@@ -1,7 +1,11 @@
 #include "CocoRoom.h"
 
-CCScene* CocoRoom::scene()
+static int tabNumber;
+
+CCScene* CocoRoom::scene(int tab)
 {
+    tabNumber = tab;
+    
     CCScene* pScene = CCScene::create();
     CocoRoom* pLayer = CocoRoom::create();
     pScene->addChild(pLayer);
@@ -23,7 +27,7 @@ void CocoRoom::onExit()
 
 void CocoRoom::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -36,6 +40,19 @@ bool CocoRoom::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoom::Notification), "CocoRoom", NULL);
+    
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
+    // scrollView init.
+    scrollViewCoco = CCScrollView::create();
+    scrollViewCoco->retain();
+    scrollViewFairy = CCScrollView::create();
+    scrollViewFairy->retain();
+
     coco = CCLayer::create();
     fairy = CCLayer::create();
     candy = CCLayer::create();
@@ -53,10 +70,32 @@ bool CocoRoom::init()
     
     InitSprites();
     curState = -1;
-    MakeSprites(0);
+    MakeSprites(tabNumber);
     
     return true;
 }
+
+void CocoRoom::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        isTouched = false;
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
+}
+
 
 void CocoRoom::InitSprites()
 {
@@ -112,21 +151,7 @@ void CocoRoom::InitSprites()
             ccp(927, 248), ccc3(182,142,142), "", "CocoRoom", this, 5) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
-    
-    /*
-    // make scroll
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionHorizontal);
-    scrollView->setViewSize(CCSizeMake(782, 177)); //782-38, 146));
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 228));
-    scrollView->setDelegate(this);
-    this->addChild(scrollView, 4);
-    */
 }
 
 void CocoRoom::MakeSprites(int state)
@@ -134,6 +159,7 @@ void CocoRoom::MakeSprites(int state)
     if (curState == state)
         return;
     
+    // layer init.
     coco->removeAllChildren();
     spriteClassCoco->spriteObj.clear();
     fairy->removeAllChildren();
@@ -164,7 +190,6 @@ void CocoRoom::MakeSprites(int state)
         spriteClass->spriteObj[size-1]->label->setOpacity(0);
         MakeSpritesCandy();
     }
-    
     
     curState = state;
 }
@@ -304,7 +329,7 @@ void CocoRoom::MakeSpritesFairy()
 
 void CocoRoom::MakeSpritesCandy()
 {
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "rank/bg_group.png",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "todaycandy/bg_group.png",
                         ccp(0, 0), ccp(108, 518), CCSize(0, 0), "", "Layer", candy, 5) );
     
     // 5 profiles
@@ -366,17 +391,16 @@ void CocoRoom::MakeScrollCoco()
         spriteClassCoco->AddChild(spriteClassCoco->spriteObj.size()-1);
     }
     
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionHorizontal);
-    scrollView->setViewSize(CCSizeMake(782, 177)); //782-38, 146));
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 228));
+    scrollViewCoco->setDirection(kCCScrollViewDirectionHorizontal);
+    scrollViewCoco->setViewSize(CCSizeMake(782, 177)); //782-38, 146));
+    scrollViewCoco->setAnchorPoint(ccp(0, 0));
+    scrollViewCoco->setPosition(ccp(77, 228));
     containerCoco->setContentSize(CCSizeMake(146*numOfSlots, 146));
-    scrollView->setContentSize(containerCoco->getContentSize());
-    scrollView->setContainer(containerCoco);
-    scrollView->setDelegate(this);
-    this->addChild(scrollView, 5);
+    scrollViewCoco->setContentSize(containerCoco->getContentSize());
+    scrollViewCoco->setContainer(containerCoco);
+    scrollViewCoco->setDelegate(this);
+    //this->addChild(scrollView, 5);
+    coco->addChild(scrollViewCoco, 5);
     // 안 보임... 수정해야함
 }
 
@@ -403,17 +427,26 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png1")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeSprites(0);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png2")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeSprites(1);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png3")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeSprites(2);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
@@ -423,11 +456,44 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
         {
             if (curState == 0 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                ; // 슬롯 구매
+            {
+                sound->playClickboard();
+                // 슬롯 구매
+            }
             else if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false); // 요정의 마을
+            }
             else if (curState == 2 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
+            }
+        }
+    }
+    
+    for (int i = 0 ; i < spriteClassCoco->spriteObj.size() ; i++)
+    {
+        if (spriteClassCoco->spriteObj[i]->name == "button/btn_green.png1")
+        {
+            if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+                sound->playLvUpSuccess();
+        }
+        
+        else if (spriteClassCoco->spriteObj[i]->name == "button/btn_green.png2")
+        {
+            if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+                sound->playLvUpFail();
+        }
+    }
+    
+    for (int i = 0 ; i < spriteClassFairy->spriteObj.size() ; i++)
+    {
+        if (spriteClassFairy->spriteObj[i]->name == "button/btn_green.png1")
+        {
+            if (spriteClassFairy->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+                ;//sound->playTest();
         }
     }
     
@@ -446,18 +512,40 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = false;
 }
 
-void CocoRoom::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
-}
 
 void CocoRoom::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    CCLog("cocoroom - scrolling~");
+    //CCLog("cocoroom - scrolling~");
 }
 
 void CocoRoom::scrollViewDidZoom(CCScrollView* view)
 {
 }
+
+
+void CocoRoom::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollViewCoco->removeAllChildren();
+    scrollViewCoco->removeFromParent();
+    scrollViewFairy->removeAllChildren();
+    scrollViewFairy->removeFromParent();
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "CocoRoom");
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void CocoRoom::EndSceneCallback()
+{
+}
+
 

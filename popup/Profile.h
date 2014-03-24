@@ -14,11 +14,15 @@ public:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
-    void EndScene();
+    
+    void Notification(CCObject* obj);
     
     CREATE_FUNC(Profile);
     
     void InitSprites();
+    
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;

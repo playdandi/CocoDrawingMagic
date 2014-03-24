@@ -23,27 +23,18 @@ public:
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
     
+    void Notification(CCObject* obj);
+    
     CREATE_FUNC(GameReady);
     
     void InitSprites();
     void MakeScroll();
     
-    void ShowMagicSlot();
-    
-    void EndLayer();
-    void EndLayerCallback();
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;
-    
-    std::vector<CCSprite*> sprites;
-    std::vector<CCPoint> pos;
-    std::vector<std::string> names;
-    
-    std::vector<CCScale9Sprite*> sprites9;
-    std::vector<std::string> names9;
-    std::vector<CCPoint> pos9;
-    std::vector<CCPoint> size9;
     
     CCScrollView* scrollView;
     
@@ -52,6 +43,9 @@ private:
     
     bool isTouched;
     bool isScrolling;
+    bool isScrollViewTouched;
+    
+    SpriteClass* spriteClass;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */

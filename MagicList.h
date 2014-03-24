@@ -19,8 +19,8 @@ public:
     
     void InitSprites();
     
-    void EndLayer();
-    void EndLayerCallback();
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;

@@ -2,32 +2,31 @@
 #define __CocoMagic__Sound__
 
 #include "Common.h"
+#include "cocos2d.h"
+
+using namespace cocos2d;
 
 class Sound
 {
 public:
     void PreLoadSound();
-    void playBackgroundSound();
+    void SetEffectVolume();
+    void SetBackgroundMusicVolume();
+    
+    void PlayBackgroundSound();
     void StopBackgroundSound();
     
-    void playMenuComeup();
-    void playClickX();
-    void playClickBtn();
     void playWarning();
+    void playClick();
+    void playClickboard();
+    void playLvUpSuccess();
+    void playLvUpFail();
+    void playBoardMove();
     
-    /*
-    void SetFileExtension();
-    void PreLoadSound();
-    void playTouchSound();
-    void playBombSound();
-    void playBackgroundSound(bool isCrushing);
-    void StopBackgroundSound();
-    void playComboSound(int combo);
-    void playItemSound();
-    void playMassSound();
-    */
 private:
     std::string ext;
+    int cnt;
+    
 };
 
 #endif /* defined(__CocoMagic__Sound__) */

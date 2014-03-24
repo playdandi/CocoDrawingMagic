@@ -23,7 +23,7 @@ void SendTopaz::onExit()
 
 void SendTopaz::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -34,11 +34,18 @@ bool SendTopaz::init()
 		return false;
 	}
     
-    CCLog("SendTopaz. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyTopaz", param);
     
     InitSprites();
     MakeScroll();
+    
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
     
     return true;
 }
@@ -67,9 +74,7 @@ void SendTopaz::InitSprites()
                     ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "SendTopaz", this, 1) );
 
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
 }
 
 void SendTopaz::MakeScroll()
@@ -154,24 +159,12 @@ bool SendTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        CCLog("%s", spriteClass->spriteObj[i]->name.c_str());
-        if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                EndScene();
-        }
-        else if (spriteClass->spriteObj[i]->name.substr(0, 26) == "button/btn_yellow_mini.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                ;
-        }
-    }
+    if (scrollView->boundingBox().containsPoint(point))
+        isScrollViewTouched = true;
     
     return true;
 }
@@ -184,14 +177,29 @@ void SendTopaz::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
+    CCPoint point = pTouch->getLocation();
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                EndScene();
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name.substr(0, 26) == "button/btn_yellow_mini.png")
+        {
+            if (isScrollViewTouched && !isScrolling &&
+                spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+                ;
+        }
+    }
+    
     isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
-
-void SendTopaz::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
-}
-
 
 void SendTopaz::scrollViewDidScroll(CCScrollView* view)
 {
@@ -199,5 +207,23 @@ void SendTopaz::scrollViewDidScroll(CCScrollView* view)
 }
 
 void SendTopaz::scrollViewDidZoom(CCScrollView* view)
+{
+}
+
+
+void SendTopaz::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyTopaz", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void SendTopaz::EndSceneCallback()
 {
 }

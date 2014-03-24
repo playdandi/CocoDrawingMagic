@@ -23,7 +23,7 @@ void RequestPotion::onExit()
 
 void RequestPotion::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -34,11 +34,21 @@ bool RequestPotion::init()
 		return false;
 	}
     
-    CCLog("RequestPotion. init");
+    //CCLog("RequestPotion. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
     
     InitSprites();
     MakeScroll();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
+    
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
     
     return true;
 }
@@ -67,11 +77,6 @@ void RequestPotion::InitSprites()
                     ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "RequestPotion", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                     ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "RequestPotion", this, 1) );
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        spriteClass->AddChild(i);
-    }
 }
 
 void RequestPotion::MakeScroll()
@@ -85,13 +90,9 @@ void RequestPotion::MakeScroll()
     name.push_back("커먼센스");
     name.push_back("우히히히힛");
     
-    int spriteClassSize = spriteClass->spriteObj.size();
-    
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
-    //scrollContainer->setAnchorPoint(ccp(0, 1));
     scrollContainer->setPosition(ccp(77, 492+904+243));
-    //scrollContainer->setPosition(ccp(77, 492));
     
     int numOfList = 8;
     char fname[50], fname2[50];
@@ -127,12 +128,6 @@ void RequestPotion::MakeScroll()
         }
     }
     
-    // addchild
-    for (int i = spriteClassSize ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        spriteClass->AddChild(i);
-    }
-    
     // scrollview 내용 전체크기
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     // scrollView 생성
@@ -156,13 +151,15 @@ bool RequestPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
+    
+    if (scrollView->boundingBox().containsPoint(point))
+        isScrollViewTouched = true;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        CCLog("%s", spriteClass->spriteObj[i]->name.c_str());
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -170,8 +167,8 @@ bool RequestPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 26) == "button/btn_yellow_mini.png")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                ;
+            //if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            //    ;
         }
     }
     
@@ -187,11 +184,8 @@ void RequestPotion::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void RequestPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     isTouched = false;
-}
-
-void RequestPotion::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
 
 
@@ -201,5 +195,26 @@ void RequestPotion::scrollViewDidScroll(CCScrollView* view)
 }
 
 void RequestPotion::scrollViewDidZoom(CCScrollView* view)
+{
+}
+
+
+void RequestPotion::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollView->removeAllChildren();
+    scrollView->removeFromParentAndCleanup(true);
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void RequestPotion::EndSceneCallback()
 {
 }

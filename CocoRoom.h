@@ -12,7 +12,7 @@ class CocoRoom : public CCLayer,
                  public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int tab);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -22,9 +22,13 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    void EndScene();
+    
+    void Notification(CCObject* obj);
     
     CREATE_FUNC(CocoRoom);
+    
+    void EndScene();
+    void EndSceneCallback();
     
     void InitSprites();
     void MakeSprites(int state);
@@ -38,7 +42,7 @@ protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollView;
+    CCScrollView* scrollViewCoco;
     CCScrollView* scrollViewFairy;
     bool isScrolling;
     CCLayer* containerCoco;

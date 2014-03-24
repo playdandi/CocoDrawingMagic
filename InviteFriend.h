@@ -25,12 +25,14 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    void EndScene();
     
     CREATE_FUNC(InviteFriend);
     
     void InitSprites();
     void MakeScroll();
+    
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;
@@ -38,6 +40,7 @@ protected:
     
     CCScrollView* scrollView;
     bool isScrolling;
+    bool isScrollViewTouched;
     
 private:
     SpriteClass* spriteClass;

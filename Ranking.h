@@ -31,14 +31,12 @@ public:
     virtual void scrollViewDidZoom(CCScrollView* view);
     //virtual void registerWithTouchDispatcher();
     
-    void AddSprites();
+    void Notification(CCObject* obj);
+    
+    void InitSprites();
     void MakeScroll();
 
-    // popup related func.
-    void ShowBuyTopaz();
-    void ShowGameReady();
-    
-    void touchDownAction(CCObject* sender, CCControlEvent controlEvent);
+    //void touchDownAction(CCObject* sender, CCControlEvent controlEvent);
     
     CREATE_FUNC(Ranking);
     
@@ -46,24 +44,22 @@ protected:
     CCSize winSize;
     
     CCScrollView* scrollView;
+    CCPoint scrollViewLastPoint;
     std::vector<CCSprite*> profiles;
     
     std::vector<std::string> usernames;
     std::vector<int> userPotionStates;
     
-    //Sound* sound;
-    
+    bool isTouched;
     bool isScrolling;
+    bool isScrollViewTouched;
+    bool isOnceScrollViewTouched;
+    
+    bool isKeyBackClicked;
     
 private:
-    std::vector<CCSprite*> sprites;
-    std::vector<CCPoint> pos;
-    std::vector<std::string> names;
     
-    std::vector<CCScale9Sprite*> sprites9;
-    std::vector<std::string> names9;
-    std::vector<CCPoint> pos9;
-    std::vector<CCPoint> size9;
+    SpriteClass* spriteClass;
 };
 
 #endif /* defined(__CocoMagic__Ranking__) */

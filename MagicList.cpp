@@ -11,32 +11,36 @@ CCScene* MagicList::scene()
 
 void MagicList::onEnter()
 {
-    CCLog("MagicList :: onEnter");
+    //CCLog("MagicList :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
 }
 void MagicList::onExit()
 {
-    CCLog("MagicList :: onExit");
+    //CCLog("MagicList :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
 }
 
 void MagicList::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
 bool MagicList::init()
 {
-    CCLog("MagicList :: Init");
+    //CCLog("MagicList :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     
     InitSprites();
     
@@ -95,9 +99,7 @@ void MagicList::InitSprites()
                 kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
 
     // action
     CCActionInterval* move = CCMoveTo::create(0.5f, ccp(0, 0));
@@ -109,14 +111,14 @@ void MagicList::InitSprites()
 bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
-    CCLog("MagicList : (%d , %d)", (int)point.x, (int)point.y);
+    //CCLog("MagicList : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                EndLayer();
+                EndScene();
         }
     }
     
@@ -134,15 +136,23 @@ void MagicList::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 }
 
 
-void MagicList::EndLayer()
+void MagicList::EndScene()
 {
+    sound->playBoardMove(); // 이 scene만 사운드가 다르다.
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+
     CCFiniteTimeAction* action =
     CCSequence::create(CCMoveTo::create(0.2f, ccp(0, winSize.height)),
-                       CCCallFunc::create(this, callfunc_selector(MagicList::EndLayerCallback)), NULL);
+                       CCCallFunc::create(this, callfunc_selector(MagicList::EndSceneCallback)), NULL);
     layer->runAction(action);
 }
 
-void MagicList::EndLayerCallback()
+void MagicList::EndSceneCallback()
 {
     //this->removeChild(pBlack);
     //this->removeChild(pBackground);

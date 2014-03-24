@@ -1,7 +1,11 @@
 #include "BuyTopaz.h"
 
-CCScene* BuyTopaz::scene()
+static int parent_id;
+
+CCScene* BuyTopaz::scene(int parent)
 {
+    parent_id = parent;
+    
     CCScene* pScene = CCScene::create();
     BuyTopaz* pLayer = BuyTopaz::create();
     pScene->addChild(pLayer);
@@ -23,7 +27,7 @@ void BuyTopaz::onExit()
 
 void BuyTopaz::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -34,18 +38,53 @@ bool BuyTopaz::init()
 		return false;
 	}
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyTopaz::Notification), "BuyTopaz", NULL);
+    
+    // notification post
+    CCString* param = CCString::create("1");
+    if (parent_id == 0) // 부모가 'Ranking'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    else if (parent_id == 1) // 부모가 'GameReady'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
     CCLog("BuyTopaz. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     MakeScroll();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
+    
+    isTouched = false;
     
     return true;
 }
 
+void BuyTopaz::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        isTouched = false;
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
+}
+
 void BuyTopaz::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
@@ -72,11 +111,6 @@ void BuyTopaz::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_request.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png", "0", NULL, 1) );
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        spriteClass->AddChild(i);
-    }
 }
 
 void BuyTopaz::MakeScroll()
@@ -92,27 +126,22 @@ void BuyTopaz::MakeScroll()
     cost.push_back("500");
     cost.push_back("800");
     
-    int spriteClassSize = spriteClass->spriteObj.size();
-    
     // make scroll
-    CCLayer* scrollContainer = CCLayer::create();
-    //scrollContainer->setAnchorPoint(ccp(0, 0));
-    //scrollContainer->setPosition(ccp(77, 492+904+243));
-    scrollContainer->setPosition(ccp(77, 492));
-    ////
-    this->addChild(scrollContainer, 2);
-    ////
+    itemContainer = CCLayer::create();
+    itemContainer->setPosition(ccp(77, 492));
+    this->addChild(itemContainer, 2);
     
     int numOfList = 5;
     char name[50], name2[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
+        layers.push_back(itemLayer);
         itemLayer->setContentSize(CCSizeMake(862, 226));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*226));
         if (i == numOfList-1)
             itemLayer->setPosition(ccp(34, (numOfList-i-1)*226-30));
-        scrollContainer->addChild(itemLayer, 2);
+        itemContainer->addChild(itemLayer, 2);
         
         // image
         CCPoint pos = ccp(35, 21);
@@ -124,6 +153,7 @@ void BuyTopaz::MakeScroll()
         // number + salenumber
         CCLayer* numberLayer = Common::MakeImageNumberLayer(cost[i]);
         numberLayer->setPosition(ccp(214, 126));
+        numberLayers.push_back(numberLayer);
         itemLayer->addChild(numberLayer, 3);
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("+ 10%", fontList[0], 36,
                         ccp(0, 0), ccp(348, 138), ccc3(168,122,62), "", "Layer", itemLayer, 3) );
@@ -157,29 +187,6 @@ void BuyTopaz::MakeScroll()
                         ccp(0, 0), ccp(0, 0), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
     }
-    
-    // addchild
-    for (int i = spriteClassSize ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        spriteClass->AddChild(i);
-    }
-    
-    /*
-    // scrollview 내용 전체크기
-    scrollContainer->setContentSize(CCSizeMake(862, numOfList*226));
-    // scrollView 생성
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904-40)); // (내용 1개 크기, 노란보드 세로크기)
-    scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492+20));
-    scrollView->setContainer(scrollContainer);
-    scrollView->setDelegate(this);
-    scrollView->setContentOffset(ccp(0, 904-40-(numOfList*226)), false);
-    this->addChild(scrollView, 3);
-     */
 }
 
 
@@ -188,33 +195,37 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (isTouched)
         return false;
     isTouched = true;
-    isScrolling = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                //this->unschedule(schedule_selector(BuyTopaz::MakeColorPaper));
                 EndScene();
+                break;
+            }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 27) == "button/btn_yellow_mini2.png")
         {
-            CCSprite* sp = spriteClass->spriteObj[i]->sprite;
             CCPoint p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
-            //CCLog("%d, %d", (int)p.x, (int)p.y);
-            // convertToNodeSpace 설명
-            // ex) sprite1->convertToNodeSpace(sprite2->getPosition());
-            // sprite1 좌측하단부터 sprite2의 anchorPoint까지의 거리
-            if (p.x >= 0 && p.y >= 0 && p.x < sp->getContentSize().width && p.y < sp->getContentSize().height)
+            CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
+            if ((int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                sound->playClick();
                 Common::ShowNextScene(this, "BuyTopaz", "SendTopaz", false);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
                 Common::ShowNextScene(this, "BuyTopaz", "RequestTopaz", false);
+            }
         }
     }
     
@@ -232,17 +243,84 @@ void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = false;
 }
 
+
 void BuyTopaz::EndScene()
 {
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    if (parent_id == 0) // 부모가 'Ranking'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    else if (parent_id == 1) // 부모가 'GameReady'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    ReleaseAll();
+    
     this->removeFromParentAndCleanup(true);
 }
 
-
-void BuyTopaz::scrollViewDidScroll(CCScrollView* view)
-{
-    isScrolling = true;
-}
-
-void BuyTopaz::scrollViewDidZoom(CCScrollView* view)
+void BuyTopaz::EndSceneCallback()
 {
 }
+
+void BuyTopaz::ReleaseAll()
+{
+    CCLog("release all");
+    pBlack->autorelease();
+    
+    // some layers
+    for (int i = 0 ; i < numberLayers.size(); i++)
+    {
+        //for (int j = 0 ; j < numberLayers[i]->getChildrenCount(); j++)
+            //layers[i]->removeAllChildren();
+        //    numberLayers[i]->getChildren()->objectAtIndex(j)->removeFromParentAndCleanup(true);
+        numberLayers[i]->removeAllChildren();
+    }
+    numberLayers.clear();
+    
+    for (int i = 0 ; i < layers.size(); i++)
+    {
+        //for (int j = 0 ; j < layers[i]->getChildrenCount(); j++)
+            //layers[i]->removeAllChildren();
+        //    layers[i]->getChildren()->objectAtIndex(j)->removeFromParentAndCleanup(true);
+        layers[i]->removeAllChildren();
+    }
+    layers.clear();
+    
+    itemContainer->removeAllChildren();
+    
+    spriteName.clear();
+    cost.clear();
+    
+    // all sprite, sprite-9, labels
+    for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
+    {
+        if (spriteClass->spriteObj[i]->type == 0)
+        {
+            CCLog("ith = %d , type = %d, 0번", i, spriteClass->spriteObj[i]->type);
+            spriteClass->spriteObj[i]->sprite->autorelease();
+        }
+        else if (spriteClass->spriteObj[i]->type == 1)
+        {
+            CCLog("ith = %d , type = %d, 1번", i, spriteClass->spriteObj[i]->type);
+            spriteClass->spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
+        }
+        else
+        {
+            CCLog("ith = %d , type = %d, 2번", i, spriteClass->spriteObj[i]->type);
+            spriteClass->spriteObj[i]->label->removeFromParentAndCleanup(true);
+        }
+        
+    }
+    this->removeAllChildren();
+    
+    spriteClass->spriteObj.clear();
+    spriteClass = NULL;
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyTopaz");
+}
+
+

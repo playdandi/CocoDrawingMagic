@@ -1,6 +1,7 @@
 #include "Sound.h"
 #include "SimpleAudioEngine.h"
 
+using namespace cocos2d;
 using namespace CocosDenshion;
 
 /*void Sound::SetFileExtension()
@@ -17,19 +18,39 @@ using namespace CocosDenshion;
 
 void Sound::PreLoadSound()
 {
-    SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/coco_bgm.wav");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/menucomeup.wav");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/click_x.wav");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/click_btn.wav");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning2.wav");
+    SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/bgm.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/click.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/clickboard.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/lvup_success.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/lvup_fail.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/magiclist.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning.mp3");
     
-    SimpleAudioEngine::sharedEngine()->setEffectsVolume(1.0);
-    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.3);
+    SetEffectVolume();
+    SetBackgroundMusicVolume();
 }
 
-void Sound::playBackgroundSound()
+void Sound::SetEffectVolume()
 {
-    SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/coco_bgm.wav", true);
+    if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_0"))
+        SimpleAudioEngine::sharedEngine()->setEffectsVolume(0.9);
+    else
+        SimpleAudioEngine::sharedEngine()->setEffectsVolume(0);
+}
+void Sound::SetBackgroundMusicVolume()
+{
+    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.4);
+    /*
+    if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1"))
+        SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.4);
+    else
+        SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0);
+     */
+}
+
+void Sound::PlayBackgroundSound()
+{
+    SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/bgm.mp3", true);
 }
 
 void Sound::StopBackgroundSound()
@@ -37,25 +58,35 @@ void Sound::StopBackgroundSound()
     SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
 }
 
-void Sound::playMenuComeup()
-{
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/menucomeup.wav");
-}
 
-void Sound::playClickX()
+void Sound::playClick()
 {
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/click_x.wav");
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/click.mp3");
 }
-
-void Sound::playClickBtn()
+void Sound::playClickboard()
 {
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/click_btn.wav");
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/clickboard.mp3");
 }
 
 void Sound::playWarning()
 {
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/warning2.wav");
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/warning.mp3");
 }
+
+void Sound::playBoardMove()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/magiclist.mp3");
+}
+
+void Sound::playLvUpSuccess()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/lvup_success.mp3");
+}
+void Sound::playLvUpFail()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/lvup_fail.mp3");
+}
+
 
 
 

@@ -8,11 +8,10 @@
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
-class BuyTopaz : public CCLayer,
-                 public CCScrollViewDelegate
+class BuyTopaz : public CCLayer
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int parent);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -20,25 +19,31 @@ public:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
-    virtual void scrollViewDidScroll(CCScrollView* view);
-    virtual void scrollViewDidZoom(CCScrollView* view);
-    void EndScene();
+    
+    void Notification(CCObject* obj);
     
     CREATE_FUNC(BuyTopaz);
     
     void InitSprites();
     void MakeScroll();
     
+    void EndScene();
+    void EndSceneCallback();
+    
+    void ReleaseAll();
+    
 protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollView;
-    bool isScrolling;
+private: // 해제해야 하는 변수들은 여기에 넣자.
+    CCSprite* pBlack;
     
-private:
     SpriteClass* spriteClass;
     
+    CCLayer* itemContainer;
+    std::vector<CCLayer*> layers;
+    std::vector<CCLayer*> numberLayers;
     std::vector<std::string> spriteName;
     std::vector<std::string> cost;
 };

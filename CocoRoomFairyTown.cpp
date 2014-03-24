@@ -11,27 +11,27 @@ CCScene* CocoRoomFairyTown::scene()
 
 void CocoRoomFairyTown::onEnter()
 {
-    CCLog("CocoRoomFairyTown :: onEnter");
+    //CCLog("CocoRoomFairyTown :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
 }
 void CocoRoomFairyTown::onExit()
 {
-    CCLog("CocoRoomFairyTown :: onExit");
+    //CCLog("CocoRoomFairyTown :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
 }
 
 void CocoRoomFairyTown::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
 bool CocoRoomFairyTown::init()
 {
-    CCLog("CocoRoomFairyTown :: Init");
+    //CCLog("CocoRoomFairyTown :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
@@ -39,11 +39,40 @@ bool CocoRoomFairyTown::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomFairyTown::Notification), "CocoRoomFairyTown", NULL);
+    
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    
     InitSprites();
     MakeScroll();
     
     return true;
 }
+
+void CocoRoomFairyTown::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        isTouched = false;
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
+}
+
 
 void CocoRoomFairyTown::InitSprites()
 {
@@ -165,9 +194,12 @@ bool CocoRoomFairyTown::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    scrollViewTouch = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
+
+    if (scrollView->boundingBox().containsPoint(point))
+        scrollViewTouch = true;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -187,42 +219,58 @@ bool CocoRoomFairyTown::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void CocoRoomFairyTown::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    isTouched = false;
-    
     CCPoint point = pTouch->getLocation();
-    /*
-    char fname[50];
-    for (int i = 0 ; i < 8; i++)
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        sprintf(fname, "button/btn_blue_mini.png%d", i);
-        CCSprite* temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
-        CCPoint p = temp->convertToNodeSpace(point);
-        
-        CCSize size = spriteClass->GetContentSizeByName(fname);
-        if (!isScrolling &&
-            (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+        if (spriteClass->spriteObj[i]->name.substr(0, 31) == "background/bg_board_brown.png_a")
         {
-            CCLog("(%d) OOOOO : %d, %d", i, (int)p.x, (int)p.y);
+            CCPoint p = spriteClass->spriteObj[i]->sprite9->convertToNodeSpace(point);
+            CCSize size = spriteClass->spriteObj[i]->sprite9->getContentSize();
+            if (scrollViewTouch && !isScrolling &&
+                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                sound->playClickboard();
+                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyInfo", false);
+            }
         }
-    }*/
-}
-
-void CocoRoomFairyTown::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
+    }
+    
+    isTouched = false;
 }
 
 void CocoRoomFairyTown::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    CCLog("Sketchbook - scrolling~");
 }
 
 void CocoRoomFairyTown::scrollViewDidZoom(CCScrollView* view)
+{
+}
+
+
+void CocoRoomFairyTown::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollView->removeAllChildren();
+    scrollView->removeFromParent();
+
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "CocoRoomFairyTown");
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void CocoRoomFairyTown::EndSceneCallback()
 {
 }

@@ -1,7 +1,11 @@
 #include "Sketchbook.h"
 
-CCScene* Sketchbook::scene()
+static int tabNumber;
+
+CCScene* Sketchbook::scene(int tab)
 {
+    tabNumber = tab;
+    
     CCScene* pScene = CCScene::create();
     Sketchbook* pLayer = Sketchbook::create();
     pScene->addChild(pLayer);
@@ -23,7 +27,7 @@ void Sketchbook::onExit()
 
 void Sketchbook::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -36,6 +40,11 @@ bool Sketchbook::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    // layer init.
     fire = CCLayer::create();
     water = CCLayer::create();
     land = CCLayer::create();
@@ -49,6 +58,18 @@ bool Sketchbook::init()
     this->addChild(land, 5);
     this->addChild(master, 5);
     
+    // scrollview init.
+    scrollViewFire = CCScrollView::create();
+    scrollViewFire->retain();
+    scrollViewWater = CCScrollView::create();
+    scrollViewWater->retain();
+    scrollViewLand = CCScrollView::create();
+    scrollViewLand->retain();
+    scrollViewMaster = CCScrollView::create();
+    scrollViewMaster->retain();
+    scrollViewSlot = CCScrollView::create();
+    scrollViewSlot->retain();
+    
     spriteClass = new SpriteClass();
     spriteClassFire = new SpriteClass();
     spriteClassWater = new SpriteClass();
@@ -59,7 +80,11 @@ bool Sketchbook::init()
     MakeScrollSlot();
     
     curState = -1;
-    MakeScroll(0);
+    MakeScroll(tabNumber);
+    
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
     
     return true;
 }
@@ -120,21 +145,7 @@ void Sketchbook::InitSprites()
                     ccp(927, 248), ccc3(182,142,142), "", "Sketchbook", this, 5) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
-    
-    /*
-     // make scroll
-     scrollView = CCScrollView::create();
-     scrollView->retain();
-     scrollView->setDirection(kCCScrollViewDirectionHorizontal);
-     scrollView->setViewSize(CCSizeMake(782, 177)); //782-38, 146));
-     scrollView->setAnchorPoint(ccp(0, 0));
-     scrollView->setPosition(ccp(77, 228));
-     scrollView->setDelegate(this);
-     this->addChild(scrollView, 4);
-     */
 }
 
 void Sketchbook::MakeScroll(int state)
@@ -269,7 +280,7 @@ void Sketchbook::MakeScrollFire()
     // scrollview 내용 전체크기
     containerFire->setContentSize(CCSizeMake(872, numOfList*196));
     // scrollView 생성
-    scrollViewFire = CCScrollView::create();
+    //scrollViewFire = CCScrollView::create();
     scrollViewFire->retain();
     scrollViewFire->setDirection(kCCScrollViewDirectionVertical);
     scrollViewFire->setViewSize(CCSizeMake(929, 904-50)); // (내용 1개 크기, 노란보드 세로크기)
@@ -299,10 +310,9 @@ void Sketchbook::MakeScrollSlot()
 {
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
-    //scrollContainer->setAnchorPoint(ccp(0, 0));
     scrollContainer->setPosition(ccp(91, 242));
     int numOfSlots = 7;
-    //addChild(scrollContainer, 500);
+
     for (int i = 0 ; i < numOfSlots ; i++)
     {
         CCSprite* temp = CCSprite::createWithSpriteFrameName("background/bg_skill_yellow.png");
@@ -313,7 +323,7 @@ void Sketchbook::MakeScrollSlot()
     
     scrollContainer->setContentSize(CCSizeMake(146*numOfSlots, 146));
     
-    scrollViewSlot = CCScrollView::create();
+    //scrollViewSlot = CCScrollView::create();
     scrollViewSlot->retain();
     scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
     //scrollViewSlot->setViewSize(CCSizeMake(782-38, 146));
@@ -340,30 +350,44 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
+    
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png1")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeScroll(0);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png2")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeScroll(1);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png3")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeScroll(2);
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png4")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
                 MakeScroll(3);
+            }
         }
         
         else if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
@@ -393,21 +417,46 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     //CCPoint point = pTouch->getLocation();
     isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
+}
+
+
+void Sketchbook::scrollViewDidScroll(CCScrollView* view)
+{
+    isScrolling = true;
+    //CCLog("Sketchbook - scrolling~");
+}
+
+void Sketchbook::scrollViewDidZoom(CCScrollView* view)
+{
 }
 
 
 void Sketchbook::EndScene()
 {
+    sound->playClick();
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollViewFire->removeAllChildren();
+    scrollViewFire->removeFromParent();
+    scrollViewWater->removeAllChildren();
+    scrollViewWater->removeFromParent();
+    scrollViewLand->removeAllChildren();
+    scrollViewLand->removeFromParent();
+    scrollViewMaster->removeAllChildren();
+    scrollViewMaster->removeFromParent();
+    scrollViewSlot->removeAllChildren();
+    scrollViewSlot->removeFromParent();
+    
     this->removeFromParentAndCleanup(true);
 }
 
-void Sketchbook::scrollViewDidScroll(CCScrollView* view)
-{
-    isScrollingSlot = true;
-    CCLog("Sketchbook - scrolling~");
-}
-
-void Sketchbook::scrollViewDidZoom(CCScrollView* view)
+void Sketchbook::EndSceneCallback()
 {
 }
 

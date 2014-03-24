@@ -23,7 +23,7 @@ void Setting::onExit()
 
 void Setting::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -36,10 +36,18 @@ bool Setting::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
     InitSprites();
     
-    for (int i = 0 ; i < 5; i++)
-        btn[i] = false;
+    selectedBtn = -1;
+    
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    
+    isTouched = false;
     
     return true;
 }
@@ -132,8 +140,11 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸시알림", fontList[0], 48, ccp(0, 0), ccp(162, 942), ccc3(78,47,8), "", "Setting", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션,그룹메시지", fontList[0], 48, ccp(0, 0), ccp(162, 829), ccc3(78,47,8), "", "Setting", this, 2) );
     
+    
     // on-off button
-    char name[50], name2[50];
+    char name[50], name2[50], key[20];
+    bool status;
+    CCPoint pos;
     for (int i = 0; i < 5; i++)
     {
         sprintf(name, "background/bg_degree_desc.png%d", i);
@@ -145,16 +156,22 @@ void Setting::InitSprites()
         sprintf(name2, "letter/letter_off.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
                 ccp(0, 0), ccp(168, 18), CCSize(0, 0), name, "1", NULL, 2) );
+      
+        sprintf(key, "setting_option_%d", i);
+        status = CCUserDefault::sharedUserDefault()->getBoolForKey(key);
+        if (status)
+            pos = ccp(627, 1261-i*112);
+        else
+            pos = ccp(627+150, 1261-i*112);
         sprintf(name2, "button/btn_option.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0, 0), ccp(627, 1261-i*112), CCSize(0, 0), "", "Setting", this, 3) );
+                ccp(0, 0), pos, CCSize(0, 0), "", "Setting", this, 3) );
     }
+    standardBtnPos = ccp(627, 0);
     
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
 }
 
 
@@ -166,7 +183,6 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -175,9 +191,17 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
                 EndScene();
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_option.png1") // 효과음
+        else if (spriteClass->spriteObj[i]->name.substr(0, 21) == "button/btn_option.png") // on-off's
         {
-            btn[0] = true;
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                selectedSprite = spriteClass->spriteObj[i]->sprite;
+                selectedBtn = spriteClass->spriteObj[i]->name[spriteClass->spriteObj[i]->name.size()-1] - '0';
+                selectedPos = spriteClass->spriteObj[i]->sprite->getPosition();
+                standardBtnPos.y = selectedPos.y;
+                selectedTouchPos = point;
+            }
         }
     }
     
@@ -187,20 +211,79 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void Setting::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCPoint point = pTouch->getLocation();
+    if (selectedBtn != -1)
+    {
+        CCPoint point = pTouch->getLocation();
+        CCSize size = selectedSprite->getContentSize();
     
-    //if (btn[0])
-        
+        int x = (int)selectedPos.x + ((int)point.x-(int)selectedTouchPos.x);
+        if (x < (int)standardBtnPos.x) x = (int)standardBtnPos.x;
+        if (x > (int)standardBtnPos.x+(int)size.width) x = (int)standardBtnPos.x+(int)size.width;
+        //CCLog("x : %d", x);
     
+        selectedSprite->setPosition(ccp((int)x, (int)selectedPos.y));
+    }
 }
 
 void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     isTouched = false;
+    
+    if (selectedBtn != -1)
+    {
+        char name[20];
+        sprintf(name, "setting_option_%d", selectedBtn);
+        
+        CCPoint pos = selectedSprite->getPosition();
+        CCSize size = selectedSprite->getContentSize();
+        
+        if ((int)pos.x <= (int)standardBtnPos.x + (int)size.width/2)
+        {
+            // On에 가까우면 on위치로 정확히 옮긴다.
+            selectedSprite->setPosition(standardBtnPos);
+            
+            // 효과음 버튼은 on->on 상황일 때 한번만 소리내자.
+            bool playSound = !CCUserDefault::sharedUserDefault()->getBoolForKey(name);
+            
+            CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
+            if (selectedBtn == 0) {
+                sound->SetEffectVolume();
+                if (playSound) sound->playClick();
+            }
+            else if (selectedBtn == 1)
+                sound->PlayBackgroundSound();
+        }
+        else
+        {
+            // Off에 가까우면 off위치로 정확히 옮긴다.
+            selectedSprite->setPosition(ccp((int)standardBtnPos.x+(int)size.width,
+                                            (int)standardBtnPos.y));
+            
+            CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
+            if (selectedBtn == 0)
+                sound->SetEffectVolume();
+            else if (selectedBtn == 1)
+                sound->StopBackgroundSound();
+        }
+    }
+    
+    selectedBtn = -1;
 }
+
 
 void Setting::EndScene()
 {
+    sound->playClick();
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
     this->removeFromParentAndCleanup(true);
+}
+
+void Setting::EndSceneCallback()
+{
 }
 

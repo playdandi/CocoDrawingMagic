@@ -23,7 +23,7 @@ void InviteFriend::onExit()
 
 void InviteFriend::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -34,11 +34,21 @@ bool InviteFriend::init()
 		return false;
 	}
     
-    CCLog("invite friend = init()");
+    //CCLog("invite friend = init()");
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
     InitSprites();
     MakeScroll();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
+    
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
     
     return true;
 }
@@ -101,11 +111,6 @@ void InviteFriend::InitSprites()
     
     // text
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("27명 초대", fontList[0], 36, ccp(0, 0), ccp(812, 200), ccc3(255,255,255), "", "InviteFriend", this, 2) );
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        spriteClass->AddChild(i);
-    }
 }
 
 void InviteFriend::MakeScroll()
@@ -127,7 +132,6 @@ void InviteFriend::MakeScroll()
     state.push_back(NOTADDED);
     int numOfList = 7;
     
-    int curSize = spriteClass->spriteObj.size();
     
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
@@ -187,10 +191,6 @@ void InviteFriend::MakeScroll()
                         ccp(0, 0), ccp(0, 10), CCSize(0, 0), "", "Layer", itemLayer, 3) );
     }
     
-    for (int i = curSize ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
-    
-    
     // scrollview 내용 전체크기
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     // scrollView 생성
@@ -214,9 +214,9 @@ bool InviteFriend::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -239,20 +239,37 @@ void InviteFriend::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
-
-void InviteFriend::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
-}
-
 
 void InviteFriend::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
+    CCLog("invitefriend scrolling");
 }
 
 void InviteFriend::scrollViewDidZoom(CCScrollView* view)
+{
+}
+
+
+void InviteFriend::EndScene()
+{
+    sound->playClick();
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollView->removeAllChildren();
+    scrollView->removeFromParentAndCleanup(true);
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void InviteFriend::EndSceneCallback()
 {
 }
 

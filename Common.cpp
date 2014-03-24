@@ -1,7 +1,7 @@
 #include "Common.h"
+#include "pugixml/pugixml.hpp"
+#include "Ranking.h"
 #include "GameReady.h"
-#include "popup/DegreeInfo.h"
-#include "popup/Profile.h"
 #include "Sound.h"
 #include "Message.h"
 #include "MagicList.h"
@@ -17,8 +17,12 @@
 #include "RequestPotion.h"
 #include "Setting.h"
 #include "Sketchbook.h"
-#include "Exit.h"
-#include "pugixml/pugixml.hpp"
+#include "popup/DegreeInfo.h"
+#include "popup/Profile.h"
+#include "popup/FairyInfo.h"
+#include "popup/NoImage.h"
+#include "puzzle/Puzzle.h"
+#include "ParticleTest.h"
 
 using namespace pugi;
 
@@ -366,7 +370,6 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
         if (i == 0)
         {
             temp->setPosition(ccp(0, 0));
-            layer->addChild(temp, 100);
         }
         else
         {
@@ -375,9 +378,9 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
                 temp->setPosition(ccp(totalWidth, 0));
             else
                 temp->setPosition(ccp(totalWidth, offset[number[i]-'0']));
-            //sprites[sprites.size()-1]->addChild(temp, 100);
-            layer->addChild(temp, 100);
         }
+        
+        layer->addChild(temp, 100);
         
         totalWidth += (int)temp->getContentSize().width;
         if (number[i]-'0' == 1)
@@ -385,6 +388,7 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
         
         sprites.push_back(temp);
     }
+    sprites.clear();
     
     return layer;
 }
@@ -395,40 +399,82 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
 // from       : 이 함수를 불러온 scene 이름
 // to         : 이동할 scene 이름
 // isReplaced : replaceScene을 할 경우 true, otherwise, false.
-void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced)
+void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc)
 {
     CCScene* nextScene;
     if (to == "GameReady") nextScene = GameReady::scene();
-    else if (to == "Profile") nextScene = Profile::scene();
-    else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "Message") nextScene = Message::scene();
     else if (to == "MagicList") nextScene = MagicList::scene();
-    else if (to == "CocoRoom") nextScene = CocoRoom::scene();
+    else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc);
     else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene();
     else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene();
     else if (to == "InviteFriend") nextScene = InviteFriend::scene();
-    else if (to == "Exit") nextScene = Exit::scene();
-    else if (to == "BuyTopaz") nextScene = BuyTopaz::scene();
-    else if (to == "BuyStarCandy") nextScene = BuyStarCandy::scene();
-    else if (to == "BuyPotion") nextScene = BuyPotion::scene();
+    else if (to == "BuyTopaz") nextScene = BuyTopaz::scene(etc);
+    else if (to == "BuyStarCandy") nextScene = BuyStarCandy::scene(etc);
+    else if (to == "BuyPotion") nextScene = BuyPotion::scene(etc);
     else if (to == "SendTopaz") nextScene = SendTopaz::scene();
     else if (to == "RequestTopaz") nextScene = RequestTopaz::scene();
     else if (to == "RequestPotion") nextScene = RequestPotion::scene();
     else if (to == "Setting") nextScene = Setting::scene();
-    else if (to == "Sketchbook") nextScene = Sketchbook::scene();
+    else if (to == "Sketchbook") nextScene = Sketchbook::scene(etc);
+    
+    else if (to == "Profile") nextScene = Profile::scene();
+    else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
+    else if (to == "FairyInfo") nextScene = FairyInfo::scene();
+    //else if (to == "NoImage") nextScene = NoImage::scene();
+    else if (to == "Puzzle") nextScene = Puzzle::scene();
+    
+    else if (to == "ParticleTest") nextScene = ParticleTest::scene();
+    
     
     // go
     if (from == "Ranking") ((Ranking*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
-    else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "GameReady") {
+        if (isReplaced) {
+            CCLog("replace start");
+            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
+            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+            CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
+            CCDirector::sharedDirector()->replaceScene(transition);
+            ((GameReady*)obj)->EndScene();
+        }
+        else
+            ((GameReady*)obj)->addChild(nextScene, 200, 200);
+    }
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
+}
+
+void Common::ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data)
+{
+    CCScene* popup;
+    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data);
+    //else if (btnType == IMAGE) popup = Image::scene();
+    
+    if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
+    else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
+    else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
+    else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
+    else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
+    else if (from == "NoImage") {
+        //CCNode* parent = ((NoImage*)obj)->getParent();
+        //parent->addChild(popup, 200, 200);
+        
+        //((NoImage*)obj)->removeFromParentAndCleanup(true);
+        if (isReplaced) ((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
+        else            ((NoImage*)obj)->addChild(popup, 200, 200);
+    }
+    
+    //else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
+    //else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(popup, 200, 200);
 }
 
 
-SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha)
+SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -447,6 +493,7 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite->setAnchorPoint(ap);
         obj->sprite->setPosition(pos);
         obj->sprite->setOpacity(alpha);
+        //obj->sprite->autorelease();
     }
     else if (spriteType == 1) // sprite-9
     {
@@ -461,6 +508,7 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite9->setPosition(pos);
         obj->sprite9->setContentSize(size);
         obj->sprite9->setOpacity(alpha);
+        //obj->sprite9->autorelease();
     }
 
     // parent 관련 대입
@@ -471,10 +519,12 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
     // z-order
     obj->zOrder = zOrder;
     
+    obj->priority = priority;
+    
     return obj;
 }
 
-SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha)
+SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -484,6 +534,7 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->label->setPosition(pos);
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
+    //obj->label->autorelease();
     
     // parent
     obj->parentName = parentName;
@@ -493,10 +544,12 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     // z-order
     obj->zOrder = zOrder;
     
+    obj->priority = priority;
+    
     return obj;
 }
 
-SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha)
+SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -506,6 +559,7 @@ SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, 
     obj->label->setPosition(pos);
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
+    //obj->label->autorelease();
     
     // parent
     obj->parentName = parentName;
@@ -514,6 +568,8 @@ SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, 
     
     // z-order
     obj->zOrder = zOrder;
+    
+    obj->priority = priority;
     
     return obj;
 }
@@ -580,6 +636,18 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((CCLayer*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((CCLayer*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((CCLayer*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "Ranking") // 부모가 layer
+    {
+        if (obj->type == 0)      ((Ranking*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((Ranking*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((Ranking*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "GameReady") // 부모가 layer
+    {
+        if (obj->type == 0)      ((GameReady*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((GameReady*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((GameReady*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
     else if (obj->parentType == "DegreeInfo") // 부모가 어떤 scene
     {
@@ -671,6 +739,25 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((Sketchbook*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Sketchbook*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Sketchbook*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "FairyInfo") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((FairyInfo*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((FairyInfo*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((FairyInfo*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "NoImage") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((NoImage*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((NoImage*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((NoImage*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    
+    else if (obj->parentType == "Puzzle") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((Puzzle*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((Puzzle*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((Puzzle*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
 }
 

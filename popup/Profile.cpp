@@ -25,7 +25,7 @@ void Profile::onExit()
 
 void Profile::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -39,10 +39,39 @@ bool Profile::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Profile::Notification), "Profile", NULL);
+    
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
     InitSprites();
     
     return true;
 }
+
+void Profile::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        isTouched = false;
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
+}
+
 
 void Profile::InitSprites()
 {
@@ -62,7 +91,7 @@ void Profile::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                 ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "Profile", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png",
-                ccp(0, 0), ccp(810, 1039), CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "Profile", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
                 ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "Profile", this, 1) );
     
@@ -162,7 +191,10 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         else if (spriteClass->spriteObj[i]->name == "button/btn_question_mini.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
                 Common::ShowNextScene(this, "Profile", "DegreeInfo", false);
+            }
         }
     }
     
@@ -182,5 +214,19 @@ void Profile::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void Profile::EndScene()
 {
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Profile");
+
     this->removeFromParentAndCleanup(true);
+}
+
+void Profile::EndSceneCallback()
+{
 }

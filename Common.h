@@ -4,7 +4,7 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "CCPlatformConfig.h"
-#include "Ranking.h"
+//#include "Ranking.h"
 #include "Sound.h"
 
 USING_NS_CC;
@@ -16,16 +16,16 @@ USING_NS_CC;
 #define COLUMN_COUNT 7
 
 #define TYPE_COUNT 5
-#define PIECE_GREEN 0
-#define PIECE_RED 2
-#define PIECE_BLUE 3
+#define PIECE_RED 0
+#define PIECE_BLUE 1
+#define PIECE_GREEN 2
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PIECE8_WIDTH 108
-#define PIECE8_HEIGHT 108
-#define PIECE4_WIDTH 64/2
-#define PIECE4_HEIGHT 64/2
+#define PIECE8_WIDTH 154
+#define PIECE8_HEIGHT 154
+#define PIECE4_WIDTH 39  //64/2
+#define PIECE4_HEIGHT 39 //64/2
 
 #define QUEUE_CNT 5
 
@@ -34,6 +34,14 @@ USING_NS_CC;
 #define BUFFER_SIZE 1024
 
 #define NUMOFSKILL 32
+
+
+#define BTN_1 0
+#define BTN_2 1
+#define POPUP_STARCANDY_0 0
+#define POPUP_STARCANDY_1 1
+#define POPUP_STARCANDY_2 2
+#define POPUP_EXIT 3
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -91,17 +99,17 @@ public:
     static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
     
     static CCLayer* MakeImageNumberLayer(std::string number);
-    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced);
+    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1);
+    static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data);
 };
 
 
 class SpriteObject
 {
 public:
-    static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha = 255);
-    static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha = 255);
-    static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int alpha = 255);
-
+    static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
+    static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
+    static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
 
     int type;
     CCSprite* sprite;
@@ -113,6 +121,7 @@ public:
     std::string parentType; // -1 : 현재 scene, 0 : 이 안의 sprite, 1 : 이 안의 sprite9, 2 : 다른 곳의 layer
     void* parent;
     int zOrder;
+    int priority;
 };
 
 class SpriteClass

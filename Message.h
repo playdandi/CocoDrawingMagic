@@ -22,22 +22,30 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    void EndScene();
     
     CREATE_FUNC(Message);
     
     void InitSprites();
     void MakeScroll();
     
+    void EndScene();
+    void EndSceneCallback();
+    
+    void ReleaseAll();
+    
 protected:
     CCSize winSize;
     bool isTouched;
-    
-    CCScrollView* scrollView;
     bool isScrolling;
+    bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
+    std::vector<CCLayer*> layer;
+    
+    CCScrollView* scrollView;
+    CCLayer* scrollContainer;
     
     std::vector<std::string> msg_content;
     std::vector<int> msg_type;

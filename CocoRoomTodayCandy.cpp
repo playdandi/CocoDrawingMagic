@@ -11,21 +11,21 @@ CCScene* CocoRoomTodayCandy::scene()
 
 void CocoRoomTodayCandy::onEnter()
 {
-    CCLog("CocoRoomTodayCandy :: onEnter");
+    //CCLog("CocoRoomTodayCandy :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
 }
 void CocoRoomTodayCandy::onExit()
 {
-    CCLog("CocoRoomTodayCandy :: onExit");
+    //CCLog("CocoRoomTodayCandy :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
 }
 
 void CocoRoomTodayCandy::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -39,8 +39,16 @@ bool CocoRoomTodayCandy::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    
     InitSprites();
     MakeScroll();
+    
+    isTouched = false;
+    isScrollViewTouched = false;
+    isScrolling = false;
     
     return true;
 }
@@ -194,9 +202,12 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return false;
     isTouched = true;
     isScrolling = false;
+    isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
+    
+    if (scrollView->boundingBox().containsPoint(point))
+        isScrollViewTouched = true;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -233,29 +244,43 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         CCPoint p = temp->convertToNodeSpace(point);
         
         CCSize size = spriteClass->GetContentSizeByName(fname);
-        if (!isScrolling &&
+        if (isScrollViewTouched && !isScrolling &&
             (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
         {
-            CCLog("(%d) OOOOO : %d, %d", i, (int)p.x, (int)p.y);
-            //if (selected[i])
-                
-                
+            sound->playClick();
             selected[i] = 1 - selected[i];
         }
     }
 }
 
-void CocoRoomTodayCandy::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
-}
-
 void CocoRoomTodayCandy::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    CCLog("Sketchbook - scrolling~");
+    //CCLog("CocoRoomTodayCandy - scrolling~");
 }
 
 void CocoRoomTodayCandy::scrollViewDidZoom(CCScrollView* view)
 {
 }
+
+
+void CocoRoomTodayCandy::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    scrollView->removeAllChildren();
+    scrollView->removeFromParent();
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void CocoRoomTodayCandy::EndSceneCallback()
+{
+}
+

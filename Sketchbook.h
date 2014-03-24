@@ -12,7 +12,7 @@ class Sketchbook : public CCLayer,
                    public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int tab);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -22,7 +22,6 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    void EndScene();
     
     CREATE_FUNC(Sketchbook);
     
@@ -33,6 +32,9 @@ public:
     void MakeScrollLand();
     void MakeScrollMaster();
     void MakeScrollSlot();
+    
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;
@@ -50,6 +52,7 @@ protected:
     CCLayer* containerLand;
     CCLayer* containerMaster;
     CCLayer* containerSlot;
+    bool isScrollViewTouched;
     
 private:
     SpriteClass* spriteClass;

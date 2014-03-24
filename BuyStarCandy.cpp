@@ -1,7 +1,11 @@
 #include "BuyStarCandy.h"
 
-CCScene* BuyStarCandy::scene()
+static int parent_id;
+
+CCScene* BuyStarCandy::scene(int parent)
 {
+    parent_id = parent;
+    
     CCScene* pScene = CCScene::create();
     BuyStarCandy* pLayer = BuyStarCandy::create();
     pScene->addChild(pLayer);
@@ -23,7 +27,7 @@ void BuyStarCandy::onExit()
 
 void BuyStarCandy::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -34,14 +38,51 @@ bool BuyStarCandy::init()
 		return false;
 	}
     
-    CCLog("BuyStarCandy. init");
+    //CCLog("BuyStarCandy. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyStarCandy::Notification), "BuyStarCandy", NULL);
+    
+    // notification post
+    CCString* param = CCString::create("1");
+    if (parent_id == 0) // 부모가 'Ranking'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    else if (parent_id == 1) // 부모가 'GameReady'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     
     InitSprites();
     MakeScroll();
     
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    
+    isTouched = false;
+    
     return true;
 }
+
+void BuyStarCandy::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        isTouched = false;
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
+}
+
 
 void BuyStarCandy::InitSprites()
 {
@@ -153,23 +194,6 @@ void BuyStarCandy::MakeScroll()
     {
         spriteClass->AddChild(i);
     }
-    
-    /*
-     // scrollview 내용 전체크기
-     scrollContainer->setContentSize(CCSizeMake(862, numOfList*226));
-     // scrollView 생성
-     scrollView = CCScrollView::create();
-     scrollView->retain();
-     scrollView->setDirection(kCCScrollViewDirectionVertical);
-     scrollView->setViewSize(CCSizeMake(929, 904-40)); // (내용 1개 크기, 노란보드 세로크기)
-     scrollView->setContentSize(scrollContainer->getContentSize());
-     scrollView->setAnchorPoint(ccp(0, 0));
-     scrollView->setPosition(ccp(77, 492+20));
-     scrollView->setContainer(scrollContainer);
-     scrollView->setDelegate(this);
-     scrollView->setContentOffset(ccp(0, 904-40-(numOfList*226)), false);
-     this->addChild(scrollView, 3);
-     */
 }
 
 
@@ -178,10 +202,8 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (isTouched)
         return false;
     isTouched = true;
-    isScrolling = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -189,6 +211,25 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
                 EndScene();
+        }
+        else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
+        {
+            CCPoint p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
+
+            if ((int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                sound->playClick();
+                
+                std::vector<int> data;
+                std::string number = spriteClass->spriteObj[i]->name.substr(25);
+                if (number == "0") data.push_back(20);
+                else if (number == "1") data.push_back(65);
+                else if (number == "2") data.push_back(300);
+                else if (number == "3") data.push_back(500);
+                else if (number == "4") data.push_back(800);
+                Common::ShowPopup(this, "BuyStarCandy", "NoImage", false, POPUP_STARCANDY_0, BTN_2, data);
+            }
         }
     }
     
@@ -206,17 +247,35 @@ void BuyStarCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = false;
 }
 
-void BuyStarCandy::EndScene()
-{
-    this->removeFromParentAndCleanup(true);
-}
-
-
+/*
 void BuyStarCandy::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
 }
 
 void BuyStarCandy::scrollViewDidZoom(CCScrollView* view)
+{
+}
+*/
+
+void BuyStarCandy::EndScene()
+{
+    sound->playClick();
+    
+    CCString* param = CCString::create("0");
+    if (parent_id == 0) // 부모가 'Ranking'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    else if (parent_id == 1) // 부모가 'GameReady'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyStarCandy");
+    
+    this->removeFromParentAndCleanup(true);
+}
+
+void BuyStarCandy::EndSceneCallback()
 {
 }

@@ -14,11 +14,13 @@ public:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
-    void EndScene();
     
     CREATE_FUNC(DegreeInfo);
     
     void InitSprites();
+    
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSize winSize;

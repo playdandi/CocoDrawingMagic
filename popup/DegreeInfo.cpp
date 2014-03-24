@@ -25,7 +25,7 @@ void DegreeInfo::onExit()
 
 void DegreeInfo::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    EndScene();
 }
 
 
@@ -39,6 +39,10 @@ bool DegreeInfo::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Profile", param);
+    
     InitSprites();
     
     return true;
@@ -46,14 +50,6 @@ bool DegreeInfo::init()
 
 void DegreeInfo::InitSprites()
 {
-    /*
-    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
-    pBlack->setPosition(ccp(0, 0));
-    pBlack->setAnchorPoint(ccp(0, 0));
-    pBlack->setColor(ccc3(0, 0, 0));
-    pBlack->setOpacity(150);
-    this->addChild(pBlack, 0);
-   */
     spriteClass = new SpriteClass();
     
     // pop-up 배경
@@ -62,21 +58,21 @@ void DegreeInfo::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(
         1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "DegreeInfo", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(
-        0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(810, 1039), CCSize(0, 0), "", "DegreeInfo", this, 1) );
+        0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "DegreeInfo", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(
         0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "DegreeInfo", this, 1) );
     
     // 학사,석사,박사
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("학사 (Bachelor of Magician)", fontList[0], 40, ccp(0, 0), ccp(130, 1140), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 1주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 1090), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("학사 (Bachelor of Magician)", fontList[0], 40, ccp(0, 0), ccp(130, 1140), ccc3(78,47,8), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 1주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 1090), ccc3(117,86,47), "", "DegreeInfo", this, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("석사 (Master of Magician)", fontList[0], 40, ccp(0, 0), ccp(130, 990), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 4주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 940), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("석사 (Master of Magician)", fontList[0], 40, ccp(0, 0), ccp(130, 990), ccc3(78,47,8), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 4주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 940), ccc3(117,86,47), "", "DegreeInfo", this, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("박사 (Doctor of Magician)", fontList[0], 48, ccp(0, 0), ccp(130, 830), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 8주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 780), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("박사 (Doctor of Magician)", fontList[0], 48, ccp(0, 0), ccp(130, 830), ccc3(78,47,8), "", "DegreeInfo", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("조건 : 8주 랭킹 1위 (5명 이상 경쟁)", fontList[0], 36, ccp(0, 0), ccp(210, 780), ccc3(117,86,47), "", "DegreeInfo", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("궁극의 마법사", fontList[0],
-          36, ccp(0, 0), ccp(307, 740), ccc3(0, 0, 0), "", "DegreeInfo", this, 1) );
+          36, ccp(0, 0), ccp(307, 740), ccc3(117,86,47), "", "DegreeInfo", this, 1) );
     
     // dotted line
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png",
@@ -98,7 +94,6 @@ bool DegreeInfo::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -125,5 +120,16 @@ void DegreeInfo::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void DegreeInfo::EndScene()
 {
+    sound->playClick();
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Profile", param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
     this->removeFromParentAndCleanup(true);
+}
+
+void DegreeInfo::EndSceneCallback()
+{
 }

@@ -14,17 +14,24 @@ public:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
-    void EndScene();
     
     CREATE_FUNC(Setting);
     
     void InitSprites();
     
+    void EndScene();
+    void EndSceneCallback();
+    
 protected:
     CCSize winSize;
     bool isTouched;
     
-    bool btn[5];
+    // on-off 버튼을 선택할 시 필요한 변수들
+    CCSprite* selectedSprite;
+    int selectedBtn;
+    CCPoint selectedPos;
+    CCPoint selectedTouchPos;
+    CCPoint standardBtnPos;
     
 private:
     SpriteClass* spriteClass;

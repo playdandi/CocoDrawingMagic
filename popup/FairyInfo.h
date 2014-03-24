@@ -1,12 +1,12 @@
-#ifndef __CocoMagic__BuyPotion__
-#define __CocoMagic__BuyPotion__
+#ifndef __CocoMagic__FairyInfo__
+#define __CocoMagic__FairyInfo__
 
 #include "Common.h"
 
-class BuyPotion : public CCLayer
+class FairyInfo : public CCLayer
 {
 public:
-    static CCScene* scene(int parent);
+    static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -15,9 +15,7 @@ public:
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
-    void Notification(CCObject* obj);
-    
-    CREATE_FUNC(BuyPotion);
+    CREATE_FUNC(FairyInfo);
     
     void InitSprites();
     
@@ -26,10 +24,14 @@ public:
     
 protected:
     CCSize winSize;
+    
+    CCSprite* pBlack;
+    
     bool isTouched;
+    
     
 private:
     SpriteClass* spriteClass;
 };
 
-#endif /* defined(__CocoMagic__BuyPotion__) */
+#endif /* defined(__CocoMagic__FairyInfo__) */
