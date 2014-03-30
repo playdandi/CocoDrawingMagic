@@ -171,7 +171,7 @@ void PuzzleSkill::Invoke(int skillNum)
         case 4:
             F4A(); break;
         case 5:
-            A4B(); break;
+            A4B(skillNum); break;
         case 6:
             F5(); break;
         case 7:
@@ -188,7 +188,7 @@ void PuzzleSkill::Invoke(int skillNum)
         case 12:
             W4A(); break;
         case 13:
-            A4B(); break;
+            A4B(skillNum); break;
         case 14:
             W5(); break;
         case 15:
@@ -205,7 +205,7 @@ void PuzzleSkill::Invoke(int skillNum)
         case 20:
             E4A(); break;
         case 21:
-            A4B(); break;
+            A4B(skillNum); break;
         case 22:
             E5(); break;
         case 23:
@@ -215,30 +215,97 @@ void PuzzleSkill::Invoke(int skillNum)
 
 void PuzzleSkill::A1(int num)
 {
+    CCLog("A1 skill (%d) execute!", num);
     // 마법불꽃, 은은한달빛, 대지의숨결 - 각 색깔의 피스 제거 시, 추가점수
     A1_addedScore = 0;
     A1_addedScore = 300*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
     
     // 한붓그리기가 된 모든 피스의 각 중앙에 '+' 그림을 보여준다.
+    m_pGameLayer->PlayEffect(num);
+    
+    // 사이클이 발동된 상태면, 사이클 이펙트도 같이 보여준다.
+    if (m_pGameLayer->IsCycle())
+        m_pGameLayer->PlayEffect(-(num+1));
 }
 
 void PuzzleSkill::A2A(int num)
 {
-    // 불꽃송이, 물방울터뜨리기, 뾰족한바위 - 각 색깔의 피스를 사이클로 제거하면 일정 확률로 그 수만큼 주변이 연달아 더 터지기
+    // 불꽃송이, 물방울터뜨리기, 뾰족한바위 - 각 색깔의 피스를 사이클로 제거하면 스킬 레벨에 비례하여 정해진 방식대로 주변부 터뜨리기
     // (여기서는 주변부의 위치만 구한다)
+    // 불2 : 스킬레벨 수만큼 사이클의 주변부를 동시에 터뜨린다.
+    // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
+    // 땅2 :
     CCLog("A2A skill");
         
     A2A_pos.clear();
-        
-    bool xy[COLUMN_COUNT][ROW_COUNT];
-    for (int x = 0 ; x < COLUMN_COUNT ; x++)
-        for (int y = 0 ; y < ROW_COUNT ; y++)
-            xy[x][y] = false;
-
-    std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
-    for (int i = 0 ; i < pos.size() ; i++)
-        xy[(int)pos[i].x][(int)pos[i].y] = true;
     
+    // 주변부 위치 구하기
+    if (num == 1) // 불2
+    {
+        int xy[COLUMN_COUNT][ROW_COUNT];
+        for (int x = 0 ; x < COLUMN_COUNT ; x++)
+            for (int y = 0 ; y < ROW_COUNT ; y++)
+                xy[x][y] = 0;
+        
+        std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
+        for (int i = 0 ; i < pos.size() ; i++)
+            xy[(int)pos[i].x][(int)pos[i].y] = -1;
+        
+        int x, y;
+        
+        // 사이클에 붙어있는 피스 중 랜덤하게 선택
+        std::vector<CCPoint> selectPos;
+        for (x = 0 ; x < COLUMN_COUNT ; x++)
+        {
+            for (y = 0 ; y < ROW_COUNT ; y++)
+            {
+                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                    continue;
+                
+                if ((y+1 < ROW_COUNT && xy[x][y+1] == -1) ||
+                    (y-1 >= 0 && xy[x][y-1] == -1) ||
+                    (x-1 >= 0 && y+1 < ROW_COUNT && xy[x-1][y+1] == -1) ||
+                    (x-1 >= 0 && y-1 >= 0 && xy[x-1][y-1] == -1) ||
+                    (x-1 >= 0 && xy[x-1][y] == -1) ||
+                    (x+1 < COLUMN_COUNT && y+1 < ROW_COUNT && xy[x+1][y+1] == -1) ||
+                    (x+1 < COLUMN_COUNT && y-1 >= 0 && xy[x+1][y-1] == -1) ||
+                    (x+1 < COLUMN_COUNT && xy[x+1][y] == -1))
+                {
+                    selectPos.push_back(ccp(x, y));
+                }
+            }
+        }
+        
+        // 후보 위치 중에서 랜덤하게 고른다.
+        int size = std::min(skillLevel[num], (int)selectPos.size());
+        int cnt = 0, position;
+        while (cnt < size)
+        {
+            position = rand() % (int)selectPos.size();
+            x = (int)selectPos[position].x;
+            y = (int)selectPos[position].y;
+            if (xy[x][y] == 0)
+            {
+                xy[x][y] = 1;
+                cnt++;
+                A2A_pos.push_back(selectPos[position]);
+            }
+        }
+        selectPos.clear();
+    }
+    
+    else if (num == 9) // 물2
+    {
+        // 사이클 끝난 방향으로 파도타기 (길이가 모자라면 반대편에서 계속 진행)
+    }
+    
+    else // 땅2
+    {
+        //
+    }
+    
+    /*
     CCLog("pos size : %d", (int)pos.size());
     int x, y;
     int temp = rand()%4;
@@ -335,8 +402,10 @@ void PuzzleSkill::A2A(int num)
             }
         }
     }
+    */
     
-    //CCLog("a2a pos size : %d", (int)A2A_pos.size());
+    // 이펙트 실행 (태양/달/파도 그림)
+    m_pGameLayer->PlayEffect(num);
     
     // 폭파 실행
     m_pGameLayer->Bomb(A2A_pos);
@@ -521,10 +590,15 @@ void PuzzleSkill::A4AClear()
     A4A_pos.clear();
 }
 
-void PuzzleSkill::A4B()
+void PuzzleSkill::A4B(int num)
 {
     // 불꽃놀이, 얼음비, 땅의 신비 - 각자의 피스 제거 시 (6개 이상) 일정 확률로 그 위치를 한 번 더 터뜨리기
     CCLog("A4B()");
+    
+    // 이펙트 실행
+    m_pGameLayer->PlayEffect(num);
+    
+    // 폭파
     m_pGameLayer->Bomb(A4B_pos);
     
     // 틀의 색깔 원상복귀
@@ -605,10 +679,21 @@ void PuzzleSkill::A8()
             int curType = m_pGameLayer->GetGlobalType();
             
             // 현재 색깔 피스의 개수를 센다. 음영처리 후의 callback에 사용된다.
-            if (m_pGameLayer->GetP8Type(x, y) == curType)
+            //if (m_pGameLayer->GetP8Type(x, y) == curType)
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == curType)
                 A8_cnt++;
             
             // 자기 자신이나 4방향 옆이 현재 색깔이면 이 위치는 폭파될 위치이므로 추가하자.
+            PuzzleP8Set* puzzleP8set = m_pGameLayer->GetPuzzleP8Set();
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == curType ||
+                (x > 0 && !(x-1 == 0 && (y == 0 || y == ROW_COUNT-1)) && puzzleP8set->GetType(x-1, y) == curType) ||
+                (y > 0 && !((x == 0 || x == COLUMN_COUNT-1) && y-1 == 0) && puzzleP8set->GetType(x, y-1) == curType) ||
+                (x < COLUMN_COUNT-1 && !(x+1 == COLUMN_COUNT-1 && (y == 0 || y == ROW_COUNT-1)) && puzzleP8set->GetType(x+1, y) == curType) ||
+                (y < ROW_COUNT-1 && !((x == 0 || x == COLUMN_COUNT-1) && y+1 == ROW_COUNT-1) && puzzleP8set->GetType(x, y+1) == curType))
+            {
+                A8_pos.push_back(ccp(x, y));
+            }
+            /*
             if (m_pGameLayer->GetP8Type(x, y) == curType ||
                 (x > 0 && !(x-1 == 0 && (y == 0 || y == ROW_COUNT-1)) && m_pGameLayer->GetP8Type(x-1, y) == curType) ||
                 (y > 0 && !((x == 0 || x == COLUMN_COUNT-1) && y-1 == 0) && m_pGameLayer->GetP8Type(x, y-1) == curType) ||
@@ -617,6 +702,7 @@ void PuzzleSkill::A8()
             {
                 A8_pos.push_back(ccp(x, y));
             }
+             */
         }
     }
 
@@ -640,7 +726,8 @@ void PuzzleSkill::A8()
             }
             */
             // 음영 바꾸는 action
-            if (m_pGameLayer->GetP8Type(x, y) == m_pGameLayer->GetGlobalType())
+            //if (m_pGameLayer->GetP8Type(x, y) == m_pGameLayer->GetGlobalType())
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == m_pGameLayer->GetGlobalType())
             {
                 /*
                 CCFiniteTimeAction* action = CCSequence::create(
@@ -649,7 +736,7 @@ void PuzzleSkill::A8()
                     NULL);
                 m_pGameLayer->GetP8(x, y)->runAction(action);
                  */
-                m_pGameLayer->GetP8(x, y)->A8Darken();
+                //@m_pGameLayer->GetP8(x, y)->A8Darken();
             }
         }
     }

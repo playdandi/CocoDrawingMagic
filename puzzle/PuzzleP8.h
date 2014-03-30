@@ -3,8 +3,8 @@
 
 #include "Common.h"
 
-class Puzzle;
-
+//class Puzzle;
+/*
 class PuzzleP8 : public CCSprite
 {
 public:
@@ -29,6 +29,27 @@ private:
     int m_type;
 
 	Puzzle* m_pGameLayer;
+};
+*/
+
+class PuzzleP8
+{
+public:
+    static PuzzleP8* CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder);
+    void SetType(int type);
+    int GetType();
+    int GetZOrder();
+    CCSprite* GetPiece();
+    void SetPosition(CCPoint pos);
+    
+    void SetPiece(CCSprite* sprite);
+    void SetZOrder(int zOrder);
+
+private:
+    CCSprite* sprite;
+    int type;
+    void* parent;
+    int zOrder;
 };
 
 #endif

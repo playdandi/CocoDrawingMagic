@@ -1,78 +1,57 @@
 #include "PuzzleP8.h"
 #include "Puzzle.h"
 
-PuzzleP8::PuzzleP8()
-: m_pGameLayer(NULL)
+PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder)
 {
-
-}
-
-PuzzleP8::~PuzzleP8()
-{
-
-}
-
-
-PuzzleP8* PuzzleP8::Create(Puzzle* layer, int pieceType)
-{
-    //PuzzleP8* pPuzzleP8 = new PuzzleP8();
-    //pPuzzleP8->SetGameLayer(layer);
-    
-    int type;
-    if (pieceType == -1)
-        type = rand()%TYPE_COUNT;
-    else
-        type = pieceType;
-    
+    PuzzleP8* puzzleP8 = new PuzzleP8();
+  
+    puzzleP8->type = rand() % TYPE_COUNT;
     char name[15];
-    sprintf(name, "pieces/%d.png", type);
-    PuzzleP8* pPuzzleP8 = (PuzzleP8*)CCSprite::createWithSpriteFrameName(name);
-    pPuzzleP8->SetGameLayer(layer);
-	pPuzzleP8->SetType(type);
-
-	return pPuzzleP8;
-}
-
-int PuzzleP8::GetType()
-{
-	return m_type;
+    sprintf(name, "pieces/%d.png", puzzleP8->type);
+    
+    puzzleP8->sprite = CCSprite::createWithSpriteFrameName(name);
+    puzzleP8->sprite->setAnchorPoint(ap);
+    puzzleP8->sprite->setPosition(pos);
+    
+    //puzzleP8->sprite->setOpacity(215);
+    
+    puzzleP8->parent = parent;
+    puzzleP8->zOrder = zOrder;
+    
+    return puzzleP8;
 }
 
 void PuzzleP8::SetType(int type)
 {
-	m_type = type;
+    this->type = type;
 }
 
-void PuzzleP8::SetGameLayer(Puzzle* layer)
+int PuzzleP8::GetType()
 {
-	m_pGameLayer = layer;
+    return type;
 }
 
-
-void PuzzleP8::Falling(int targetX, int targetY, int queue_pos)
+int PuzzleP8:: GetZOrder()
 {
-    CCMoveTo* moveTo = CCMoveTo::create(0.1f, m_pGameLayer->SetPiece8Position(targetX, targetY));
-    CCFiniteTimeAction* action = CCSequence::create(moveTo,
-            CCCallFuncND::create(this, callfuncND_selector(PuzzleP8::FallingCompleted), (void*)queue_pos),
-            NULL);
-    this->runAction(action);
+    return zOrder;
 }
 
-void PuzzleP8::FallingCompleted(CCNode* sender, void* queue_pos)
+CCSprite* PuzzleP8::GetPiece()
 {
-	m_pGameLayer->FallingCallback((int)queue_pos);
+    return sprite;
 }
 
-void PuzzleP8::A8Darken()
+void PuzzleP8::SetPosition(CCPoint pos)
 {
-    CCFiniteTimeAction* action = CCSequence::create(
-                CCTintTo::create(0.4f, 50, 50, 50),
-                CCCallFunc::create(this, callfunc_selector(PuzzleP8::A8DarkenCompleted)),
-                NULL);
-    this->runAction(action);
+    sprite->setPosition(pos);
 }
 
-void PuzzleP8::A8DarkenCompleted(CCNode* sender)
+void PuzzleP8::SetPiece(CCSprite* sprite)
 {
-    //m_pGameLayer->GetSkill()->A8Callback();
+    this->sprite = sprite;
+}
+
+void PuzzleP8::SetZOrder(int zOrder)
+{
+    this->zOrder = zOrder;
 }

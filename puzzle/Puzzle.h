@@ -5,11 +5,13 @@
 #include "PuzzleP8.h"
 #include "PuzzleP4.h"
 #include "PuzzleSkill.h"
-//#include "Sound.h"
+#include "Effect.h"
+#include "SoundGame.h"
 
-class PuzzleP4;
-class PuzzleP8;
+class Effect;
 class PuzzleSkill;
+class PuzzleP8Set;
+class PuzzleP4Set;
 
 class Puzzle : public CCLayer
 {
@@ -31,7 +33,7 @@ public:
     void ComboTimer(float f);
     void SetTimer();
     void UpdateTimer(float f);
-    PuzzleP8* GetBoard(int x, int y);
+    //PuzzleP8* GetBoard(int x, int y);
     CCLayer* GetPieceLayer();
     
     CCPoint BoardStartPosition(CCPoint point);
@@ -49,29 +51,33 @@ public:
     void Bomb(std::vector<CCPoint> bomb_pos);
     void BombCallback(CCNode* sender, void *queue_pos);
     void Falling(int queue_pos);
-	void FallingCallback(int queue_pos);
+	void FallingCallback(CCNode* sender, void* queue_pos);
     
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
     int GetGlobalType();
-    int GetP8Type(int x, int y);
     PuzzleP8* GetP8(int x, int y);
     void SetSkillLock(bool flag);
     bool IsCycle();
     PuzzleSkill* GetSkill();
     
     void tCB(CCNode* sender, void* pos);
+    
+    
+    PuzzleP8Set* GetPuzzleP8Set();
+    
+    void PlayEffect(int skillNum);
 
-    static CCScene* scene();//std::vector<int> number, std::vector<int> prob, std::vector<int>level);
+    static CCScene* scene();
 	CREATE_FUNC(Puzzle);
+    
+    void EndScene();
+    void EndSceneCallback();
     
 protected:
     CCSprite* background;
     CCSprite* puzzleFrame;
     
-    CCLayer* pieceLayer;
-    
-	PuzzleP8* m_pBoard[COLUMN_COUNT][ROW_COUNT];
-    PuzzleP4* m_pBoardSP[COLUMN_COUNT][ROW_COUNT];
+    //CCLayer* pieceLayer;
     
     bool m_bTouchStarted;
     bool m_bIsCycle;
@@ -95,11 +101,8 @@ protected:
     int touch_cnt;
     
     CCSize m_winSize;
-
-    //int m_iBombCallbackCnt;
-    int m_iFallingCallbackCnt;
-	int m_numOfFallingObjects;
-	//Sound* sound;
+    
+	SoundGame* sound;
     PuzzleSkill* skill;
     
     int m_iState;
@@ -121,6 +124,49 @@ private:
     CCLabelTTF* pTimerLabel;
     
     SpriteClass* spriteClass;
+    
+    PuzzleP8Set* puzzleP8set;
+    CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
+    PuzzleP4Set* puzzleP4set;
+    Effect* effect;
+    
+    int m_iFallingCallbackCnt;
+	int m_numOfFallingObjects;
+};
+
+class PuzzleP8Set
+{
+public:
+    void SetGameLayer(Puzzle* layer);
+    void CreatePiece(int x, int y);
+    CCSprite* GetSprite(int x, int y);
+    int GetType(int x, int y);
+    void AddChild(int x, int y);
+    void RemoveChild(int x, int y);
+    PuzzleP8* GetObject(int x, int y);
+    void MoveObject(int x, int y, int fromX, int fromY);
+    void Falling(int x, int y, int targetX, int targetY, int queue_pos);
+    void FallingCompleted(CCNode* sender, void* queue_pos);
+    
+private:
+    PuzzleP8* object[COLUMN_COUNT][ROW_COUNT];
+    Puzzle* gameLayer;
+};
+
+class PuzzleP4Set
+{
+public:
+    void SetGameLayer(Puzzle* layer);
+    void CreatePiece(int x, int y, int type = -1);
+    int GetType(int x, int y);
+    void SetOpacity(int x, int y, int alpha);
+    void AddChild(int x, int y);
+    void RemoveChild(int x, int y);
+    PuzzleP4* GetObject(int x, int y);
+    
+private:
+    PuzzleP4* object[COLUMN_COUNT][ROW_COUNT];
+    Puzzle* gameLayer;
 };
 
 #endif

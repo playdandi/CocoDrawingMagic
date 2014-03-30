@@ -23,6 +23,7 @@
 #include "popup/NoImage.h"
 #include "puzzle/Puzzle.h"
 #include "ParticleTest.h"
+#include "Splash.h"
 
 using namespace pugi;
 
@@ -402,7 +403,8 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
 void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc)
 {
     CCScene* nextScene;
-    if (to == "GameReady") nextScene = GameReady::scene();
+    if (to == "Ranking") nextScene = Ranking::scene();
+    else if (to == "GameReady") nextScene = GameReady::scene();
     else if (to == "Message") nextScene = Message::scene();
     else if (to == "MagicList") nextScene = MagicList::scene();
     else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc);
@@ -421,20 +423,28 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Profile") nextScene = Profile::scene();
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyInfo") nextScene = FairyInfo::scene();
-    //else if (to == "NoImage") nextScene = NoImage::scene();
+    
     else if (to == "Puzzle") nextScene = Puzzle::scene();
     
-    else if (to == "ParticleTest") nextScene = ParticleTest::scene();
+    //else if (to == "ParticleTest") nextScene = ParticleTest::scene();
     
     
     // go
+    if (from == "Splash")
+    {
+        if (isReplaced)
+        {
+            CCScene* transition = CCTransitionFade::create(1.0f, nextScene);
+            CCDirector::sharedDirector()->replaceScene(transition);
+            ((Splash*)obj)->EndScene();
+        }
+    }
     if (from == "Ranking") ((Ranking*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
-    else if (from == "GameReady") {
-        if (isReplaced) {
-            CCLog("replace start");
-            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
-            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+    else if (from == "GameReady")
+    {
+        if (isReplaced)
+        {
             CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
             CCDirector::sharedDirector()->replaceScene(transition);
             ((GameReady*)obj)->EndScene();
@@ -447,6 +457,18 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
+    
+    else if (from == "Puzzle")
+    {
+        if (isReplaced)
+        {
+            CCLog("back to RANKING");
+            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
+            CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
+            CCDirector::sharedDirector()->replaceScene(transition);
+            ((Puzzle*)obj)->EndScene();
+        }
+    }
 }
 
 void Common::ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data)

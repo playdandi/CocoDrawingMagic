@@ -16,6 +16,11 @@ using namespace CocosDenshion;
     }
 }*/
 
+void Sound::PreLoadSoundWarning()
+{
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning.mp3");
+}
+
 void Sound::PreLoadSound()
 {
     SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/bgm.mp3");
@@ -39,13 +44,7 @@ void Sound::SetEffectVolume()
 }
 void Sound::SetBackgroundMusicVolume()
 {
-    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.4);
-    /*
-    if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1"))
-        SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.4);
-    else
-        SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0);
-     */
+    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.7);
 }
 
 void Sound::PlayBackgroundSound()

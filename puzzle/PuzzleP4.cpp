@@ -1,252 +1,124 @@
 #include "PuzzleP4.h"
 #include "Puzzle.h"
 
-PuzzleP4::PuzzleP4()
-: m_pGameLayer(NULL)
+PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type)
 {
+    PuzzleP4* puzzleP4 = new PuzzleP4();
+    
+    if (type != -1)
+        puzzleP4->type = type;
+    else
+        puzzleP4->type = (rand()%100 < 0) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+
+    puzzleP4->parent = parent;
+    puzzleP4->zOrder = zOrder;
+    
+    return puzzleP4;
 }
 
-PuzzleP4::~PuzzleP4()
+void PuzzleP4::InitChild()
 {
+    leftup = NULL;
+    rightup = NULL;
+    leftdown = NULL;
+    rightdown = NULL;
 }
 
-
-PuzzleP4* PuzzleP4::Create(Puzzle* layer, int x, int y)
+void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint ap, CCPoint pos)
 {
-    PuzzleP4* pPuzzleP4 = new PuzzleP4();
-    pPuzzleP4->SetGameLayer(layer);
-    
-    int r = rand()%100;
-    int type = (r < 50) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
-
-    pPuzzleP4->SetType(type);
-    
-    pPuzzleP4->CreateSprites(layer, x, y);
-    
-	return pPuzzleP4;
-}
-
-void PuzzleP4::InitSprites()
-{
-    /*
-    if (m_basic == NULL)
+    if (type != BLOCKED)
     {
-        m_basic = new CCSprite();
-        m_basic->initWithTexture(,
-                             CCRectMake(, , , ));
-        m_basic->autorelease();
-    }
-     */
-    
-    m_leftup = NULL;
-    m_rightup = NULL;
-    m_leftdown = NULL;
-    m_rightdown = NULL;
-    //m_special = NULL;
-}
-
-void PuzzleP4::CreateSprites(Puzzle* layer, int x, int y)
-{
-    InitSprites();
-    
-    if (m_type != BLOCKED)
-    {
-        // 4각형의 4방향에 있는 8각형들의 type을 구해서 삼각형을 어떻게 만들지 결정한다.
-        int lu = (x == 1 && y == ROW_COUNT-1) ? -1 : layer->GetBoard(x-1, y)->GetType();
-        int rd = (x == COLUMN_COUNT-1 && y == 1) ? -2 : layer->GetBoard(x, y-1)->GetType();
-        int ru = (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) ? -3 : layer->GetBoard(x, y)->GetType();
-        int ld = (x == 1 && y == 1) ? -4 : layer->GetBoard(x-1, y-1)->GetType();
+        InitChild();
         
+        char name[20];
+
         if (lu == rd)
         {
-            CCLog(" type : %d", lu);
-            char name[20];
             sprintf(name, "pieces/%d_link.png", lu);
-            m_leftup = CCSprite::createWithSpriteFrameName(name);
-            m_rightdown = CCSprite::createWithSpriteFrameName(name);
-
-            /*m_leftup->initWithTexture(pPuzzlePiece4,
-                                      CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-            m_rightdown->initWithTexture(pPuzzlePiece4,
-                                      CCRectMake(rd*PIECE4_WIDTH+3*rd+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-            m_leftup->autorelease();
-            m_rightdown->autorelease();*/
+            leftup = CCSprite::createWithSpriteFrameName(name);
+            rightdown = CCSprite::createWithSpriteFrameName(name);
             
             if (ru != ld)
             {
-                //m_rightup = new CCSprite();
-                //m_leftdown = new CCSprite();
-                m_rightup = CCSprite::createWithSpriteFrameName(name);
-                m_leftdown = CCSprite::createWithSpriteFrameName(name);
-                /*
-                m_rightup->initWithTexture(pPuzzlePiece4,
-                                    CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-                m_leftdown->initWithTexture(pPuzzlePiece4,
-                                    CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-                m_rightup->autorelease();
-                m_leftdown->autorelease();
-                 */
+                rightup = CCSprite::createWithSpriteFrameName(name);
+                leftdown = CCSprite::createWithSpriteFrameName(name);
+                //m_rightup->initWithTexture(pPuzzlePiece4,
+                //CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
+                //m_leftdown->initWithTexture(pPuzzlePiece4,
+                //CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
             }
         }
         if (ru == ld)
         {
-            char name[20];
             sprintf(name, "pieces/%d_link.png", ru);
-            m_rightup = CCSprite::createWithSpriteFrameName(name);
-            m_leftdown = CCSprite::createWithSpriteFrameName(name);
-            /*
-            m_rightup = new CCSprite();
-            m_leftdown = new CCSprite();
-            m_rightup->initWithTexture(pPuzzlePiece4,
-                                CCRectMake(ru*PIECE4_WIDTH+3*ru+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-            m_leftdown->initWithTexture(pPuzzlePiece4,
-                                CCRectMake(ld*PIECE4_WIDTH+3*ld+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-            m_rightup->autorelease();
-            m_leftdown->autorelease();
-             */
-            
+            rightup = CCSprite::createWithSpriteFrameName(name);
+            leftdown = CCSprite::createWithSpriteFrameName(name);
             if (lu != rd)
             {
-                m_leftup = CCSprite::createWithSpriteFrameName(name);
-                m_rightdown = CCSprite::createWithSpriteFrameName(name);
-                /*
-                m_leftup->initWithTexture(pPuzzlePiece4,
-                                    CCRectMake(ru*PIECE4_WIDTH+3*ru+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-                m_rightdown->initWithTexture(pPuzzlePiece4,
-                                    CCRectMake(ru*PIECE4_WIDTH+3*ru+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-                m_leftup->autorelease();
-                m_rightdown->autorelease();
-                */
+                leftup = CCSprite::createWithSpriteFrameName(name);
+                rightdown = CCSprite::createWithSpriteFrameName(name);
             }
         }
+        
+        // set anchorpoint and position
+        if (leftup != NULL)
+        {
+            leftup->setAnchorPoint(ap);
+            leftup->setPosition(pos);
+        }
+        if (rightup != NULL)
+        {
+            rightup->setAnchorPoint(ap);
+            rightup->setRotation(90);
+            rightup->setPosition(ccp((int)pos.x-1, (int)pos.y));
+            //rightup->setPosition(pos);
+        }
+        if (leftdown != NULL)
+        {
+            leftdown->setAnchorPoint(ap);
+            leftdown->setRotation(-90);
+            leftdown->setPosition(ccp((int)pos.x, (int)pos.y+1));
+            //leftdown->setPosition(pos);
+        }
+        if (rightdown != NULL)
+        {
+            rightdown->setAnchorPoint(ap);
+            rightdown->setRotation(180);
+            rightdown->setPosition(ccp((int)pos.x-1, (int)pos.y+1));
+            //rightdown->setPosition(pos);
+        }
     }
-    
-    // special은 나중에...
 }
 
-void PuzzleP4::SetScales(float scale)
+CCSprite* PuzzleP4::GetLeftUp()
 {
-    if (m_leftup != NULL)
-        m_leftup->setScale(scale);
-    if (m_rightup != NULL)
-        m_rightup->setScale(scale);
-    if (m_leftdown != NULL)
-        m_leftdown->setScale(scale);
-    if (m_rightdown != NULL)
-        m_rightdown->setScale(scale);
+    return leftup;
 }
-
-void PuzzleP4::SetOpacities(int alpha)
+CCSprite* PuzzleP4::GetRightUp()
 {
-    if (m_leftup != NULL)
-        m_leftup->setOpacity(alpha);
-    if (m_rightup != NULL)
-        m_rightup->setOpacity(alpha);
-    if (m_leftdown != NULL)
-        m_leftdown->setOpacity(alpha);
-    if (m_rightdown != NULL)
-        m_rightdown->setOpacity(alpha);
+    return rightup;
 }
-
-void PuzzleP4::SetPositions(CCPoint pos)
+CCSprite* PuzzleP4::GetLeftDown()
 {
-    //m_basic->setPosition(pos);
-
-    if (m_leftup != NULL)
-    {
-        m_leftup->setAnchorPoint(ccp(1, 0));
-        m_leftup->setPosition(pos);
-    }
-    if (m_rightup != NULL)
-    {
-        m_rightup->setAnchorPoint(ccp(1, 0));
-        m_rightup->setRotation(90);
-        m_rightup->setPosition(pos);
-    }
-    if (m_leftdown != NULL)
-    {
-        m_leftdown->setAnchorPoint(ccp(1, 0));
-        m_leftdown->setRotation(-90);
-        m_leftdown->setPosition(pos);
-    }
-    if (m_rightdown != NULL)
-    {
-        m_rightdown->setAnchorPoint(ccp(1, 0));
-        m_rightdown->setRotation(180);
-        m_rightdown->setPosition(pos);
-    }
-    
-    // special은 나중에...
-    //CCLog("set position");
+    return leftdown;
 }
-
-void PuzzleP4::AddChildren(int zOrder)
+CCSprite* PuzzleP4::GetRightDown()
 {
-    //CCLog("add children");
-    //GetGameLayer()->GetPieceLayer()->addChild(m_basic, 0);
-    /*
-    if (m_leftup != NULL)
-        GetGameLayer()->GetPieceLayer()->addChild(m_leftup, zOrder);
-    if (m_rightup != NULL)
-        GetGameLayer()->GetPieceLayer()->addChild(m_rightup, zOrder);
-    if (m_leftdown != NULL)
-        GetGameLayer()->GetPieceLayer()->addChild(m_leftdown, zOrder);
-    if (m_rightdown != NULL)
-        GetGameLayer()->GetPieceLayer()->addChild(m_rightdown, zOrder);
-    */
-    if (m_leftup != NULL)    GetGameLayer()->addChild(m_leftup, zOrder);
-    if (m_rightup != NULL)   GetGameLayer()->addChild(m_rightup, zOrder);
-    if (m_leftdown != NULL)  GetGameLayer()->addChild(m_leftdown, zOrder);
-    if (m_rightdown != NULL) GetGameLayer()->addChild(m_rightdown, zOrder);
-    // special은 나중에...
-    //CCLog("add children done");
-}
-
-void PuzzleP4::RemoveChildren()
-{
-    //GetGameLayer()->GetPieceLayer()->removeChild(m_basic, true);
-    if (m_leftup != NULL)
-        GetGameLayer()->GetPieceLayer()->removeChild(m_leftup, true);
-    if (m_rightup != NULL)
-        GetGameLayer()->GetPieceLayer()->removeChild(m_rightup, true);
-    if (m_leftdown != NULL)
-        GetGameLayer()->GetPieceLayer()->removeChild(m_leftdown, true);
-    if (m_rightdown != NULL)
-        GetGameLayer()->GetPieceLayer()->removeChild(m_rightdown, true);
-    
-    InitSprites();
-    // special은 나중에...
-}
-
-
-int PuzzleP4::GetType()
-{
-	return m_type;
+    return rightdown;
 }
 
 void PuzzleP4::SetType(int type)
 {
-	m_type = type;
+    this->type = type;
 }
 
-/*
-int PuzzleP4::GetTypeSP()
+int PuzzleP4::GetType()
 {
-    return m_type_sp;
+    return type;
 }
 
-void PuzzleP4::SetTypeSP(int type_sp)
+int PuzzleP4::GetZOrder()
 {
-    m_type_sp = type_sp;
-}
-*/
-
-void PuzzleP4::SetGameLayer(Puzzle* layer)
-{
-    m_pGameLayer = layer;
+    return zOrder;
 }
 
-Puzzle* PuzzleP4::GetGameLayer()
-{
-    return m_pGameLayer;
-}

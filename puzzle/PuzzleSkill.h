@@ -40,7 +40,7 @@ public:
     std::vector<CCPoint> A4AGetPos();
     void A4AClear();
     
-    void A4B();
+    void A4B(int num);
     std::vector<CCPoint> A4BGetPos();
     void A4BClear();
     

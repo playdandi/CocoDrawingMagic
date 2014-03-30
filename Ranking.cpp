@@ -132,7 +132,7 @@ void Ranking::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        //CCLog("noti 0 - ranking 터치 활성");
+        CCLog("noti 0 - ranking 터치 활성");
         //CCDirector::sharedDirector()->resume();
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
@@ -143,7 +143,7 @@ void Ranking::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        //CCLog("noti 1 - 터치 비활성");
+        CCLog("noti 1 - 터치 비활성");
         //CCDirector::sharedDirector()->pause();
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         this->setKeypadEnabled(false);
@@ -153,15 +153,14 @@ void Ranking::Notification(CCObject* obj)
 
 void Ranking::InitSprites()
 {
+    // background image
     CCTexture2D::setDefaultAlphaPixelFormat(kTexture2DPixelFormat_RGBA4444);
     // load images
-    CCTexture2D* tBackground = CCTextureCache::sharedTextureCache()->addImage("images/bg.png");
+    CCTexture2D* tBackground = CCTextureCache::sharedTextureCache()->addImage("images/main_background.png");
     CCSprite* temp = new CCSprite();
-    temp->initWithTexture(tBackground, CCRectMake(0, 0, 500, 889));
+    temp->initWithTexture(tBackground, CCRectMake(0, 0, 1080, 1920));
     temp->setAnchorPoint(ccp(0, 0));
     temp->setPosition(ccp(0, 0));
-    temp->setScaleX((float)1080/500);
-    temp->setScaleY((float)1920/889);
     this->addChild(temp, 0);
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "Ranking", this, 0) );
@@ -235,14 +234,14 @@ void Ranking::MakeScroll()
     usernames.push_back("박일진");
     usernames.push_back("동해물과");
     usernames.push_back("정연준");
-    usernames.push_back("Yhlas Beganov");
-    usernames.push_back("Sera");
+    usernames.push_back("백두산이");
+    usernames.push_back("마르고");
     usernames.push_back("AHRORO");
     usernames.push_back("TREVI");
     usernames.push_back("칸쵸");
     usernames.push_back("로드리게스");
-    usernames.push_back("yo so sexy");
-    usernames.push_back("큭");
+    usernames.push_back("만세");
+    usernames.push_back("만만세");
     userPotionStates.push_back(POTION_SEND);
     userPotionStates.push_back(POTION_SEND);
     userPotionStates.push_back(POTION_NOTHING);

@@ -1,4 +1,5 @@
 #include "AppDelegate.h"
+#include "Splash.h"
 #include "Ranking.h"
 
 USING_NS_CC;

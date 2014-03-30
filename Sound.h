@@ -9,7 +9,9 @@ using namespace cocos2d;
 class Sound
 {
 public:
+    void PreLoadSoundWarning();
     void PreLoadSound();
+    
     void SetEffectVolume();
     void SetBackgroundMusicVolume();
     
@@ -26,7 +28,6 @@ public:
 private:
     std::string ext;
     int cnt;
-    
 };
 
 #endif /* defined(__CocoMagic__Sound__) */

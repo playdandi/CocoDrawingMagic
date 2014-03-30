@@ -164,11 +164,11 @@ void GameReady::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(84+193*i, 972), CCSize(0, 0), "", "GameReady", this, 5) );
 
         sprintf(name2, "background/bg_skill_select.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 0) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1, 0) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
         sprintf(name3, "icon/icon_check.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 0) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 1, 0) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
     }
     
@@ -290,6 +290,10 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
+                CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
+                CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+                sound->StopBackgroundSound();
+                
                 Common::ShowNextScene(this, "GameReady", "Puzzle", true);
                 //Common::ShowNextScene(this, "GameReady", "ParticleTest", false);
             }
