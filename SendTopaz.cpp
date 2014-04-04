@@ -78,16 +78,7 @@ void SendTopaz::InitSprites()
 }
 
 void SendTopaz::MakeScroll()
-{
-    name.push_back("AHRORO");
-    name.push_back("막나가는딸내미");
-    name.push_back("나눔고딕48픽셀");
-    name.push_back("막나가는아들내미");
-    name.push_back("박순퇘퇘퇫");
-    name.push_back("문제야");
-    name.push_back("커먼센스");
-    name.push_back("우히히히힛");
-    
+{    
     int spriteClassSize = spriteClass->spriteObj.size();
     
     // make scroll
@@ -96,23 +87,27 @@ void SendTopaz::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904+243));
     //scrollContainer->setPosition(ccp(77, 492));
     
-    int numOfList = 8;
+    int numOfList = friendList.size();
     char fname[50], fname2[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
+        // 본인은 리스트 제외
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            continue;
+        
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(itemLayer, 2);
         
         // profile bg
-        sprintf(fname, "background/bg_profile.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
-                        ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        //sprintf(fname, "background/bg_profile.png%d", i);
+        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
+         //               ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         
         // name (text)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name[i], fontList[0], 48,
-                        ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
         // button
         sprintf(fname, "button/btn_yellow_mini.png%d", i);

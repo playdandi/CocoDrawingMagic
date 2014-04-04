@@ -2,6 +2,7 @@
 #define __poops8__Splash__
 
 #include "Common.h"
+//#include "Data.h"
 #include "Sound.h"
 #include "cocos-ext.h"
 
@@ -32,8 +33,11 @@ public:
 //    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
+    void onHttpRequestCompletedData(CCNode *sender, void *data);
+    void XmlParseLogin(char* data, int size);
+    bool XMLParseData(char* data, int size);
+    void onHttpRequestCompletedProfile(CCNode *sender, void *data);
     
-    bool XmlParseLogin(char* data, int size);
     void EndScene();
     
 protected:
@@ -45,13 +49,18 @@ protected:
     //CCLabelTTF* m_pLoadLabel;
     
 private:
-    bool isKeyBackClicked;
     int mKakaoId;
     int mDeviceType;
-    CCSprite* m_pLogo;
+    
+    bool isKeyBackClicked;
+    CCSprite* m_pBackground;
+    CCSprite* m_pTitle;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
+    
+    int profileCntTotal;
+    int profileCnt;
 };
 
 

@@ -24,6 +24,11 @@ public:
     
     void InitSprites();
 	void InitBoard();
+    void InitCoco();
+    void CocoAnim(float f);
+    void InitFairy();
+    void ChangeAnimCoco(float f);
+    void ChangeAnimFairy(float f);
     
     void SetScore();
     void UpdateScore(int numOfPiece);
@@ -39,6 +44,9 @@ public:
     CCPoint BoardStartPosition(CCPoint point);
     CCPoint BoardMovePosition(CCPoint point);
     CCPoint SetCorrectPosition(CCPoint point);
+    
+    void StartMagicTime(float f);
+    
 	virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent);
@@ -64,6 +72,8 @@ public:
     
     
     PuzzleP8Set* GetPuzzleP8Set();
+    void SetSpriteP8Null(int x, int y);
+    CCSprite* GetSpriteP8(int x, int y);
     
     void PlayEffect(int skillNum);
 
@@ -93,6 +103,7 @@ protected:
     bool m_bSkillLock;
     std::vector< std::vector<CCPoint> > piece8xy;
     std::vector< std::vector<CCPoint> > piece4xy;
+    std::vector< std::vector<CCSprite*> > strap;
     int m_iBombCallbackCnt[QUEUE_CNT];
     int m_iBombCallbackCntMax;
     int m_iBombCallbackType[QUEUE_CNT];
@@ -125,10 +136,25 @@ private:
     
     SpriteClass* spriteClass;
     
+    CCLayer* fairyLayer;
+    CCSprite* fairyShadow;
+    CCLayer* cocoLayer;
+    int cocoFrameNumber;
+    std::vector<CCSprite*> coco_sp;
+    
     PuzzleP8Set* puzzleP8set;
     CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
     PuzzleP4Set* puzzleP4set;
     Effect* effect;
+
+    CCSprite* magicTimeBg;
+    int m_iStartMagicTimeStatus;
+    bool isMagicTime;
+    
+    CCSprite* fever;
+    bool isFeverTime;
+    int feverRemainTime;
+    std::vector<CCSprite*> feverSpr;
     
     int m_iFallingCallbackCnt;
 	int m_numOfFallingObjects;
@@ -159,6 +185,7 @@ public:
     void SetGameLayer(Puzzle* layer);
     void CreatePiece(int x, int y, int type = -1);
     int GetType(int x, int y);
+    void SetType(int x, int y, int type);
     void SetOpacity(int x, int y, int alpha);
     void AddChild(int x, int y);
     void RemoveChild(int x, int y);

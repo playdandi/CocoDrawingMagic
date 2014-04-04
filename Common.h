@@ -4,8 +4,8 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "CCPlatformConfig.h"
-//#include "Ranking.h"
 #include "Sound.h"
+#include "Data.h"
 
 USING_NS_CC;
 
@@ -24,6 +24,8 @@ USING_NS_CC;
 
 #define PIECE8_WIDTH  152//150
 #define PIECE8_HEIGHT 152//150
+#define PIECE8_FRAME_WIDTH 154
+#define PIECE8_FRAME_HEIGHT 154
 #define PIECE4_WIDTH 39  //64/2
 #define PIECE4_HEIGHT 39 //64/2
 
@@ -31,7 +33,8 @@ USING_NS_CC;
 
 #define LARGEST_MASS_LOWER_BOUND 7
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024*10
+#define IMAGE_BUFFER_SIZE 120*120*8
 
 #define NUMOFSKILL 32
 
@@ -47,26 +50,6 @@ using namespace cocos2d;
 using namespace cocos2d::extension;
 
 
-struct friendScore
-{
-	char name[16];
-	int score;
-};
-
-extern int iCash;
-extern int iGold;
-extern int iRemainingHeartTime;
-extern int iRemainingHeartNum;
-extern int iRemainingObjectTime;
-extern int iAge;
-extern int iType;
-extern int iWeight;
-extern int iMaxScore;
-extern std::string sUsername;
-extern std::vector<int> vEnabledMaterial;
-extern std::vector<int> vStoredMaterial;
-extern std::vector<struct friendScore> vScoreList;
-
 extern std::string fontList[];
 
 class Sound;
@@ -79,25 +62,9 @@ extern Sound* sound;
 class Common
 {
 public:
-/*
-	static float ComputeX(float x);
-	static float ComputeY(float y);
-	static CCPoint ComputeXY(float x, float y);
-	static int ComputeBoardX(float x);
-	static int ComputeBoardY(float y);
-*/
-    //static CCPoint GetPosition(CCDictionary* dic);
-    //static CCPoint GetAnchorPoint(CCDictionary* dic);
-    
-    static bool XmlParseMoneyRaisePuzzle(char* data, int size, bool hasMoney);
-
-	static bool XmlParsePuzzleStart(std::vector<char>* buffer);
-	static bool XmlParseRanking(std::vector<char>* buffer);
-
-    static bool XmlParsePuzzleEnd(char* data, int size);
-    
     static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
     
+    static std::string InsertComma(std::string number);
     static CCLayer* MakeImageNumberLayer(std::string number);
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data);
@@ -108,6 +75,7 @@ class SpriteObject
 {
 public:
     static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
+    static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
     static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
     static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
 

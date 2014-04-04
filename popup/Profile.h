@@ -6,7 +6,7 @@
 class Profile : public CCLayer
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int idx);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -20,6 +20,8 @@ public:
     CREATE_FUNC(Profile);
     
     void InitSprites();
+    void InitFairy();
+    void InitSkill();
     
     void EndScene();
     void EndSceneCallback();

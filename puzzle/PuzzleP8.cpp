@@ -6,6 +6,7 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder)
     PuzzleP8* puzzleP8 = new PuzzleP8();
   
     puzzleP8->type = rand() % TYPE_COUNT;
+    
     char name[15];
     sprintf(name, "pieces/%d.png", puzzleP8->type);
     
@@ -39,6 +40,11 @@ int PuzzleP8:: GetZOrder()
 CCSprite* PuzzleP8::GetPiece()
 {
     return sprite;
+}
+
+void PuzzleP8::RemovePiece()
+{
+    sprite = NULL;
 }
 
 void PuzzleP8::SetPosition(CCPoint pos)

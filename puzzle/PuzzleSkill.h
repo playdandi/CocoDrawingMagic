@@ -50,7 +50,7 @@ public:
     bool W5GetVar();
     void E5();
     
-    void A8();
+    void A8(int num);
     void A8Callback();
     std::vector<CCPoint> A8GetPos();
     void A8Clear();

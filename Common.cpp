@@ -26,7 +26,7 @@
 #include "Splash.h"
 
 using namespace pugi;
-
+/*
 int iCash;
 int iGold;
 int iRemainingHeartTime;
@@ -40,7 +40,7 @@ std::string sUsername;
 std::vector<int> vEnabledMaterial;
 std::vector<int> vStoredMaterial;
 std::vector<struct friendScore> vScoreList;
-
+*/
 Sound* sound;
 
 std::string fontList[] = {
@@ -98,7 +98,7 @@ CCPoint Common::GetPosition(CCDictionary* dic)
 }
 */
 
-
+/*
 bool Common::XmlParsePuzzleEnd(char* data, int size)
 {
     // xml parsing
@@ -276,7 +276,7 @@ bool Common::XmlParseMoneyRaisePuzzle(char* data, int size, bool hasMoney)
     
     return false;
 }
-
+*/
 
 
 
@@ -343,26 +343,49 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
     return rt;
 }
 
+std::string Common::InsertComma(std::string number)
+{
+    std::string result = "";
+    for (int i = number.size()-1 ; i >= 0 ; i--)
+    {
+        result = number[i] + result;
+        if ((number.size() - i) % 3 == 0)
+            result = "," + result;
+    }
+    return result;
+}
 CCLayer* Common::MakeImageNumberLayer(std::string number)
 {
+    std::string commaNumber = Common::InsertComma(number);
+    
     int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
     
     char name[30];
     CCLayer* layer = CCLayer::create();
     
+    if (number == "-1") // no score
+    {
+        CCSprite* noscore = CCSprite::createWithSpriteFrameName("letter/letter_noscore.png");
+        noscore->setAnchorPoint(ccp(0, 0));
+        noscore->setPosition(ccp(0, 0));
+        noscore->setScale(0.95f);
+        layer->addChild(noscore, 100);
+        return layer;
+    }
+    
     int totalWidth = 0;
     
     std::vector<CCSprite*> sprites;
-    for (int i = 0 ; i < number.size() ; i++)
+    for (int i = 0 ; i < commaNumber.size() ; i++)
     {
         CCSprite* temp;
-        if (number[i] == ',')
+        if (commaNumber[i] == ',')
         {
             temp = CCSprite::createWithSpriteFrameName("number/rank_comma.png");
         }
         else
         {
-            sprintf(name, "number/rank_%c.png", number[i]);
+            sprintf(name, "number/rank_%c.png", commaNumber[i]);
             temp = CCSprite::createWithSpriteFrameName(name);
         }
         
@@ -375,16 +398,16 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
         else
         {
             CCSize size = sprites[sprites.size()-1]->getContentSize();
-            if (number[i] == ',')
+            if (commaNumber[i] == ',')
                 temp->setPosition(ccp(totalWidth, 0));
             else
-                temp->setPosition(ccp(totalWidth, offset[number[i]-'0']));
+                temp->setPosition(ccp(totalWidth, offset[commaNumber[i]-'0']));
         }
         
         layer->addChild(temp, 100);
         
         totalWidth += (int)temp->getContentSize().width;
-        if (number[i]-'0' == 1)
+        if (commaNumber[i]-'0' == 1)
             totalWidth += 3;
         
         sprites.push_back(temp);
@@ -420,7 +443,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Setting") nextScene = Setting::scene();
     else if (to == "Sketchbook") nextScene = Sketchbook::scene(etc);
     
-    else if (to == "Profile") nextScene = Profile::scene();
+    else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyInfo") nextScene = FairyInfo::scene();
     
@@ -532,6 +555,33 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite9->setOpacity(alpha);
         //obj->sprite9->autorelease();
     }
+
+    // parent 관련 대입
+    obj->parentName = parentName;
+    obj->parentType = parentType;
+    obj->parent = parent;
+    
+    // z-order
+    obj->zOrder = zOrder;
+    
+    obj->priority = priority;
+    
+    return obj;
+}
+
+SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
+{
+    SpriteObject* obj = new SpriteObject();
+    
+    obj->name = "";
+    
+    obj->type = spriteType;
+    
+    obj->sprite = CCSprite::createWithTexture(spr->getTexture());
+    obj->sprite->setAnchorPoint(ap);
+    obj->sprite->setPosition(pos);
+    obj->sprite->setOpacity(alpha);
+    obj->sprite->setScale(0.85f);
 
     // parent 관련 대입
     obj->parentName = parentName;
@@ -819,3 +869,10 @@ void* SpriteClass::FindSpriteByName(std::string name)
 
 }
 
+
+/*
+void Common::Compare(class *a, class *b)
+{
+    //return
+}
+*/

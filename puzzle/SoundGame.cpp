@@ -9,16 +9,16 @@ void SoundGame::PreLoadSound()
     SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/game_bgm.mp3");
     
     SetEffectVolume();
-    SetBackgroundMusicVolume();
+    SetBackgroundMusicVolume(0.7f);
 }
 
 void SoundGame::SetEffectVolume()
 {
     SimpleAudioEngine::sharedEngine()->setEffectsVolume(0);
 }
-void SoundGame::SetBackgroundMusicVolume()
+void SoundGame::SetBackgroundMusicVolume(float vol)
 {
-    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.7);
+    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(vol);
 }
 
 

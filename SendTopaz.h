@@ -42,7 +42,6 @@ protected:
 private:
     SpriteClass* spriteClass;
     
-    std::vector<std::string> name;
 };
 
 #endif /* defined(__CocoMagic__SendTopaz__) */

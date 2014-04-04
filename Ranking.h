@@ -5,11 +5,6 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 
-#define POTION_REMAIN 0
-#define POTION_SEND 1
-#define POTION_X 2
-#define POTION_NOTHING 3
-
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -47,8 +42,8 @@ protected:
     CCPoint scrollViewLastPoint;
     std::vector<CCSprite*> profiles;
     
-    std::vector<std::string> usernames;
-    std::vector<int> userPotionStates;
+    //std::vector<std::string> usernames;
+    //std::vector<int> userPotionStates;
     
     bool isTouched;
     bool isScrolling;

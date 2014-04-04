@@ -42,8 +42,7 @@ protected:
 private:
     SpriteClass* spriteClass;
     
-    std::vector<int> selected;
-    std::vector<std::string> name;
+    std::vector<bool> selected;
 };
 
 #endif /* defined(__CocoMagic__CocoRoomTodayCandy__) */

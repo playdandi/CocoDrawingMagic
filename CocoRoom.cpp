@@ -200,6 +200,12 @@ void CocoRoom::MakeSpritesCoco()
                         ccp(0, 0), ccp(441, 1290), CCSize(543, 61), "", "Layer", coco, 5) );
     spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel("오늘도 곰을 백마리 잡은 마법사", fontList[0], 36, ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_degree_desc.png"), ccc3(255,255,255), "background/bg_degree_desc.png", "1", NULL, 5) );
     
+    // stone floor
+    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/stone_floor.png",
+                        ccp(0, 0), ccp(100, 750), CCSize(0, 0), "", "Layer", coco, 5) );
+    
+    // coco character
+    
     // skill 그림
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png1",
                         ccp(0, 0), ccp(608, 1182), CCSize(0, 0), "", "Layer", coco, 5) );
@@ -288,6 +294,12 @@ void CocoRoom::MakeSpritesFairy()
                         ccp(0, 0), ccp(524, 1124), CCSize(439, 58), "", "Layer", fairy, 5) );
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4",
                         ccp(0, 0), ccp(524, 1026), CCSize(439, 58), "", "Layer", fairy, 5) );
+    
+    // stone floor
+    spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, "background/fairy_floor.png",
+                        ccp(0, 0), ccp(100, 750), CCSize(0, 0), "", "Layer", fairy, 5) );
+    
+    // fairy character
     
     // description
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("잠만자양", fontList[0], 52, ccp(0.5, 0.5), spriteClassFairy->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5) );

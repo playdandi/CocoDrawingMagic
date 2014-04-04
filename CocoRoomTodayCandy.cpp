@@ -45,6 +45,8 @@ bool CocoRoomTodayCandy::init()
     
     InitSprites();
     MakeScroll();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
     
     isTouched = false;
     isScrollViewTouched = false;
@@ -97,53 +99,40 @@ void CocoRoomTodayCandy::InitSprites()
                     ccp(0, 0), ccp(750, 262), CCSize(0, 0), "", "CocoRoom", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",
             ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 1) );
-    
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
 }
 
 void CocoRoomTodayCandy::MakeScroll()
 {
-    name.push_back("AHRORO");
-    name.push_back("막나가는딸내미");
-    name.push_back("나눔고딕48픽셀");
-    name.push_back("막나가는아들내미");
-    name.push_back("박순퇘퇘퇫");
-    name.push_back("문제야");
-    name.push_back("커먼센스");
-    name.push_back("우히히히힛");
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
-    selected.push_back(0);
+    int numOfList = friendList.size();
     
-    int spriteClassSize = spriteClass->spriteObj.size();
+    // init select array
+    selected.clear();
+    for (int i = 0 ; i < numOfList ; i++)
+        selected.push_back(false);
     
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
     scrollContainer->setPosition(ccp(77, 492+904+243));
     
-    int numOfList = 8;
     char fname[50], fname2[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            continue;
+        
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(itemLayer, 2);
         
         // profile bg
-        sprintf(fname, "background/bg_profile.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
-                        ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        //sprintf(fname, "background/bg_profile.png%d", i);
+        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
+        //                ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         
         // name (text)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name[i], fontList[0], 48,
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48,
                         ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
         // button
@@ -174,10 +163,6 @@ void CocoRoomTodayCandy::MakeScroll()
                         ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
     }
-    
-    // addchild
-    for (int i = spriteClassSize ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
     
     // scrollview 내용 전체크기
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
@@ -237,8 +222,11 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     CCPoint point = pTouch->getLocation();
     
     char fname[50];
-    for (int i = 0 ; i < 8; i++)
+    for (int i = 0 ; i < friendList.size(); i++)
     {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            continue;
+        
         sprintf(fname, "button/btn_blue_mini.png%d", i);
         CCSprite* temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
         CCPoint p = temp->convertToNodeSpace(point);
@@ -248,7 +236,7 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
         {
             sound->playClick();
-            selected[i] = 1 - selected[i];
+            selected[i] = !selected[i];
         }
     }
 }

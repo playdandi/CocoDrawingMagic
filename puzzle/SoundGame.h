@@ -12,7 +12,7 @@ public:
     void PreLoadSound();
     
     void SetEffectVolume();
-    void SetBackgroundMusicVolume();
+    void SetBackgroundMusicVolume(float vol);
     
     void PlayBackgroundSound();
     void StopBackgroundSound();

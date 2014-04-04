@@ -175,7 +175,7 @@ void PuzzleSkill::Invoke(int skillNum)
         case 6:
             F5(); break;
         case 7:
-            A8(); break;
+            A8(skillNum); break;
             
         case 8:
             A1(skillNum); break;
@@ -192,7 +192,7 @@ void PuzzleSkill::Invoke(int skillNum)
         case 14:
             W5(); break;
         case 15:
-            A8(); break;
+            A8(skillNum); break;
             
         case 16:
             A1(skillNum); break;
@@ -209,8 +209,11 @@ void PuzzleSkill::Invoke(int skillNum)
         case 22:
             E5(); break;
         case 23:
-            A8(); break;
+            A8(skillNum); break;
     }
+    
+    // coco animation
+    m_pGameLayer->schedule(schedule_selector(Puzzle::CocoAnim), 0.04f);
 }
 
 void PuzzleSkill::A1(int num)
@@ -234,25 +237,25 @@ void PuzzleSkill::A2A(int num)
     // (여기서는 주변부의 위치만 구한다)
     // 불2 : 스킬레벨 수만큼 사이클의 주변부를 동시에 터뜨린다.
     // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
-    // 땅2 :
+    // 땅2 : 스킬레벨 수만큼 완전히 랜덤하게 터뜨린다.
     CCLog("A2A skill");
         
     A2A_pos.clear();
     
+    int x, y;
+    int xy[COLUMN_COUNT][ROW_COUNT];
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+            xy[x][y] = 0;
+    
+    std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
+    for (int i = 0 ; i < pos.size() ; i++)
+        xy[(int)pos[i].x][(int)pos[i].y] = -1;
+    
+    
     // 주변부 위치 구하기
     if (num == 1) // 불2
     {
-        int xy[COLUMN_COUNT][ROW_COUNT];
-        for (int x = 0 ; x < COLUMN_COUNT ; x++)
-            for (int y = 0 ; y < ROW_COUNT ; y++)
-                xy[x][y] = 0;
-        
-        std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
-        for (int i = 0 ; i < pos.size() ; i++)
-            xy[(int)pos[i].x][(int)pos[i].y] = -1;
-        
-        int x, y;
-        
         // 사이클에 붙어있는 피스 중 랜덤하게 선택
         std::vector<CCPoint> selectPos;
         for (x = 0 ; x < COLUMN_COUNT ; x++)
@@ -298,117 +301,63 @@ void PuzzleSkill::A2A(int num)
     else if (num == 9) // 물2
     {
         // 사이클 끝난 방향으로 파도타기 (길이가 모자라면 반대편에서 계속 진행)
+        CCPoint last = pos[0];
+        CCPoint before = pos[pos.size()-1];
+        CCPoint delta = ccp((int)last.x-(int)before.x, (int)last.y-(int)before.y);
+        
+        CCPoint lastPos = m_pGameLayer->SetPiece8Position((int)pos[0].x, (int)pos[0].y);
+        CCPoint beforePos = m_pGameLayer->SetPiece8Position((int)pos[pos.size()-1].x, (int)pos[pos.size()-1].y);
+        CCPoint deltaPos = ccp((int)lastPos.x-(int)beforePos.x, (int)lastPos.y-(int)beforePos.y);
+        
+        // 예외처리 : 시작점, 직전점의 변화량 값을 array의 처음에 넣는다. (파티클 움직임을 위해)
+        A2A_pos.push_back(deltaPos);
+        
+        int size = skillLevel[num];
+        int cnt = 0;
+        int x = (int)pos[0].x + (int)delta.x;
+        int y = (int)pos[0].y + (int)delta.y;
+        while (cnt < size)
+        {
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                break;
+            if (x < 0 || y < 0 || x >= COLUMN_COUNT || y >= ROW_COUNT)
+                break;
+            
+            A2A_pos.push_back(ccp(x, y));
+            x += (int)delta.x;
+            y += (int)delta.y;
+        }
     }
     
     else // 땅2
     {
-        //
-    }
-    
-    /*
-    CCLog("pos size : %d", (int)pos.size());
-    int x, y;
-    int temp = rand()%4;
-    if (temp == 0)
-    {
-        for (x = 0 ; x < COLUMN_COUNT ; x++) {
-            for (y = 0 ; y < ROW_COUNT ; y++) {
-                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-                    continue;
-                if (xy[x][y])
-                    continue;
-                if ((y+1 < ROW_COUNT && xy[x][y+1]) || (y-1 >= 0 && xy[x][y-1]) ||
-                    (x+1 < COLUMN_COUNT && xy[x+1][y]) || (x-1 >= 0 && xy[x-1][y]))
-                {
-                    if (A2A_pos.size() < pos.size())
-                        A2A_pos.push_back(ccp(x, y));
-                }
-            }
-        }
-    }
-    else if (temp == 1)
-    {
-        for (x = 0 ; x < COLUMN_COUNT ; x++) {
-            for (y = ROW_COUNT-1 ; y >= 0 ; y--) {
-                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-                    continue;
-                if (xy[x][y])
-                    continue;
-                if ((y+1 < ROW_COUNT && xy[x][y+1]) || (y-1 >= 0 && xy[x][y-1]) ||
-                    (x+1 < COLUMN_COUNT && xy[x+1][y]) || (x-1 >= 0 && xy[x-1][y]))
-                {
-                    if (A2A_pos.size() < pos.size())
-                        A2A_pos.push_back(ccp(x, y));
-                }
-            }
-        }
-    }
-    else if (temp == 2)
-    {
-        for (y = 0 ; y < ROW_COUNT ; y++) {
-            for (x = COLUMN_COUNT-1 ; x >= 0 ; x--) {
-                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-                    continue;
-                if (xy[x][y])
-                    continue;
-                if ((y+1 < ROW_COUNT && xy[x][y+1]) || (y-1 >= 0 && xy[x][y-1]) ||
-                    (x+1 < COLUMN_COUNT && xy[x+1][y]) || (x-1 >= 0 && xy[x-1][y]))
-                {
-                    if (A2A_pos.size() < pos.size())
-                        A2A_pos.push_back(ccp(x, y));
-                }
-            }
-        }
-    }
-    else
-    {
-        for (y = 0 ; y < ROW_COUNT ; y++) {
-            for (x = 0 ; x < COLUMN_COUNT ; x++) {
-                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-                    continue;
-                if (xy[x][y])
-                    continue;
-                if ((y+1 < ROW_COUNT && xy[x][y+1]) || (y-1 >= 0 && xy[x][y-1]) ||
-                    (x+1 < COLUMN_COUNT && xy[x+1][y]) || (x-1 >= 0 && xy[x-1][y]))
-                {
-                    if (A2A_pos.size() < pos.size())
-                        A2A_pos.push_back(ccp(x, y));
-                }
-            }
-        }
-    }
-    
-    // 사이클 한붓그리기 개수만큼 채우지 못했다면, 랜덤한 위치에 마저 채운다.
-    if (A2A_pos.size() < pos.size())
-    {
-        CCLog("remaining...");
-        for (int i = 0 ; i < A2A_pos.size() ; i++)
-            xy[(int)A2A_pos[i].x][(int)A2A_pos[i].y] = true;
-        
-        while(1)
+        // 완전히 랜덤하게 개수 뽑기
+        int size = std::min(skillLevel[num], (int)pos.size());
+        int cnt = 0;
+        while(cnt < size)
         {
-            x = rand()%COLUMN_COUNT;
-            y = rand()%ROW_COUNT;
-            if (!xy[x][y])
+            x = rand() % 7;
+            y = rand() % 7;
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                continue;
+            if (xy[x][y] == 0)
             {
+                xy[x][y] = 1;
+                cnt++;
                 A2A_pos.push_back(ccp(x, y));
-                xy[x][y] = true;
-                if (A2A_pos.size() == pos.size())
-                    break;
             }
         }
+        
     }
-    */
     
     // 이펙트 실행 (태양/달/파도 그림)
     m_pGameLayer->PlayEffect(num);
     
     // 폭파 실행
-    m_pGameLayer->Bomb(A2A_pos);
+    if (num != 9) // 물 사이클 스킬은 이펙트와 함께 발동시켜야 하므로, 여기서 Bomb을 실행하지 않는다.
+        m_pGameLayer->Bomb(A2A_pos);
 }
 std::vector<CCPoint> PuzzleSkill::A2AGetPos()
 {
@@ -660,7 +609,7 @@ void PuzzleSkill::E5()
 }
 
 
-void PuzzleSkill::A8()
+void PuzzleSkill::A8(int num)
 {
     // 8번 스킬 준비 (자기 색깔 변화주기)
     A8_pos.clear();
@@ -740,9 +689,12 @@ void PuzzleSkill::A8()
             }
         }
     }
+    
+    m_pGameLayer->PlayEffect(num);
 }
 void PuzzleSkill::A8Callback()
 {
+    /*
     // 8번 스킬 실제 실행 (터뜨리기)
     A8_callbackCnt++;
     if (A8_callbackCnt == A8_cnt)
@@ -750,6 +702,7 @@ void PuzzleSkill::A8Callback()
         CCLog("A8 callback executed");
         m_pGameLayer->Bomb(A8_pos);
     }
+     */
 }
 std::vector<CCPoint> PuzzleSkill::A8GetPos()
 {

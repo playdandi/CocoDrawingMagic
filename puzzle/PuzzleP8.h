@@ -40,6 +40,7 @@ public:
     int GetType();
     int GetZOrder();
     CCSprite* GetPiece();
+    void RemovePiece();
     void SetPosition(CCPoint pos);
     
     void SetPiece(CCSprite* sprite);

@@ -1,5 +1,6 @@
 #include "Ranking.h"
 #include "pugixml/pugixml.hpp"
+#include "curl/curl.h"
 
 using namespace pugi;
 using namespace cocos2d;
@@ -64,8 +65,8 @@ bool Ranking::init()
     
     srand(time(NULL));
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
     
     spriteClass = new SpriteClass();
     
@@ -230,49 +231,26 @@ void Ranking::InitSprites()
 
 void Ranking::MakeScroll()
 {
-    // usernames (temporary)
-    usernames.push_back("박일진");
-    usernames.push_back("동해물과");
-    usernames.push_back("정연준");
-    usernames.push_back("백두산이");
-    usernames.push_back("마르고");
-    usernames.push_back("AHRORO");
-    usernames.push_back("TREVI");
-    usernames.push_back("칸쵸");
-    usernames.push_back("로드리게스");
-    usernames.push_back("만세");
-    usernames.push_back("만만세");
-    userPotionStates.push_back(POTION_SEND);
-    userPotionStates.push_back(POTION_SEND);
-    userPotionStates.push_back(POTION_NOTHING);
-    userPotionStates.push_back(POTION_REMAIN);
-    userPotionStates.push_back(POTION_X);
-    userPotionStates.push_back(POTION_REMAIN);
-    userPotionStates.push_back(POTION_X);
-    userPotionStates.push_back(POTION_SEND);
-    userPotionStates.push_back(POTION_SEND);
-    userPotionStates.push_back(POTION_REMAIN);
-    userPotionStates.push_back(POTION_SEND);
-    
-    
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
     scrollContainer->setAnchorPoint(ccp(0, 1));
     scrollContainer->setPosition(ccp(77, 492+904));
-    int numOfList = 11;
     
-    char rankNum[3], name[40];
+    int numOfList = friendList.size();
+    CCLog("number of friends = %d", numOfList);
+    
+    char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
+        CCLog("friend # %d", i);
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(profileLayer, 5);
         
         // my profile bg
-        if (usernames[i] == "정연준")
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
         {
-            CCLog("hi");
             spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_my_profile.png", ccp(0, 0), ccp(0, 15), CCSize(862, 166-10), "", "Layer", profileLayer, 3) );
         }
         
@@ -293,36 +271,48 @@ void Ranking::MakeScroll()
         }
         
         // profile image
+        friendList[i]->GetProfile()->setScale(0.85f);
+        friendList[i]->GetProfile()->setAnchorPoint(ccp(0, 0));
+        friendList[i]->GetProfile()->setPosition(ccp(102+5, 36+10));
+        profileLayer->addChild(friendList[i]->GetProfile(), 5);
         sprintf(name, "background/bg_profile.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
         
         // user name
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(usernames[i].c_str(), fontList[0], 48, ccp(0, 0), ccp(252, 110), ccc3(78,47,8), "", "Layer", profileLayer, 5) );
+        friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));
+        friendList[i]->GetNicknameLabel()->setPosition(ccp(252, 110));
+        friendList[i]->GetNicknameLabel()->setColor(ccc3(78,47,8));
+        profileLayer->addChild(friendList[i]->GetNicknameLabel(), 5);
         
         // user score
-        CCLayer* scoreLayer = Common::MakeImageNumberLayer("14,083,569");
+        sprintf(score, "%d", friendList[i]->GetWeeklyHighScore());
+        CCLayer* scoreLayer = Common::MakeImageNumberLayer(score);
         scoreLayer->setPosition(ccp(282, 36));
         profileLayer->addChild(scoreLayer, 5);
 
-        // potion state
-        if (userPotionStates[i] != POTION_NOTHING)
+        // potion state (내 프로필에는 당연히 포션 그림 나오면 안 된다.)
+        if (friendList[i]->GetPotionMsgStatus() != POTION_NOTHING &&
+            friendList[i]->GetKakaoId() != myInfo->GetKakaoId())
         {
-            char potionState[18];
-            if (userPotionStates[i] == POTION_REMAIN)
-                sprintf(potionState, "icon/icon_potion_remain.png");
-            else if (userPotionStates[i] == POTION_SEND)
-                sprintf(potionState, "icon/icon_potion_send.png");
+            char potionState[32];
+            if (friendList[i]->GetPotionMsgStatus() == POTION_SEND)
+            {
+                if (friendList[i]->GetRemainPotionTime() == 0)
+                    sprintf(potionState, "icon/icon_potion_send.png%d", i);
+                else
+                    sprintf(potionState, "icon/icon_potion_remain.png%d", i);
+            }
             else
-                sprintf(potionState, "icon/icon_potion_x.png");
+                sprintf(potionState, "icon/icon_potion_x.png%d", i);
             
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, potionState, ccp(0, 0), ccp(724, 24), CCSize(0, 0), "", "Layer", profileLayer, 5) );
         }
         
         // dotted line
-        if (i < numOfList-1)
-        {
+        //if (i < numOfList-1)
+        //{
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", profileLayer, 5) );
-        }
+        //}
     }
     
     // scrollview 내용 전체크기
@@ -448,6 +438,22 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     CCPoint point = pTouch->getLocation();
     
     CCPoint p;
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        p = friendList[i]->GetProfile()->convertToNodeSpace(point);
+        // convertToNodeSpace 설명
+        // ex) sprite1->convertToNodeSpace(sprite2->getPosition());
+        // sprite1 좌측하단부터 sprite2의 anchorPoint까지의 거리
+        CCSize size = friendList[i]->GetProfile()->getContentSize();
+        if (isScrollViewTouched && !isScrolling &&
+            (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+        {
+            sound->playClick();
+            Common::ShowNextScene(this, "Ranking", "Profile", false, i);
+        }
+    }
+    
+    /*
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name.substr(0, 25) == "background/bg_profile.png")
@@ -465,6 +471,7 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
     }
+     */
     
     //scrollViewLastPoint = scrollView->getContentOffset();
     isOnceScrollViewTouched = true;
