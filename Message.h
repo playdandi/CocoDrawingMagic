@@ -31,6 +31,9 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseMsg(char* data, int size);
+    
     void ReleaseAll();
     
 protected:
@@ -47,8 +50,7 @@ private:
     CCScrollView* scrollView;
     CCLayer* scrollContainer;
     
-    std::vector<std::string> msg_content;
-    std::vector<int> msg_type;
+    std::vector<Msg*> msgData;
 };
 
 #endif /* defined(__CocoMagic__Message__) */

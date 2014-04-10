@@ -47,6 +47,8 @@ bool BuyTopaz::init()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (parent_id == 2) // 부모가 'BuyPotion'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
     
     CCLog("BuyTopaz. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
@@ -110,28 +112,18 @@ void BuyTopaz::InitSprites()
                     ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "BuyTopaz", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_request.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
-                    getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png", "0", NULL, 1) );
+                    getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png", "0", NULL, 1, 1) );
 }
 
 void BuyTopaz::MakeScroll()
-{
-    spriteName.push_back("icon/icon_purchase_topaz_a.png");
-    spriteName.push_back("icon/icon_purchase_topaz_b.png");
-    spriteName.push_back("icon/icon_purchase_topaz_c.png");
-    spriteName.push_back("icon/icon_purchase_topaz_d.png");
-    spriteName.push_back("icon/icon_purchase_topaz_e.png");
-    cost.push_back("20");
-    cost.push_back("65");
-    cost.push_back("300");
-    cost.push_back("500");
-    cost.push_back("800");
-    
+{    
     // make scroll
     itemContainer = CCLayer::create();
     itemContainer->setPosition(ccp(77, 492));
     this->addChild(itemContainer, 2);
     
-    int numOfList = 5;
+    int numOfList = priceTopaz.size();
+    
     char name[50], name2[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
@@ -139,45 +131,55 @@ void BuyTopaz::MakeScroll()
         layers.push_back(itemLayer);
         itemLayer->setContentSize(CCSizeMake(862, 226));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*226));
-        if (i == numOfList-1)
-            itemLayer->setPosition(ccp(34, (numOfList-i-1)*226-30));
         itemContainer->addChild(itemLayer, 2);
         
-        // image
-        CCPoint pos = ccp(35, 21);
-        if (i == 0)
-            pos = ccp(69, 70);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName[i], ccp(0, 0),
-                            pos, CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        // 토파즈 병 이미지
+        CCPoint pos;
+        if (i == 0) pos = ccp(69, 70);
+        else if (i == 1) pos = ccp(35, 21);
+        else if (i == 2) pos = ccp(29, 21);
+        else if (i == 3) pos = ccp(30, 21);
+        else if (i == 4) pos = ccp(24, 21-30);
+            
+        sprintf(name, "icon/icon_purchase_topaz_%c.png", 'a'+i);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), pos, CCSize(0, 0), "", "Layer", itemLayer, 3) );
         
-        // number + salenumber
-        CCLayer* numberLayer = Common::MakeImageNumberLayer(cost[i]);
+        // 토파즈 개수
+        sprintf(name, "%d", priceTopaz[i]->GetCount());
+        CCLayer* numberLayer = Common::MakeImageNumberLayer(name, 0);
         numberLayer->setPosition(ccp(214, 126));
         numberLayers.push_back(numberLayer);
         itemLayer->addChild(numberLayer, 3);
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("+ 10%", fontList[0], 36,
-                        ccp(0, 0), ccp(348, 138), ccc3(168,122,62), "", "Layer", itemLayer, 3) );
+        
+        // 보너스 숫자
+        sprintf(name, "+ %d%%", priceTopaz[i]->GetBonus());
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(348, 138), ccc3(168,122,62), "", "Layer", itemLayer, 3) );
 
         // 가격
         sprintf(name, "background/bg_degree_desc.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(226, 18),
-                        CCSize(201, 77), "", "Layer", itemLayer, 3) );
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("₩ 35,700", fontList[0], 36,
-            ccp(0.5, 0.5), ccp(326, 57), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(226, 18), CCSize(201, 77), "", "Layer", itemLayer, 3) );
+
+        std::string cost = "";
+        if (myInfo->GetDeviceType() == 1) // ANDROID
+        {
+            cost = "₩ " + Common::MakeComma(priceTopaz[i]->GetPrice());
+        }
+        else if (myInfo->GetDeviceType() == 2) // iPHONE
+        {
+            cost = "$ " + Common::MakeComma(priceTopaz[i]->GetPrice()/100) + "." + Common::MakeComma(priceTopaz[i]->GetPrice()%100);
+        }
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 36, ccp(0.5, 0.5), ccp(326, 57), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
         
-        // button (yellow, present, green, letter 순)
+        
+        // button (yellow, present, green, letter 순서)
         sprintf(name, "button/btn_yellow_mini2.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(472, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(472, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         sprintf(name2, "button/btn_present.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
         sprintf(name, "button/btn_green_mini.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(634, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(634, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         sprintf(name2, "letter/letter_purchase.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
         
         // dotted line
         if (i < numOfList-1)
@@ -204,7 +206,6 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                //this->unschedule(schedule_selector(BuyTopaz::MakeColorPaper));
                 EndScene();
                 break;
             }
@@ -253,74 +254,36 @@ void BuyTopaz::EndScene()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (parent_id == 2) // 부모가 'BuyPotion'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyTopaz");
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    ReleaseAll();
     
+    // remove children in all layers
+    for (int i = 0 ; i < numberLayers.size(); i++)
+        numberLayers[i]->removeAllChildren();
+    for (int i = 0 ; i < layers.size(); i++)
+        layers[i]->removeAllChildren();
+    numberLayers.clear();
+    layers.clear();
+    
+    itemContainer->removeAllChildren();
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
+    // end scene
     this->removeFromParentAndCleanup(true);
+    
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
 }
 
 void BuyTopaz::EndSceneCallback()
 {
 }
-
-void BuyTopaz::ReleaseAll()
-{
-    CCLog("release all");
-    pBlack->autorelease();
-    
-    // some layers
-    for (int i = 0 ; i < numberLayers.size(); i++)
-    {
-        //for (int j = 0 ; j < numberLayers[i]->getChildrenCount(); j++)
-            //layers[i]->removeAllChildren();
-        //    numberLayers[i]->getChildren()->objectAtIndex(j)->removeFromParentAndCleanup(true);
-        numberLayers[i]->removeAllChildren();
-    }
-    numberLayers.clear();
-    
-    for (int i = 0 ; i < layers.size(); i++)
-    {
-        //for (int j = 0 ; j < layers[i]->getChildrenCount(); j++)
-            //layers[i]->removeAllChildren();
-        //    layers[i]->getChildren()->objectAtIndex(j)->removeFromParentAndCleanup(true);
-        layers[i]->removeAllChildren();
-    }
-    layers.clear();
-    
-    itemContainer->removeAllChildren();
-    
-    spriteName.clear();
-    cost.clear();
-    
-    // all sprite, sprite-9, labels
-    for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
-    {
-        if (spriteClass->spriteObj[i]->type == 0)
-        {
-            CCLog("ith = %d , type = %d, 0번", i, spriteClass->spriteObj[i]->type);
-            spriteClass->spriteObj[i]->sprite->autorelease();
-        }
-        else if (spriteClass->spriteObj[i]->type == 1)
-        {
-            CCLog("ith = %d , type = %d, 1번", i, spriteClass->spriteObj[i]->type);
-            spriteClass->spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
-        }
-        else
-        {
-            CCLog("ith = %d , type = %d, 2번", i, spriteClass->spriteObj[i]->type);
-            spriteClass->spriteObj[i]->label->removeFromParentAndCleanup(true);
-        }
-        
-    }
-    this->removeAllChildren();
-    
-    spriteClass->spriteObj.clear();
-    spriteClass = NULL;
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyTopaz");
-}
-
 

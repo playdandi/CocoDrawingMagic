@@ -16,10 +16,6 @@ using namespace CocosDenshion;
     }
 }*/
 
-void Sound::PreLoadSoundWarning()
-{
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning.mp3");
-}
 
 void Sound::PreLoadSound()
 {
@@ -32,7 +28,7 @@ void Sound::PreLoadSound()
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning.mp3");
     
     SetEffectVolume();
-    SetBackgroundMusicVolume();
+    SetBackgroundMusicVolume(0.7f);
 }
 
 void Sound::SetEffectVolume()
@@ -42,9 +38,9 @@ void Sound::SetEffectVolume()
     else
         SimpleAudioEngine::sharedEngine()->setEffectsVolume(0);
 }
-void Sound::SetBackgroundMusicVolume()
+void Sound::SetBackgroundMusicVolume(float vol)
 {
-    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.7);
+    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(vol);
 }
 
 void Sound::PlayBackgroundSound()
@@ -87,126 +83,45 @@ void Sound::playLvUpFail()
 }
 
 
-
-
-
-/*
-void Sound::PreLoadSound()
+////////////////////////////////////////////////////////////////////////////////////////////////
+void Sound::PreLoadInGameSound()
 {
-    SetFileExtension();
+    SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/game_bgm.mp3");
     
-    if (ext == "wav")
+    char name[22];
+    for (int i = 1 ; i <= 18 ; i++)
     {
-        SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/background.mp3");
-        SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/background_crush.mp3");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/explosion.mp3");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/click.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_double.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_triple.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_quadruple.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_pentuple.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/crush3.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/create_item.mp3");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/bigshot.m4a");
+        sprintf(name, "sounds/pieces/%d.mp3", i);
+        SimpleAudioEngine::sharedEngine()->preloadEffect(name);
     }
-    else
-    {
-        SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic("sounds/background.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/explosion.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/click.wav");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_double.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_triple.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_quadruple.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/combo_pentuple.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/crush3.ogg");
-        SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/create_item.mp3");
-    }
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bomb.mp3");
     
-    SimpleAudioEngine::sharedEngine()->setEffectsVolume(0.7);
-    SimpleAudioEngine::sharedEngine()->setBackgroundMusicVolume(0.5);
+    SetEffectVolume();
+    SetBackgroundMusicVolume(0.7f);
 }
 
-void Sound::playTouchSound()
+
+void Sound::PlayBackgroundInGameSound()
 {
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/click.wav");
+    SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/game_bgm.mp3", true);
 }
 
-void Sound::playBombSound()
+void Sound::PlayPieceClick(int idx)
 {
-    if (ext == "wav")
-        SimpleAudioEngine::sharedEngine()->playEffect("sounds/explosion.mp3");
-    else
-        SimpleAudioEngine::sharedEngine()->playEffect("sounds/explosion.ogg");
+    if (idx % 18 > 0)
+        idx = idx % 18;
+    char name[22];
+    sprintf(name, "sounds/pieces/%d.mp3", idx);
+    SimpleAudioEngine::sharedEngine()->playEffect(name);
 }
 
-void Sound::playBackgroundSound(bool isCrushing)
+void Sound::PlayBomb()
 {
-    if (ext == "wav")
-    {
-        if (isCrushing)
-            SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/background_crush.mp3", true);
-        else
-            SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/background.mp3", true);
-    }
-    else
-    {
-        if (isCrushing)
-            SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/background_crush.mp3", true);
-        else
-            SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/background.ogg", true);
-    }
-    
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/bomb.mp3");
 }
 
-void Sound::StopBackgroundSound()
+void Sound::PlaySkillSound(int skillNum)
 {
-    SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
+    if (skillNum == 5)
+        SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3");
 }
-
-void Sound::playComboSound(int combo)
-{
-    if (ext == "wav")
-    {
-        switch(combo)
-        {
-            case 2:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_double.wav"); break;
-            case 3:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_triple.wav"); break;
-            case 4:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_quadruple.wav"); break;
-            case 5:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_pentuple.wav"); break;
-            case 6:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/crush3.wav"); break;
-        }
-    }
-    else
-    {
-        switch(combo)
-        {
-            case 2:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_double.ogg"); break;
-            case 3:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_triple.ogg"); break;
-            case 4:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_quadruple.ogg"); break;
-            case 5:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/combo_pentuple.ogg"); break;
-            case 6:
-                SimpleAudioEngine::sharedEngine()->playEffect("sounds/crush3.ogg"); break;
-        }
-    }
-}
-
-void Sound::playItemSound()
-{
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/create_item.mp3");
-}
-
-void Sound::playMassSound()
-{
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/bigshot.m4a");
-}
-*/
-

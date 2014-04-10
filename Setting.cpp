@@ -1,4 +1,7 @@
 #include "Setting.h"
+#include "pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 CCScene* Setting::scene()
 {
@@ -48,6 +51,11 @@ bool Setting::init()
     this->setTouchEnabled(true);
     
     isTouched = false;
+    
+    // 팝업창을 나갈 때 서버 저장용 예비 변수들
+    kakaoMsgReserved = myInfo->GetKakaoMsg();
+    pushNotiReserved = myInfo->GetPushNotification();
+    potionMsgReserved = myInfo->GetPotionMsg();
     
     return true;
 }
@@ -157,8 +165,17 @@ void Setting::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
                 ccp(0, 0), ccp(168, 18), CCSize(0, 0), name, "1", NULL, 2) );
       
-        sprintf(key, "setting_option_%d", i);
-        status = CCUserDefault::sharedUserDefault()->getBoolForKey(key);
+        if (i < 2) // 클라이언트에서 들고오는 정보 (효과음, 배경음)
+        {
+            sprintf(key, "setting_option_%d", i);
+            status = CCUserDefault::sharedUserDefault()->getBoolForKey(key);
+        }
+        else // 서버에서 들고오는 정보 (카카오, 푸시, 포션)
+        {
+            if (i == 2)      status = myInfo->GetKakaoMsg();
+            else if (i == 3) status = myInfo->GetPushNotification();
+            else if (i == 4) status = myInfo->GetPotionMsg();
+        }
         if (status)
             pos = ccp(627, 1261-i*112);
         else
@@ -189,7 +206,42 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                EndScene();
+            {
+                if (kakaoMsgReserved)
+                    kakaoMsgReserved = true;
+                else if (selectedBtn == 3)
+                    pushNotiReserved = true;
+                else if (selectedBtn == 4)
+                    potionMsgReserved = true;
+                
+                // 카카오메시지, 푸시메시지, 포션수신 중 하나라도 바뀐 게 있다면 서버에 전송.
+                if (kakaoMsgReserved != myInfo->GetKakaoMsg() || pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
+                {
+                    char temp[50];
+                    std::string url = "http://14.63.225.203/cogma/game/setting.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
+                    url += temp;
+                    sprintf(temp, "push_notification=%d&", pushNotiReserved);
+                    url += temp;
+                    sprintf(temp, "potion_message=%d", potionMsgReserved);
+                    url += temp;
+                    CCLog("url : %s", url.c_str());
+                    
+                    CCHttpRequest* req = new CCHttpRequest();
+                    req->setUrl(url.c_str());
+                    req->setRequestType(CCHttpRequest::kHttpPost);
+                    req->setResponseCallback(this, httpresponse_selector(Setting::onHttpRequestCompleted));
+                    CCHttpClient::getInstance()->send(req);
+                    req->release();
+                }
+                else
+                {
+                    // 바뀐 게 없으면 그냥 끈다.
+                    EndScene();
+                }
+            }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 21) == "button/btn_option.png") // on-off's
         {
@@ -206,6 +258,55 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     }
     
     return true;
+}
+
+void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    XmlParseResult(dumpData, buffer->size());
+}
+
+void Setting::XmlParseResult(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        CCLog("setting code 0 SUCCESS");
+        myInfo->SetSettingVariables(kakaoMsgReserved, pushNotiReserved, potionMsgReserved);
+        EndScene();
+    }
+    else
+    {
+        // failed msg
+        CCLog("failed code = %d", code);
+    }
 }
 
 
@@ -245,13 +346,23 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             // 효과음 버튼은 on->on 상황일 때 한번만 소리내자.
             bool playSound = !CCUserDefault::sharedUserDefault()->getBoolForKey(name);
             
-            CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
-            if (selectedBtn == 0) {
+            if (selectedBtn == 0)
+            {
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
                 sound->SetEffectVolume();
                 if (playSound) sound->playClick();
             }
             else if (selectedBtn == 1)
+            {
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
                 sound->PlayBackgroundSound();
+            }
+            else if (selectedBtn == 2)
+                kakaoMsgReserved = true;
+            else if (selectedBtn == 3)
+                pushNotiReserved = true;
+            else if (selectedBtn == 4)
+                potionMsgReserved = true;
         }
         else
         {
@@ -259,17 +370,27 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             selectedSprite->setPosition(ccp((int)standardBtnPos.x+(int)size.width,
                                             (int)standardBtnPos.y));
             
-            CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
             if (selectedBtn == 0)
+            {
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
                 sound->SetEffectVolume();
+            }
             else if (selectedBtn == 1)
+            {
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
                 sound->StopBackgroundSound();
+            }
+            else if (selectedBtn == 2)
+                kakaoMsgReserved = false;
+            else if (selectedBtn == 3)
+                pushNotiReserved = false;
+            else if (selectedBtn == 4)
+                potionMsgReserved = false;
         }
     }
     
     selectedBtn = -1;
 }
-
 
 void Setting::EndScene()
 {

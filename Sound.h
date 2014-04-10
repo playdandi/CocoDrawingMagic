@@ -9,11 +9,10 @@ using namespace cocos2d;
 class Sound
 {
 public:
-    void PreLoadSoundWarning();
     void PreLoadSound();
     
     void SetEffectVolume();
-    void SetBackgroundMusicVolume();
+    void SetBackgroundMusicVolume(float f);
     
     void PlayBackgroundSound();
     void StopBackgroundSound();
@@ -24,6 +23,15 @@ public:
     void playLvUpSuccess();
     void playLvUpFail();
     void playBoardMove();
+    
+    //////////////////////////////////////////////////////
+    void PreLoadInGameSound();
+    
+    void PlayBackgroundInGameSound();
+    
+    void PlayPieceClick(int idx);
+    void PlayBomb();
+    void PlaySkillSound(int skillNum);
     
 private:
     std::string ext;

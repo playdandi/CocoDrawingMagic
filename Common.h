@@ -38,13 +38,23 @@ USING_NS_CC;
 
 #define NUMOFSKILL 32
 
-
+// 팝업창에서 버튼 개수를 구분하기 위한 predefined type
 #define BTN_1 0
 #define BTN_2 1
+// 어떤 팝업창인지 구분하기 위한 predefined type
 #define POPUP_STARCANDY_0 0
 #define POPUP_STARCANDY_1 1
 #define POPUP_STARCANDY_2 2
 #define POPUP_EXIT 3
+#define BUYPOTION_1 4
+#define BUYPOTION_OK 5
+#define BUYPOTION_FAIL 6
+#define POTION_SEND_TRY 7
+#define POTION_SEND_OK 8
+#define POTION_SEND_REJECT 9
+#define POTION_SEND_NO_FRIEND 10
+#define POTION_SEND_EARLY 11
+
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -64,8 +74,10 @@ class Common
 public:
     static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
     
+    static std::string MakeComma(int number);
     static std::string InsertComma(std::string number);
-    static CCLayer* MakeImageNumberLayer(std::string number);
+    static CCLayer* MakeImageNumberLayer(std::string number, int type);
+    static CCLayer* MakeItemNumberLayer(std::string number);
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data);
 };
@@ -75,8 +87,8 @@ class SpriteObject
 {
 public:
     static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
-    static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
-    static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
+    static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, float scale = 1.0f);
+    static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
     static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
 
     int type;
@@ -101,6 +113,9 @@ public:
     void* FindSpriteByName(std::string name);
     CCPoint FindParentCenterPos(std::string parentName);
     CCSize GetContentSizeByName(std::string name);
+    void* FindLabelByTag(int tag);
+    
+    void RemoveAllObjects();
     
     std::vector<SpriteObject*> spriteObj;
 };

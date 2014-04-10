@@ -544,6 +544,9 @@ void PuzzleSkill::A4B(int num)
     // 불꽃놀이, 얼음비, 땅의 신비 - 각자의 피스 제거 시 (6개 이상) 일정 확률로 그 위치를 한 번 더 터뜨리기
     CCLog("A4B()");
     
+    // 사운드
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
+    
     // 이펙트 실행
     m_pGameLayer->PlayEffect(num);
     

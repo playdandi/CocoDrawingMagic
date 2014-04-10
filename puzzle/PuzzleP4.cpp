@@ -5,10 +5,10 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type)
 {
     PuzzleP4* puzzleP4 = new PuzzleP4();
     
-    if (type != -1)
+    if (type != -100)
         puzzleP4->type = type;
     else
-        puzzleP4->type = (rand()%100 < 0) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+        puzzleP4->type = (rand()%100 < 50) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
 
     puzzleP4->parent = parent;
     puzzleP4->zOrder = zOrder;
@@ -29,7 +29,7 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
     if (type != BLOCKED)
     {
         InitChild();
-        
+        //CCLog("type ; %d", type);
         char name[20];
 
         if (lu == rd)

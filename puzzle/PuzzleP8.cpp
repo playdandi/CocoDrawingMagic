@@ -7,12 +7,13 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder)
   
     puzzleP8->type = rand() % TYPE_COUNT;
     
-    char name[15];
+    char name[20];
     sprintf(name, "pieces/%d.png", puzzleP8->type);
     
     puzzleP8->sprite = CCSprite::createWithSpriteFrameName(name);
     puzzleP8->sprite->setAnchorPoint(ap);
     puzzleP8->sprite->setPosition(pos);
+    puzzleP8->sprite->setScale(1.05f);
     
     //puzzleP8->sprite->setOpacity(215);
     

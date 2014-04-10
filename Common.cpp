@@ -57,229 +57,7 @@ std::string fontList[] = {
 #endif
 };
 
-
-
 /*
-float Common::ComputeX(float x)
-{
-	return floorf(x*OCTA_WIDTH);
-}
-
-float Common::ComputeY(float y)
-{
-    return floorf(y*OCTA_HEIGHT+25)+OCTA_HEIGHT;
-}
-
-CCPoint Common::ComputeXY(float x, float y)
-{
-	return ccp(ComputeX(x), ComputeY(y));
-}
-
-int Common::ComputeBoardX(float x)
-{
-	return (int)(x/floorf(OBJECT_WIDTH));
-}
-
-int Common::ComputeBoardY(float y)
-{
-    return (int)((y-OBJECT_HEIGHT-25)/floorf(OBJECT_HEIGHT));
-}
-*/
-
-/*
-CCPoint Common::GetAnchorPoint(CCDictionary* dic)
-{
-    return ccp(dic->valueForKey("apX")->intValue(), dic->valueForKey("apY")->intValue());
-}
-
-CCPoint Common::GetPosition(CCDictionary* dic)
-{
-    return ccp(dic->valueForKey("posX")->intValue(), dic->valueForKey("posY")->intValue());
-}
-*/
-
-/*
-bool Common::XmlParsePuzzleEnd(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return false;
-    }
-    
-    // get several data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    
-    if (code == 0)
-    {
-        iAge = nodeResult.child("raise").attribute("age").as_int();
-        iType = nodeResult.child("raise").attribute("type").as_int();
-        iWeight = nodeResult.child("raise").attribute("weight").as_int();
-        iMaxScore = nodeResult.child("puzzle").attribute("max-score").as_int();
-        iRemainingHeartNum = nodeResult.child("puzzle").attribute("heart-num").as_int();
-        iRemainingHeartTime = nodeResult.child("puzzle").attribute("heart-remain-time").as_int();
-        vEnabledMaterial.clear();
-        vStoredMaterial.clear();
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-a").as_int());
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-b").as_int());
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-c").as_int());
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-d").as_int());
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-e").as_int());
-        vEnabledMaterial.push_back(nodeResult.child("material").attribute("enabled-f").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-a").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-b").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-c").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-d").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-e").as_int());
-        vStoredMaterial.push_back(nodeResult.child("material").attribute("stored-f").as_int());
-
-        return true;
-    }
-    else
-    {
-        // failed msg
-    }
-    
-    return false;
-}
-
-bool Common::XmlParsePuzzleStart(std::vector<char>* buffer)
-{
-	const char *data;
-	std::string str(buffer->begin(), buffer->end());
-	data = str.c_str();
-	int size = strlen(data);	
-
-	 // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return false;
-    }
-    
-    // get several data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    //CCLog("code = %d", code);
-    
-    if (code == 0)
-    {
-        // http 통신 성공 - data를 모두 받는다.
-        iAge = nodeResult.child("raise").attribute("age").as_int();
-        iType = nodeResult.child("raise").attribute("type").as_int();
-        iWeight = nodeResult.child("raise").attribute("weight").as_int();
-        iMaxScore = nodeResult.child("puzzle").attribute("max-score").as_int();
-        iRemainingHeartNum = nodeResult.child("puzzle").attribute("heart-num").as_int();
-        iRemainingHeartTime = nodeResult.child("puzzle").attribute("heart-remain-time").as_int();
-        
-        return true;
-    }
-    else if (code == 3)
-    {
-        // no heart msg
-        return false;
-    }
-    
-    return false;
-}
-
-bool Common::XmlParseRanking(std::vector<char>* buffer)
-{
-	const char *data;
-	std::string str(buffer->begin(), buffer->end());
-	data = str.c_str();
-	int size = strlen(data);	
-
-	 // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return false;
-    }
-    
-    // get several data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    
-    if (code == 0)
-    {
-		xml_node nodeRank = nodeResult.child("rank");
-		vScoreList.clear();
-		xml_node_iterator it;
-		for(it = nodeRank.children().begin() ; it != nodeRank.children().end() ; ++it)
-		{
-			struct friendScore fs;
-			strcpy(fs.name, it->attribute("name").as_string());
-            fs.score = it->attribute("score").as_int();
-			vScoreList.push_back(fs);
-		}
-        return true;
-    }
-
-    return false;
-}
-
-bool Common::XmlParseMoneyRaisePuzzle(char* data, int size, bool hasMoney)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return false;
-    }
-    
-    // get several data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    //CCLog("code = %d", code);
-    
-    if (code == 0)
-    {
-        // http 통신 성공 - data를 모두 받는다.
-        if (hasMoney)
-        {
-            iCash = nodeResult.child("money").attribute("cash").as_int();
-            iGold = nodeResult.child("money").attribute("gold").as_int();
-        }
-        iAge = nodeResult.child("raise").attribute("age").as_int();
-        iType = nodeResult.child("raise").attribute("type").as_int();
-        iWeight = nodeResult.child("raise").attribute("weight").as_int();
-        iMaxScore = nodeResult.child("puzzle").attribute("max-score").as_int();
-        iRemainingHeartNum = nodeResult.child("puzzle").attribute("heart-num").as_int();
-        iRemainingHeartTime = nodeResult.child("puzzle").attribute("heart-remain-time").as_int();
-        
-        return true;
-    }
-    else if (code == 3)
-    {
-        // no heart msg
-        return false;
-    }
-    
-    return false;
-}
-*/
-
-
-
 CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity )
 {
     CCRenderTexture* rt = CCRenderTexture::create(
@@ -342,6 +120,24 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
     
     return rt;
 }
+*/
+
+
+
+std::string Common::MakeComma(int number)
+{
+    char temp[10];
+    sprintf(temp, "%d", number);
+    std::string num = temp;
+    std::string result = "";
+    for (int i = num.size()-1 ; i >= 0 ; i--)
+    {
+        result = num[i] + result;
+        if (i > 0 && (num.size() - i) % 3 == 0)
+            result = "," + result;
+    }
+    return result;
+}
 
 std::string Common::InsertComma(std::string number)
 {
@@ -349,18 +145,48 @@ std::string Common::InsertComma(std::string number)
     for (int i = number.size()-1 ; i >= 0 ; i--)
     {
         result = number[i] + result;
-        if ((number.size() - i) % 3 == 0)
+        if (i > 0 && (number.size() - i) % 3 == 0)
             result = "," + result;
     }
     return result;
 }
-CCLayer* Common::MakeImageNumberLayer(std::string number)
+
+CCLayer* Common::MakeItemNumberLayer(std::string number)
 {
-    std::string commaNumber = Common::InsertComma(number);
+    CCLayer* layer = CCLayer::create();
     
     int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
-    
+    int offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
     char name[30];
+    int totalWidth = 0;
+
+    std::vector<CCSprite*> sprites;
+    for (int i = number.size()-1 ; i >= 0 ; i--)
+    {
+        sprintf(name, "number/count_%c.png", number[i]);
+        CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
+        
+        temp->setAnchorPoint(ccp(1, 0));
+        if (i == number.size()-1)
+        {
+            temp->setPosition(ccp(0, offset[number[i]-'0']));
+            totalWidth -= (int)temp->getContentSize().width;
+        }
+        else
+        {
+            temp->setPosition(ccp(totalWidth + offsetX[number[i]-'0'], offset[number[i]-'0']));
+            totalWidth -= ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
+        }
+
+        layer->addChild(temp, 100);
+        sprites.push_back(temp);
+    }
+    sprites.clear();
+    
+    return layer;
+}
+CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
+{
     CCLayer* layer = CCLayer::create();
     
     if (number == "-1") // no score
@@ -369,10 +195,15 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
         noscore->setAnchorPoint(ccp(0, 0));
         noscore->setPosition(ccp(0, 0));
         noscore->setScale(0.95f);
+        noscore->setTag(-1);
         layer->addChild(noscore, 100);
         return layer;
     }
     
+    std::string commaNumber = Common::InsertComma(number);
+    
+    int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
+    char name[30];
     int totalWidth = 0;
     
     std::vector<CCSprite*> sprites;
@@ -381,14 +212,21 @@ CCLayer* Common::MakeImageNumberLayer(std::string number)
         CCSprite* temp;
         if (commaNumber[i] == ',')
         {
-            temp = CCSprite::createWithSpriteFrameName("number/rank_comma.png");
+            if (type == 0)
+                temp = CCSprite::createWithSpriteFrameName("number/rank_comma.png");
+            else if (type == 1)
+                temp = CCSprite::createWithSpriteFrameName("number/count_comma.png");
         }
         else
         {
-            sprintf(name, "number/rank_%c.png", commaNumber[i]);
+            if (type == 0)
+                sprintf(name, "number/rank_%c.png", commaNumber[i]);
+            else if (type == 1)
+                sprintf(name, "number/count_%c.png", commaNumber[i]);
             temp = CCSprite::createWithSpriteFrameName(name);
         }
         
+        temp->setTag(i);
         temp->setAnchorPoint(ccp(0, 0));
         
         if (i == 0)
@@ -462,7 +300,10 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((Splash*)obj)->EndScene();
         }
     }
-    if (from == "Ranking") ((Ranking*)obj)->addChild(nextScene, 200, 200);
+    if (from == "Ranking") {
+        ((Ranking*)obj)->addChild(nextScene, 200, 200);
+        //CCLog("nextScene retain : %d", ((Ranking*)obj));
+    }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady")
     {
@@ -494,11 +335,11 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     }
 }
 
+// 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
 void Common::ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data)
 {
     CCScene* popup;
     if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data);
-    //else if (btnType == IMAGE) popup = Image::scene();
     
     if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
@@ -508,7 +349,6 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "NoImage") {
         //CCNode* parent = ((NoImage*)obj)->getParent();
         //parent->addChild(popup, 200, 200);
-        
         //((NoImage*)obj)->removeFromParentAndCleanup(true);
         if (isReplaced) ((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
         else            ((NoImage*)obj)->addChild(popup, 200, 200);
@@ -538,7 +378,7 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite->setAnchorPoint(ap);
         obj->sprite->setPosition(pos);
         obj->sprite->setOpacity(alpha);
-        //obj->sprite->autorelease();
+        //CCLog("sprite retain : %d", obj->sprite->retainCount());
     }
     else if (spriteType == 1) // sprite-9
     {
@@ -553,7 +393,7 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite9->setPosition(pos);
         obj->sprite9->setContentSize(size);
         obj->sprite9->setOpacity(alpha);
-        //obj->sprite9->autorelease();
+        //CCLog("sprite9 retain : %d", obj->sprite9->retainCount());
     }
 
     // parent 관련 대입
@@ -569,7 +409,7 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
     return obj;
 }
 
-SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
+SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha, float scale)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -577,11 +417,14 @@ SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPo
     
     obj->type = spriteType;
     
-    obj->sprite = CCSprite::createWithTexture(spr->getTexture());
+    obj->sprite = CCSprite::create();
+    obj->sprite->setDisplayFrame(spr->displayFrame());
     obj->sprite->setAnchorPoint(ap);
     obj->sprite->setPosition(pos);
     obj->sprite->setOpacity(alpha);
-    obj->sprite->setScale(0.85f);
+    obj->sprite->setScale(scale);
+    //CCLog("sprite retain(file) : %d", obj->sprite->retainCount());
+
 
     // parent 관련 대입
     obj->parentName = parentName;
@@ -596,7 +439,7 @@ SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPo
     return obj;
 }
 
-SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
+SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha, int tag)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -606,7 +449,9 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->label->setPosition(pos);
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
-    //obj->label->autorelease();
+    obj->label->setTag(tag);
+    //obj->label->retain();
+    //CCLog("label retain : %d", obj->label->retainCount());
     
     // parent
     obj->parentName = parentName;
@@ -617,6 +462,7 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->zOrder = zOrder;
     
     obj->priority = priority;
+    
     
     return obj;
 }
@@ -631,7 +477,6 @@ SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, 
     obj->label->setPosition(pos);
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
-    //obj->label->autorelease();
     
     // parent
     obj->parentName = parentName;
@@ -732,6 +577,10 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((Profile*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Profile*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Profile*)obj->parent)->addChild(obj->label, obj->zOrder);
+        
+        //if (obj->type == 0) CCLog("added (0) : %d", obj->sprite->retainCount());
+        //if (obj->type == 1) CCLog("added (1) : %d", obj->sprite9->retainCount());
+        //if (obj->type == 2) CCLog("added (2) : %d", obj->label->retainCount());
     }
     else if (obj->parentType == "Message") // 부모가 어떤 scene
     {
@@ -866,13 +715,68 @@ void* SpriteClass::FindSpriteByName(std::string name)
         }
     }
     return NULL;
-
 }
 
-
-/*
-void Common::Compare(class *a, class *b)
+void* SpriteClass::FindLabelByTag(int tag)
 {
-    //return
+    for (int i = 0 ; i < spriteObj.size() ; i++)
+    {
+        if (spriteObj[i]->type == 2 && spriteObj[i]->label->getTag() == tag)
+            return (void*)spriteObj[i]->label;
+    }
+    return NULL;
 }
-*/
+
+void SpriteClass::RemoveAllObjects()
+{
+    int curPriority = -999999999;
+    for (int i = 0 ; i < spriteObj.size() ; i++)
+        curPriority = std::max(curPriority, spriteObj[i]->priority);
+    
+    while (curPriority >= 0)
+    {
+        for (int i = 0 ; i < spriteObj.size() ; i++)
+        {
+            if (spriteObj[i]->priority == curPriority)
+            {
+                //CCLog("priority %d , idx %d , type %d", curPriority, i, spriteObj[i]->type);
+                spriteObj[i]->name.clear();
+                spriteObj[i]->parentName.clear();
+                spriteObj[i]->parentType.clear();
+                if (spriteObj[i]->type == 0) { // delete sprite
+                    //spriteObj[i]->sprite->autorelease();
+                    //spriteObj[i]->sprite->release();
+                    //spriteObj[i]->sprite->removeFromParentAndCleanup(true);
+                    //CCLog("type 0 : %d", spriteObj[i]->sprite->retainCount());
+                    
+                }
+                else if (spriteObj[i]->type == 1) { // delete sprite-9
+                    //spriteObj[i]->sprite9->autorelease();
+                    //spriteObj[i]->sprite9->release();
+                    //spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
+                    //CCLog("type 1 : %d", spriteObj[i]->sprite9->retainCount());
+                    
+                }
+                else { // delete label
+                    //spriteObj[i]->label->autorelease();
+                    //spriteObj[i]->label->release();
+                    //spriteObj[i]->label->removeFromParentAndCleanup(true);
+                    //CCLog("type 2 : %d", spriteObj[i]->label->retainCount());
+                }
+            }
+        }
+        curPriority--;
+    }
+    
+    // free memory
+    for (int i = 0 ; i < spriteObj.size() ; i++)
+        delete spriteObj[i];
+    
+    // clear vector
+    spriteObj.clear();
+}
+
+
+
+
+

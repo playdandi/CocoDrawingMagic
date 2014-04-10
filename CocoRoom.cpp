@@ -202,44 +202,40 @@ void CocoRoom::MakeSpritesCoco()
     
     // stone floor
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/stone_floor.png",
-                        ccp(0, 0), ccp(100, 750), CCSize(0, 0), "", "Layer", coco, 5) );
+                        ccp(0, 0), ccp(100, 730), CCSize(0, 0), "", "Layer", coco, 5) );
     
     // coco character
     
     // skill 그림
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png1",
-                        ccp(0, 0), ccp(608, 1182), CCSize(0, 0), "", "Layer", coco, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png2",
-                        ccp(0, 0), ccp(699, 1182), CCSize(0, 0), "", "Layer", coco, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png3",
-                        ccp(0, 0), ccp(790, 1182), CCSize(0, 0), "", "Layer", coco, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png4",
-                        ccp(0, 0), ccp(882, 1182), CCSize(0, 0), "", "Layer", coco, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png1",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png1"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png2",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png2"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png3",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png3"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png4",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png4"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png4", "0", NULL, 5) );
+    CCPoint pos = ccp(608, 1182);
+    if (myInfo->IsFire())
+    {
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png1", ccp(0, 0), pos, CCSize(0, 0), "", "Layer", coco, 5) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png1", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 5, 1) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 5, 1) );
+        pos = ccp(699, 1182);
+    }
+    if (myInfo->IsWater())
+    {
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png2", ccp(0, 0), pos, CCSize(0, 0), "", "Layer", coco, 5) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png2", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 5, 1) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 5, 1) );
+        pos = ccp(790, 1182);
+    }
+    if (myInfo->IsLand())
+    {
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png3", ccp(0, 0), pos, CCSize(0, 0), "", "Layer", coco, 5) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png3", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 5, 1) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 5, 1) );
+        pos = ccp(882, 1182);
+    }
+    if (myInfo->IsMaster())
+    {
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png4", ccp(0, 0), pos, CCSize(0, 0), "", "Layer", coco, 5) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png4", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png4"), CCSize(0, 0), "background/bg_skill_yellow_mini.png4", "0", NULL, 5, 1) );
+        spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_master_mini.png", ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png4"), CCSize(0, 0), "background/bg_skill_yellow_mini.png4", "0", NULL, 5, 1) );
+    }
     
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png1"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png2"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png3"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 5) );
-    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_master_mini.png",
-        ccp(0.5, 0.5), spriteClassCoco->FindParentCenterPos("background/bg_skill_yellow_mini.png4"),
-        CCSize(0, 0), "background/bg_skill_yellow_mini.png4", "0", NULL, 5) );
     
     // 설명창 배경
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png1",
@@ -259,6 +255,17 @@ void CocoRoom::MakeSpritesCoco()
     spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel("추가속성", fontList[2], 36, ccp(0, 0), ccp(549, 947), ccc3(255,219,53), "", "Layer", coco, 5) );
     spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel("지팡이", fontList[2], 36, ccp(0, 0), ccp(549, 882), ccc3(121,71,0), "", "Layer", coco, 5) );
     spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel("지팡이", fontList[2], 36, ccp(0, 0), ccp(549, 885), ccc3(255,219,53), "", "Layer", coco, 5) );
+    
+    // 실제 값들 넣기 (MP, 기본mp, 추가속성, 지팡이)
+    char val[20];
+    sprintf(val, "%d", myInfo->GetMPTotal());
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 60, ccp(0.5, 0.5), ccp(800, 1090+35), ccc3(255,255,255), "", "Layer", coco, 5) );
+    sprintf(val, "%d", myInfo->GetMP());
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 60, ccp(0.5, 0.5), ccp(800, 999+32), ccc3(255,255,255), "", "Layer", coco, 5) );
+    sprintf(val, "요정 %d", myInfo->GetMpFairy());
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0.5, 0.5), ccp(800, 946+21), ccc3(0,167,222), "", "Layer", coco, 5) );
+    sprintf(val, "%dLv", myInfo->GetStaffLv());
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0.5, 0.5), ccp(800, 884+20), ccc3(255,219,53), "", "Layer", coco, 5) );
     
     // buttons
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png1",
@@ -345,15 +352,15 @@ void CocoRoom::MakeSpritesCandy()
                         ccp(0, 0), ccp(108, 518), CCSize(0, 0), "", "Layer", candy, 5) );
     
     // 5 profiles
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png1",
                         ccp(0, 0), ccp(471, 1200), CCSize(0, 0), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png2",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png2",
                         ccp(0, 0), ccp(184, 1051), CCSize(0, 0), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png3",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png3",
                         ccp(0, 0), ccp(267, 671), CCSize(0, 0), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png4",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png4",
                         ccp(0, 0), ccp(696, 671), CCSize(0, 0), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png5",
+    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png5",
                         ccp(0, 0), ccp(787, 1051), CCSize(0, 0), "", "Layer", candy, 5) );
     
     // names

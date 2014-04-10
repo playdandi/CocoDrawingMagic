@@ -6,7 +6,7 @@
 #include "PuzzleP4.h"
 #include "PuzzleSkill.h"
 #include "Effect.h"
-#include "SoundGame.h"
+#include "Sound.h"
 
 class Effect;
 class PuzzleSkill;
@@ -16,6 +16,7 @@ class PuzzleP4Set;
 class Puzzle : public CCLayer
 {
 public:
+    static CCScene* scene();
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -77,8 +78,10 @@ public:
     
     void PlayEffect(int skillNum);
 
-    static CCScene* scene();
+    
 	CREATE_FUNC(Puzzle);
+    
+    Sound* GetSound();
     
     void EndScene();
     void EndSceneCallback();
@@ -113,7 +116,7 @@ protected:
     
     CCSize m_winSize;
     
-	SoundGame* sound;
+	Sound* sound;
     PuzzleSkill* skill;
     
     int m_iState;
@@ -141,6 +144,7 @@ private:
     CCLayer* cocoLayer;
     int cocoFrameNumber;
     std::vector<CCSprite*> coco_sp;
+    CCLayer* puzzleLayer;
     
     PuzzleP8Set* puzzleP8set;
     CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
@@ -164,6 +168,7 @@ class PuzzleP8Set
 {
 public:
     void SetGameLayer(Puzzle* layer);
+    void SetPuzzleLayer(CCLayer* layer);
     void CreatePiece(int x, int y);
     CCSprite* GetSprite(int x, int y);
     int GetType(int x, int y);
@@ -177,13 +182,15 @@ public:
 private:
     PuzzleP8* object[COLUMN_COUNT][ROW_COUNT];
     Puzzle* gameLayer;
+    CCLayer* puzzleLayer;
 };
 
 class PuzzleP4Set
 {
 public:
     void SetGameLayer(Puzzle* layer);
-    void CreatePiece(int x, int y, int type = -1);
+    void SetPuzzleLayer(CCLayer* layer);
+    void CreatePiece(int x, int y, int type = -100);
     int GetType(int x, int y);
     void SetType(int x, int y, int type);
     void SetOpacity(int x, int y, int alpha);
@@ -194,6 +201,7 @@ public:
 private:
     PuzzleP4* object[COLUMN_COUNT][ROW_COUNT];
     Puzzle* gameLayer;
+    CCLayer* puzzleLayer;
 };
 
 #endif

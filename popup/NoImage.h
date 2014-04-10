@@ -23,6 +23,10 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void XmlParseBuyPotion(char* data, int size);
+    void XmlParseSendPotion(char* data, int size);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    
 protected:
     CCSize winSize;
     

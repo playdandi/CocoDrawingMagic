@@ -27,7 +27,8 @@ void BuyPotion::onExit()
 
 void BuyPotion::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    sound->playClick();
+    EndScene();
 }
 
 
@@ -145,7 +146,11 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
                 EndScene();
+                break;
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png1")
         {
@@ -160,7 +165,8 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                //    Common::ShowNextScene(this, "BuyPotion", "RequestTopaz", false);
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "BuyPotion", "NoImage", false, BUYPOTION_1, BTN_2, nullData);
             }
         }
     }
@@ -182,8 +188,6 @@ void BuyPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyPotion::EndScene()
 {
-    sound->playClick();
-    
     CCString* param = CCString::create("0");
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);

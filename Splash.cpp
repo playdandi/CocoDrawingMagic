@@ -41,6 +41,7 @@ bool Splash::init()
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
     
+    // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
     m_pBackground->setAnchorPoint(ccp(0, 0));
     m_pBackground->setPosition(ccp(0, 0));
@@ -54,6 +55,8 @@ bool Splash::init()
 	this->setTouchEnabled(true);
     isStarting = false;
     
+    httpStatus = 0;
+    
 	return true;
 }
 
@@ -61,16 +64,21 @@ void Splash::LogoLoadingCompleted()
 {
     // logo
     m_pTitle = CCSprite::createWithSpriteFrameName("background/Title.png");
-    m_pTitle->setPosition(ccp(winSize.width/2, 1350));
+    m_pTitle->setPosition(ccp(winSize.width/2, 1350+1000));
     this->addChild(m_pTitle, 5);
+    CCActionInterval* action = CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350));
+    m_pTitle->runAction(CCEaseBounceOut::create(action));
     
-    
+    // 클라이언트에 들고 있던 kakao ID, device Type 불러오기
     mKakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey("kakaoId", -1);
     if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
         mDeviceType = 2;
     else if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         mDeviceType = 1;
+    else
+        mDeviceType = 3;
     
+    // Label 생성
     m_pMsgLabel = CCLabelTTF::create("", fontList[2].c_str(), 40);
     m_pMsgLabel->setAnchorPoint(ccp(0.5, 0.5));
     m_pMsgLabel->setPosition(ccp(winSize.width/2, 400));
@@ -84,22 +92,20 @@ void Splash::LogoLoadingCompleted()
     // kakao id 세팅
     if (mKakaoId == -1)
     {
+        // 처음이면 kakao platform에 동의하는 창으로 넘어가야 한다.
         mKakaoId = 1000;
         CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
     }
     
+    // 시작 버튼
     m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
     m_pStartBtn->setAnchorPoint(ccp(0, 0));
     m_pStartBtn->setPosition(ccp(319, 191));
     this->addChild(m_pStartBtn, 3);
-    
     m_pStartLetter = CCSprite::createWithSpriteFrameName("letter/letter_gamestart.png");
     m_pStartLetter->setAnchorPoint(ccp(0.5, 0.5));
     m_pStartLetter->setPosition(ccp(319+446/2, 191+160/2+5));
     this->addChild(m_pStartLetter, 3);
-    
-    // 내 정보 class (extern) 미리 만들기
-    myInfo = new MyInfo(mKakaoId, mDeviceType);
 }
 
 /*
@@ -162,7 +168,7 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
     
     if (isStarting && m_pStartBtn->boundingBox().containsPoint(point))
     {
-        m_pMsgLabel->setString("로딩중입니다......");
+        m_pMsgLabel->setString("로그인 중...");
         
         // make url
         char temp[255];
@@ -198,44 +204,6 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
     isStarting = false;
 }
 
-void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
-{
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    if (!res)
-        return;
-    
-    int statusCode = res->getResponseCode();
-    //char statusString[64] = {};
-    //sprintf(statusString, "Http Status Code: %d, tag = %s", statusCode, res->getHttpRequest()->getTag());
-    CCLog("response code : %d", statusCode);
-    
-    if (!res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-    {
-        dumpData[i] = (*buffer)[i];
-    }
-    dumpData[buffer->size()] = NULL;
-    CCLog("==================================");
-    CCLog("%s", dumpData);
-    CCLog("==================================");
-    
-    // save
-    //CCUserDefault::sharedUserDefault()->setStringForKey("username", sUsername);
- 
-    // check login success
-    //if (XmlParseLogin(dumpData, buffer->size()))
-    XmlParseLogin(dumpData, buffer->size());
-    //Common::ShowNextScene(this, "Splash", "Ranking", true);
-}
 
 void Splash::XmlParseLogin(char* data, int size)
 {
@@ -250,32 +218,161 @@ void Splash::XmlParseLogin(char* data, int size)
         return;
     }
     
-    // get several data
+    // get data
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
-    
     if (code == 0)
     {
-        // login success
+        // 로그인 기본 정보를 받는다.
+        xml_node setting = nodeResult.child("setting");
+        bool kakaoMsg = (setting.attribute("kakao-message").as_int() == 1) ? true : false;
+        bool pushNoti = (setting.attribute("push-notification").as_int() == 1) ? true : false;
+        bool potionMsg = (setting.attribute("potion-message").as_int() == 1) ? true : false;
+        int userId = nodeResult.child("userID").text().as_int();
+        int msgCnt = nodeResult.child("message").attribute("count").as_int();
         
-        bool todayFirst = nodeResult.child("today-first").text().as_bool();
-        int userID = nodeResult.child("userID").text().as_int();
-        if (todayFirst)
-            CCLog("today first : true");
-        else
-            CCLog("today first : false");
-        CCLog("user id = %d", userID);
-        /*
-        iAge = nodeResult.child("raise").attribute("age").as_int();
-        iType = nodeResult.child("raise").attribute("type").as_int();
-        iWeight = nodeResult.child("raise").attribute("weight").as_int();
-        iMaxScore = nodeResult.child("puzzle").attribute("max-score").as_int();
-        iRemainingHeartNum = nodeResult.child("puzzle").attribute("heart-num").as_int();
-        iRemainingHeartTime = nodeResult.child("puzzle").attribute("heart-remain-time").as_int();
-        */
+        // 내 정보 class (extern) 만들기
+        myInfo = new MyInfo();
+        myInfo->Init(mKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt);
+        
+        // 내 모든 정보 요청
+        m_pMsgLabel->setString("나의 정보를 요청 중...");
+        char temp[50];
+        std::string url = "http://14.63.225.203/cogma/game/user_info.php?";
+        sprintf(temp, "kakao_id=%d", mKakaoId);
+        url += temp;
+        
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+    else
+    {
+        // failed msg
+        CCLog("failed code = %d", code);
+    }
+}
+
+void Splash::XmlParseMyInfo(char *data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 내 모든 정보를 받는다.
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        int mp = nodeResult.child("coco").attribute("magic-point").as_int();
+        int mpStaff = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
+        int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
+        int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
+        int highScore = nodeResult.child("score").attribute("high-score").as_int();
+        int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
+        int certificateType = nodeResult.child("score").attribute("certificate-type").as_int();
+        int remainWeeklyRankTime = nodeResult.child("score").attribute("remain-weekly-rank-time").as_int();
+        int item1 = nodeResult.child("item").attribute("count-1").as_int();
+        int item2 = nodeResult.child("item").attribute("count-2").as_int();
+        int item3 = nodeResult.child("item").attribute("count-3").as_int();
+        int item4 = nodeResult.child("item").attribute("count-4").as_int();
+        int item5 = nodeResult.child("item").attribute("count-5").as_int();
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int remainPotionTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        int fire = nodeResult.child("properties").attribute("fire").as_int();
+        int water = nodeResult.child("properties").attribute("water").as_int();
+        int land = nodeResult.child("properties").attribute("land").as_int();
+        int master = nodeResult.child("properties").attribute("master").as_int();
+        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaff, mpFairy, staffLv, highScore, weeklyHighScore, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
         
         
-        // request for data (friend list)
+        // 친구 리스트 정보를 받는다.
+        m_pMsgLabel->setString("상품 정보를 불러오는 중...");
+        char temp[50];
+        std::string url = "http://14.63.225.203/cogma/game/get_pricelist.php?";
+        sprintf(temp, "device_type=%d", myInfo->GetDeviceType());
+        url += temp;
+        CCLog("url = %s", url.c_str());
+        
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+    else
+    {
+        // failed msg
+        CCLog("failed code = %d", code);
+    }
+}
+
+void Splash::XmlParsePrice(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int id, count, price, bonus;
+        
+        // topaz 가격 정보를 받는다.
+        xml_object_range<xml_named_node_iterator> topaz = nodeResult.child("price-topaz").children("topaz");
+        for (xml_named_node_iterator it = topaz.begin() ; it != topaz.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "count") count = ait->as_int();
+                else if (name == "price") price = ait->as_int();
+                else if (name == "bonus-percentage") bonus = ait->as_int();
+            }
+            priceTopaz.push_back( new PriceTopaz(id, count, price, bonus) );
+        }
+        // starCandy 가격 정보를 받는다.
+        xml_object_range<xml_named_node_iterator> sc = nodeResult.child("price-starcandy").children("starcandy");
+        for (xml_named_node_iterator it = sc.begin() ; it != sc.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "count") count = ait->as_int();
+                else if (name == "price") price = ait->as_int();
+                else if (name == "bonus-percentage") bonus = ait->as_int();
+            }
+            priceStarCandy.push_back( new PriceStarCandy(id, count, price, bonus) );
+        }
+
+                    
+        // 친구 리스트 정보를 받는다.
+        m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
         char temp[50];
         std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
         sprintf(temp, "kakao_id=%d", mKakaoId);
@@ -285,24 +382,130 @@ void Splash::XmlParseLogin(char* data, int size)
         CCHttpRequest* req = new CCHttpRequest();
         req->setUrl(url.c_str());
         req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedData));
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
+    }
+    else if (code == 10)
+    {
+        CCLog("잘못된 device type 값입니다.");
+    }
+}
+
+void Splash::XmlParseFriends(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        profileCnt = 0;
         
-        //return true;
+        int kakaoId;
+        std::string nickname;
+        std::string imageUrl;
+        int potionMsgStatus;
+        int weeklyHighScore;
+        int scoreUpdateTime;
+        int remainPotionTime;
+        int highScore;
+        int certificateType;
+        int fire;
+        int water;
+        int land;
+        int master;
+        int fairyId;
+        int fairyLevel;
+        int skillId;
+        int skillLevel;
+        
+        xml_object_range<xml_named_node_iterator> friends = nodeResult.child("friend-list").children("friend");
+        for (xml_named_node_iterator it = friends.begin() ; it != friends.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "kakao-id") kakaoId = ait->as_int();
+                else if (name == "nick-name") nickname = ait->as_string();
+                else if (name == "profile-image-url") imageUrl = ait->as_string();
+                else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
+                else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
+                else if (name == "high-score") highScore = ait->as_int();
+                else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
+                else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
+                else if (name == "certificate-type") certificateType = ait->as_int();
+                else if (name == "properties-fire") fire = ait->as_int();
+                else if (name == "properties-water") water = ait->as_int();
+                else if (name == "properties-land") land = ait->as_int();
+                else if (name == "properties-master") master = ait->as_int();
+                else if (name == "fairy-id") fairyId = ait->as_int();
+                else if (name == "fairy-level") fairyLevel = ait->as_int();
+                else if (name == "skill-id") skillId = ait->as_int();
+                else if (name == "skill-level") skillLevel = ait->as_int();
+            }
+            
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            // potion image 처리
+            friendList[(int)friendList.size()-1]->SetPotionSprite();
+            
+            // profile이 없으면 미리 NOIMAGE sprite를 만든다.
+            if (imageUrl == "")
+            {
+                profileCnt++;
+                friendList[(int)friendList.size()-1]->SetSprite();
+            }
+        }
+        
+        // sort by { max[weeklyScore], min[scoreUpdateTime] }
+        DataProcess::SortFriendListByScore();
+        
+        // get image by url (다 받으면 Ranking으로 넘어간다)
+        m_pMsgLabel->setString("친구의 못생긴 얼굴 지적하는 중...");
+        char tag[5];
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            CCLog("sorted : %d", friendList[i]->GetKakaoId());
+            if (friendList[i]->GetImageUrl() != "")
+            {
+                // get profile image sprite from URL
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(friendList[i]->GetImageUrl().c_str());
+                req->setRequestType(CCHttpRequest::kHttpGet);
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+                sprintf(tag, "%d", i);
+                req->setTag(tag);
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+        }
     }
     else
     {
         // failed msg
         CCLog("failed code = %d", code);
     }
-    
-    //return false;
 }
 
-void Splash::onHttpRequestCompletedData(CCNode *sender, void *data)
+
+void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    //int statusCode = res->getResponseCode();
+    //char statusString[64] = {};
+    //sprintf(statusString, "Http Status Code: %d, tag = %s", statusCode, res->getHttpRequest()->getTag());
+    //CCLog("response code : %d", statusCode);
     
     if (!res || !res->isSucceed())
     {
@@ -316,145 +519,43 @@ void Splash::onHttpRequestCompletedData(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-    //CCLog("==================================");
-    //CCLog("%s", dumpData);
-    //CCLog("==================================");
     
-    // check login success
-//    if (XMLParseData(dumpData, buffer->size()))
-//        Common::ShowNextScene(this, "Splash", "Ranking", true);
-    XMLParseData(dumpData, buffer->size());
-}
-
-bool Splash::XMLParseData(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
+    // parse xml data
+    httpStatus++;
+    switch (httpStatus-1)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return false;
-    }
-    
-    // get several data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    
-    if (code == 0)
-    {
-        profileCnt = 0;
-        char tag[5];
-        
-        xml_object_range<xml_named_node_iterator> friends = nodeResult.child("friend-list").children("friend");
-        for (xml_named_node_iterator it = friends.begin() ; it != friends.end() ; ++it)
-        {
-            int kakaoId;
-            std::string nickname;
-            std::string imageUrl;
-            int potionMsgStatus;
-            int weeklyHighScore;
-            int remainPotionTime;
-            int highScore;
-            int certificateType;
-            int fire;
-            int water;
-            int land;
-            int master;
-            int fairyId;
-            int fairyLevel;
-            int skillId;
-            int skillLevel;
-
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                std::string name = ait->name();
-                if (name == "kakao-id") kakaoId = ait->as_int();
-                else if (name == "nick-name") nickname = ait->as_string();
-                else if (name == "profile-image-url") imageUrl = ait->as_string();
-                else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
-                else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
-                else if (name == "high-score") highScore = ait->as_int();
-                else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
-                else if (name == "certificate-type") certificateType = ait->as_int();
-                else if (name == "properties-fire") fire = ait->as_int();
-                else if (name == "properties-water") water = ait->as_int();
-                else if (name == "properties-land") land = ait->as_int();
-                else if (name == "properties-master") master = ait->as_int();
-                else if (name == "fairy-id") fairyId = ait->as_int();
-                else if (name == "fairy-level") fairyLevel = ait->as_int();
-                else if (name == "skill-id") skillId = ait->as_int();
-                else if (name == "skill-level") skillLevel = ait->as_int();
-            }
+        case HTTP_LOGIN:
+            XmlParseLogin(dumpData, buffer->size()); break;
+        case HTTP_MYINFO:
+            XmlParseMyInfo(dumpData, buffer->size()); break;
+        case HTTP_PRICE:
+            XmlParsePrice(dumpData, buffer->size()); break;
+        case HTTP_FRIENDS:
+            XmlParseFriends(dumpData, buffer->size()); break;
+        default:
+            profileCnt++;
+            // make texture2D
+            CCImage* img = new CCImage;
+            img->initWithImageData(dumpData, buffer->size());
+            CCTexture2D* texture = new CCTexture2D();
+            texture->initWithImage(img);
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, weeklyHighScore, highScore, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            // set CCSprite
+            int index = atoi(res->getHttpRequest()->getTag());
+            friendList[index]->SetSprite(texture);
             
-            // get profile image sprite from URL
-            CCHttpRequest* req = new CCHttpRequest();
-            CCLog("image url = %s", imageUrl.c_str());
-            req->setUrl(imageUrl.c_str());
-            req->setRequestType(CCHttpRequest::kHttpGet);
-            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedProfile));
-            sprintf(tag, "%d", (int)friendList.size()-1);
-            req->setTag(tag);
-            CCHttpClient::getInstance()->send(req);
-            req->release();
-        }
-        
-        return true;
+            //CCLog("callback : %d", profileCnt);
+            
+            if (profileCnt == (int)friendList.size())
+                Common::ShowNextScene(this, "Splash", "Ranking", true);
+            break;
     }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
-    }
-    
-    return false;
 }
-
-void Splash::onHttpRequestCompletedProfile(CCNode *sender, void *data)
-{
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    profileCnt++;
-    //CCLog("profile cnt : %d", profileCnt);
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[IMAGE_BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    
-    // make texture2D
-    CCImage* img = new CCImage;
-    img->initWithImageData(dumpData, buffer->size());
-    CCTexture2D* texture = new CCTexture2D();
-    texture->initWithImage(img);
-    
-    // set CCSprite
-    int index = atoi(res->getHttpRequest()->getTag());
-    //CCLog("image index = %d", index);
-    friendList[index]->SetSprite(texture);
-    
-    if (profileCnt == (int)friendList.size())
-        Common::ShowNextScene(this, "Splash", "Ranking", true);
-}
-
-
-
 
 
 void Splash::EndScene()
 {
+    CCLog("Splash :: EndScene");
     //this->removeAllChildren();
     //CCScene* nextScene = RaisingLayer::scene();
 //	CCDirector::sharedDirector()->setDepthTest(true);

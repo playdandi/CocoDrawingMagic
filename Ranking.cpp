@@ -33,9 +33,8 @@ void Ranking::onEnter()
 void Ranking::onPause()
 {
     CCLog("Ranking :: onPause");
-    //CCDirector* pDirector = CCDirector::sharedDirector();
-    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
-    //CCLayer::onEnter();
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
 }
 void Ranking::onExit()
 {
@@ -96,17 +95,11 @@ bool Ranking::init()
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
-    
+    // 효과음 , 배경음은 클라이언트에 user data로 보관해야 한다. 기본 세팅을 위한 코드.
     bool opt0 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_0", true);
     bool opt1 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true);
-    bool opt2 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_2", true);
-    bool opt3 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_3", true);
-    bool opt4 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_4", true);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_0", opt0);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_1", opt1);
-    CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_2", opt2);
-    CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_3", opt3);
-    CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_4", opt4);
     
     sound = new Sound();
     sound->PreLoadSound();
@@ -123,8 +116,12 @@ bool Ranking::init()
     isTouched = false;
     isKeyBackClicked = false;
     
+    this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
+    //this->unschedule(schedule_selector(Ranking::PotionTimer));
+    
 	return true;
 }
+
 
 void Ranking::Notification(CCObject* obj)
 {
@@ -140,6 +137,30 @@ void Ranking::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
         isTouched = false;
         isKeyBackClicked = false;
+        
+        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+        
+        // 포션 개수에 따른 포션 아이콘 업데이트
+        char name[40];
+        for (int i = 0 ; i < 5 ; i++)
+        {
+            sprintf(name, "icon/icon_potion.png%d", i);
+            if (i < myInfo->GetPotion())
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            else
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        }
+        
+        // message Count 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setString(Common::MakeComma(myInfo->GetMsgCnt()).c_str());
+        
+        // 포션 보내기에 대한 정보 업데이트
+        //for (int i = 0 ; i < friendList.size() ; i++)
+        //    friendList[i]->SetPotionSprite();
     }
     else if (param->intValue() == 1)
     {
@@ -155,14 +176,20 @@ void Ranking::Notification(CCObject* obj)
 void Ranking::InitSprites()
 {
     // background image
-    CCTexture2D::setDefaultAlphaPixelFormat(kTexture2DPixelFormat_RGBA4444);
     // load images
     CCTexture2D* tBackground = CCTextureCache::sharedTextureCache()->addImage("images/main_background.png");
+    tBackground->setDefaultAlphaPixelFormat(kTexture2DPixelFormat_RGBA4444);
     CCSprite* temp = new CCSprite();
     temp->initWithTexture(tBackground, CCRectMake(0, 0, 1080, 1920));
     temp->setAnchorPoint(ccp(0, 0));
     temp->setPosition(ccp(0, 0));
     this->addChild(temp, 0);
+    
+//    CCLog("=========================================================");
+//    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+//    CCLog("=========================================================");
+    
+    char name[30], name2[30];
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "Ranking", this, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png2", ccp(0, 0), ccp(390, 1666), CCSize(290, 75), "", "Ranking", this, 0) );
@@ -174,59 +201,102 @@ void Ranking::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15, 1656), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), ccp(848, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), ccp(904, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), ccp(959, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
     
+    // property 문양 (mp 바로 밑에)
+    CCPoint pos = ccp(848, 1611);
+    if (myInfo->IsFire())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
+        pos = ccp(904, 1611);
+    }
+    if (myInfo->IsWater())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
+    if (myInfo->IsLand())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
+    
+    // 메인 지붕
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
     CCSize roofSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png2", ccp(0, 0), ccp(10+roofSize.width, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
     spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setFlipX(true);
     
+    // 플러스 아이콘들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_potion_time.png", ccp(0, 0), ccp(506, 1493), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png3", ccp(0, 0), ccp(645, 1498), CCSize(0, 0), "", "Ranking", this, 5) );
     
+    // 스트랩
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_red.png", ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_rank.png", ccp(0, 0), ccp(118, 1920-441-88), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_rank_time.png", ccp(0, 0), ccp(423, 1391), CCSize(0, 0), "", "Ranking", this, 5) );
+    
+    // 스케치북 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_sketchbook.png", ccp(0, 0), ccp(67, 1920-1569-96), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_sketchbook.png", ccp(0, 0), ccp(53, 1920-1674-44), CCSize(0, 0), "", "Ranking", this, 5) );
-    
+
+    // 친구추가 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_addfriend.png", ccp(0, 0), ccp(912, 1920-1582-86), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_addfriend.png", ccp(0, 0), ccp(886, 1920-1674-44), CCSize(0, 0), "", "Ranking", this, 5) );
+    
+    // 게임준비 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gameready.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "Ranking", this, 5) );
+    
+    // 세팅 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_setting.png", ccp(0, 0), ccp(750, 1498), CCSize(0, 0), "", "Ranking", this, 5) );
+    // 메시지함 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_msg.png", ccp(0, 0), ccp(750+90+35, 1498), CCSize(0, 0), "", "Ranking", this, 5) );
     
     CCSize msgSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_msg_setting.png", ccp(0, 0), ccp(msgSize.width-30, msgSize.height-30), CCSize(0, 0), "button/btn_msg.png", "0", NULL, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("88", fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5) );
+
+    sprintf(name, "%d", myInfo->GetMsgCnt());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5, 1, 255, 0) );
     
     // make potion
-    char name[30], name2[30];
-    int numOfPotion = 3;
     for (int i = 0; i < 5; i++)
     {
         sprintf(name, "icon/icon_potion_empty.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(89+83*i, 1480), CCSize(0, 0), "", "Ranking", this, 4) );
-        if (i < numOfPotion)
-        {
-            sprintf(name2, "icon/icon_potion.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4) );
-        }
+        
+        sprintf(name2, "icon/icon_potion.png%d", i);
+        if (i < myInfo->GetPotion())
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4, 1, 255) );
+        else
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4, 1, 0) );
     }
     
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("88,888", fontList[0], 36, ccp(0, 0), ccp(105, 1686), ccc3(255,255,255), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("200,000", fontList[0], 36, ccp(0, 0), ccp(415, 1686), ccc3(255,255,255), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("5,200,000", fontList[0], 36, ccp(0, 0), ccp(795, 1686), ccc3(255,255,255), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("11:59", fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("23:50", fontList[0], 48, ccp(0.5, 0.5), ccp(498, 1445), ccc3(152, 49, 64), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("23:50", fontList[0], 48, ccp(0.5, 0.5), ccp(498, 1448), ccc3(255,255,255), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("남음", fontList[0], 30, ccp(0, 0), ccp(550, 1400), ccc3(212, 212, 212), "", "Ranking", this, 5) );
+    // topaz
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0, 0), ccp(110, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 1) );
+    // starcandy
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0, 0), ccp(420, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 2) );
+    // magic-point
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0, 0), ccp(800, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 3) );
+    // potion-remain-time
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 4) );
     
+    // 주간랭킹 남은시간
+    if (myInfo->GetRemainWeeklyRankTimeInt() < 86400) // '시간' 단어가 들어갈 경우
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainWeeklyRankTime(), fontList[0], 36, ccp(0.5, 0.5), ccp(498, 1450), ccc3(152, 49, 64), "", "Ranking", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainWeeklyRankTime(), fontList[0], 36, ccp(0.5, 0.5), ccp(498, 1453), ccc3(255,255,255), "", "Ranking", this, 5) );
+    }
+    else // '일' 단어가 들어갈 경우
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainWeeklyRankTime(), fontList[0], 48, ccp(0.5, 0.5), ccp(498, 1440), ccc3(152, 49, 64), "", "Ranking", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainWeeklyRankTime(), fontList[0], 48, ccp(0.5, 0.5), ccp(498, 1443), ccc3(255,255,255), "", "Ranking", this, 5) );
+    }
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("남음", fontList[0], 30, ccp(0, 0), ccp(550, 1400), ccc3(212, 212, 212), "", "Ranking", this, 5) );
 }
 
 void Ranking::MakeScroll()
@@ -267,16 +337,27 @@ void Ranking::MakeScroll()
         else // 4위부터는 일반 font 사용
         {
             sprintf(rankNum, "%d", i+1);
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(rankNum, fontList[0], 36, ccp(0, 0), ccp(32, 115), ccc3(78,47,8), "", "Layer", profileLayer, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(rankNum, fontList[0], 48, ccp(0, 0), ccp(32, 115), ccc3(78,47,8), "", "Layer", profileLayer, 5) );
         }
         
         // profile image
-        friendList[i]->GetProfile()->setScale(0.85f);
+        if (friendList[i]->GetImageUrl() != "")
+        {
+            friendList[i]->GetProfile()->setScale(0.85f);
+            friendList[i]->GetProfile()->setPosition(ccp(102+5, 36+10));
+        }
+        else
+        {
+            friendList[i]->GetProfile()->setPosition(ccp(102, 36));
+        }
         friendList[i]->GetProfile()->setAnchorPoint(ccp(0, 0));
-        friendList[i]->GetProfile()->setPosition(ccp(102+5, 36+10));
         profileLayer->addChild(friendList[i]->GetProfile(), 5);
-        sprintf(name, "background/bg_profile.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+        
+        if (friendList[i]->GetImageUrl() != "")
+        {
+            sprintf(name, "background/bg_profile.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+        }
         
         // user name
         friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));
@@ -286,10 +367,27 @@ void Ranking::MakeScroll()
         
         // user score
         sprintf(score, "%d", friendList[i]->GetWeeklyHighScore());
-        CCLayer* scoreLayer = Common::MakeImageNumberLayer(score);
+        CCLayer* scoreLayer = Common::MakeImageNumberLayer(score, 0);
         scoreLayer->setPosition(ccp(282, 36));
         profileLayer->addChild(scoreLayer, 5);
 
+        // potion
+        if (friendList[i]->GetPotionSprite() != NULL)
+            profileLayer->addChild(friendList[i]->GetPotionSprite(), 5);
+        
+        // potion timer (안 보여도 그냥 포지션만 잡아 놓는다)
+        friendList[i]->GetPotionLabelMin()->setPosition(ccp(762, 80));
+        profileLayer->addChild(friendList[i]->GetPotionLabelMin(), 6);
+        friendList[i]->GetPotionLabelMin()->setString("60:");
+        friendList[i]->GetPotionLabelSec()->setPosition(ccp(773, 52));
+        profileLayer->addChild(friendList[i]->GetPotionLabelSec(), 6);
+        friendList[i]->GetPotionLabelSec()->setString("00");
+        if (friendList[i]->GetRemainPotionTime() == 0 || friendList[i]->GetPotionMsgStatus() == 0)
+        {
+            friendList[i]->GetPotionLabelMin()->setOpacity(0);
+            friendList[i]->GetPotionLabelSec()->setOpacity(0);
+        }
+        /*
         // potion state (내 프로필에는 당연히 포션 그림 나오면 안 된다.)
         if (friendList[i]->GetPotionMsgStatus() != POTION_NOTHING &&
             friendList[i]->GetKakaoId() != myInfo->GetKakaoId())
@@ -298,15 +396,22 @@ void Ranking::MakeScroll()
             if (friendList[i]->GetPotionMsgStatus() == POTION_SEND)
             {
                 if (friendList[i]->GetRemainPotionTime() == 0)
-                    sprintf(potionState, "icon/icon_potion_send.png%d", i);
+                    sprintf(potionState, "icon/icon_potion_send.png");
                 else
-                    sprintf(potionState, "icon/icon_potion_remain.png%d", i);
+                    sprintf(potionState, "icon/icon_potion_remain.png");
             }
             else
-                sprintf(potionState, "icon/icon_potion_x.png%d", i);
+                sprintf(potionState, "icon/icon_potion_x.png");
             
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, potionState, ccp(0, 0), ccp(724, 24), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+            CCSprite* potion = CCSprite::createWithSpriteFrameName(potionState);
+            potion->setAnchorPoint(ccp(0, 0));
+            potion->setPosition(ccp(724, 24));
+            potion->setTag(i);
+            profileLayer->addChild(potion, 5);
+            potions.push_back(potion);
+            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, potionState, ccp(0, 0), ccp(724, 24), CCSize(0, 0), "", "Layer", profileLayer, 5) );
         }
+        */
         
         // dotted line
         //if (i < numOfList-1)
@@ -337,6 +442,46 @@ void Ranking::MakeScroll()
 {
     CCLog("touch down action!");
 }*/
+
+void Ranking::PotionTimer(float f)
+{
+    char time[5];
+    int remainTime;
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        remainTime = friendList[i]->GetRemainPotionTime();
+        if (remainTime > 0)
+            friendList[i]->SetRemainPotionTime(remainTime-1);
+        // 시간을 나타내야 하는 포션은 타이머를 보여준다.
+        if (remainTime-1 > 0 && friendList[i]->GetPotionMsgStatus() == 1)
+        {
+            friendList[i]->GetPotionLabelMin()->setOpacity(255);
+            friendList[i]->GetPotionLabelSec()->setOpacity(255);
+            
+            if ((remainTime-1)/60 < 10)
+                sprintf(time, "0%d:", (remainTime-1)/60);
+            else
+                sprintf(time, "%d:", (remainTime-1)/60);
+            friendList[i]->GetPotionLabelMin()->setString(time);
+            
+            if ((remainTime-1)%60 < 10)
+                sprintf(time, "0%d", (remainTime-1)%60);
+            else
+                sprintf(time, "%d", (remainTime-1)%60);
+            friendList[i]->GetPotionLabelSec()->setString(time);
+        }
+        
+        // 이제 막 00:00가 되었다면 potion sprite를 바꾼다.
+        if (remainTime-1 == 0)
+        {
+            friendList[i]->GetPotionLabelMin()->setOpacity(0);
+            friendList[i]->GetPotionLabelSec()->setOpacity(0);
+            friendList[i]->SetPotionSprite();
+        }
+    }
+}
+
+
 
 bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -451,8 +596,26 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             sound->playClick();
             Common::ShowNextScene(this, "Ranking", "Profile", false, i);
         }
+        
+        if (friendList[i]->GetPotionSprite() != NULL)
+        {
+            // 포션 보낼 수 있는 상태 & 남은시간 = 0 일 때만 가능하다.
+            p = friendList[i]->GetPotionSprite()->convertToNodeSpace(point);
+            CCSize size = friendList[i]->GetPotionSprite()->getContentSize();
+            if (isScrollViewTouched && !isScrolling &&
+                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height &&
+                friendList[i]->GetPotionMsgStatus() == 1 && friendList[i]->GetRemainPotionTime() == 0)
+            {
+                sound->playClick();
+                std::vector<int> data;
+                data.push_back(i);
+                Common::ShowPopup(this, "Ranking", "NoImage", false, POTION_SEND_TRY, BTN_2, data);
+                break;
+            }
+        }
     }
     
+
     /*
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {

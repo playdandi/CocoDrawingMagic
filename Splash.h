@@ -2,9 +2,14 @@
 #define __poops8__Splash__
 
 #include "Common.h"
-//#include "Data.h"
 #include "Sound.h"
 #include "cocos-ext.h"
+
+#define HTTP_LOGIN 0
+#define HTTP_MYINFO 1
+#define HTTP_PRICE 2
+#define HTTP_FRIENDS 3
+#define HTTP_PROFILE_IMAGE 4
 
 using namespace cocos2d::extension;
 
@@ -32,11 +37,11 @@ public:
 //    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
 //    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
-    void onHttpRequestCompleted(CCNode *sender, void *data);
-    void onHttpRequestCompletedData(CCNode *sender, void *data);
     void XmlParseLogin(char* data, int size);
-    bool XMLParseData(char* data, int size);
-    void onHttpRequestCompletedProfile(CCNode *sender, void *data);
+    void XmlParseMyInfo(char* data, int size);
+    void XmlParsePrice(char* data, int size);
+    void XmlParseFriends(char* data, int size);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
     
     void EndScene();
     
@@ -51,6 +56,8 @@ protected:
 private:
     int mKakaoId;
     int mDeviceType;
+    
+    int httpStatus;
     
     bool isKeyBackClicked;
     CCSprite* m_pBackground;

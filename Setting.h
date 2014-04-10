@@ -19,6 +19,9 @@ public:
     
     void InitSprites();
     
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseResult(char* data, int size);
+    
     void EndScene();
     void EndSceneCallback();
     
@@ -33,9 +36,12 @@ protected:
     CCPoint selectedTouchPos;
     CCPoint standardBtnPos;
     
+    bool kakaoMsgReserved;
+    bool pushNotiReserved;
+    bool potionMsgReserved;
+    
 private:
     SpriteClass* spriteClass;
-
 };
 
 #endif /* defined(__CocoMagic__Setting__) */

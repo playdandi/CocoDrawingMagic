@@ -30,22 +30,17 @@ public:
     void EndScene();
     void EndSceneCallback();
     
-    void ReleaseAll();
-    
 protected:
     CCSize winSize;
     bool isTouched;
     
 private: // 해제해야 하는 변수들은 여기에 넣자.
     CCSprite* pBlack;
-    
     SpriteClass* spriteClass;
     
     CCLayer* itemContainer;
     std::vector<CCLayer*> layers;
     std::vector<CCLayer*> numberLayers;
-    std::vector<std::string> spriteName;
-    std::vector<std::string> cost;
 };
 
 #endif /* defined(__CocoMagic__BuyTopaz__) */

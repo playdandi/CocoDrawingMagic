@@ -49,8 +49,12 @@ bool GameReady::init()
     
     spriteClass = new SpriteClass();
     
+    // item select init.
     for (int i = 0 ; i < 5 ; i++)
+    {
         itemSelected[i] = false;
+        itemNumLayer.push_back(new CCLayer());
+    }
     
     InitSprites();
     MakeScroll();
@@ -78,6 +82,23 @@ void GameReady::Notification(CCObject* obj)
         this->setTouchEnabled(true);
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
         isTouched = false;
+        
+        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+        
+        // 포션 개수에 따른 포션 아이콘 업데이트
+        char name[40];
+        for (int i = 0 ; i < 5 ; i++)
+        {
+            sprintf(name, "icon/icon_potion.png%d", i);
+            if (i < myInfo->GetPotion())
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            else
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        }
     }
     else if (param->intValue() == 1)
     {
@@ -118,19 +139,38 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png4", ccp(0, 0), ccp(867, 497), CCSize(136, 63), "", "GameReady", this, 1) );
     
     
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15, 1656), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "GameReady", this, 5) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15, 1656), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), ccp(848, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), ccp(904, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), ccp(959, 1611), CCSize(0, 0), "", "Ranking", this, 5) );
+    // property 문양 (mp 바로 밑에)
+    CCPoint pos = ccp(848, 1611);
+    if (myInfo->IsFire())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
+        pos = ccp(904, 1611);
+    }
+    if (myInfo->IsWater())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
+    if (myInfo->IsLand())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
     
+    // roof
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
     CCSize roofSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png2", ccp(0, 0), ccp(10+roofSize.width, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
     spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setFlipX(true);
     
+    // 버튼들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_potion_time.png", ccp(0, 0), ccp(506, 1493), CCSize(0, 0), "", "Ranking", this, 5) );
@@ -138,18 +178,28 @@ void GameReady::InitSprites()
     
     // make potion
     char name[40], name2[40];
-    int numOfPotion = 3;
     for (int i = 0; i < 5; i++)
     {
         sprintf(name, "icon/icon_potion_empty.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(89+83*i, 1480), CCSize(0, 0), "", "Ranking", this, 4) );
-        if (i < numOfPotion)
-        {
-            sprintf(name2, "icon/icon_potion.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4) );
-        }
+        
+        sprintf(name2, "icon/icon_potion.png%d", i);
+        if (i < myInfo->GetPotion())
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4, 1, 255) );
+        else
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4, 1, 0) );
     }
     
+    // topaz
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0, 0), ccp(110, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 1) );
+    // starcandy
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0, 0), ccp(420, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 2) );
+    // magic-point
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0, 0), ccp(800, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 3) );
+    // potion-remain-time
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 4) );
+
+    // strap, 제일 아래 버튼 등
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_blue.png", ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_gameready.png", ccp(0, 0), ccp(409, 1389), CCSize(0, 0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png", ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "GameReady", this, 5) );
@@ -171,13 +221,22 @@ void GameReady::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 1, 0) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
-        if (i < 4)
-        {
-            sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5) );
+        sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5) );
 
-            sprintf(name2, "icon/icon_item_%d.png", i+1);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+        //sprintf(name2, "icon/icon_item_%d.png", i+1);
+        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+        
+        if (myInfo->GetItem(i) > 0)
+        {
+            itemNumLayer[i] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)));
+            itemNumLayer[i]->setPosition(ccp(84+193*i+130, 965));
+            this->addChild(itemNumLayer[i], 10);
+        }
+        else
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(84+193*i-15, 925), CCSize(0, 0), "", "GameReady", this, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("1200", fontList[0], 36, ccp(0, 0), ccp(84+193*i+50, 935), ccc3(255,255,255), "", "GameReady", this, 5) );
         }
     }
     

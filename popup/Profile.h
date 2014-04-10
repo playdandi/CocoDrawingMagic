@@ -6,6 +6,7 @@
 class Profile : public CCLayer
 {
 public:
+    ~Profile(void);
     static CCScene* scene(int idx);
     virtual bool init();
     virtual void onEnter();
@@ -31,6 +32,9 @@ protected:
     bool isTouched;
     
 private:
+    CCSprite* pBlack;
+    CCLayer* scoreLayer;
+    CCLayer* profileLayer;
     SpriteClass* spriteClass;
 };
 

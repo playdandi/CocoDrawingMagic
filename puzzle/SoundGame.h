@@ -1,3 +1,4 @@
+/*
 #ifndef __CocoMagic__SoundGame__
 #define __CocoMagic__SoundGame__
 
@@ -16,11 +17,15 @@ public:
     
     void PlayBackgroundSound();
     void StopBackgroundSound();
+    
+    void PlayPieceClick(int idx);
+    void PlayBomb();
+    void PlaySkillSound(int skillNum);
 
 private:
     std::string ext;
     int cnt;
 };
 
-
-#endif /* defined(__CocoMagic__SoundGame__) */
+*/
+//#endif /* defined(__CocoMagic__SoundGame__) */

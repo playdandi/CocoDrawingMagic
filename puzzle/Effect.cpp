@@ -642,35 +642,37 @@ void Effect::Effect7Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_Spirit()
 {
-    /*
+    return;
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/BoilingFoam.plist");
+    m_emitter->retain();
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(ccp(70, 300));
+    m_emitter->setStartColor(ccc4f(0.1, 0.1, 0.95, 1));
+    m_emitter->setEndColor(ccc4f(0.1, 0.1, 0.95, 0));
+    m_emitter->setScale(1.2f);
+    gameLayer->addChild(m_emitter, 1000);
+    
     CCParticleSystemQuad* eye1 = CCParticleSystemQuad::create("images/BoilingFoam.plist");
     eye1->retain();
     eye1->setAnchorPoint(ccp(0.5, 0.5));
-    eye1->setPosition(ccp(50, 250));
-    eye1->setStartColor(ccc4f(0.01, 0.01, 0.01, 1));
-    eye1->setEndColor(ccc4f(0.99, 0.99, 0.99, 0));
-    eye1->setScale(0.3f);
-    gameLayer->addChild(eye1, 3050);
+    eye1->setPosition(ccp(50, 350));
+    eye1->setStartColor(ccc4f(0.99, 0.01, 0.01, 1));
+    eye1->setEndColor(ccc4f(0.99, 0.01, 0.01, 1));
+    eye1->setScale(0.4f);
+    gameLayer->addChild(eye1, 1050);
     //CCParticleBatchNode *batch1 = CCParticleBatchNode::createWithTexture(eye1->getTexture());
     //batch1->addChild(eye1);
     
     CCParticleSystemQuad* eye2 = CCParticleSystemQuad::create("images/BoilingFoam.plist");
     eye2->retain();
     eye2->setAnchorPoint(ccp(0.5, 0.5));
-    eye2->setPosition(ccp(95, 250));
-    eye2->setStartColor(ccc4f(0.95, 0.0, 0.0, 1));
-    eye2->setEndColor(ccc4f(0.03, 0.03, 0.03, 0));
+    eye2->setPosition(ccp(95, 350));
+    eye2->setStartColor(ccc4f(0.99, 0.01, 0.01, 1));
+    eye2->setEndColor(ccc4f(0.99, 0.01, 0.01, 1));
     eye2->setScale(0.4f);
-    gameLayer->addChild(eye2, 3050);
+    gameLayer->addChild(eye2, 1050);
     
-    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/BoilingFoam.plist");
-    m_emitter->retain();
-    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    m_emitter->setPosition(ccp(70, 220));
-    m_emitter->setStartColor(ccc4f(0.1, 0.1, 0.95, 1));
-    m_emitter->setEndColor(ccc4f(0.1, 0.1, 0.95, 0));
-    m_emitter->setScale(0.9f);
-    gameLayer->addChild(m_emitter, 3000);
+    
     //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
     //batch->addChild(m_emitter);
     //
@@ -678,8 +680,6 @@ void Effect::PlayEffect_Spirit()
     //CCParticleBatchNode *batch2 = CCParticleBatchNode::createWithTexture(eye2->getTexture());
     //batch2->addChild(eye2);
     
-    
-*/
     //gameLayer->addChild(batch, 2000);
     //gameLayer->addChild(batch1, 2001);
     //gameLayer->addChild(batch2, 2001);

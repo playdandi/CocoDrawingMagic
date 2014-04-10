@@ -35,15 +35,14 @@ public:
 protected:
     CCSize winSize;
     bool isTouched;
-    
-    //CCScrollView* scrollView;
-    //bool isScrolling;
-    
+
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
     
-    std::vector<std::string> spriteName;
-    std::vector<std::string> cost;
+    CCLayer* itemContainer;
+    std::vector<CCLayer*> layers;
+    std::vector<CCLayer*> numberLayers;
 };
 
 #endif /* defined(__CocoMagic__BuyStarCandy__) */

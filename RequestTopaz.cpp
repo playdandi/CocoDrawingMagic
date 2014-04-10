@@ -86,6 +86,7 @@ void RequestTopaz::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904+243));
     
     int numOfList = friendList.size();
+    int height = 0;
     char fname[50], fname2[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
@@ -94,8 +95,9 @@ void RequestTopaz::MakeScroll()
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
-        itemLayer->setPosition(ccp(34, (numOfList-i-1)*166));
+        itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
         scrollContainer->addChild(itemLayer, 2);
+        height++;
         
         // profile bg
         spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );

@@ -40,6 +40,7 @@ protected:
     
 private:
     bool itemSelected[5];
+    std::vector<CCLayer*> itemNumLayer;
     
     bool isTouched;
     bool isScrolling;

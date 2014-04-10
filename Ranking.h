@@ -30,6 +30,8 @@ public:
     
     void InitSprites();
     void MakeScroll();
+    
+    void PotionTimer(float f);
 
     //void touchDownAction(CCObject* sender, CCControlEvent controlEvent);
     
@@ -42,8 +44,7 @@ protected:
     CCPoint scrollViewLastPoint;
     std::vector<CCSprite*> profiles;
     
-    //std::vector<std::string> usernames;
-    //std::vector<int> userPotionStates;
+    //std::vector<CCSprite*> potions;
     
     bool isTouched;
     bool isScrolling;
