@@ -1,7 +1,11 @@
 #include "SendTopaz.h"
 
-CCScene* SendTopaz::scene()
+static int priceTopazIdx;
+
+CCScene* SendTopaz::scene(int idx)
 {
+    priceTopazIdx = idx;
+    
     CCScene* pScene = CCScene::create();
     SendTopaz* pLayer = SendTopaz::create();
     pScene->addChild(pLayer);
@@ -129,9 +133,7 @@ void SendTopaz::MakeScroll()
     
     // addchild
     for (int i = spriteClassSize ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
     
      // scrollview 내용 전체크기
      scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
@@ -187,9 +189,19 @@ void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 26) == "button/btn_yellow_mini.png")
         {
+            CCPoint p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
-                spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                ;
+                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                sound->playClick();
+                
+                int number = atoi(spriteClass->spriteObj[i]->name.substr(26).c_str());
+                std::vector<int> data;
+                data.push_back(number);
+                data.push_back(priceTopazIdx);
+                Common::ShowPopup(this, "SendTopaz", "NoImage", false, SEND_TOPAZ_TRY, BTN_2, data);
+            }
         }
     }
     

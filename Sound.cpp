@@ -94,7 +94,9 @@ void Sound::PreLoadInGameSound()
         sprintf(name, "sounds/pieces/%d.mp3", i);
         SimpleAudioEngine::sharedEngine()->preloadEffect(name);
     }
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bomb.mp3");
+   
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombA.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombB.mp3");
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.7f);
@@ -117,7 +119,8 @@ void Sound::PlayPieceClick(int idx)
 
 void Sound::PlayBomb()
 {
-    SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/bomb.mp3");
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/bombA.mp3");
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/bombB.mp3");
 }
 
 void Sound::PlaySkillSound(int skillNum)

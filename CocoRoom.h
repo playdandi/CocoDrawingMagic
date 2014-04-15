@@ -33,6 +33,7 @@ public:
     void InitSprites();
     void MakeSprites(int state);
     void MakeSpritesCoco();
+    void SetFullStaffBtn();
     void MakeScrollCoco();
     void MakeSpritesFairy();
     void MakeScrollFairy();

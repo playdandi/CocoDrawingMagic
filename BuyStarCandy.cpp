@@ -27,6 +27,7 @@ void BuyStarCandy::onExit()
 
 void BuyStarCandy::keyBackClicked()
 {
+    sound->playClick();
     EndScene();
 }
 
@@ -195,25 +196,33 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
                 EndScene();
+            }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
         {
             CCPoint p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
             CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
-
             if ((int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClick();
                 
                 std::vector<int> data;
                 std::string number = spriteClass->spriteObj[i]->name.substr(25);
+                int idx = std::atoi(number.c_str());
+                data.push_back(priceStarCandy[idx]->GetId());
+                data.push_back(priceStarCandy[idx]->GetPrice());
+                data.push_back(priceStarCandy[idx]->GetCount());
+                /*
                 if (number == "0") data.push_back(priceStarCandy[0]->GetPrice());
                 else if (number == "1") data.push_back(priceStarCandy[1]->GetPrice());
                 else if (number == "2") data.push_back(priceStarCandy[2]->GetPrice());
                 else if (number == "3") data.push_back(priceStarCandy[3]->GetPrice());
                 else if (number == "4") data.push_back(priceStarCandy[4]->GetPrice());
-                Common::ShowPopup(this, "BuyStarCandy", "NoImage", false, POPUP_STARCANDY_0, BTN_2, data);
+                 */
+                Common::ShowPopup(this, "BuyStarCandy", "NoImage", false, BUY_STARCANDY_TRY, BTN_2, data);
             }
         }
     }
@@ -245,8 +254,6 @@ void BuyStarCandy::scrollViewDidZoom(CCScrollView* view)
 
 void BuyStarCandy::EndScene()
 {
-    sound->playClick();
-    
     CCString* param = CCString::create("0");
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);

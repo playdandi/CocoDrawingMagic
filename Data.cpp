@@ -5,6 +5,7 @@ class MyInfo* myInfo;
 std::vector<class Friend*> friendList;
 std::vector<class PriceTopaz*> priceTopaz;
 std::vector<class PriceStarCandy*> priceStarCandy;
+std::vector<class Msg*> msgData;
 
 ////////////////////////////////////////////////////////////////////////////////
 void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)
@@ -18,12 +19,13 @@ void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool p
     this->msgCnt = msgCnt;
 }
 
-void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
+void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
 {
     this->topaz = topaz;
     this->starcandy = starcandy;
     this->mp = mp;
-    this->mpStaff = mpStaff;
+    this->mpStaffPercent = mpStaffPercent;
+    this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
     this->mpFairy = mpFairy;
     this->staffLv = staffLv;
     this->highScore = highScore;
@@ -56,6 +58,10 @@ int MyInfo::GetMsgCnt()
 {
     return msgCnt;
 }
+void MyInfo::SetMsgCnt(int cnt)
+{
+    this->msgCnt = cnt;
+}
 bool MyInfo::GetKakaoMsg()
 {
     return settingKakaoMsg;
@@ -86,11 +92,15 @@ int MyInfo::GetMP()
 {
     return mp;
 }
+int MyInfo::GetMPStaffPercent()
+{
+    return mpStaffPercent;
+}
 int MyInfo::GetMPStaff()
 {
     return mpStaff;
 }
-int MyInfo::GetMpFairy()
+int MyInfo::GetMPFairy()
 {
     return mpFairy;
 }
@@ -98,6 +108,23 @@ int MyInfo::GetStaffLv()
 {
     return staffLv;
 }
+int MyInfo::GetStaffLvNext()
+{
+    return staffLvNext;
+}
+int MyInfo::GetMPStaffPercentNext()
+{
+    return mpStaffPercentNext;
+}
+int MyInfo::GetMPNextCostStarcandy()
+{
+    return mpNextCostStarcandy;
+}
+int MyInfo::GetMPNextCostTopaz()
+{
+    return mpNextCostTopaz;
+}
+
 int MyInfo::GetHighScore()
 {
     return highScore;
@@ -201,8 +228,21 @@ void MyInfo::SetPotion(int potion, int remainPotionTime)
     this->potion = potion;
     this->remainPotionTime = remainPotionTime;
 }
-
-
+void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
+{
+    this->mp = mp;
+    this->mpStaffPercent = mpStaffPercent;
+    this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
+    this->mpFairy = mpFairy;
+    this->staffLv = staffLv;
+}
+void MyInfo::SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCostTopaz, int staffNextPercent)
+{
+    this->staffLvNext = staffLvNext;
+    this->mpNextCostStarcandy = mpNextCostStarcandy;
+    this->mpNextCostTopaz = mpNextCostTopaz;
+    this->mpStaffPercentNext = staffNextPercent;
+}
 
 
 
@@ -398,7 +438,10 @@ Msg::Msg(int id, int type, int rewardCount, std::string content, std::string pro
     this->profileUrl = profileUrl;
     this->noticeUrl = noticeUrl;
 }
-
+int Msg::GetId()
+{
+    return id;
+}
 int Msg::GetType()
 {
     return type;
@@ -421,6 +464,10 @@ PriceTopaz::PriceTopaz(int id, int count, int price, int bonus)
     this->price = price;
     this->bonus = bonus;
 }
+int PriceTopaz::GetId()
+{
+    return id;
+}
 int PriceTopaz::GetCount()
 {
     return count;
@@ -440,6 +487,10 @@ PriceStarCandy::PriceStarCandy(int id, int count, int price, int bonus)
     this->count = count;
     this->price = price;
     this->bonus = bonus;
+}
+int PriceStarCandy::GetId()
+{
+    return id;
 }
 int PriceStarCandy::GetCount()
 {

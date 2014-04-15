@@ -157,6 +157,16 @@ void Ranking::Notification(CCObject* obj)
         
         // message Count 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setString(Common::MakeComma(myInfo->GetMsgCnt()).c_str());
+        if (myInfo->GetMsgCnt() == 0)
+        {
+            ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setOpacity(0);
+            ((CCSprite*)spriteClass->FindSpriteByName("background/bg_msg_setting.png"))->setOpacity(0);
+        }
+        else
+        {
+            ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setOpacity(255);
+            ((CCSprite*)spriteClass->FindSpriteByName("background/bg_msg_setting.png"))->setOpacity(255);
+        }
         
         // 포션 보내기에 대한 정보 업데이트
         //for (int i = 0 ; i < friendList.size() ; i++)
@@ -170,6 +180,38 @@ void Ranking::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
+    }
+    else if (param->intValue() == 2)
+    {
+        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+        
+        // 포션 개수에 따른 포션 아이콘 업데이트
+        char name[40];
+        for (int i = 0 ; i < 5 ; i++)
+        {
+            sprintf(name, "icon/icon_potion.png%d", i);
+            if (i < myInfo->GetPotion())
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            else
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        }
+        
+        // message Count 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setString(Common::MakeComma(myInfo->GetMsgCnt()).c_str());
+        if (myInfo->GetMsgCnt() == 0)
+        {
+            ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setOpacity(0);
+            ((CCSprite*)spriteClass->FindSpriteByName("background/bg_msg_setting.png"))->setOpacity(0);
+        }
+        else
+        {
+            ((CCLabelTTF*)spriteClass->FindLabelByTag(0))->setOpacity(255);
+            ((CCSprite*)spriteClass->FindSpriteByName("background/bg_msg_setting.png"))->setOpacity(255);
+        }
     }
 }
 
@@ -257,11 +299,14 @@ void Ranking::InitSprites()
     // 메시지함 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_msg.png", ccp(0, 0), ccp(750+90+35, 1498), CCSize(0, 0), "", "Ranking", this, 5) );
     
+    // 메시지 빨간배경 + 숫자
+    int opacity = 255;
+    if (myInfo->GetMsgCnt() == 0)
+        opacity = 0;
     CCSize msgSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_msg_setting.png", ccp(0, 0), ccp(msgSize.width-30, msgSize.height-30), CCSize(0, 0), "button/btn_msg.png", "0", NULL, 5) );
-
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_msg_setting.png", ccp(0, 0), ccp(msgSize.width-30, msgSize.height-30), CCSize(0, 0), "button/btn_msg.png", "0", NULL, 5, 0, opacity) );
     sprintf(name, "%d", myInfo->GetMsgCnt());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5, 1, 255, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5, 1, opacity, 0) );
     
     // make potion
     for (int i = 0; i < 5; i++)
@@ -376,7 +421,7 @@ void Ranking::MakeScroll()
             profileLayer->addChild(friendList[i]->GetPotionSprite(), 5);
         
         // potion timer (안 보여도 그냥 포지션만 잡아 놓는다)
-        friendList[i]->GetPotionLabelMin()->setPosition(ccp(762, 80));
+        friendList[i]->GetPotionLabelMin()->setPosition(ccp(765, 80));
         profileLayer->addChild(friendList[i]->GetPotionLabelMin(), 6);
         friendList[i]->GetPotionLabelMin()->setString("60:");
         friendList[i]->GetPotionLabelSec()->setPosition(ccp(773, 52));

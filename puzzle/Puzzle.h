@@ -87,6 +87,9 @@ public:
     void EndSceneCallback();
     
 protected:
+    CCSize vs;
+    CCPoint vo;
+    
     CCSprite* background;
     CCSprite* puzzleFrame;
     

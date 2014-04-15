@@ -23,9 +23,16 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void HttpRequest(std::string url);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    
+    void XmlParseBuyTopaz(char* data, int size);
+    void XmlParseBuyStarCandy(char* data, int size);
     void XmlParseBuyPotion(char* data, int size);
     void XmlParseSendPotion(char* data, int size);
-    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseMsg(char* data, int size);
+    void XmlParseSendTopaz(char* data, int size);
+    void XmlParseUpgradeStaff(char* data, int size);
     
 protected:
     CCSize winSize;

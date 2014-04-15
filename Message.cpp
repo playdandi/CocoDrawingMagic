@@ -39,15 +39,19 @@ bool Message::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Message::Notification), "Message", NULL);
+    
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
-    // init sprites & scrolls
+    // init sprites
     InitSprites();
-    //MakeScroll();
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
+    
+    spriteClassScroll = new SpriteClass();
+    
+    httpStatus = 0;
     
     msgData.clear();
     // 네트워크로 메시지들을 받아온다.
@@ -55,7 +59,6 @@ bool Message::init()
     std::string url = "http://14.63.225.203/cogma/game/get_messagelist.php?";
     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
     url += temp;
-    //CCLog("url = %s", url.c_str());
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
     req->setRequestType(CCHttpRequest::kHttpPost);
@@ -70,6 +73,50 @@ bool Message::init()
     isScrollViewTouched = false;
     
     return true;
+}
+
+void Message::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        CCLog("Message : noti 활성");
+        // 터치 활성
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        isTouched = false;
+        
+        // 메시지 data 갱신 (전체 포션 받기를 했을 때는 행하지 않는다)
+        if (httpMsgIdx != -1)
+        {
+            for (int i = 0 ; i < msgData.size() ; i++)
+            {
+                if (i == httpMsgIdx)
+                    delete msgData[i];
+                if (i > httpMsgIdx)
+                    msgData[i-1] = msgData[i];
+            }
+            msgData.pop_back();
+        }
+        
+        // scroll 갱신
+        RenewScroll();
+        
+        // Notification : Ranking 화면에 데이터 갱신
+        myInfo->SetMsgCnt((int)msgData.size());
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    }
+    else if (param->intValue() == 1)
+    {
+        CCLog("Message : noti 비활성");
+        // 터치 비활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        this->setKeypadEnabled(false);
+        this->setTouchEnabled(false);
+    }
 }
 
 void Message::InitSprites()
@@ -99,21 +146,24 @@ void Message::InitSprites()
             ccp(0, 0), ccp(319, 191), CCSize(929, 904), "", "Message", this, 1, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_potion_all_recieve.png",
             ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 40), CCSize(0, 0), "button/btn_red.png", "0", NULL, 1, 1) );
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
 }
 
 void Message::MakeScroll()
 {
-    int objSize = spriteClass->spriteObj.size();
-    //msg_type.push_back(0); // potion receive
-    //msg_type.push_back(1); // starcandy receive
-    //msg_type.push_back(2); // 뽑기
+    int numOfList = msgData.size();
+    
+    // 메시지가 0개면 스크롤뷰를 아예 생성하지 말 것.
+    //if (numOfList == 0)
+    //    return;
 
     // make scroll
     scrollContainer = CCLayer::create();
     scrollContainer->setAnchorPoint(ccp(0, 1));
     scrollContainer->setPosition(ccp(77, 492+904));
 
-    int numOfList = msgData.size();
     char spriteName[35];
     for (int i = 0 ; i < numOfList ; i++)
     {
@@ -134,63 +184,42 @@ void Message::MakeScroll()
         
         // profile 영역 bg
         sprintf(spriteName, "background/bg_profile.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
         
         // content (fontList[2] = 나눔고딕볼드)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(msgData[i]->GetContent(), fontList[0], 36, ccp(0, 0), ccp(194, 45), ccc3(78,47,8), CCSize(400, 105), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", itemLayer, 3, 0) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabelArea(msgData[i]->GetContent(), fontList[0], 36, ccp(0, 0), ccp(194, 45), ccc3(78,47,8), CCSize(400, 105), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", itemLayer, 3, 0) );
+        
         
         // button (type마다 버튼이 다르다)
+        sprintf(spriteName, "button/btn_green_mini.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(634, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
         switch (msgData[i]->GetType())
         {
             case 1: // 공지 (보기)
                 break;
             case 2: // 별사탕 (별사탕아이콘 + 받기)
+                sprintf(spriteName, "button/btn_receive_starcandy.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(664, 63), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                sprintf(spriteName, "letter/letter_receive.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
             case 3: // 토파즈 (토파즈아이콘 + 받기)
+                sprintf(spriteName, "button/btn_receive_topaz.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 60), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                sprintf(spriteName, "letter/letter_receive.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
             case 4: // 포션 (포션아이콘 + 받기)
-                sprintf(spriteName, "button/btn_green_mini.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(634, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 sprintf(spriteName, "button/btn_receive_potion.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 sprintf(spriteName, "letter/letter_receive.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
         }
-        
-        // button
-        
-        /*
-        // button 안에 image1개, letter1개 넣는다.
-        switch (msg_type[i])
-        {
-            case 0: // 포션
-                sprintf(spriteName, "button/btn_receive_potion.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                            ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
-                sprintf(spriteName, "letter/letter_receive.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                            ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
-                break;
-            case 1: // 별사탕
-                sprintf(spriteName, "button/btn_receive_starcandy.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                            ccp(0, 0), ccp(664, 63), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
-                sprintf(spriteName, "letter/letter_receive.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                            ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
-                break;
-            case 2: // 뽑기
-                sprintf(spriteName, "letter/letter_vote.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                            ccp(0, 0), ccp(676, 60), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
-                break;
-        }
-        */
         
         // dotted line
         sprintf(spriteName, "background/bg_dotted_line.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, spriteName,
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName,
                         ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
     }
     
@@ -209,9 +238,24 @@ void Message::MakeScroll()
     this->addChild(scrollView, 3);
     
     // add child
-    for (int i = objSize ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
+    for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
+        spriteClassScroll->AddChild(i);
 }
+
+void Message::RenewScroll()
+{
+    // delete & init all scroll-related variables.
+    spriteClassScroll->RemoveAllObjects();
+    for (int i = 0 ; i < layer.size() ; i++)
+        layer[i]->removeFromParentAndCleanup(true);
+    layer.clear();
+    scrollContainer->removeFromParentAndCleanup(true);
+    scrollView->removeFromParentAndCleanup(true);
+    
+    // 다시 스크롤 생성
+    MakeScroll();
+}
+
 
 void Message::onHttpRequestCompleted(CCNode *sender, void *data)
 {
@@ -230,7 +274,13 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
     
-    XmlParseMsg(dumpData, buffer->size());
+    switch (httpStatus)
+    {
+        case 0:
+            XmlParseMsg(dumpData, buffer->size()); break;
+        case 1:
+            XmlParseMsgReceiveOne(dumpData, buffer->size()); break;
+    }
 }
 
 void Message::XmlParseMsg(char* data, int size)
@@ -274,10 +324,62 @@ void Message::XmlParseMsg(char* data, int size)
         
         // scroll을 생성 후 데이터 보여주기
         MakeScroll();
+        
+        // Notification : Ranking 화면에 데이터 갱신
+        myInfo->SetMsgCnt((int)msgData.size());
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     }
     else
     {
         CCLog("FAILED : code = %d", code);
+    }
+}
+
+void Message::XmlParseMsgReceiveOne(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        myInfo->SetPotion(potion, remainTime);
+        
+        std::vector<int> data;
+        data.push_back(msgData[httpMsgIdx]->GetRewardCount());
+        switch (msgData[httpMsgIdx]->GetType())
+        {
+            case 1: break;
+                //Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_NOTICE, BTN_1, data); break;
+            case 2:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_STARCANDY, BTN_1, data); break;
+            case 3:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_TOPAZ, BTN_1, data); break;
+            case 4:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION, BTN_1, data); break;
+        }
+    }
+    else if (code == 10)
+    {
+        // 없는 메시지 (삭제하자)
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_EMPTY, BTN_1, nullData);
     }
 }
 
@@ -318,6 +420,66 @@ void Message::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
+    CCPoint point = pTouch->getLocation();
+    
+    CCPoint p;
+    for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
+    {
+        if (spriteClassScroll->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
+        {
+            p = spriteClassScroll->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClassScroll->spriteObj[i]->sprite->getContentSize();
+            if (isScrollViewTouched && !isScrolling &&
+                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                httpMsgIdx = atoi(spriteClassScroll->spriteObj[i]->name.substr(25).c_str());
+                
+                // 공지는 팝업창 띄우는 거라 나중에 구현하자...
+                if (msgData[httpMsgIdx]->GetType() == 1)
+                    continue;
+                
+                sound->playClick();
+                
+                httpStatus = 1;
+                // 메시지에 대한 처리 서버 통신
+                char temp[50];
+                std::string url = "http://14.63.225.203/cogma/game/receive_message_one.php?";
+                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                url += temp;
+                sprintf(temp, "message_id=%d", msgData[httpMsgIdx]->GetId());
+                url += temp;
+                CCLog("url : %s", url.c_str());
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(url.c_str());
+                req->setRequestType(CCHttpRequest::kHttpPost);
+                req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+                break;
+            }
+        }
+    }
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                if (msgData.size() == 0)
+                    continue;
+                
+                sound->playClick();
+                
+                httpMsgIdx = -1; // 메시지 리스트 갱신 방지
+                
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_ALL_TRY, BTN_2, nullData);
+                break;
+            }
+        }
+    }
+    
     isTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;

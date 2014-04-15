@@ -275,7 +275,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "BuyTopaz") nextScene = BuyTopaz::scene(etc);
     else if (to == "BuyStarCandy") nextScene = BuyStarCandy::scene(etc);
     else if (to == "BuyPotion") nextScene = BuyPotion::scene(etc);
-    else if (to == "SendTopaz") nextScene = SendTopaz::scene();
+    else if (to == "SendTopaz") nextScene = SendTopaz::scene(etc);
     else if (to == "RequestTopaz") nextScene = RequestTopaz::scene();
     else if (to == "RequestPotion") nextScene = RequestPotion::scene();
     else if (to == "Setting") nextScene = Setting::scene();
@@ -317,6 +317,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((GameReady*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
@@ -346,16 +347,12 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
+    else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
+    else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "NoImage") {
-        //CCNode* parent = ((NoImage*)obj)->getParent();
-        //parent->addChild(popup, 200, 200);
-        //((NoImage*)obj)->removeFromParentAndCleanup(true);
         if (isReplaced) ((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
         else            ((NoImage*)obj)->addChild(popup, 200, 200);
     }
-    
-    //else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
-    //else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(popup, 200, 200);
 }
 
 

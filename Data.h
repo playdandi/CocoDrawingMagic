@@ -12,6 +12,7 @@ extern class MyInfo* myInfo;
 extern std::vector<class Friend*> friendList;
 extern std::vector<class PriceTopaz*> priceTopaz;
 extern std::vector<class PriceStarCandy*> priceStarCandy;
+extern std::vector<class Msg*> msgData;
 
 using namespace cocos2d;
 
@@ -24,6 +25,7 @@ public:
     int GetDeviceType();
     int GetKakaoId();
     int GetMsgCnt();
+    void SetMsgCnt(int cnt);
     bool GetKakaoMsg();
     bool GetPushNotification();
     bool GetPotionMsg();
@@ -31,11 +33,16 @@ public:
     int GetTopaz();
     int GetStarCandy();
     int GetMP();
+    int GetMPStaffPercent();
     int GetMPStaff();
-    int GetMpFairy();
+    int GetMPFairy();
     int GetMPTotal();
+    int GetMPStaffPercentNext();
+    int GetMPNextCostStarcandy();
+    int GetMPNextCostTopaz();
     
     int GetStaffLv();
+    int GetStaffLvNext();
     int GetHighScore();
     int GetWeeklyHighScore();
     int GetCertificateType();
@@ -53,6 +60,8 @@ public:
     void SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved);
     void SetMoney(int topaz, int starcandy);
     void SetPotion(int potion, int remainPotionTime);
+    void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
+    void SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCostTopaz, int staffNextPercent);
     
 private:
     bool settingKakaoMsg;
@@ -66,10 +75,18 @@ private:
     
     int topaz;
     int starcandy;
+    
     int mp;
+    int mpStaffPercent;
     int mpStaff;
     int mpFairy;
     int staffLv;
+    
+    int mpStaffPercentNext;
+    int staffLvNext;
+    int mpNextCostStarcandy;
+    int mpNextCostTopaz;
+    
     int highScore;
     int weeklyHighScore;
     int certificateType;
@@ -151,6 +168,7 @@ class Msg
 {
 public:
     Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl);
+    int GetId();
     int GetType();
     int GetRewardCount();
     std::string GetContent();
@@ -171,6 +189,7 @@ class PriceTopaz
 {
 public:
     PriceTopaz(int id, int count, int price, int bonus);
+    int GetId();
     int GetCount();
     int GetPrice();
     int GetBonus();
@@ -184,6 +203,7 @@ class PriceStarCandy
 {
 public:
     PriceStarCandy(int id, int count, int price, int bonus);
+    int GetId();
     int GetCount();
     int GetPrice();
     int GetBonus();

@@ -49,6 +49,8 @@ bool BuyTopaz::init()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     else if (parent_id == 2) // 부모가 'BuyPotion'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    else if (parent_id == 3) // 부모가 'BuyStarCandy'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
     
     CCLog("BuyTopaz. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
@@ -217,7 +219,22 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if ((int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "BuyTopaz", "SendTopaz", false);
+                int number = atoi(spriteClass->spriteObj[i]->name.substr(27).c_str());
+                Common::ShowNextScene(this, "BuyTopaz", "SendTopaz", false, number);
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
+        {
+            CCPoint p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
+            if ((int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+            {
+                sound->playClick();
+            
+                int number = atoi(spriteClass->spriteObj[i]->name.substr(25).c_str());
+                std::vector<int> data;
+                data.push_back(number);
+                Common::ShowPopup(this, "BuyTopaz", "NoImage", false, BUY_TOPAZ_TRY, BTN_2, data);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
@@ -256,6 +273,8 @@ void BuyTopaz::EndScene()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     else if (parent_id == 2) // 부모가 'BuyPotion'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    else if (parent_id == 3) // 부모가 'BuyStarCandy'
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
     
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyTopaz");
     

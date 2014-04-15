@@ -113,6 +113,12 @@ bool Puzzle::init()
     SetCombo();
     SetTimer();
     
+    //    puzzleLayer->setScale((double)966/(double)1078);
+    
+   // CCActionInterval* action = CCRotateBy::create(5.0f, 90, 0);
+   // puzzleLayer->runAction(action);
+    
+    
     PlayEffect(100);
     
     this->setKeypadEnabled(true);
@@ -127,45 +133,80 @@ bool Puzzle::init()
 void Puzzle::InitSprites()
 {
     CCLog("Init Sprites");
-    CCSize ds = CCDirector::sharedDirector()->getVisibleSize();
+    CCLog("Real : %f , %f", m_winSize.width, m_winSize.height);
+    vs = CCDirector::sharedDirector()->getVisibleSize();
+    vo = CCDirector::sharedDirector()->getVisibleOrigin();
+    CCLog("visible : %f , %f", vs.width, vs.height);
+    CCLog("visible point : %f , %f", vo.x, vo.y);
+    
     
     // background
     CCTexture2D* bgCache = CCTextureCache::sharedTextureCache()->addImage("images/game_bg.png");
     CCSprite* bg = new CCSprite();
     bg->initWithTexture(bgCache, CCRectMake(0, 0, 1080, 1920));
-    bg->setAnchorPoint(ccp(0, 0));
-    bg->setPosition(ccp(0, -(m_winSize.height-ds.height)/2));
+    bg->setAnchorPoint(ccp(0, 1));
+    bg->setPosition(ccp(0, vs.height+vo.y)); ///-(m_winSize.height-ds.height)/2));
     this->addChild(bg, 0);
     
     
-    CCLog("resolution : %d , %d", (int)ds.width, (int)ds.height);
+    // 별사탕
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(0, 1), ccp(40, vs.height+vo.y-30), CCSize(0, 0), "", "Puzzle", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_3.png", ccp(0, 1), ccp(10, vs.height+vo.y-17), CCSize(0, 0), "", "Puzzle", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_4.png", ccp(0, 1), ccp(25, vs.height+vo.y-3), CCSize(0, 0), "", "Puzzle", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 1), ccp(30, vs.height+vo.y-10), CCSize(200, 75), "", "Puzzle", this, 1) );
+    // 스코어
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png2", ccp(0, 1), ccp(250, vs.height+vo.y-10), CCSize(500, 75), "", "Puzzle", this, 1) );
+    // 스킬게이지
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_menu_coco.png", ccp(0, 1), ccp(750, vs.height+vo.y-10), CCSize(0, 0), "", "Puzzle", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png3", ccp(0, 1), ccp(790, vs.height+vo.y-10), CCSize(200, 75), "", "Puzzle", this, 1) );
     
-    // puzzle board
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0, 0), ccp(1, 220), CCSize(0, 0), "", "Layer", puzzleLayer, 1) );
+    // 값들
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("972", fontList[0], 40, ccp(0.5, 0.5), ccp(130, vs.height+vo.y-10-30), ccc3(255,255,255), "", "Puzzle", this, 3) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("1,596,394", fontList[0], 44, ccp(0.5, 0.5), ccp(500, vs.height+vo.y-10-30), ccc3(255,255,255), "", "Puzzle", this, 3) );
     
     // pause button
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/pause.png", ccp(0, 0), ccp(980, 1680), CCSize(0, 0), "", "Puzzle", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/pause.png", ccp(1, 1), ccp(m_winSize.width-5, vs.height+vo.y-5), CCSize(0, 0), "", "Puzzle", this, 1) );
     
+    
+    // timer bar
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/timer_outer.png", ccp(0.5, 0), ccp(m_winSize.width/2+7, vo.y+35), CCSize(0, 0), "", "Puzzle", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/timer_inner.png", ccp(0.5, 0), ccp(m_winSize.width/2, vo.y+30), CCSize(0, 0), "", "Puzzle", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bar_ice.png", ccp(0.5, 0), ccp(m_winSize.width/2, vo.y), CCSize(0, 0), "", "Puzzle", this, 3) );
+    CCSize tbSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
+    
+    CCSize boardSize = CCSize(vs.height*1.920/2.920 - tbSize.height, vs.height*1.920/2.920 - tbSize.height);
+    puzzleLayer->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height/2));
+    
+    // puzzle board
+    //if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0, 0), ccp(57, vo.y+130), CCSize(0, 0), "", "Layer", puzzleLayer, 1) );
+    //else
+    //    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0, 0), ccp(1, vo.y+130), CCSize(0, 0), "", "Layer", puzzleLayer, 1) );
+        
+    
+
+    
+    
+    /*
     // (temporary) fever time button
     fever = CCSprite::createWithSpriteFrameName("pieces/mt_1.png");
     fever->setScale(0.6f);
     fever->setAnchorPoint(ccp(0, 0));
     fever->setPosition(ccp(850, 1680));
     this->addChild(fever, 10);
+    */
     
+    // mission
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/mission.png", ccp(0, 0), ccp(46, 1290), CCSize(0, 0), "", "Puzzle", this, 1) );
+    // 코코 그림자, 마법진
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/coco_shadow.png", ccp(0, 0), ccp(155, vs.height+vo.y-480), CCSize(0, 0), "", "Puzzle", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0, 0), ccp(330, vs.height+vo.y-500), CCSize(0, 0), "", "Puzzle", this, 1) );
     
-    // mission, shadow, magicCircle
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/mission.png", ccp(0, 0), ccp(46, 1290), CCSize(0, 0), "", "Puzzle", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/coco_shadow.png", ccp(0, 0), ccp(145, 1405), CCSize(0, 0), "", "Puzzle", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0, 0), ccp(330, 1380), CCSize(0, 0), "", "Puzzle", this, 1) );
-    
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/timer_outer.png", ccp(0, 0), ccp(28+7, 155+5), CCSize(0, 0), "", "Puzzle", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/timer_inner.png", ccp(0, 0), ccp(28, 155), CCSize(0, 0), "", "Puzzle", this, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
-    //puzzleLayer->setScale(0.9f);
+    
     
     //CCLog("Init Sprites Done");
     
@@ -243,8 +284,13 @@ void Puzzle::InitCoco()
     staff->setPosition(ccp(65, -27));  // 1
     cocoLayer->addChild(staff, 104);
     
+    
     cocoLayer->setScale(0.8f);
-    cocoLayer->setPosition(ccp(100, 1380));
+    //cocoLayer->setPosition(ccp(100, 1380));
+    
+    
+    
+    cocoLayer->setPosition(ccp(100, vs.height+vo.y-500));
     
     this->addChild(cocoLayer, 1000);
     
@@ -258,6 +304,11 @@ void Puzzle::InitCoco()
     coco_sp.push_back(arm3);
     coco_sp.push_back(staff);
     coco_sp.push_back(body);
+    
+    // action
+    CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
+    CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
+    cocoLayer->runAction(rep);
 }
 
 void Puzzle::CocoAnim(float f)
@@ -404,10 +455,12 @@ void Puzzle::InitFairy()
     eyeLayer->setTag(0);
     fairyLayer->addChild(eyeLayer, 1000);
     
+    // 그림자
     fairyShadow = CCSprite::createWithSpriteFrameName("anim/fairy/sun_shadow.png");
     fairyShadow->setAnchorPoint(ccp(0.5, 0.5));
-    fairyShadow->setPosition(ccp(900, 1430));
-    this->addChild(fairyShadow, 1000);
+    fairyShadow->setPosition(ccp(0, -150));
+    fairyShadow->setScale(1.25f);
+    fairyLayer->addChild(fairyShadow, 999);
     
     float r = 110.0;
     float x, y;
@@ -429,8 +482,14 @@ void Puzzle::InitFairy()
     }
     
     fairyLayer->setScale(0.8f);
-    fairyLayer->setPosition(ccp(800, 1350));
+    //fairyLayer->setPosition(ccp(800, 1350));
+    fairyLayer->setPosition(ccp(800, vs.height+vo.y-530));
     this->addChild(fairyLayer, 1000);
+    
+    // action
+    CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
+    CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
+    fairyLayer->runAction(rep);
 }
 
 void Puzzle::ChangeAnimFairy(float f)
@@ -506,29 +565,35 @@ void Puzzle::InitBoard()
 
 void Puzzle::SetScore()
 {
+    /*
     iScore = 0;
     pScoreLabel = CCLabelTTF::create("0", fontList[2].c_str(), 50);
     pScoreLabel->setAnchorPoint(ccp(0, 0));
     pScoreLabel->setPosition(ccp(PIECE8_WIDTH-6, 8*PIECE8_HEIGHT-6));
     this->addChild(pScoreLabel);
+    */
 }
 
 void Puzzle::UpdateScore(int numOfPiece)
 {
+    /*
     iScore += numOfPiece*100;
     char s[10];
     sprintf(s, "%d", iScore);
     pScoreLabel->setString(s);
+     */
 }
 
 void Puzzle::SetCombo()
 {
+    /*
     iCombo = 0;
     pComboLabel = CCLabelTTF::create("", fontList[2].c_str(), 50);
     pComboLabel->setAnchorPoint(ccp(0, 0));
     pComboLabel->setPosition(ccp(PIECE8_WIDTH-6, 7*PIECE8_HEIGHT+6+10));
     pComboLabel->setOpacity(0);
     this->addChild(pComboLabel);
+    */
 }
 
 int Puzzle::GetCombo()
@@ -655,9 +720,14 @@ void Puzzle::UpdateTimer(float f)
 
 CCPoint Puzzle::SetPiece8Position(int x, int y)
 {
+    CCPoint vo = CCDirector::sharedDirector()->getVisibleOrigin();
+    
     // start + (x,y)좌표만큼 이동 + AP로 인해 절반 더 이동 + 보정치
-    int posX =   1 + x*PIECE8_WIDTH  + PIECE8_WIDTH/2  + 7;
-    int posY = 220 + y*PIECE8_HEIGHT + PIECE8_HEIGHT/2 + 6;
+    //int posX =   1 + x*PIECE8_WIDTH  + PIECE8_WIDTH/2  + 7;
+    int posX = 85 + x*PIECE8_WIDTH + PIECE8_WIDTH/2;
+    //CCLog("(%d, %d) : %d", x, y, posX);
+    //int posY = 220 + y*PIECE8_HEIGHT + PIECE8_HEIGHT/2 + 6;
+    int posY = vo.y+130 + y*PIECE8_HEIGHT + PIECE8_HEIGHT/2 + 6;
     return ccp(posX, posY);
 }
 CCPoint Puzzle::SetPiece4Position(int x, int y)
@@ -819,7 +889,7 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
         return true;
     }
-    
+    /*
     if (fever->boundingBox().containsPoint(point))
     {
         isFeverTime = true;
@@ -829,12 +899,11 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             for (int y = 1 ; y < ROW_COUNT ; y++)
             {
-                /*
-                CCSprite* bomb = CCSprite::create("images/bomb.png");
-                bomb->setPosition(SetPiece4Position(x, y));
-                this->addChild(bomb, 3000);
-                feverSpr.push_back(bomb);
-                */
+                //CCSprite* bomb = CCSprite::create("images/bomb.png");
+                //bomb->setPosition(SetPiece4Position(x, y));
+                //this->addChild(bomb, 3000);
+                //feverSpr.push_back(bomb);
+     
                 CCSprite* dia = CCSprite::create("images/fever_dia.png");
                 dia->setPosition(SetPiece4Position(x, y));
                 this->addChild(dia, 3000);
@@ -851,6 +920,7 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
     }
+    */
     
     /*
     if (pado->boundingBox().containsPoint(point))
@@ -1009,9 +1079,9 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
                 // strap + strap connector추가
                 CCSprite* sp;
                 if ((beforeX > x && beforeY > y) || (beforeX < x && beforeY < y))
-                    sp = CCSprite::createWithSpriteFrameName("pieces/strap_diagonal_ldru.png");
+                    sp = CCSprite::createWithSpriteFrameName("icon/strap_vertical_2.png");
                 else
-                    sp = CCSprite::createWithSpriteFrameName("pieces/strap_diagonal_lurd.png");
+                    sp = CCSprite::createWithSpriteFrameName("icon/strap_vertical.png");
                 sp->setPosition(SetPiece4Position(p4X, p4Y));
                 this->addChild(sp, 1000);
                 strap[touch_cnt%QUEUE_CNT].push_back(sp);
@@ -1029,7 +1099,7 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
             {
                 // strap추가
                 CCPoint pos = SetPiece8Position(x, y);
-                CCSprite* sp = CCSprite::createWithSpriteFrameName("pieces/strap_horizontal.png");
+                CCSprite* sp = CCSprite::createWithSpriteFrameName("icon/strap_horizontal.png");
                 if (beforeX == x-1)
                     sp->setPosition(ccp((int)pos.x-PIECE8_FRAME_WIDTH/2, (int)pos.y));
                 else if (beforeX == x+1)

@@ -53,12 +53,17 @@ bool NoImage::init()
     
     // notification post
     CCString* param = CCString::create("1");
-    if (type == POPUP_STARCANDY_0)
+    if (type == BUY_STARCANDY_TRY)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
     else if (type == POPUP_EXIT)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (type == BUYPOTION_1)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
+    //else if (type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK)
+    else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_FULL_LEVEL)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     InitSprites();
     
@@ -87,11 +92,23 @@ void NoImage::InitSprites()
                     ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "NoImage", this, 1) );
     
     // text (각 팝업 상황에 맞는 문구를 만들어 출력한다)
+    int deltaX = 0;
+    CCPoint deltaSize = ccp(0, 0);
     char text[150], cost[10];
     switch (type)
     {
-        case POPUP_STARCANDY_0:
-            sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", d[0]); break;
+        case NETWORK_FAIL:
+            sprintf(text, "[오류] 다시 시도해 주세요."); break;
+        case BUY_TOPAZ_TRY:
+            sprintf(text, "토파즈 %d개를 구매하시겠습니까?", priceTopaz[d[0]]->GetCount()); break;
+        case BUY_TOPAZ_OK:
+            sprintf(text, "토파즈를 성공적으로 구매하였습니다."); break;
+        case BUY_STARCANDY_TRY:
+            sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", d[2]); break;
+        case BUY_STARCANDY_OK:
+            sprintf(text, "별사탕을 성공적으로 구매하였습니다."); break;
+        case BUY_STARCANDY_FAIL:
+            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case POPUP_EXIT:
             sprintf(text, "정말 그만둘꼬얌?"); break;
         case BUYPOTION_1:
@@ -110,24 +127,68 @@ void NoImage::InitSprites()
             sprintf(text, "친구가 아닙니다."); break;
         case POTION_SEND_EARLY:
             sprintf(text, "포션을 보낸지 1시간이 경과하지 않았습니다."); break;
+        case MESSAGE_OK_STARCANDY:
+            sprintf(text, "별사탕 %d개를 받았습니다.", d[0]); break;
+        case MESSAGE_OK_TOPAZ:
+            sprintf(text, "토파즈 %d개를 받았습니다.", d[0]); break;
+        case MESSAGE_OK_POTION:
+            sprintf(text, "포션 %d개를 받았습니다.", d[0]); break;
+        case MESSAGE_EMPTY:
+            sprintf(text, "삭제된 메시지입니다."); break;
+        case MESSAGE_ALL_TRY:
+            sprintf(text, "포션을 모두 받으시겠사와요~?"); break;
+        case MESSAGE_ALL_OK:
+            sprintf(text, "모든 포션을 받았습니다."); break;
+        case SEND_TOPAZ_TRY:
+            sprintf(text, "%s님에게 토파즈 %d개를 선물하시겠습니까?", friendList[d[0]]->GetNickname().c_str(), priceTopaz[d[1]]->GetCount()); break;
+        case SEND_TOPAZ_OK:
+            sprintf(text, "토파즈를 선물하였습니다!"); break;
+        case SEND_TOPAZ_FAIL:
+            sprintf(text, "선물을 보내지 못하였습니다. 다시 시도해 주세요."); break;
+        case UPGRADE_STAFF_BY_TOPAZ_TRY:
+            deltaX = 150;
+            deltaSize = ccp(-200, 100);
+            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?\n(강화 확률이 높아요!)", myInfo->GetMPStaffPercent(), myInfo->GetMPStaffPercentNext()); break;
+        case UPGRADE_STAFF_BY_STARCANDY_TRY:
+            deltaX = 150;
+            deltaSize = ccp(-200, 100);
+            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), myInfo->GetMPStaffPercentNext()); break;
+        case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
+            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
+            sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        case UPGRADE_STAFF_OK:
+            sound->playLvUpSuccess();
+            deltaX = 150;
+            deltaSize = ccp(-200, 100);
+            sprintf(text, "강화 성공!\nMP가 많이 증가했어요!"); break;
+        case UPGRADE_STAFF_FAIL:
+            sound->playLvUpFail();
+            deltaX = 150;
+            deltaSize = ccp(-200, 100);
+            sprintf(text, "강화 실패!\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ"); break;
+        case UPGRADE_STAFF_FULL_LEVEL:
+            sprintf(text, "어머? 이미 만렙이에요~"); break;
     }
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2, 640+623/2+50), ccc3(78,47,8), CCSize(982-200, 300), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
     // 가격표
-    if (type == POPUP_STARCANDY_0)
+    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
                     ccp(0, 0), ccp(493, 723), CCSize(201, 77), "", "NoImage", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png",
-                    ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png",
-        //            ccp(0, 0), ccp(503, 730), CCSize(0, 0), "", "NoImage", this, 5) );
-        sprintf(cost, "x %d", 13);
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 36, ccp(0, 0), ccp(588, 743), ccc3(255,255,255), "", "NoImage", this, 5) );
+        
+        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
+        else
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
+        
+        sprintf(cost, "x %d", d[1]);
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 36, ccp(0, 0), ccp(580, 743), ccc3(255,255,255), "", "NoImage", this, 5) );
     }
     
     
-     // 취소 버튼이 필요할 경우 넣는다.
+    // 취소 버튼이 필요할 경우 넣는다.
     if (btn == BTN_2)
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png",
@@ -158,22 +219,33 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
+        // 'x'나 '취소'를 누를 경우
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
-            spriteClass->spriteObj[i]->name == "button/btn_system.png" ||
-            (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
-             (type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY)) )
+            spriteClass->spriteObj[i]->name == "button/btn_system.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                /*
-                if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" && type == BUYPOTION_OK)
-                {
-                    // 이전 창까지 삭제.
-                    ((BuyPotion*)(this->getParent()))->EndScene();
-                }
-                 */
                 EndScene();
+                return true;
+            }
+        }
+        // 팝업창에서 '확인' 버튼 하나만 있는 경우.
+        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
+                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL) )
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                //CCNode* parent = this->getParent();
+                EndScene();
+                /*
+                // 특정 scene은 그 부모의 scene까지 end 시킨다.
+                if (type == BUY_STARCANDY_OK || type == BUYPOTION_OK)
+                {
+                    parent->removeFromParentAndCleanup(true);
+                }
+                */
                 return true;
             }
         }
@@ -182,6 +254,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
+                char temp[255];
                 
                 if (type == POPUP_EXIT)
                 {
@@ -190,9 +263,36 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     exit(0);
                     #endif
                 }
-                else if (type == POPUP_STARCANDY_0)
+                else if (type == BUY_TOPAZ_TRY)
                 {
-                    ReplaceScene("NoImage", POPUP_STARCANDY_1, BTN_2);
+                    // 토파즈 구입하기. (미결제 버전)
+                    std::string url = "http://14.63.225.203/cogma/game/purchase_topaz.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
+                    url += temp;
+                    
+                    HttpRequest(url);
+                }
+                else if (type == BUY_STARCANDY_TRY)
+                {
+                    std::string url = "http://14.63.225.203/cogma/game/purchase_starcandy.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "starcandy_id=%d", d[0]);
+                    url += temp;
+                    CCLog("url : %s", url.c_str());
+                    
+                    HttpRequest(url);
+                }
+                else if (type == BUY_STARCANDY_FAIL)
+                {
+                    // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
+                    // (코드 상에서는 BuyStarCandy에서 BuyTopaz로 이동한 것처럼 구현한다)
+                    CCNode* parent = this->getParent();
+                    EndScene();
+                    Common::ShowNextScene(parent, "BuyStarCandy", "BuyTopaz", false, 3);
+                    break;
                 }
                 else if (type == BUYPOTION_1)
                 {
@@ -200,52 +300,67 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         ReplaceScene("NoImage", BUYPOTION_FAIL, BTN_2);
                     else
                     {
-                        CCLog("to server : purchase_potion");
                         // 포션 구매 프로토콜을 요청한다.
-                        char temp[255];
                         std::string url = "http://14.63.225.203/cogma/game/purchase_potion.php?";
                         sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
                         url += temp;
                         
-                        // post request
-                        CCHttpRequest* req = new CCHttpRequest();
-                        req->setUrl(url.c_str());
-                        req->setRequestType(CCHttpRequest::kHttpPost);
-                        req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
-                        CCHttpClient::getInstance()->send(req);
-                        req->release();
+                        HttpRequest(url);
                     }
                 }
                 else if (type == BUYPOTION_FAIL)
                 {
-                    CCLog("BUYPOTION_FAIL : click '확인'");
                     // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
                     // (코드 상에서는 BuyPotion에서 BuyTopaz로 이동한 것처럼 구현한다)
-                    
                     CCNode* parent = this->getParent();
                     EndScene();
                     Common::ShowNextScene(parent, "BuyPotion", "BuyTopaz", false, 2);
-                    //Common::ShowNextScene(this, "NoImage", "BuyTopaz", true);
                     break;
                 }
                 else if (type == POTION_SEND_TRY)
                 {
-                    CCLog("to server : send_potion");
                     // 포션 구매 프로토콜을 요청한다.
-                    char temp[255];
                     std::string url = "http://14.63.225.203/cogma/game/send_potion.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
                     sprintf(temp, "friend_kakao_id=%d", friendList[d[0]]->GetKakaoId());
                     url += temp;
                     
-                    // post request
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    HttpRequest(url);
+                }
+                else if (type == MESSAGE_ALL_TRY)
+                {
+                    // 포션 모두 받기 프로토콜 요청.
+                    std::string url = "http://14.63.225.203/cogma/game/receive_message_all_potion.php?";
+                    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                    url += temp;
+                    
+                    HttpRequest(url);
+                }
+                else if (type == SEND_TOPAZ_TRY)
+                {
+                    // 토파즈 선물하기. (미결제 버전)
+                    std::string url = "http://14.63.225.203/cogma/game/send_topaz.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "friend_kakao_id=%d&", friendList[d[0]]->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
+                    url += temp;
+                    
+                    HttpRequest(url);
+                }
+                else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
+                {
+                    // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
+                    std::string url = "http://14.63.225.203/cogma/game/upgrade_staff.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    int costType = (type == UPGRADE_STAFF_BY_TOPAZ_TRY) ? 2 : 1;
+                    sprintf(temp, "cost_type=%d", costType);
+                    url += temp;
+                    
+                    HttpRequest(url);
                 }
             }
         }
@@ -277,10 +392,14 @@ void NoImage::EndScene()
     CCString* param = CCString::create("0");
     if (type == POPUP_EXIT)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (type == POPUP_STARCANDY_0 || type == POPUP_STARCANDY_1 || type == POPUP_STARCANDY_2)
+    else if (type == BUY_STARCANDY_TRY || type == BUY_STARCANDY_OK || type == BUY_STARCANDY_FAIL)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
     else if (type == BUYPOTION_1 || type == BUYPOTION_OK || type == BUYPOTION_FAIL)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
+    else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
+    else if (type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -294,6 +413,17 @@ void NoImage::EndSceneCallback()
 
 
 /////////////////////////////////////////////////////////////////////////////////////
+
+void NoImage::HttpRequest(std::string url)
+{
+    // post request
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl(url.c_str());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
+}
 
 void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
 {
@@ -315,10 +445,91 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
     // parse xml data
     switch (type)
     {
+        case BUY_TOPAZ_TRY:
+            XmlParseBuyTopaz(dumpData, buffer->size()); break;
+        case BUY_STARCANDY_TRY:
+            XmlParseBuyStarCandy(dumpData, buffer->size()); break;
         case BUYPOTION_1:
             XmlParseBuyPotion(dumpData, buffer->size()); break;
         case POTION_SEND_TRY:
             XmlParseSendPotion(dumpData, buffer->size()); break;
+        case MESSAGE_ALL_TRY:
+            XmlParseMsg(dumpData, buffer->size()); break;
+        case SEND_TOPAZ_TRY:
+            XmlParseSendTopaz(dumpData, buffer->size()); break;
+        case UPGRADE_STAFF_BY_TOPAZ_TRY:
+        case UPGRADE_STAFF_BY_STARCANDY_TRY:
+            XmlParseUpgradeStaff(dumpData, buffer->size()); break;
+    }
+}
+
+void NoImage::XmlParseBuyTopaz(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 토파즈, 별사탕을 갱신한다.
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 성공한 팝업창으로 넘어간다.
+        ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
+    }
+    else if (code == 10)
+    {
+        // 잘못된 토파즈 id
+        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+}
+
+void NoImage::XmlParseBuyStarCandy(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 토파즈, 별사탕을 갱신한다.
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 성공한 팝업창으로 넘어간다.
+        ReplaceScene("NoImage", BUY_STARCANDY_OK, BTN_1);
+    }
+    else if (code == 3)
+    {
+        // 토파즈가 부족해 실패한 경우.
+        ReplaceScene("NoImage", BUY_STARCANDY_FAIL, BTN_2);
+    }
+    else if (code == 10)
+    {
+        // 잘못된 별사탕 id
     }
 }
 
@@ -401,4 +612,165 @@ void NoImage::XmlParseSendPotion(char* data, int size)
     }
 }
 
+void NoImage::XmlParseMsg(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        CCLog("모두받기 xml");
+        // 포션 정보 갱신
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetPotion(potion, remainTime);
+        
+        
+        // 메시지 리스트 갱신
+        for (int i = 0 ; i < msgData.size() ; i++)
+            delete msgData[i];
+        msgData.clear();
+        
+        int id, type;
+        int rewardCount;
+        std::string content, profileUrl, noticeUrl;
+        std::string name;
+        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
+        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "type") type = ait->as_int();
+                else if (name == "content") content = ait->as_string();
+                else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
+                else if (name == "reward-count") rewardCount = ait->as_int();
+                else if (name == "notice-url") noticeUrl = "";
+            }
+            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl) );
+        }
+        
+        myInfo->SetMsgCnt((int)msgData.size());
+        
+        // Notification : Ranking 화면에 데이터 갱신
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        // Notification : Message 화면에 데이터 갱신
+        //param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
+        ReplaceScene("NoImage", MESSAGE_ALL_OK, BTN_1);
+    }
+    else
+    {
+        CCLog("FAILED : code = %d", code);
+    }
+}
 
+void NoImage::XmlParseSendTopaz(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 성공한 팝업창으로 넘어간다.
+        ReplaceScene("NoImage", SEND_TOPAZ_OK, BTN_1);
+    }
+    else if (code == 10)
+    {
+        // 없는 토파즈 아이디
+        ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
+    }
+    else if (code == 11)
+    {
+        // 친구가 아님
+        ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
+    }
+}
+
+void NoImage::XmlParseUpgradeStaff(char* data, int size)
+{
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int result = nodeResult.child("upgrade-result").text().as_int();
+        
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        int mp = nodeResult.child("coco").attribute("magic-point").as_int();
+        int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
+        int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
+        int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
+        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv);
+        
+        int mpStaffLvNext = nodeResult.child("next-staff").attribute("staff-level").as_int();
+        int mpNextCostStarcandy = nodeResult.child("next-staff").attribute("star-candy-cost-value").as_int();
+        int mpNextCostTopaz= nodeResult.child("next-staff").attribute("topaz-cost-value").as_int();
+        int staffNextPercent= nodeResult.child("next-staff").attribute("bonus-mp").as_int();
+        myInfo->SetNextStaff(mpStaffLvNext, mpNextCostStarcandy, mpNextCostTopaz, staffNextPercent);
+        
+        // 성공/실패 팝업창으로 넘어간다.
+        if (result == 1)
+            ReplaceScene("NoImage", UPGRADE_STAFF_OK, BTN_1);
+        else
+            ReplaceScene("NoImage", UPGRADE_STAFF_FAIL, BTN_1);
+        
+        // Ranking에 topaz, starcandy, mp 정보 변경시킨다.
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    }
+    else if (code == 3)
+    {
+        // 잔액 부족
+        if (type == UPGRADE_STAFF_BY_TOPAZ_TRY)
+            ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
+        else
+            ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
+    }
+    else if (code == 11)
+    {
+        // 이미 지팡이 만렙
+        ReplaceScene("NoImage", UPGRADE_STAFF_FULL_LEVEL, BTN_1);
+    }
+    else
+    {
+        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+}

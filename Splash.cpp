@@ -98,7 +98,7 @@ void Splash::LogoLoadingCompleted()
     }
     
     // 시작 버튼
-    m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
+    m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_blue.png");
     m_pStartBtn->setAnchorPoint(ccp(0, 0));
     m_pStartBtn->setPosition(ccp(319, 191));
     this->addChild(m_pStartBtn, 3);
@@ -277,26 +277,37 @@ void Splash::XmlParseMyInfo(char *data, int size)
         // 내 모든 정보를 받는다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        
         int mp = nodeResult.child("coco").attribute("magic-point").as_int();
-        int mpStaff = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
+        int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
+        int staffLvNext = nodeResult.child("next-staff").attribute("staff-level").as_int();
+        int mpNextCostStarcandy = nodeResult.child("next-staff").attribute("star-candy-cost-value").as_int();
+        int mpNextCostTopaz= nodeResult.child("next-staff").attribute("topaz-cost-value").as_int();
+        int staffNextPercent= nodeResult.child("next-staff").attribute("bonus-mp").as_int();
+        
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
         int certificateType = nodeResult.child("score").attribute("certificate-type").as_int();
         int remainWeeklyRankTime = nodeResult.child("score").attribute("remain-weekly-rank-time").as_int();
+        
         int item1 = nodeResult.child("item").attribute("count-1").as_int();
         int item2 = nodeResult.child("item").attribute("count-2").as_int();
         int item3 = nodeResult.child("item").attribute("count-3").as_int();
         int item4 = nodeResult.child("item").attribute("count-4").as_int();
         int item5 = nodeResult.child("item").attribute("count-5").as_int();
+        
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
         int remainPotionTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        
         int fire = nodeResult.child("properties").attribute("fire").as_int();
         int water = nodeResult.child("properties").attribute("water").as_int();
         int land = nodeResult.child("properties").attribute("land").as_int();
         int master = nodeResult.child("properties").attribute("master").as_int();
-        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaff, mpFairy, staffLv, highScore, weeklyHighScore, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
+        
+        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
+        myInfo->SetNextStaff(staffLvNext, mpNextCostStarcandy, mpNextCostTopaz, staffNextPercent);
         
         
         // 친구 리스트 정보를 받는다.

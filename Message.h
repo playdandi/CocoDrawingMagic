@@ -25,14 +25,18 @@ public:
     
     CREATE_FUNC(Message);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void MakeScroll();
+    void RenewScroll();
     
     void EndScene();
     void EndSceneCallback();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseMsg(char* data, int size);
+    void XmlParseMsgReceiveOne(char* data, int size);
     
     void ReleaseAll();
     
@@ -42,15 +46,17 @@ protected:
     bool isScrolling;
     bool isScrollViewTouched;
     
+    int httpStatus;
+    int httpMsgIdx;
+    
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassScroll;
     std::vector<CCLayer*> layer;
     
     CCScrollView* scrollView;
     CCLayer* scrollContainer;
-    
-    std::vector<Msg*> msgData;
 };
 
 #endif /* defined(__CocoMagic__Message__) */

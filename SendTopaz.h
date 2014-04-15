@@ -12,7 +12,7 @@ class SendTopaz : public CCLayer,
 public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int topaz_id);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

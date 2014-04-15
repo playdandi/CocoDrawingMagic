@@ -88,7 +88,7 @@ void GameReady::Notification(CCObject* obj)
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
-        
+
         // 포션 개수에 따른 포션 아이콘 업데이트
         char name[40];
         for (int i = 0 ; i < 5 ; i++)
@@ -106,6 +106,14 @@ void GameReady::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
+    }
+    else if (param->intValue() == 2)
+    {
+        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
     }
 }
 
@@ -221,9 +229,16 @@ void GameReady::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 1, 0) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
+        if (i >= 2) {
         sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5) );
+        }
 
+        // 아이템 아이콘
+        if (i == 0)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_clear.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+        else if (i == 1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_paint.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
         //sprintf(name2, "icon/icon_item_%d.png", i+1);
         //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
         
@@ -360,6 +375,11 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
                 CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+                CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
+                CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+                
+                CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+                
                 sound->StopBackgroundSound();
                 
                 Common::ShowNextScene(this, "GameReady", "Puzzle", true);
