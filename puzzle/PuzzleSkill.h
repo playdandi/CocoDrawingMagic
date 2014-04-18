@@ -34,6 +34,7 @@ public:
     void F4(int num);
     void F5Recur(int x, int y, int type, std::vector<CCPoint>& v);
     void F5(int num);
+    void F5_Callback(CCNode* sender, void* data);
     void SpiritTry(int type);
     void A6(int num);
     //std::vector<CCPoint> A6GetPos();

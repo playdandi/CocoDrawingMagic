@@ -1,11 +1,13 @@
 #include "PuzzleP8.h"
 #include "Puzzle.h"
 
-PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, float scale)
+PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, float scale, int type)
 {
     PuzzleP8* puzzleP8 = new PuzzleP8();
   
-    puzzleP8->type = rand() % TYPE_COUNT;
+    puzzleP8->type = type;
+    if (type == -1)
+        puzzleP8->type = rand() % TYPE_COUNT;
     
     char name[20];
     sprintf(name, "pieces/%d.png", puzzleP8->type);
@@ -17,8 +19,6 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, 
     puzzleP8->sprite->setPosition(pos);
     //puzzleP8->sprite->setScale(1.05f);
     puzzleP8->sprite->setScale(scale);
-    
-    //puzzleP8->sprite->setOpacity(215);
     
     puzzleP8->parent = parent;
     puzzleP8->zOrder = zOrder;
@@ -59,6 +59,11 @@ void PuzzleP8::SetPosition(CCPoint pos)
 void PuzzleP8::SetPiece(CCSprite* sprite)
 {
     this->sprite = sprite;
+}
+
+void PuzzleP8::SetPieceTexture(CCTexture2D* texture)
+{
+    this->sprite->setTexture(texture);
 }
 
 void PuzzleP8::SetZOrder(int zOrder)

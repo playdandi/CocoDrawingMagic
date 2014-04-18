@@ -140,6 +140,15 @@ CCParticleSystemQuad* Effect::GetSpirit(int type)
         return water;
     return land;
 }
+void Effect::ReleaseSpirit(int type)
+{
+    if (type == 0)
+        fire->removeFromParentAndCleanup(true);
+    else if (type == 1)
+        water->removeFromParentAndCleanup(true);
+    else
+        land->removeFromParentAndCleanup(true);
+}
 
 void Effect::PlayEffect_0(std::vector<CCPoint> pos)
 {

@@ -77,6 +77,9 @@ public:
     PuzzleP8Set* GetPuzzleP8Set();
     void SetSpriteP8Null(int x, int y);
     CCSprite* GetSpriteP8(int x, int y);
+    PuzzleP4Set* GetPuzzleP4Set();
+    
+    void SwapSpriteP8(int x1, int y1, int x2, int y2);
     
     bool IsConnected(int x, int y);
     
@@ -197,6 +200,7 @@ public:
     void RemoveChild(int x, int y);
     PuzzleP8* GetObject(int x, int y);
     void MoveObject(int x, int y, int fromX, int fromY);
+    void SwapObject(int x1, int y1, int x2, int y2);
     void Falling(int x, int y, int targetX, int targetY, int queue_pos);
     void FallingCompleted(CCNode* sender, void* queue_pos);
     

@@ -55,6 +55,7 @@ bool PuzzleResult::init()
 
 void PuzzleResult::InitSprites()
 {
+    /*
     pBlack = new CCSprite();
     pBlack->initWithTexture(tBackground, CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
@@ -111,7 +112,7 @@ void PuzzleResult::InitSprites()
     cycle->setPosition(ccp(pBackground->getContentSize().width/2, 50));
     cycle->setColor(ccc3(0, 0, 0));
     pBackground->addChild(cycle);
-    
+    */
     
     //CCActionInterval* action = CCMoveTo::create(0.2f, ccp(0, 0));
     //pBackground->runAction(action);

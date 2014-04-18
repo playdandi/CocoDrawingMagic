@@ -17,6 +17,7 @@ public:
     void PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos);
     void SetSpirit(int type);
     CCParticleSystemQuad* GetSpirit(int type);
+    void ReleaseSpirit(int type);
     
     void PlayEffect_0(std::vector<CCPoint> pos);
     void PlayEffect_8(std::vector<CCPoint> pos);

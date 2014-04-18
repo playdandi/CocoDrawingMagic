@@ -452,6 +452,7 @@ void PuzzleSkill::SpiritTry(int type)
     
     CCLog("정령 생성 !");
     spiritShownCnt[type]++;
+    isSpiritAlive[type] = true;
     
     // effect 발생 (정령 생성)
     GetEffect()->SetSpirit(type);
@@ -483,14 +484,11 @@ void PuzzleSkill::F5(int num)
     int cnt = 0, dcnt = 1;
     for (int i = 0 ; i < result_pos.size() ; i++)
     {
-        result_pos.push_back(ccp(curX, curY));
+        result_pos_end.push_back(ccp(curX, curY));
         
-        curX += dx;
-        curY += dy;
-        
-        if (cnt >= std::abs(dcnt))
+        if (cnt++ >= std::abs(dcnt))
         {
-            cnt = 0;
+            cnt = 1;
             if (dcnt > 0)
                 dcnt *= -1;
             else
@@ -501,93 +499,81 @@ void PuzzleSkill::F5(int num)
             else if (dx == -1 && dy == 0) { dx = 0; dy = -1; }
             else { dx = 1; dy = 0; }
         }
+        
+        curX += dx;
+        curY += dy;
     }
     
+    // 위치가 바뀌지 않는 피스를 찾아서, 액션을 취하지 않도록 한다.
+    CCPoint temp;
+    for (int i = 0 ; i < result_pos_end.size() ; i++)
+    {
+        for (int j = 0; j < result_pos.size() ; j++)
+        {
+            if (result_pos_end[i].x == result_pos[j].x && result_pos_end[i].y == result_pos[j].y)
+            {
+                result_pos_end[i] = ccp(-1, -1);
+                result_pos[j] = ccp(-1, -1);
+            }
+        }
+    }
     
-    /*
-     //std::vector<int> redSize;
-     //redSize.clear();
-     
-     int maxSize, k, number;
-     
-     // 변수 초기화
-     maxSize = -1;
-     k = 0;
-     F4A_cnt = 0;
-     for (int x = 0 ; x < COLUMN_COUNT ; x++)
-     for (int y = 0 ; y < ROW_COUNT ; y++)
-     F4A_check[x][y] = -1;
-     
-     // 가장 큰 red cluster를 찾는다.
-     for (int x = 0 ; x < COLUMN_COUNT ; x++)
-     {
-     for (int y = 0 ; y < ROW_COUNT ; y++)
-     {
-     // 네 모서리에 위치한 존재하지 않는 부분
-     if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-     (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-     continue;
-     
-     if (!F4A_check[x][y] && m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
-     {
-     F4ARecur(x, y, k);
-     if (F4A_cnt > maxSize)
-     {
-     maxSize = F4A_cnt;
-     number = k;
-     }
-     k++;
-     }
-     }
-     }
-     
-     // 아예 red piece가 없는 경우 스킬을 실행하지 않는다.
-     if (maxSize == -1)
-     return;
-     
-     std::vector<CCPoint> redPos;
-     for (int x = 0 ; x < COLUMN_COUNT ; x++)
-     {
-     for (int y = 0 ; y < ROW_COUNT ; y++)
-     {
-     if (F4A_check[x][y] != number && m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
-     redPos.push_back(ccp(x, y));
-     }
-     }
-     
-     // 큰 덩어리에 붙일 red piece들을 랜덤 선택한다.
-     int cnt = 0, p;
-     while(cnt < skillLevel[num] && cnt < (int)redPos.size())
-     {
-     p = rand() % (int)redPos.size();
-     if ((int)redPos[p].x == -1 && (int)redPos[p].y == -1)
-     continue;
-     
-     result_pos.push_back(redPos[p]);
-     redPos[p] = ccp(-1, -1);
-     cnt++;
-     }
-     
-     // 붙여야 하는 위치를 정한다.
-     cnt = 0;
-     while (cnt++ < (int)result_pos.size())
-     {
-     redPos.clear();
-     for (int x = 0 ; x < COLUMN_COUNT ; x++)
-     {
-     for (int y = 0 ; y < ROW_COUNT ; y++)
-     {
-     // 네 모서리에 위치한 존재하지 않는 부분
-     if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-     (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-     continue;
-     
-     if (F4A_IsAdjacentRed(x, y-1))
-     redPos.clear();
-     }
-     }
-     }
-     */
+    assert(result_pos.size() == result_pos_end.size());
+    
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        if (result_pos[i].x == -1 && result_pos[i].y == -1)
+            continue;
+        for (int j = 0 ; j < result_pos_end.size() ; j++)
+        {
+            if (result_pos_end[j].x == -1 && result_pos_end[j].y == -1)
+                continue;
+            
+            CCLog ("(%d, %d) , (%d, %d)", (int)result_pos[i].x, (int)result_pos[i].y, (int)result_pos_end[i].x, (int)result_pos_end[i].y);
+            
+            int x = (int)result_pos[i].x;
+            int y = (int)result_pos[i].y;
+            int x_end = (int)result_pos_end[j].x;
+            int y_end = (int)result_pos_end[j].y;
+            
+            result_pos_end[j] = ccp(-1, -1);
+            
+            CCActionInterval* action = CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x_end, y_end));
+            m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
+            CCActionInterval* action2 = CCSequence::create(CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x, y)),
+                        CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F5_Callback), NULL), NULL);
+            m_pGameLayer->GetSpriteP8(x_end, y_end)->runAction(action2);
+            
+            break;
+        }
+    }
+    
+    GetEffect()->GetSpirit(0)->setDuration(0.5f);
+    GetEffect()->GetSpirit(0)->setAutoRemoveOnFinish(true);
+    GetEffect()->ReleaseSpirit(0);
+    
+    isSpiritAlive[0] = false;
+}
+void PuzzleSkill::F5_Callback(CCNode* sender, void* data)
+{
+    // 8각형 피스 swap
+    m_pGameLayer->GetPuzzleP8Set()->SwapObject(x, y, x_end, y_end);
+    
+    // 4각형 피스들 갱신
+    for (int x = 1; x < COLUMN_COUNT ; x++)
+    {
+        for (int y = 1 ; y < ROW_COUNT ; y++)
+        {
+            m_pGameLayer->GetPuzzleP4Set()->SetType(x, y, -m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
+            //if (puzzleP4set->GetType(x, y) != BLOCKED)
+            //{
+            if (m_pGameLayer->GetPuzzleP4Set()->GetObject(x, y) != NULL)
+                m_pGameLayer->GetPuzzleP4Set()->RemoveChild(x, y);
+            m_pGameLayer->GetPuzzleP4Set()->CreatePiece(x, y, m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
+            m_pGameLayer->GetPuzzleP4Set()->AddChild(x, y);
+            //}
+        }
+    }
 }
 
 void PuzzleSkill::F5Recur(int x, int y, int type, std::vector<CCPoint>& v)

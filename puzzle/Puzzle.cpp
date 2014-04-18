@@ -84,6 +84,9 @@ bool Puzzle::init()
     skillNum.push_back(13);
     skillNum.push_back(21);
     
+    skillNum.push_back(4);
+    skillNum.push_back(12);
+    skillNum.push_back(20);
     //skillNum.push_back(7);
     
     for (int i = 0 ; i < skillNum.size() ; i++) {
@@ -215,9 +218,9 @@ void Puzzle::InitSprites()
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
-    effect->SetSpirit(0);
-    effect->SetSpirit(1);
-    effect->SetSpirit(2);
+    //effect->SetSpirit(0);
+    //effect->SetSpirit(1);
+    //effect->SetSpirit(2);
     //CCLog("Init Sprites Done");
     
     /*
@@ -692,6 +695,11 @@ void Puzzle::UpdateTimer(float f)
             sound->StopBackgroundSound();
             Common::ShowNextScene(this, "Puzzle", "Ranking", true);
         }
+        
+        // 정령 준비 발동
+        skill->SpiritTry(0);
+        skill->SpiritTry(1);
+        skill->SpiritTry(2);
     }
     
     if (isFeverTime)
@@ -823,8 +831,9 @@ CCPoint Puzzle::BoardStartPosition(CCPoint point)
 		for (int y = 0 ; y < ROW_COUNT ; y++)
 		{
             // board의 모서리에 있는 4개는 취급하지 않는다.
-            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+            //if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+            //    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+            if (x == 0 && y == 0)
                 continue;
             
             //if (IsValidInOcta(SetPiece8Position(x, y), point))
@@ -909,11 +918,6 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     CCPoint point = pTouch->getLocation();
     CCLog("Puzzle :: %d , %d", (int)point.x, (int)point.y);
-    
-    if (effect->GetSpirit(0)->boundingBox().containsPoint(point))
-    {
-        CCLog ("FIRE!!!!!!!!");
-    }
     
     // pause button
     if (((CCSprite*)spriteClass->FindSpriteByName("background/pause.png"))->boundingBox().containsPoint(point))
@@ -1012,6 +1016,19 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     if (m_bLockP8[x][y] > 0) // locked면 중지.
         return (m_bTouchStarted = false);
+    
+    
+    // 3가지 정령 중 하나를 터치할 때 동작한다.
+    if ((x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) || (x == COLUMN_COUNT && y == 0))
+    {
+        if (x == 0 && y == ROW_COUNT-1)
+            skill->Invoke(4);
+        else if (x == COLUMN_COUNT-1 && y == ROW_COUNT-1)
+            skill->Invoke(12);
+        else if (x == COLUMN_COUNT-1 == y == 0)
+            skill->Invoke(20);
+        return true;
+    }
     
     
     m_bIsCycle = false;
@@ -1413,7 +1430,11 @@ void Puzzle::InvokeSkills()
     {
         CCLog("state 6");
         m_iNextState = 7;
+        m_iState = m_iNextState;
         
+        InvokeSkills();
+        
+        /*
         // 불지르기, 물내리기, 땅꺼지기
         skill->Invoke(4); skill->Invoke(20); //skill->Invoke(12); skill->Invoke(20);
         
@@ -1423,6 +1444,7 @@ void Puzzle::InvokeSkills()
             m_iState = m_iNextState;
             InvokeSkills();
         }
+         */
     }
     else if (m_iState == 7)
     {
@@ -1861,6 +1883,10 @@ PuzzleP8Set* Puzzle::GetPuzzleP8Set()
 {
     return puzzleP8set;
 }
+PuzzleP4Set* Puzzle::GetPuzzleP4Set()
+{
+    return puzzleP4set;
+}
 
 void Puzzle::SetSpriteP8Null(int x, int y)
 {
@@ -1904,7 +1930,11 @@ void Puzzle::PlayEffect(int skillNum)
         effect->PlayEffect(skillNum, piece8xy[(touch_cnt-1)%QUEUE_CNT]);
 }
 
-
+void Puzzle::SwapSpriteP8(int x1, int y1, int x2, int y2)
+{
+    spriteP8[x1][y1] = puzzleP8set->GetSprite(x1, y1);
+    spriteP8[x2][y2] = puzzleP8set->GetSprite(x2, y2);
+}
 
 
 
@@ -1954,6 +1984,43 @@ PuzzleP8* PuzzleP8Set::GetObject(int x, int y)
 void PuzzleP8Set::MoveObject(int x, int y, int fromX, int fromY)
 {
     object[x][y] = object[fromX][fromY];
+}
+
+void PuzzleP8Set::SwapObject(int x1, int y1, int x2, int y2)
+{
+    PuzzleP8* p1 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x1, y1), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1078, object[x1][y1]->GetType());
+    PuzzleP8* p2 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x2, y2), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1078, object[x1][y1]->GetType());
+    
+    RemoveChild(x1, y1);
+    RemoveChild(x2, y2);
+    object[x1][y1] = p1;
+    object[x2][y2] = p2;
+    gameLayer->SwapSpriteP8(x1, y1, x2, y2);
+    
+    
+    /*
+    //PuzzleP8* temp = object[x1][y1];
+    int tempType = object[x1][y1]->GetType();
+    int tempZorder = object[x1][y1]->GetZOrder();
+    //CCSprite* tempSprite =
+    CCSprite* tempSprite1 = CCSprite::createWithTexture(object[x1][y1]->GetPiece()->getTexture());
+    CCSprite* tempSprite2 = CCSprite::createWithTexture(object[x2][y2]->GetPiece()->getTexture());
+
+    //object[x1][y1]->GetPiece()->removeFromParentAndCleanup(true);
+    //CCTexture2D* tempTexture = object[x1][y1]->GetPiece()->getTexture();
+    
+    object[x1][y1]->SetType(object[x2][y2]->GetType());
+    object[x1][y1]->SetZOrder(object[x2][y2]->GetZOrder());
+    object[x1][y1]->SetPiece(tempSprite2);
+    //object[x1][y1]->SetPieceTexture(object[x2][y2]->GetPiece()->getTexture());
+    
+    object[x2][y2]->SetType(tempType);
+    object[x2][y2]->SetZOrder(tempZorder);
+    object[x2][y2]->SetPiece(tempSprite1);
+    
+    CCLog("swap : (x1, y1) : (%d, %d)", (int)object[x1][y1]->GetPiece()->getPositionX(), (int)object[x1][y1]->GetPiece()->getPositionY());
+    */
+    
 }
 
 void PuzzleP8Set::Falling(int x, int y, int targetX, int targetY, int queue_pos)
