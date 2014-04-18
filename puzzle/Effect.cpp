@@ -58,7 +58,7 @@ void Effect::PlayEffect_Default(std::vector<CCPoint> pos)
         par->setTexture(sp->getTexture());
         
         par->setAnchorPoint(ccp(0.5, 0.5));
-        par->setPosition(gameLayer->SetPiece8Position(x, y));
+        par->setPosition(gameLayer->SetTouch8Position(x, y));
         par->setLife(0.5);
         
         par->setSpeed(300);
@@ -89,7 +89,7 @@ void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
     //    sprite = CCSprite::createWithSpriteFrameName("pieces/.png");
     
     sprite->setAnchorPoint(ccp(0.5, 0.5));
-    sprite->setPosition(gameLayer->SetPiece8Position((int)pos[0].x, (int)pos[0].y));
+    sprite->setPosition(gameLayer->SetTouch8Position((int)pos[0].x, (int)pos[0].y));
     sprite->setScale(0.5f);
     sprite->setOpacity(0);
     gameLayer->addChild(sprite, z1);
@@ -100,6 +100,45 @@ void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
                 CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), NULL),
                     NULL);
     sprite->runAction(action);
+}
+
+void Effect::SetSpirit(int type)
+{
+    if (type == 0) // 불의 정령
+    {
+        fire = CCParticleSystemQuad::create("particles/fire2.plist");
+        fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
+        fire->retain();
+        fire->setAnchorPoint(ccp(0.5, 0.5));
+        gameLayer->addChild(fire, 2000);
+    }
+    else if (type == 1) // 물의 정령
+    {
+        water = CCParticleSystemQuad::create("particles/water.plist");
+        water->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1));
+        water->retain();
+        water->setAnchorPoint(ccp(0.5, 0.5));
+        gameLayer->addChild(water, 2000);
+    }
+    else // 땅의 정령
+    {
+        land = CCParticleSystemQuad::create("particles/land.plist");
+        land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
+        land->retain();
+        land->setAnchorPoint(ccp(0.5, 0.5));
+        gameLayer->addChild(land, 2000);
+    }
+    //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
+    //batch->addChild(m_emitter);
+    //puzzleLayer->addChild(batch, 2000);
+}
+CCParticleSystemQuad* Effect::GetSpirit(int type)
+{
+    if (type == 0)
+        return fire;
+    else if (type == 1)
+        return water;
+    return land;
 }
 
 void Effect::PlayEffect_0(std::vector<CCPoint> pos)
@@ -151,7 +190,7 @@ void Effect::PlayEffect_0(std::vector<CCPoint> pos)
         par->setGravity(ccp(0, -200));
         
         par->setAnchorPoint(ccp(0.5, 0.5));
-        par->setPosition(gameLayer->SetPiece8Position(x, y));
+        par->setPosition(gameLayer->SetTouch8Position(x, y));
         
         par->setDuration(0.15f);
         par->setAutoRemoveOnFinish(true);
@@ -175,7 +214,7 @@ void Effect::PlayEffect_1(std::vector<CCPoint> pos)
         
         //par->setTotalParticles(800);
         par->setAnchorPoint(ccp(0.5, 0.5));
-        par->setPosition(gameLayer->SetPiece8Position(x, y));
+        par->setPosition(gameLayer->SetTouch8Position(x, y));
         par->setLife(1);
         //par->setLifeVar(1);
         
@@ -214,7 +253,7 @@ void Effect::PlayEffect_8(std::vector<CCPoint> pos)
         
         CCSprite* moon = CCSprite::createWithSpriteFrameName("pieces/moon_1.png");
         moon->setAnchorPoint(ccp(0.5, 0.5));
-        moon->setPosition(gameLayer->SetPiece8Position(x, y));
+        moon->setPosition(gameLayer->SetTouch8Position(x, y));
         moon->setScale(0.3f);
         
         CCLayer* layer = CCLayer::create();
@@ -223,7 +262,7 @@ void Effect::PlayEffect_8(std::vector<CCPoint> pos)
         layer->addChild(moon, z1);
         
         CCDrawNode* stencil = CCDrawNode::create();
-        stencil->drawDot(gameLayer->SetPiece8Position(x-1, y), 154/2, ccc4f(0, 0, 0, 255));
+        stencil->drawDot(gameLayer->SetTouch8Position(x-1, y), 154/2, ccc4f(0, 0, 0, 255));
         CCClippingNode* clip = CCClippingNode::create(stencil);
         clip->addChild(layer);
         gameLayer->addChild(clip, z1);
@@ -261,8 +300,8 @@ void Effect::PlayEffect_9(std::vector<CCPoint> pos, int queue_pos)
     
     //par->setTotalParticles(800);
     par->setAnchorPoint(ccp(0.5, 0.5));
-    //par->setPosition(gameLayer->SetPiece8Position((int)pos[1].x-(int)pos[0].x, (int)pos[1].y-(int)pos[0].y));
-    CCPoint first = gameLayer->SetPiece8Position((int)pos[1].x, (int)pos[1].y);
+    //par->setPosition(gameLayer->SetTouch8Position((int)pos[1].x-(int)pos[0].x, (int)pos[1].y-(int)pos[0].y));
+    CCPoint first = gameLayer->SetTouch8Position((int)pos[1].x, (int)pos[1].y);
     par->setPosition(ccp((int)first.x-(int)pos[0].x, (int)first.y-(int)pos[0].y));
     par->setLife(1);
     //par->setLifeVar(1);
@@ -400,8 +439,8 @@ void Effect::PlayEffect_17(std::vector<CCPoint> pos)
         
 //
         
-        //CCActionInterval* action = CCRipple3D::create(3.0f, CCSizeMake(PIECE8_WIDTH, PIECE8_HEIGHT), gameLayer->SetPiece8Position(x, y), PIECE8_WIDTH, 4, 160);
-        //CCActionInterval* ripple = CCRipple3D::create(1.0f, CCSizeMake(30, 30), gameLayer->SetPiece8Position(x, y), PIECE8_WIDTH/2, 4, 160);
+        //CCActionInterval* action = CCRipple3D::create(3.0f, CCSizeMake(PIECE8_WIDTH, PIECE8_HEIGHT), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH, 4, 160);
+        //CCActionInterval* ripple = CCRipple3D::create(1.0f, CCSizeMake(30, 30), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH/2, 4, 160);
         //CCActionInterval* wave = CCWaves::create(0.5f, CCSizeMake(5, 5), 2, 10, true, true);
         //CCFiniteTimeAction* action = CCSequence::create(ripple,
         //        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), NULL),
@@ -438,7 +477,7 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
         
         CCSprite* first = CCSprite::createWithSpriteFrameName("anim/green_1.png");
         first->setAnchorPoint(ccp(0.5, 0.5));
-        first->setPosition(gameLayer->SetPiece8Position(x, y));
+        first->setPosition(gameLayer->SetTouch8Position(x, y));
         first->setScale(0.45f);
         gameLayer->addChild(first, z1);
         
@@ -458,7 +497,7 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
         
         //par->setTotalParticles(800);
         par->setAnchorPoint(ccp(0.5, 0.5));
-        par->setPosition(gameLayer->SetPiece8Position(x, y));
+        par->setPosition(gameLayer->SetTouch8Position(x, y));
         par->setLife(0.5);
         //par->setLifeVar(1);
         
@@ -495,7 +534,7 @@ void Effect::PlayEffect_5(std::vector<CCPoint> pos)
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/LavaFlow.plist");
         m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(gameLayer->SetPiece8Position(x, y));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
         CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
         batch->addChild(m_emitter);
 
@@ -515,7 +554,7 @@ void Effect::PlayEffect_13(std::vector<CCPoint> pos)
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/LavaFlow.plist");
         m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(gameLayer->SetPiece8Position(x, y));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
         CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
         batch->addChild(m_emitter);
         
@@ -537,7 +576,7 @@ void Effect::PlayEffect_21(std::vector<CCPoint> pos)
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/LavaFlow.plist");
         m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(gameLayer->SetPiece8Position(x, y));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
         CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
         batch->addChild(m_emitter);
         
@@ -615,7 +654,7 @@ void Effect::Effect7Callback(CCNode* sender, void* pointer)
             pThis->callbackCnt++;
         
             CCActionInterval* action = CCSequence::create(
-                CCMoveTo::create(1.0f, pThis->gameLayer->SetPiece8Position(x, y)),
+                CCMoveTo::create(1.0f, pThis->gameLayer->SetTouch8Position(x, y)),
                 CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect7Callback), (void*)pThis),
                 NULL);
             par->runAction(action);

@@ -8,6 +8,8 @@
 #define POTION_REMAIN 2
 #define POTION_NOTHING 3
 
+extern int iGameVersion;
+extern int iBinaryVersion;
 extern class MyInfo* myInfo;
 extern std::vector<class Friend*> friendList;
 extern std::vector<class PriceTopaz*> priceTopaz;

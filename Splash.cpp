@@ -97,6 +97,10 @@ void Splash::LogoLoadingCompleted()
         CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
     }
     
+    // 버전 세팅
+    iGameVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion", -1);
+    iBinaryVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion", -1);
+    
     // 시작 버튼
     m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_blue.png");
     m_pStartBtn->setAnchorPoint(ccp(0, 0));
@@ -168,11 +172,72 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
     
     if (isStarting && m_pStartBtn->boundingBox().containsPoint(point))
     {
-        m_pMsgLabel->setString("로그인 중...");
+        m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
-        // make url
+        // 게임 버전 체크
+        std::string url = "http://14.63.225.203/cogma/game/get_version.php?";
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+ 
+    m_pStartBtn->setOpacity(255);
+    m_pStartLetter->setOpacity(255);
+    isStarting = false;
+}
+
+
+void Splash::XmlParseVersion(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 버전 정보를 받는다.
+        //xml_node setting = nodeResult.child("setting");
+        int gameVersion = nodeResult.child("game-version").text().as_int();
+        int binaryVersion = nodeResult.child("binary-version").text().as_int();
+        std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
+        // 나중에 마켓버전도 받자.
+        
+        if (binaryVersion != iBinaryVersion)
+        {
+            CCLog("바이너리 버전 다름");
+            // 마켓/스토어에서 다시 앱을 받으라는 팝업창을 띄우자.
+            
+            iBinaryVersion = binaryVersion;
+            CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
+        }
+        if (gameVersion != iGameVersion)
+        {
+            CCLog("게임 버전 다름");
+            // 밸런스 파일 업데이트 !
+            
+            iGameVersion = gameVersion;
+            CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", iGameVersion);
+        }
+        
+        // 로그인 시도
+        m_pMsgLabel->setString("로그인 중...");
         char temp[255];
         std::string url = "http://14.63.225.203/cogma/game/login.php?";
+        sprintf(temp, "game_version=%d&", iGameVersion);
+        url += temp;
         sprintf(temp, "kakao_id=%d&", mKakaoId);
         url += temp;
         sprintf(temp, "push_token=TEST_PUSH_VALUE&");
@@ -198,12 +263,11 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
         CCHttpClient::getInstance()->send(req);
         req->release();
     }
- 
-    m_pStartBtn->setOpacity(255);
-    m_pStartLetter->setOpacity(255);
-    isStarting = false;
+    else
+    {
+        CCLog("failed code = %d", code);
+    }
 }
-
 
 void Splash::XmlParseLogin(char* data, int size)
 {
@@ -535,6 +599,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     httpStatus++;
     switch (httpStatus-1)
     {
+        case HTTP_VERSION:
+            XmlParseVersion(dumpData, buffer->size()); break;
         case HTTP_LOGIN:
             XmlParseLogin(dumpData, buffer->size()); break;
         case HTTP_MYINFO:

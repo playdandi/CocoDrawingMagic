@@ -1,6 +1,8 @@
 #include "Data.h"
 #include <algorithm>
 
+int iGameVersion;
+int iBinaryVersion;
 class MyInfo* myInfo;
 std::vector<class Friend*> friendList;
 std::vector<class PriceTopaz*> priceTopaz;

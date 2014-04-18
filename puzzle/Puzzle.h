@@ -52,6 +52,8 @@ public:
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent);
     
+    CCPoint SetTouch8Position(int x, int y);
+    CCPoint SetTouch4Position(int x, int y);
     CCPoint SetPiece8Position(int x, int y);
     CCPoint SetPiece4Position(int x, int y);
     
@@ -76,12 +78,19 @@ public:
     void SetSpriteP8Null(int x, int y);
     CCSprite* GetSpriteP8(int x, int y);
     
+    bool IsConnected(int x, int y);
+    
     void PlayEffect(int skillNum);
 
+    bool IsValidInSquare(CCPoint center, CCPoint point);
+    int GetDist(CCPoint center, CCPoint point);
+    
+    float GetBoardSize();
     
 	CREATE_FUNC(Puzzle);
     
     Sound* GetSound();
+    Effect* GetEffect();
     
     void EndScene();
     void EndSceneCallback();
@@ -89,6 +98,15 @@ public:
 protected:
     CCSize vs;
     CCPoint vo;
+    CCSize tbSize;
+    CCSize boardSize;
+    
+    float PIECE8_WIDTH;
+    float PIECE8_HEIGHT;
+    float PIECE4_WIDTH;
+    float PIECE4_HEIGHT;
+    float PIECE8_FRAME_WIDTH;
+    float PIECE8_FRAME_HEIGHT;
     
     CCSprite* background;
     CCSprite* puzzleFrame;

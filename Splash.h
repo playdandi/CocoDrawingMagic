@@ -5,11 +5,12 @@
 #include "Sound.h"
 #include "cocos-ext.h"
 
-#define HTTP_LOGIN 0
-#define HTTP_MYINFO 1
-#define HTTP_PRICE 2
-#define HTTP_FRIENDS 3
-#define HTTP_PROFILE_IMAGE 4
+#define HTTP_VERSION 0
+#define HTTP_LOGIN 1
+#define HTTP_MYINFO 2
+#define HTTP_PRICE 3
+#define HTTP_FRIENDS 4
+#define HTTP_PROFILE_IMAGE 5
 
 using namespace cocos2d::extension;
 
@@ -37,6 +38,7 @@ public:
 //    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
 //    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
+    void XmlParseVersion(char* data, int size);
     void XmlParseLogin(char* data, int size);
     void XmlParseMyInfo(char* data, int size);
     void XmlParsePrice(char* data, int size);

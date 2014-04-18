@@ -15,6 +15,9 @@ public:
     
     void PlayEffect_Default(std::vector<CCPoint> pos);
     void PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos);
+    void SetSpirit(int type);
+    CCParticleSystemQuad* GetSpirit(int type);
+    
     void PlayEffect_0(std::vector<CCPoint> pos);
     void PlayEffect_8(std::vector<CCPoint> pos);
     void PlayEffect_16(std::vector<CCPoint> pos);
@@ -45,6 +48,11 @@ private:
     int queue_pos_now;
     
     CCSprite* dragon;
+    
+    // 정령
+    CCParticleSystemQuad* fire;
+    CCParticleSystemQuad* water;
+    CCParticleSystemQuad* land;
 };
 
 #endif /* defined(__CocoMagic__Effect__) */
