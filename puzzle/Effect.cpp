@@ -690,7 +690,7 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos)
 {
     // F3 : 10개이상 제거 시 추가점수
     
-    CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
+    //CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
     int x = (int)pos[pos.size()-1].x;
     int y = (int)pos[pos.size()-1].y;
     if (gameLayer->IsCycle())
@@ -698,6 +698,26 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos)
         x = (int)pos[0].x;
         y = (int)pos[0].y;
     }
+    
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/Untitled 5.plist");
+    m_emitter->retain();
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+    CCLog("effect F3 === %d %d", x, y);
+    //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
+    //batch->addChild(m_emitter);
+    m_emitter->setStartColor(ccc4f(0.97, 0.03, 0.03, 1));
+    m_emitter->setEndColor(ccc4f(0.97, 0.03, 0.03, 1));
+    //m_emitter->setStartColor(ccc4f(0.1, 0.1, 0.95, 1));
+    //m_emitter->setEndColor(ccc4f(0.1, 0.1, 0.95, 0));
+    //batch->setScale(3.0f);
+    m_emitter->setScale(0.75f);
+    gameLayer->addChild(m_emitter, 2000);
+    
+    
+    m_emitter->setDuration(1.0f);
+    m_emitter->setAutoRemoveOnFinish(true);
+    /*
     plus->setPosition(gameLayer->SetTouch8Position(x, y));
     plus->setScale(0.5);
     plus->setOpacity(0);
@@ -709,6 +729,7 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos)
                     CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect2Callback), (void*)pThis),
                     NULL );
     plus->runAction(action);
+     */
 }
 void Effect::Effect2Callback(CCNode* sender, void* pointer)
 {
