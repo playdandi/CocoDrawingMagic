@@ -175,7 +175,7 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
         // 게임 버전 체크
-        std::string url = "http://14.63.225.203/cogma/game/get_version.php?";
+        std::string url = "http://14.63.225.203/cogma/game/get_version.php";
         CCHttpRequest* req = new CCHttpRequest();
         req->setUrl(url.c_str());
         req->setRequestType(CCHttpRequest::kHttpPost);

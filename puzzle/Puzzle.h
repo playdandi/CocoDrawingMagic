@@ -31,15 +31,17 @@ public:
     void ChangeAnimCoco(float f);
     void ChangeAnimFairy(float f);
     
-    void SetScore();
-    void UpdateScore(int numOfPiece);
+    void SetScoreAndStarCandy();
+    void UpdateScore(int type, int data);
+    void UpdateStarCandy();
     void SetCombo();
     int GetCombo();
     void UpdateCombo();
+    
     void ComboTimer(float f);
     void SetTimer();
     void UpdateTimer(float f);
-    //PuzzleP8* GetBoard(int x, int y);
+    
     CCLayer* GetPieceLayer();
     
     CCPoint BoardStartPosition(CCPoint point);
@@ -71,7 +73,9 @@ public:
     bool IsCycle();
     PuzzleSkill* GetSkill();
     
-    void tCB(CCNode* sender, void* pos);
+    //void tCB(CCNode* sender, void* pos);
+    
+    void SetSpiritTouch(bool val);
     
     
     PuzzleP8Set* GetPuzzleP8Set();
@@ -80,6 +84,7 @@ public:
     PuzzleP4Set* GetPuzzleP4Set();
     
     void SwapSpriteP8(int x1, int y1, int x2, int y2);
+    void SetSpriteP8(int x, int y, CCSprite* sp);
     
     bool IsConnected(int x, int y);
     
@@ -118,6 +123,7 @@ protected:
     
     bool m_bTouchStarted;
     bool m_bIsCycle;
+    bool m_bIsSpiritTouched;
     int m_bLockP8[COLUMN_COUNT][ROW_COUNT];
     int m_bLockP4[COLUMN_COUNT][ROW_COUNT];
     int cur_priority;
@@ -155,6 +161,8 @@ protected:
 private:
     int iScore;
     CCLabelTTF* pScoreLabel;
+    int iStarCandy;
+    CCLabelTTF* pStarCandyLabel;
     int iCombo;
     CCLabelTTF* pComboLabel;
     int iComboTimer;
@@ -193,7 +201,7 @@ class PuzzleP8Set
 public:
     void SetGameLayer(Puzzle* layer);
     void SetPuzzleLayer(CCLayer* layer);
-    void CreatePiece(int x, int y);
+    void CreatePiece(int x, int y, int type = -1);
     CCSprite* GetSprite(int x, int y);
     int GetType(int x, int y);
     void AddChild(int x, int y);

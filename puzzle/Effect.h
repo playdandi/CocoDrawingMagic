@@ -33,6 +33,9 @@ public:
     void PlayEffect_13(std::vector<CCPoint> pos); // 6개이상한번더
     void PlayEffect_21(std::vector<CCPoint> pos); // 6개이상한번더
     
+    void PlayEffect_2(std::vector<CCPoint> pos); // F3 : 10개이상 제거 시 추가점수
+    void Effect2Callback(CCNode* sender, void* pointer);
+    
     void PlayEffect_7(std::vector<CCPoint> pos); // 8번 스킬
     void Effect7Callback(CCNode* sender, void* pointer);
     

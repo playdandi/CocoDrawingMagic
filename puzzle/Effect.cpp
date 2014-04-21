@@ -38,6 +38,8 @@ void Effect::PlayEffect(int skillNum, std::vector<CCPoint> pos, int queue_pos)
         case 13: PlayEffect_13(pos); break;
         case 21: PlayEffect_21(pos); break;
             
+        case 2: PlayEffect_2(pos); break;
+            
         case 7: PlayEffect_7(pos); break;
             
         default: PlayEffect_Default(pos); break;
@@ -684,6 +686,35 @@ void Effect::Effect7Callback(CCNode* sender, void* pointer)
     }
 }
 
+void Effect::PlayEffect_2(std::vector<CCPoint> pos)
+{
+    // F3 : 10개이상 제거 시 추가점수
+    
+    CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
+    int x = (int)pos[pos.size()-1].x;
+    int y = (int)pos[pos.size()-1].y;
+    if (gameLayer->IsCycle())
+    {
+        x = (int)pos[0].x;
+        y = (int)pos[0].y;
+    }
+    plus->setPosition(gameLayer->SetTouch8Position(x, y));
+    plus->setScale(0.5);
+    plus->setOpacity(0);
+    gameLayer->addChild(plus, z1+1);
+    
+    CCFiniteTimeAction* action = CCSequence::create(
+                    CCSpawn::create(CCScaleTo::create(0.5f, 1.5f),
+                                    CCSequence::create(CCFadeIn::create(0.25f), CCFadeOut::create(0.25f), NULL), NULL),
+                    CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect2Callback), (void*)pThis),
+                    NULL );
+    plus->runAction(action);
+}
+void Effect::Effect2Callback(CCNode* sender, void* pointer)
+{
+    //Effect* pThis = (Effect*)pointer;
+    sender->removeFromParentAndCleanup(true);
+}
 
 
 
