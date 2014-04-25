@@ -19,12 +19,16 @@ class Splash : public CCLayer
                 //public cocos2d::extension::CCEditBoxDelegate
 {
 public:
+    ~Splash(void);
 	virtual bool init();
+    virtual void onEnter();
+    virtual void onPause();
+    virtual void onExit();
     virtual void keyBackClicked();
     
-	void ccTouchesBegan(CCSet* pTouches, CCEvent* pEvent);
-	void ccTouchesMoved(CCSet* pTouches, CCEvent* pEvent);
-	void ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent);
+    virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
+	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
+	virtual void ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent);
     
 	static CCScene* scene();
 	CREATE_FUNC(Splash);
@@ -45,31 +49,34 @@ public:
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
+    void LastActionStart();
+    void LastActionCallback(CCNode* sender, void *data);
+    void LastActionCallback2(CCNode* sender, void *data);
     void EndScene();
     
 protected:
     CCSize winSize;
+    bool isLoading;
+    bool isStarting;
+    bool isKeyBackClicked;
     
     //CCSprite* m_pEditNameSprite;
     //CCTextFieldTTF* m_pEditName;
     //CCEditBox* m_pEditName;
     //CCLabelTTF* m_pLoadLabel;
     
-private:
     int mKakaoId;
     int mDeviceType;
-    
     int httpStatus;
+    int profileCntTotal;
+    int profileCnt;
     
-    bool isKeyBackClicked;
+private:
     CCSprite* m_pBackground;
     CCSprite* m_pTitle;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
-    
-    int profileCntTotal;
-    int profileCnt;
 };
 
 

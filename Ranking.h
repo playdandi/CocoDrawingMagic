@@ -26,25 +26,19 @@ public:
     virtual void scrollViewDidZoom(CCScrollView* view);
     //virtual void registerWithTouchDispatcher();
     
+    void EndScene();
+    
     void Notification(CCObject* obj);
     
     void InitSprites();
     void MakeScroll();
     
     void PotionTimer(float f);
-
-    //void touchDownAction(CCObject* sender, CCControlEvent controlEvent);
     
     CREATE_FUNC(Ranking);
     
 protected:
     CCSize winSize;
-    
-    CCScrollView* scrollView;
-    CCPoint scrollViewLastPoint;
-    std::vector<CCSprite*> profiles;
-    
-    //std::vector<CCSprite*> potions;
     
     bool isTouched;
     bool isScrolling;
@@ -54,8 +48,15 @@ protected:
     bool isKeyBackClicked;
     
 private:
+    CCSprite* pBackground;
+    CCSprite* pBlack;
     
     SpriteClass* spriteClass;
+    
+    std::vector<CCLayer*> profileLayers;
+    CCScrollView* scrollView;
+    //CCPoint scrollViewLastPoint;
+    //std::vector<CCSprite*> profiles;
 };
 
 #endif /* defined(__CocoMagic__Ranking__) */

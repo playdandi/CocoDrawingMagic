@@ -12,6 +12,7 @@ class GameReady : public CCLayer,
                     public CCScrollViewDelegate
 {
 public:
+    ~GameReady(void);
     static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
@@ -31,20 +32,25 @@ public:
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
+    //void EndSceneCallback();
+    void EndSceneCallback(CCNode* sender, void* data);
     
 protected:
     CCSize winSize;
-    
-    CCScrollView* scrollView;
-    
-private:
-    bool itemSelected[5];
-    std::vector<CCLayer*> itemNumLayer;
-    
     bool isTouched;
     bool isScrolling;
     bool isScrollViewTouched;
+    bool isStarting;
+    
+    bool itemSelected[5];
+    int callbackType;
+    
+private:
+    CCSprite* pBlack;
+    CCSprite* pBlackClose;
+    std::vector<CCLayer*> itemNumLayer;
+    
+    CCScrollView* scrollView;
     
     SpriteClass* spriteClass;
 };

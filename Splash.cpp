@@ -3,8 +3,10 @@
 
 using namespace pugi;
 
-bool isStarting = false;
-
+Splash::~Splash(void)
+{
+    CCLog("Splash 소멸자");
+}
 
 CCScene* Splash::scene()
 {
@@ -15,6 +17,25 @@ CCScene* Splash::scene()
     
 	return pScene;
 }
+
+void Splash::onEnter()
+{
+    CCLog("Splash :: onEnter");
+    CCLayer::onEnter();
+}
+void Splash::onPause()
+{
+    CCLog("Splash :: onPause");
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+}
+void Splash::onExit()
+{
+    CCLog("Splash :: onExit");
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->removeDelegate(this);
+}
+
 
 void Splash::keyBackClicked()
 {
@@ -27,7 +48,6 @@ void Splash::keyBackClicked()
     std::vector<int> nullData;
     Common::ShowPopup(this, "Ranking", "NoImage", false, POPUP_EXIT, BTN_2, nullData);
 }
-
 
 bool Splash::init()
 {
@@ -43,17 +63,17 @@ bool Splash::init()
     
     // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
-    m_pBackground->setAnchorPoint(ccp(0, 0));
-    m_pBackground->setPosition(ccp(0, 0));
+    m_pBackground->setAnchorPoint(ccp(0.5, 0.5));
+    m_pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
+    m_pBackground->setScale(1.2f);
     m_pBackground->setOpacity(0);
     this->addChild(m_pBackground, 0);
     CCActionInterval* action = CCSequence::create(CCFadeIn::create(0.5f),
                         CCCallFunc::create(this, callfunc_selector(Splash::LogoLoadingCompleted)), NULL);
     m_pBackground->runAction(action);
 
-    this->setKeypadEnabled(true);
-	this->setTouchEnabled(true);
     isStarting = false;
+    isLoading = false;
     
     httpStatus = 0;
     
@@ -102,14 +122,20 @@ void Splash::LogoLoadingCompleted()
     iBinaryVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion", -1);
     
     // 시작 버튼
-    m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_blue.png");
+    m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
     m_pStartBtn->setAnchorPoint(ccp(0, 0));
     m_pStartBtn->setPosition(ccp(319, 191));
     this->addChild(m_pStartBtn, 3);
-    m_pStartLetter = CCSprite::createWithSpriteFrameName("letter/letter_gamestart.png");
+    m_pStartLetter = CCSprite::createWithSpriteFrameName("letter/letter_startgame.png");
     m_pStartLetter->setAnchorPoint(ccp(0.5, 0.5));
     m_pStartLetter->setPosition(ccp(319+446/2, 191+160/2+5));
     this->addChild(m_pStartLetter, 3);
+    
+    // 터치 활성화
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    this->setKeypadEnabled(true);
+	this->setTouchEnabled(true);
 }
 
 /*
@@ -141,17 +167,21 @@ void Splash::editBoxReturn(CCEditBox* editBox)
 */
 
 
-void Splash::ccTouchesBegan(CCSet* pTouches, CCEvent* pEvent)
+bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCTouch* pTouch = (CCTouch*)pTouches->anyObject();
-    CCPoint point = pTouch->getLocation();
+    if (isLoading)
+        return true;
     
+    CCPoint point = pTouch->getLocation();
+
     if (m_pStartBtn->boundingBox().containsPoint(point))
     {
         isStarting = true;
         m_pStartBtn->setOpacity(120);
         m_pStartLetter->setOpacity(120);
     }
+    
+    return true;
     /*
     if (m_pEditName->boundingBox().containsPoint(point))
     {
@@ -160,18 +190,22 @@ void Splash::ccTouchesBegan(CCSet* pTouches, CCEvent* pEvent)
      */
 }
 
-void Splash::ccTouchesMoved(CCSet* pTouches, CCEvent* pEvent)
+void Splash::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
     
 }
 
-void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
+void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCTouch* pTouch = (CCTouch*)pTouches->anyObject();
+    if (isLoading)
+        return;
+    
     CCPoint point = pTouch->getLocation();
     
     if (isStarting && m_pStartBtn->boundingBox().containsPoint(point))
     {
+        isLoading = true;
+        
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
         // 게임 버전 체크
@@ -182,11 +216,16 @@ void Splash::ccTouchesEnded(CCSet* pTouches, CCEvent* pEvent)
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
+        
+        m_pStartBtn->setOpacity(0);
+        m_pStartLetter->setOpacity(0);
     }
- 
-    m_pStartBtn->setOpacity(255);
-    m_pStartLetter->setOpacity(255);
-    isStarting = false;
+    else
+    {
+        m_pStartBtn->setOpacity(255);
+        m_pStartLetter->setOpacity(255);
+        isStarting = false;
+    }
 }
 
 
@@ -624,21 +663,41 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             //CCLog("callback : %d", profileCnt);
             
             if (profileCnt == (int)friendList.size())
-                Common::ShowNextScene(this, "Splash", "Ranking", true);
+            {
+                // 1) 로고랑 글자를 없앤다.
+                // 2) 배경화면 축소하면서 Ranking 시작.
+                LastActionStart();
+                //Common::ShowNextScene(this, "Splash", "Ranking", true);
+            }
             break;
     }
 }
 
+void Splash::LastActionStart()
+{
+    CCActionInterval* action = CCSequence::create(CCEaseBounceIn::create( CCMoveBy::create(0.5f, ccp(0, 900)) ),
+                                               //   CCDelayTime::create(0.5f),
+                        CCCallFuncND::create(this, callfuncND_selector(Splash::LastActionCallback), NULL), NULL);
+    m_pTitle->runAction(action);
+    
+    m_pMsgLabel->setOpacity(0);
+}
+
+void Splash::LastActionCallback(CCNode* sender, void* data)
+{
+    CCActionInterval* action = CCSequence::create(CCScaleTo::create(1.0f, 1.0f),
+                        CCCallFuncND::create(this, callfuncND_selector(Splash::LastActionCallback2), NULL), NULL);
+    m_pBackground->runAction(CCEaseIn::create(action, 1.0f));
+}
+
+void Splash::LastActionCallback2(CCNode* sender, void *data)
+{
+    Common::ShowNextScene(this, "Splash", "Ranking", true);
+}
 
 void Splash::EndScene()
 {
     CCLog("Splash :: EndScene");
-    //this->removeAllChildren();
-    //CCScene* nextScene = RaisingLayer::scene();
-//	CCDirector::sharedDirector()->setDepthTest(true);
-    //CCScene* transition = CCTransitionFade::create(1.0f, nextScene);
-	//CCDirector::sharedDirector()->replaceScene(transition);
-    
     m_pBackground->removeFromParentAndCleanup(true);
     m_pTitle->removeFromParentAndCleanup(true);
     m_pMsgLabel->removeFromParentAndCleanup(true);

@@ -30,17 +30,20 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
     {
         InitChild();
         //CCLog("type ; %d", type);
-        char name[20];
+        char name[25];
 
         if (lu == rd)
         {
-            sprintf(name, "pieces/%d_link.png", lu);
+            sprintf(name, "pieces/%d_link_lu.png", lu);
             leftup = CCSprite::createWithSpriteFrameName(name);
+            sprintf(name, "pieces/%d_link_rd.png", rd);
             rightdown = CCSprite::createWithSpriteFrameName(name);
             
             if (ru != ld)
             {
+                sprintf(name, "pieces/%d_link_ru.png", lu);
                 rightup = CCSprite::createWithSpriteFrameName(name);
+                sprintf(name, "pieces/%d_link_ld.png", rd);
                 leftdown = CCSprite::createWithSpriteFrameName(name);
                 //m_rightup->initWithTexture(pPuzzlePiece4,
                 //CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
@@ -50,12 +53,15 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         }
         if (ru == ld)
         {
-            sprintf(name, "pieces/%d_link.png", ru);
+            sprintf(name, "pieces/%d_link_ru.png", ru);
             rightup = CCSprite::createWithSpriteFrameName(name);
+            sprintf(name, "pieces/%d_link_ld.png", ld);
             leftdown = CCSprite::createWithSpriteFrameName(name);
             if (lu != rd)
             {
+                sprintf(name, "pieces/%d_link_lu.png", ru);
                 leftup = CCSprite::createWithSpriteFrameName(name);
+                sprintf(name, "pieces/%d_link_rd.png", ld);
                 rightdown = CCSprite::createWithSpriteFrameName(name);
             }
         }
@@ -63,28 +69,28 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         // set anchorpoint and position
         if (leftup != NULL)
         {
-            leftup->setAnchorPoint(ap);
+            leftup->setAnchorPoint(ccp(1, 0));
             leftup->setPosition(pos);
         }
         if (rightup != NULL)
         {
-            rightup->setAnchorPoint(ap);
-            rightup->setRotation(90);
+            rightup->setAnchorPoint(ccp(0, 0));
+            //rightup->setRotation(90);
             rightup->setPosition(ccp((int)pos.x-1, (int)pos.y));
             //rightup->setPosition(pos);
         }
         if (leftdown != NULL)
         {
-            leftdown->setAnchorPoint(ap);
-            leftdown->setRotation(-90);
-            leftdown->setPosition(ccp((int)pos.x, (int)pos.y+1));
+            leftdown->setAnchorPoint(ccp(1, 1));
+            //leftdown->setRotation(-90);
+            leftdown->setPosition(ccp((int)pos.x, (int)pos.y+2));
             //leftdown->setPosition(pos);
         }
         if (rightdown != NULL)
         {
-            rightdown->setAnchorPoint(ap);
-            rightdown->setRotation(180);
-            rightdown->setPosition(ccp((int)pos.x-1, (int)pos.y+1));
+            rightdown->setAnchorPoint(ccp(0, 1));
+            //rightdown->setRotation(180);
+            rightdown->setPosition(ccp((int)pos.x-1, (int)pos.y+2));
             //rightdown->setPosition(pos);
         }
     }

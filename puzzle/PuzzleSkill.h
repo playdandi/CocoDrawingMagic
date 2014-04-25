@@ -19,44 +19,52 @@ public:
     
     void Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv);
     
-    void TrySkills(int pieceColor);
-    void Try(int skillNum);
+    void TrySkills(int pieceColor, int queue_pos);
+    void Try(int skillNum, int queue_pos);
     
-    bool IsApplied(int skillNum);
+    bool IsApplied(int skillNum, int queue_pos);
     
     void SetQueuePos(int queue_pos);
     
-    void Invoke(int skillNum);
+    void Invoke(int skillNum, int queue_pos);
     
-    void A1(int num);
-    void A2(int num);
+    void A1(int num, int queue_pos);
+    void A2(int num, int queue_pos);
     std::vector<CCPoint> A2GetPos();
     void A2Clear();
-    void F3(int num);
+    void F3(int num, int queue_pos);
     void F4(int num);
     void F5(int num);
     void F5_Callback(CCNode* sender, void* data);
-    void SpiritTry(int type);
-    void A6(int num);
+    void SpiritTry(int type, int queue_pos);
+    bool IsSpiritAlive(int type);
+    void A6(int num, int queue_pos);
 
-    void F7(int num);
-    void F7_Callback(CCNode* sender, void* data);
+    void F7(int num, int queue_pos);
+    void F7_Continue(void* pointer, int queue_pos);
+    //void F7_Callback(CCNode* sender, void* data);
+    
     void F7Recur(int x, int y, int type, std::vector<CCPoint>& v);
-    void A8(int num);
+    void A8(int num, int queue_pos);
     //void A8Callback();
     std::vector<CCPoint> A8GetPos();
     void A8Clear();
     
     void W3(int num);
+    int W3GetScore();
     void W4(int num);
+    int W4GetCandy();
     void W5(int num);
     void W5_Callback(CCNode* sender, void* data);
-    void W7();
+    void W7(int num);
+    void W7SetVar();
     bool W7GetVar();
-    void W7Timer(float f);
+    void W7SetTime(int time);
+    int W7GetTime();
+    //void W7Timer(float f);
     
     void E3(int num);
-    void E4(int num);
+    void E4(int num, int queue_pos);
     void E5(int num);
     void E7();
     
@@ -82,29 +90,17 @@ private:
     int skillLevel[NUMOFSKILL];
 
 	// result variables
-    bool skillApplied[NUMOFSKILL];
+    bool skillApplied[QUEUE_CNT][NUMOFSKILL];
     
     int A1_addedScore;
     
     std::vector<CCPoint> A2_pos;
     
     int F3_addedScore;
-    
-    
-    //int W2B_addedScore;
-    int E2B_addedCandy;
-    
-    bool F3_isDoubledMT;
-    int W3_addedCandy;
-    int E3_addedCandy;
+    bool F4_isDoubledMT;
     
     int spiritShownCnt[3];
     bool isSpiritAlive[3];
-    
-    std::vector<CCPoint> A4A_pos;
-    std::vector<CCPoint> A4A_pos_end;
-    
-    std::vector<CCPoint> A4B_pos;
     
     std::vector<CCPoint> F5_pos;
     std::vector<CCPoint> F5_pos_end;
@@ -112,8 +108,6 @@ private:
     int F5_callbackCnt;
     std::vector<CCPoint> F5_i, F5_j;
     int F5_ij_cnt;
-    
-    int W5_callbackCnt;
     
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
@@ -123,12 +117,32 @@ private:
     int A8_callbackCnt;
     std::vector<CCPoint> A8_pos;
     
+    //////////////////////////////////////////
+    
+    int E2B_addedCandy;
+    
+    int W3_addedScore;
+    int W4_addedCandy;
+    int W5_callbackCnt;
+
+    int W7_RemainTime;
+    bool W7_isTimeSlowed;
+    
+    //////////////////////////////////////////
+
+    int E4_addedCandy;
+
+    
+   // std::vector<CCPoint> A4A_pos;
+   // std::vector<CCPoint> A4A_pos_end;
+    
+   // std::vector<CCPoint> A4B_pos;
+    
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;
     std::vector<CCPoint> result_pos_end;
     std::vector<CCPoint> result_pos_temp;
     
-    bool isTimeSlowed;
     bool getPotion;
 };
 

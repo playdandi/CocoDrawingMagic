@@ -4,8 +4,9 @@
 PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, float scale, int type)
 {
     PuzzleP8* puzzleP8 = new PuzzleP8();
-  
+
     puzzleP8->type = type;
+
     if (type == -1)
         puzzleP8->type = rand() % TYPE_COUNT;
     

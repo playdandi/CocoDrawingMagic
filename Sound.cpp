@@ -97,6 +97,13 @@ void Sound::PreLoadInGameSound()
    
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombA.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombB.mp3");
+
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_6.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_7.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_7.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_6.mp3");
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.7f);
@@ -125,6 +132,16 @@ void Sound::PlayBomb()
 
 void Sound::PlaySkillSound(int skillNum)
 {
-    if (skillNum == 5)
-        SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3");
+    switch (skillNum)
+    {
+        case 1: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_2.mp3"); break;
+        case 5: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3"); break;
+        case 6: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_7.mp3"); break;
+        case 9: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_2.mp3"); break;
+        case 14: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_7.mp3"); break;
+        case 21: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_6.mp3"); break;
+    }
 }
+
+
+

@@ -2,6 +2,12 @@
 #include "Ranking.h"
 #include "MagicList.h"
 
+GameReady::~GameReady(void)
+{
+    // 게임준비 소멸자
+//    CCLog("GameReady 소멸자");
+}
+
 CCScene* GameReady::scene()
 {
     CCScene* pScene = CCScene::create();
@@ -28,7 +34,7 @@ void GameReady::onExit()
 
 void GameReady::keyBackClicked()
 {
-    EndScene();
+    EndSceneCallback(this, this);
 }
 
 
@@ -67,6 +73,7 @@ bool GameReady::init()
     isTouched = false;
     isScrollViewTouched = false;
     isScrolling = false;
+    isStarting = false;
     
     return true;
 }
@@ -120,7 +127,7 @@ void GameReady::Notification(CCObject* obj)
 
 void GameReady::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
@@ -173,23 +180,23 @@ void GameReady::InitSprites()
     }
     
     // roof
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "GameReady", this, 1) );
     CCSize roofSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png2", ccp(0, 0), ccp(10+roofSize.width, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png2", ccp(0, 0), ccp(10+roofSize.width, 1433), CCSize(0, 0), "", "GameReady", this, 1) );
     spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setFlipX(true);
     
     // 버튼들
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_potion_time.png", ccp(0, 0), ccp(506, 1493), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png3", ccp(0, 0), ccp(645, 1498), CCSize(0, 0), "", "Ranking", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_potion_time.png", ccp(0, 0), ccp(506, 1493), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png3", ccp(0, 0), ccp(645, 1498), CCSize(0, 0), "", "GameReady", this, 5) );
     
     // make potion
     char name[40], name2[40];
     for (int i = 0; i < 5; i++)
     {
         sprintf(name, "icon/icon_potion_empty.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(89+83*i, 1480), CCSize(0, 0), "", "Ranking", this, 4) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(89+83*i, 1480), CCSize(0, 0), "", "GameReady", this, 4) );
         
         sprintf(name2, "icon/icon_potion.png%d", i);
         if (i < myInfo->GetPotion())
@@ -226,12 +233,12 @@ void GameReady::InitSprites()
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
         sprintf(name3, "icon/icon_check.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 1, 0) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 2, 0) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
         if (i >= 2) {
         sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5, 1) );
         }
 
         // 아이템 아이콘
@@ -255,9 +262,17 @@ void GameReady::InitSprites()
         }
     }
     
+    // 슬롯 추가 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", ccp(0, 0), ccp(896, 572), CCSize(0, 0), "", "GameReady", this, 5) );
+    
+    // 게임시작 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(318, 193), CCSize(0, 0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gamestart.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "GameReady", this, 5) );
+    
+    // 오늘의 별사탕 버튼
+    //
+    //ccp(912, 1920-1582-86)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_todaycandy.png", ccp(0, 0), ccp(886-50, 1920-1674-44), CCSize(0, 0), "", "GameReady", this, 5) );
     
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("지팡이 24Lv", fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1190), ccc3(121,71,0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("지팡이 24Lv", fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1193), ccc3(255,219,53), "", "GameReady", this, 5) );
@@ -303,7 +318,7 @@ void GameReady::MakeScroll()
 
 bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (isTouched)
+    if (isTouched || isStarting)
         return false;
     isTouched = true;
     isScrolling = false;
@@ -317,7 +332,11 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndScene();
+                sound->playClick();
+                
+                callbackType = 0;
+                EndSceneCallback(this, this);
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png1")
@@ -372,18 +391,24 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                isStarting = true;
+                
                 sound->playClick();
-                CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
-                CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
-                CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
-                CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+
+                pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+                pBlackClose->setPosition(ccp(0, 0));
+                pBlackClose->setAnchorPoint(ccp(0, 0));
+                pBlackClose->setColor(ccc3(0, 0, 0));
+                pBlackClose->setOpacity(0);
+                this->addChild(pBlackClose, 1000);
                 
-                CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+                callbackType = 1;
+                CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.0f),
+                        CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
+                pBlackClose->runAction(action);
                 
-                sound->StopBackgroundSound();
-                
-                Common::ShowNextScene(this, "GameReady", "Puzzle", true);
-                //Common::ShowNextScene(this, "GameReady", "ParticleTest", false);
+                return true;
+                //Common::ShowNextScene(this, "GameReady", "Puzzle", true);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_board_brown.png2")
@@ -410,38 +435,16 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
             }
         }
-    }
-    
-    
-    /*
-    if (903 <= (int)point.x && (int)point.x <= 1004 &&
-        1504 <= (int)point.y && (int)point.y <= 1591)
-    {
-        EndLayer();
-    }
-    else if (54 <= (int)point.x && (int)point.x <= 879 &&
-        454 <= (int)point.y && (int)point.y <= 642)
-    {
-        // slot part
-        ShowMagicSlot();
-    }
-    
-    else if (pItemNormal->boundingBox().containsPoint(point))
-    {
-        // item 부분 클릭
-        bItem = !bItem;
-        if (bItem)
+        else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
         {
-            pItemClicked->setOpacity(255);
-            desc->setString("[마법 폭탄] 양방향 대각선으로 4개씩 총 8칸이 터집니다. 히힛~");
-        }
-        else
-        {
-            pItemClicked->setOpacity(0);
-            desc->setString("[마법 폭탄] 양방향 대각선으로 4개씩 총 8칸이 터집니다. 히힛~");
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2);
+            }
         }
     }
-    */
+ 
     return true;
 }
 
@@ -453,6 +456,9 @@ void GameReady::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (isStarting)
+        return;
+    
     CCPoint point = pTouch->getLocation();
     
     if (!isScrolling && scrollView->boundingBox().containsPoint(point))
@@ -468,52 +474,55 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void GameReady::EndScene()
 {
-    sound->playClick();
-    
-    CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "GameReady");
-    
-    scrollView->removeAllChildren();
-    scrollView->removeFromParent();
-    
-    this->removeFromParentAndCleanup(true);
-    
-    /*
-    CCFiniteTimeAction* action =
-    CCSequence::create(CCFadeOut::create(0.1f),
-                       CCCallFunc::create(this, callfunc_selector(GameReady::EndLayerCallback)), NULL);
-    pBackground->runAction((CCActionInterval*)action->copy()->autorelease());
-    pItemNormal->runAction((CCActionInterval*)action->copy()->autorelease());
-    if (bItem)
-        pItemClicked->runAction((CCActionInterval*)action->copy()->autorelease());
-     */
 }
 
-void GameReady::EndSceneCallback()
+void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
 {
-    /*
-    this->removeChild(pItemNormal);
-    this->removeChild(pItemClicked);
-    this->removeChild(pBackground);
-    this->removeChild(pDescription);
-    this->removeChild(pBlack);
-    pItemNormal->autorelease();
-    pItemClicked->autorelease();
-    pBackground->autorelease();
-    pDescription->autorelease();
+    GameReady* pThis = (GameReady*)pointer;
     
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/gameready.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/gameready_description.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/gameready_item_normal.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/gameready_item_clicked.png");
+    CCString* param;
+    if (pThis->callbackType == 1) // 게임시작 버튼을 누른 경우
+        param = CCString::create("3");
+    else // x 버튼을 눌러 GameReady만 끈 경우
+        param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
-    this->removeFromParentAndCleanup(true);
-     */
+    pThis->setKeypadEnabled(false);
+    pThis->setTouchEnabled(false);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(pThis, "GameReady");
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
+    // itemLayer
+    for (int i = 0 ; i < itemNumLayer.size() ; i++)
+    {
+        itemNumLayer[i]->removeAllChildren();
+        CCLog("ii : %d", itemNumLayer[i]->retainCount());
+    }
+    itemNumLayer.clear();
+    
+    // background layer
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
+    CCLog("pBlack %d", pBlack->retainCount());
+    //CCLog("pBlackClose %d", pBlackClose->retainCount());
+    
+    scrollView->getContainer()->removeAllChildren();
+    scrollView->removeAllChildren();
+    scrollView->removeFromParent();
+    //CCLog("%d", scrollView->retainCount());
+    
+    //CCNode* parent = pThis->getParent();
+    pThis->removeFromParentAndCleanup(true);
+    
+    if (pThis->callbackType == 1)
+    {
+        // Ranking도 끝낸다.
+        param = CCString::create("4");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    }
 }
 
 void GameReady::scrollViewDidScroll(CCScrollView* view)

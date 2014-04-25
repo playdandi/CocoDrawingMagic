@@ -213,23 +213,31 @@ void Ranking::Notification(CCObject* obj)
             ((CCSprite*)spriteClass->FindSpriteByName("background/bg_msg_setting.png"))->setOpacity(255);
         }
     }
+    else if (param->intValue() == 3)
+    {
+        pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+        pBlack->setPosition(ccp(0, 0));
+        pBlack->setAnchorPoint(ccp(0, 0));
+        pBlack->setColor(ccc3(0, 0, 0));
+        this->addChild(pBlack, 0);
+    }
+    else if (param->intValue() == 4)
+    {
+        EndScene();
+    }
 }
 
 void Ranking::InitSprites()
 {
-    // background image
-    // load images
-    CCTexture2D* tBackground = CCTextureCache::sharedTextureCache()->addImage("images/main_background.png");
-    tBackground->setDefaultAlphaPixelFormat(kTexture2DPixelFormat_RGBA4444);
-    CCSprite* temp = new CCSprite();
-    temp->initWithTexture(tBackground, CCRectMake(0, 0, 1080, 1920));
-    temp->setAnchorPoint(ccp(0, 0));
-    temp->setPosition(ccp(0, 0));
-    this->addChild(temp, 0);
+    // background
+    pBackground = CCSprite::create("images/main_background.png");
+    pBackground->setAnchorPoint(ccp(0, 0));
+    pBackground->setPosition(ccp(0, 0));
+    this->addChild(pBackground, 0);
     
-//    CCLog("=========================================================");
-//    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-//    CCLog("=========================================================");
+    CCLog("=========================================================");
+    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+    CCLog("=========================================================");
     
     char name[30], name2[30];
     
@@ -288,7 +296,7 @@ void Ranking::InitSprites()
 
     // 친구추가 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_addfriend.png", ccp(0, 0), ccp(912, 1920-1582-86), CCSize(0, 0), "", "Ranking", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_addfriend.png", ccp(0, 0), ccp(886, 1920-1674-44), CCSize(0, 0), "", "Ranking", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invitefriend.png", ccp(0, 0), ccp(886, 1920-1674-44), CCSize(0, 0), "", "Ranking", this, 5) );
     
     // 게임준비 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "Ranking", this, 5) );
@@ -304,9 +312,9 @@ void Ranking::InitSprites()
     if (myInfo->GetMsgCnt() == 0)
         opacity = 0;
     CCSize msgSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_msg_setting.png", ccp(0, 0), ccp(msgSize.width-30, msgSize.height-30), CCSize(0, 0), "button/btn_msg.png", "0", NULL, 5, 0, opacity) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_msg_setting.png", ccp(0, 0), ccp(msgSize.width-30, msgSize.height-30), CCSize(0, 0), "button/btn_msg.png", "0", NULL, 5, 1, opacity) );
     sprintf(name, "%d", myInfo->GetMsgCnt());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5, 1, opacity, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_msg_setting.png"), ccc3(255,255,255), "background/bg_msg_setting.png", "0", NULL, 5, 2, opacity, 0) );
     
     // make potion
     for (int i = 0; i < 5; i++)
@@ -352,16 +360,17 @@ void Ranking::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     
     int numOfList = friendList.size();
-    CCLog("number of friends = %d", numOfList);
+    //CCLog("number of friends = %d", numOfList);
     
     char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
-        CCLog("friend # %d", i);
+        //CCLog("friend # %d", i);
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(profileLayer, 5);
+        profileLayers.push_back(profileLayer);
         
         // my profile bg
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
@@ -432,31 +441,6 @@ void Ranking::MakeScroll()
             friendList[i]->GetPotionLabelMin()->setOpacity(0);
             friendList[i]->GetPotionLabelSec()->setOpacity(0);
         }
-        /*
-        // potion state (내 프로필에는 당연히 포션 그림 나오면 안 된다.)
-        if (friendList[i]->GetPotionMsgStatus() != POTION_NOTHING &&
-            friendList[i]->GetKakaoId() != myInfo->GetKakaoId())
-        {
-            char potionState[32];
-            if (friendList[i]->GetPotionMsgStatus() == POTION_SEND)
-            {
-                if (friendList[i]->GetRemainPotionTime() == 0)
-                    sprintf(potionState, "icon/icon_potion_send.png");
-                else
-                    sprintf(potionState, "icon/icon_potion_remain.png");
-            }
-            else
-                sprintf(potionState, "icon/icon_potion_x.png");
-            
-            CCSprite* potion = CCSprite::createWithSpriteFrameName(potionState);
-            potion->setAnchorPoint(ccp(0, 0));
-            potion->setPosition(ccp(724, 24));
-            potion->setTag(i);
-            profileLayer->addChild(potion, 5);
-            potions.push_back(potion);
-            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, potionState, ccp(0, 0), ccp(724, 24), CCSize(0, 0), "", "Layer", profileLayer, 5) );
-        }
-        */
         
         // dotted line
         //if (i < numOfList-1)
@@ -660,27 +644,6 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
     }
     
-
-    /*
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        if (spriteClass->spriteObj[i]->name.substr(0, 25) == "background/bg_profile.png")
-        {
-            p = spriteClass->spriteObj[i]->sprite->convertToNodeSpace(point);
-            // convertToNodeSpace 설명
-            // ex) sprite1->convertToNodeSpace(sprite2->getPosition());
-            // sprite1 좌측하단부터 sprite2의 anchorPoint까지의 거리
-            CCSize size = spriteClass->spriteObj[i]->sprite->getContentSize();
-            if (isScrollViewTouched && !isScrolling &&
-                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
-            {
-                sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "Profile", false);
-            }
-        }
-    }
-     */
-    
     //scrollViewLastPoint = scrollView->getContentOffset();
     isOnceScrollViewTouched = true;
     isScrolling = false;
@@ -704,6 +667,55 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     //scrollView->setAccelerometerEnabled(true);
     //scrollView->setAccelerometerInterval(0.5);
 }
+
+
+void Ranking::EndScene()
+{
+    CCLog("Ranking : EndScene()");
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Ranking");
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
+    // itemLayer
+    for (int i = 0 ; i < profileLayers.size() ; i++)
+    {
+        profileLayers[i]->removeAllChildren();
+        CCLog("ii : %d", profileLayers[i]->retainCount());
+    }
+    profileLayers.clear();
+    
+    // background layer
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
+    CCLog("pBlack %d", pBlack->retainCount());
+    CCLog("pBackground %d", pBackground->retainCount());
+    
+    scrollView->getContainer()->removeAllChildren();
+    scrollView->removeAllChildren();
+    scrollView->removeFromParent();
+    CCLog("%d", scrollView->retainCount());
+    
+    //this->removeFromParentAndCleanup(true);
+    
+    sound->StopBackgroundSound();
+    
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+    
+    CCLog("========================================");
+    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+    CCLog("========================================");
+    
+    Common::ShowNextScene(this, "Ranking", "Puzzle", true);
+}
+
 
 
 void Ranking::scrollViewDidScroll(CCScrollView* view)

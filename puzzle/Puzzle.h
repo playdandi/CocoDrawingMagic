@@ -33,7 +33,9 @@ public:
     
     void SetScoreAndStarCandy();
     void UpdateScore(int type, int data);
-    void UpdateStarCandy();
+    void UpdateStarCandy(int type, int data);
+    void ShowStarCandy(std::vector<CCPoint> pos);
+    void ShowStarCandy_Callback(CCNode* sender, void* data);
     void SetCombo();
     int GetCombo();
     void UpdateCombo();
@@ -59,23 +61,28 @@ public:
     CCPoint SetPiece8Position(int x, int y);
     CCPoint SetPiece4Position(int x, int y);
     
-    void InvokeSkills();
+    void InvokeSkills(int queue_pos);
     void Lock(int queue_pos);
-    void Bomb(std::vector<CCPoint> bomb_pos);
+    void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);
     void BombCallback(CCNode* sender, void *queue_pos);
     void Falling(int queue_pos);
 	void FallingCallback(CCNode* sender, void* queue_pos);
     
+    //void WaitOrder(int queue_pos);
+    
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
     int GetGlobalType();
     PuzzleP8* GetP8(int x, int y);
-    void SetSkillLock(bool flag);
-    bool IsCycle();
+    void SetSkillLock(int queue_pos, bool flag);
+    bool IsCycle(int queue_pos);
     PuzzleSkill* GetSkill();
     
-    //void tCB(CCNode* sender, void* pos);
+    CCLayer* GetPuzzleLayer();
+    CCLayer* GetCocoLayer();
+    CCLayer* GetFairyLayer();
     
     void SetSpiritTouch(bool val);
+    
     
     
     PuzzleP8Set* GetPuzzleP8Set();
@@ -88,7 +95,7 @@ public:
     
     bool IsConnected(int x, int y);
     
-    void PlayEffect(int skillNum);
+    void PlayEffect(int skillNum, int queue_pos);
 
     bool IsValidInSquare(CCPoint center, CCPoint point);
     int GetDist(CCPoint center, CCPoint point);
@@ -102,13 +109,18 @@ public:
     
     void EndScene();
     void EndSceneCallback();
+
+    void WaitThread(int queue_pos);
+    //void* WaitOrder(void *queue_pos);
     
-protected:
+    CCSize m_winSize;
     CCSize vs;
     CCPoint vo;
     CCSize tbSize;
     CCSize boardSize;
     
+    
+protected:
     float PIECE8_WIDTH;
     float PIECE8_HEIGHT;
     float PIECE4_WIDTH;
@@ -119,46 +131,46 @@ protected:
     CCSprite* background;
     CCSprite* puzzleFrame;
     
-    //CCLayer* pieceLayer;
-    
-    bool m_bTouchStarted;
-    bool m_bIsCycle;
-    bool m_bIsSpiritTouched;
     int m_bLockP8[COLUMN_COUNT][ROW_COUNT];
     int m_bLockP4[COLUMN_COUNT][ROW_COUNT];
-    int cur_priority;
-    int max_priority;
     
     // queue는 DROP_QUEUE_CNT(5)개.
-    int drop_order;
     std::vector< std::vector<CCPoint> > lock8xy;
     std::vector< std::vector<CCPoint> > lock4xy;
-    bool m_bSkillLock;
     std::vector< std::vector<CCPoint> > piece8xy;
     std::vector< std::vector<CCPoint> > piece4xy;
     std::vector< std::vector<CCSprite*> > strap;
     int m_iBombCallbackCnt[QUEUE_CNT];
-    int m_iBombCallbackCntMax;
+    int m_iBombCallbackCntMax[QUEUE_CNT];
     int m_iBombCallbackType[QUEUE_CNT];
     int globalType[QUEUE_CNT];
+    // skill state도 DROP_QUEUE_CNT만큼 있어야 한다.
+    int m_iState[QUEUE_CNT];
+    int m_iNextState[QUEUE_CNT];
+    bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
+    bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
     
+    int drop_order;
     int touch_cnt;
     
-    CCSize m_winSize;
+    int W3_total;
+    int W4_total;
     
-	Sound* sound;
-    PuzzleSkill* skill;
+    // lock, semaphore 관련 변수들
+    bool m_bTouchStarted; // touch began에 대한 lock
+    int m_iSpiritSP; // 정령 터치에 관한 semaphore
+    bool m_bIsSpiritExecuted; // 정령 스킬이 실행될 때 lock
+    int m_iSkillSP; // 스킬 lock에 관한 semaphore
     
-    int m_iState;
-    int m_iNextState;
-    
-    CCSprite* pado;
-    int m_pado_callback_cnt;
-    int m_pado_total_cnt;
-    
-    bool isPadoRunning;
+    // Bomb()에서 연결피스 지울 때 사용되는 변수
+    bool P8Bombed[COLUMN_COUNT][ROW_COUNT];    
     
 private:
+    Sound* sound;
+    PuzzleSkill* skill;
+    
+    CCSprite* pBlackOpen;
+    
     int iScore;
     CCLabelTTF* pScoreLabel;
     int iStarCandy;
@@ -194,6 +206,9 @@ private:
     
     int m_iFallingCallbackCnt;
 	int m_numOfFallingObjects;
+    
+    // timer (ice bar)
+    CCSprite* iced_bar;
 };
 
 class PuzzleP8Set

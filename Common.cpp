@@ -295,25 +295,31 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     {
         if (isReplaced)
         {
-            CCScene* transition = CCTransitionFade::create(1.0f, nextScene);
-            CCDirector::sharedDirector()->replaceScene(transition);
+            //CCScene* transition = CCTransitionFade::create(1.0f, nextScene);
+            CCDirector::sharedDirector()->replaceScene(nextScene);
             ((Splash*)obj)->EndScene();
         }
     }
     if (from == "Ranking") {
-        ((Ranking*)obj)->addChild(nextScene, 200, 200);
-        //CCLog("nextScene retain : %d", ((Ranking*)obj));
+        if (isReplaced)
+        {
+            //CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
+            CCDirector::sharedDirector()->replaceScene(nextScene);
+            //((Ranking*)obj)->EndScene();
+        }
+        else
+            ((Ranking*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady")
     {
-        if (isReplaced)
+        /*if (isReplaced)
         {
             CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
             CCDirector::sharedDirector()->replaceScene(transition);
             ((GameReady*)obj)->EndScene();
         }
-        else
+        else*/
             ((GameReady*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);

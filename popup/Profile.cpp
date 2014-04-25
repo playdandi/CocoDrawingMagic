@@ -4,7 +4,7 @@ static int profile_index;
 
 Profile::~Profile(void)
 {
-    //CCLog("Profile destructor");
+    CCLog("Profile destructor");
 }
 
 CCScene* Profile::scene(int idx)
