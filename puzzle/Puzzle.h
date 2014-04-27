@@ -111,7 +111,7 @@ public:
     void EndSceneCallback();
 
     void WaitThread(int queue_pos);
-    //void* WaitOrder(void *queue_pos);
+    void WaitOrder(int queue_pos);
     
     CCSize m_winSize;
     CCSize vs;
@@ -150,7 +150,7 @@ protected:
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
     
-    int drop_order;
+    //int drop_order;
     int touch_cnt;
     
     int W3_total;

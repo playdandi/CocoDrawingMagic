@@ -8,6 +8,8 @@ enum
     zPieceConn = 3,
 };
 
+int drop_order;
+pthread_t thread;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 CCScene* Puzzle::scene()
@@ -1313,11 +1315,12 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             sound->PlayBomb();
             
             // 스킬 실행 (오토마타 표 참조)
-            skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
-            m_iState[(touch_cnt-1)%QUEUE_CNT] = 1;
-            InvokeSkills((touch_cnt-1)%QUEUE_CNT);
+            WaitThread((touch_cnt-1)%QUEUE_CNT);
+            //skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
+            //m_iState[(touch_cnt-1)%QUEUE_CNT] = 1;
+            //InvokeSkills((touch_cnt-1)%QUEUE_CNT);
             
-            m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
+            //m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
         }
         
         // 3개 미만으로 한붓그리기가 되었다면, 원상태로 복구시킨다.
@@ -1397,7 +1400,7 @@ void Puzzle::InvokeSkills(int queue_pos)
             m_iNextState[queue_pos] = 5;
         }
    
-        WaitThread(queue_pos);
+        //WaitThread(queue_pos);
         //WaitOrder(queue_pos);
         
         // 8번, cycle 모두 적용된 경우 : cycle에서 나온 주변부 터뜨리기
@@ -1408,7 +1411,8 @@ void Puzzle::InvokeSkills(int queue_pos)
         CCLog("state(%d) 3", queue_pos);
         m_iNextState[queue_pos] = 5;
         
-        WaitThread(queue_pos);
+        //WaitThread(queue_pos);
+        //CCLog("state(%d) 3 : wait done, get started", queue_pos);
         //WaitOrder(queue_pos);
         
         // 8번 적용된 경우 : 8번 스킬 '준비' & '실행'
@@ -1444,7 +1448,7 @@ void Puzzle::InvokeSkills(int queue_pos)
         CCLog("state(%d) 5", queue_pos);
         m_iNextState[queue_pos] = 7;
         
-        WaitThread(queue_pos);
+        //WaitThread(queue_pos);
         //WaitOrder(queue_pos);
         
         // 6개 이상 제거 시, 한 번 더 제거
@@ -1463,7 +1467,7 @@ void Puzzle::InvokeSkills(int queue_pos)
         m_iNextState[queue_pos] = -1;
         //m_iNextState = 8;
         
-        WaitThread(queue_pos);
+        //WaitThread(queue_pos);
         //WaitOrder(queue_pos);
         
         // 코코타임
@@ -1506,6 +1510,9 @@ void Puzzle::InvokeSkills(int queue_pos)
         drop_order++;
         
         m_iSpiritSP--;
+        
+        CCLog("WaitOrder (%d) : unLock", queue_pos);
+        pthread_mutex_unlock(&mutex);
     }
 }
 
@@ -1750,7 +1757,7 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
 void Puzzle::Falling(int queue_pos)
 {
     CCLog("Falling 들어옴 : queue_pos , drop_order : %d %d", queue_pos, drop_order%QUEUE_CNT);
-    WaitThread(queue_pos);
+    //WaitThread(queue_pos);
     //WaitOrder(queue_pos);
 
     CCLog("Falling : drop_order (%d) is started", drop_order%QUEUE_CNT);
@@ -1894,30 +1901,58 @@ struct TempData
     int drop_order;
 };
 
-void* WaitOrder(void *arg)
+//void* WaitOrder(void *arg)
+void Puzzle::WaitOrder(int queue_pos)
 {
+    CCLog("WaitOrder (%d) : Try Lock", queue_pos);
     // queue에서 현재 순서(order)인 것을 찾는다. 없으면 대기한다.
-    pthread_mutex_lock(&mutex);
-    TempData* temp = (TempData*)arg;
+    //while(pthread_mutex_trylock(&mutex) != 0);
+    int trylock = pthread_mutex_lock(&mutex);
+    CCLog("WaitOrder(%d) : trylock = %d", queue_pos, trylock);
+    
+    //if (queue_pos == drop_order%QUEUE_CNT)
+    //{
+    
+        //int lock  = pthread_mutex_lock(&mutex);
+        //CCLog("WaitOrder (%d) : lockNumber = %d", queue_pos, lock);
+    //}
+    CCLog("WaitOrder (%d) : %d %d", queue_pos, queue_pos, drop_order%QUEUE_CNT);
+
+    skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
+    m_iState[(touch_cnt-1)%QUEUE_CNT] = 1;
+    InvokeSkills((touch_cnt-1)%QUEUE_CNT);
+    
+    m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
+    /*
     while(1)
     {
-        if (temp->queue_pos == (temp->drop_order)%QUEUE_CNT)
+        if (queue_pos == drop_order%QUEUE_CNT)
             break;
+        //CCLog("WaitOrder... (%d)", queue_pos);
+        
     }
-    CCLog("waitOrder (%d) : Done", temp->queue_pos);
-    pthread_mutex_unlock(&mutex);
-    CCLog("waitOrder (%d) : Thread exit", temp->queue_pos);
-    pthread_exit(NULL);
-    return NULL;
+    */
+    //if (queue_pos == drop_order%QUEUE_CNT)
+    //{
+    
+    //}
+    CCLog("WaitOrder (%d) : Done", queue_pos);
+    
+    //CCLog("WaitOrder (%d) : Thread exit", queue_pos);
+    //pthread_exit(NULL);
+    //return NULL;
 }
 
 void Puzzle::WaitThread(int queue_pos)
 {
-    pthread_t thread;
-    TempData* temp = new TempData();
-    temp->queue_pos = queue_pos;
-    temp->drop_order = drop_order;
-    pthread_create(&thread, NULL, &WaitOrder, temp);
+    WaitOrder(queue_pos);
+    //pthread_t thread;
+    //TempData* temp = new TempData();
+    //temp->queue_pos = queue_pos;
+    //temp->drop_order = drop_order;
+    //thread = NULL;
+    //pthread_create(&thread, NULL, &Puzzle::WaitOrder, (void*)queue_pos);
+    //WaitOrde
 }
 
 
