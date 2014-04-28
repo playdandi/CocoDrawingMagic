@@ -104,7 +104,7 @@ void NoImage::InitSprites()
         case BUY_TOPAZ_OK:
             sprintf(text, "토파즈를 성공적으로 구매하였습니다."); break;
         case BUY_STARCANDY_TRY:
-            sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", d[2]); break;
+            sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", priceStarCandy[d[0]]->GetCount()); break;
         case BUY_STARCANDY_OK:
             sprintf(text, "별사탕을 성공적으로 구매하였습니다."); break;
         case BUY_STARCANDY_FAIL:
@@ -148,11 +148,12 @@ void NoImage::InitSprites()
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
             deltaX = 150;
             deltaSize = ccp(-200, 100);
-            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?\n(강화 확률이 높아요!)", myInfo->GetMPStaffPercent(), myInfo->GetMPStaffPercentNext()); break;
+            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?\n(강화 확률이 높아요!)", myInfo->GetMPStaffPercent(),
+                    magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
             deltaX = 150;
             deltaSize = ccp(-200, 100);
-            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), myInfo->GetMPStaffPercentNext()); break;
+            sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
             sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
@@ -269,7 +270,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::string url = "http://14.63.225.203/cogma/game/purchase_topaz.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
-                    sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
+                    sprintf(temp, "topaz_id=%d&", priceTopaz[d[0]]->GetId());
                     url += temp;
                     
                     HttpRequest(url);
@@ -279,7 +280,9 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::string url = "http://14.63.225.203/cogma/game/purchase_starcandy.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
-                    sprintf(temp, "starcandy_id=%d", d[0]);
+                    sprintf(temp, "starcandy_id=%d&", priceStarCandy[d[0]]->GetId());
+                    url += temp;
+                    sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
                     url += temp;
                     CCLog("url : %s", url.c_str());
                     
@@ -357,9 +360,14 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
                     int costType = (type == UPGRADE_STAFF_BY_TOPAZ_TRY) ? 2 : 1;
-                    sprintf(temp, "cost_type=%d", costType);
+                    sprintf(temp, "cost_type=%d&", costType);
                     url += temp;
-                    
+                    int cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz();
+                    if (costType == 1) // 일반강화는 별사탕
+                        cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
+                    sprintf(temp, "cost_value=%d", cost);
+                    url += temp;
+                    CCLog("upgradestaff url = %s", url.c_str());
                     HttpRequest(url);
                 }
             }
@@ -740,12 +748,6 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
         myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv);
         
-        int mpStaffLvNext = nodeResult.child("next-staff").attribute("staff-level").as_int();
-        int mpNextCostStarcandy = nodeResult.child("next-staff").attribute("star-candy-cost-value").as_int();
-        int mpNextCostTopaz= nodeResult.child("next-staff").attribute("topaz-cost-value").as_int();
-        int staffNextPercent= nodeResult.child("next-staff").attribute("bonus-mp").as_int();
-        myInfo->SetNextStaff(mpStaffLvNext, mpNextCostStarcandy, mpNextCostTopaz, staffNextPercent);
-        
         // 성공/실패 팝업창으로 넘어간다.
         if (result == 1)
             ReplaceScene("NoImage", UPGRADE_STAFF_OK, BTN_1);
@@ -773,4 +775,5 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
     {
         ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
+    
 }

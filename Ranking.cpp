@@ -41,6 +41,7 @@ void Ranking::onExit()
     CCLog("Ranking :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void Ranking::keyBackClicked()

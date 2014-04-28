@@ -29,6 +29,7 @@ void GameReady::onExit()
     //CCLog("GameReady :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 

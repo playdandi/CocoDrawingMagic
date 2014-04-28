@@ -164,11 +164,11 @@ void BuyTopaz::MakeScroll()
         std::string cost = "";
         if (myInfo->GetDeviceType() == 1) // ANDROID
         {
-            cost = "₩ " + Common::MakeComma(priceTopaz[i]->GetPrice());
+            cost = "₩ " + Common::MakeComma(priceTopaz[i]->GetPrice(1));
         }
         else if (myInfo->GetDeviceType() == 2) // iPHONE
         {
-            cost = "$ " + Common::MakeComma(priceTopaz[i]->GetPrice()/100) + "." + Common::MakeComma(priceTopaz[i]->GetPrice()%100);
+            cost = "$ " + Common::MakeComma(priceTopaz[i]->GetPrice(2)/100) + "." + Common::MakeComma(priceTopaz[i]->GetPrice(2)%100);
         }
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 36, ccp(0.5, 0.5), ccp(326, 57), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
         

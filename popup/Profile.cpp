@@ -61,7 +61,7 @@ bool Profile::init()
     InitSkill();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
+    /*
     CCLog("========================================");
     for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
     {
@@ -73,7 +73,7 @@ bool Profile::init()
             CCLog("cur retain (2) : %d", spriteClass->spriteObj[i]->label->retainCount());
     }
     CCLog("========================================");
-    
+    /*/
     return true;
 }
 
@@ -224,16 +224,51 @@ void Profile::InitFairy()
 
 void Profile::InitSkill()
 {
+    int idx = profile_index;
+    
     // skill board
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png3",
                 ccp(0, 0), ccp(699, 797-25), CCSize(263, 236), "", "Profile", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2",
                 ccp(0, 0), ccp(19, 22), CCSize(228, 53), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
     
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(760, 850), CCSize(0, 0), "", "Profile", this, 5) );
+    
+    CCPoint pos = spriteClass->FindParentCenterPos("background/bg_gameready_name.png2");
+    
     // 배운 스킬이 없으면 아래를 넣자.
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png",
-                ccp(0, 0), ccp(760, 850), CCSize(0, 0), "", "Profile", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("스킬 없음", fontList[2], 30, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_gameready_name.png2"), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
+    if (friendList[idx]->GetSkillId() == 0)
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("스킬 없음", fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
+    }
+    else
+    {
+        char skillName[20];
+        
+        //sprintf(skillName, "icon/icon_skill_division_red.png");
+        // 스킬 옆에 삼각형 아이콘 색깔 (속성별로)
+        if (friendList[idx]->GetSkillId() / 10 == 2) // fire
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_red.png", ccp(0, 0), ccp(60, 160), CCSize(0, 0), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
+        else if (friendList[idx]->GetSkillId() / 10 == 1) // water
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_blue.png", ccp(0, 0), ccp(60, 160), CCSize(0, 0), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
+        else if (friendList[idx]->GetSkillId() / 10 == 3) // land
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_green.png", ccp(0, 0), ccp(60, 160), CCSize(0, 0), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
+        else // master
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_purple.png", ccp(0, 0), ccp(60, 160), CCSize(0, 0), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
+
+        sprintf(skillName, "skill/skill_%d.png", friendList[idx]->GetSkillId());
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
+        
+        CCLog("스킬이름 : %s", DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()).c_str());
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
+        
+        // Lv. <- 이 그림
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797, 850), CCSize(0, 0), "", "Profile", this, 5) );
+        // 레벨 숫자 이미지
+        CCSize size = ((CCSprite*)spriteClass->FindSpriteByName("number/level_lv.png"))->getContentSize();
+        sprintf(skillName, "number/level_%d.png", friendList[idx]->GetSkillLv() % 10);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797+size.width, 850+3), CCSize(0, 0), "", "Profile", this, 5) );
+    }
 }
 
 
@@ -252,6 +287,7 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                /*
                 CCLog("========================================");
                 for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
                 {
@@ -263,7 +299,7 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("cur retain (2) : %d", spriteClass->spriteObj[i]->label->retainCount());
                 }
                 CCLog("========================================");
-                
+                */
                 
                 EndScene();
                 return false;

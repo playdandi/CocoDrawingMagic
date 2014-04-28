@@ -235,7 +235,7 @@ void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyInfo", false);
+                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false);
             }
         }
     }

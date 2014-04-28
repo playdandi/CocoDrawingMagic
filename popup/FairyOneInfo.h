@@ -1,9 +1,9 @@
-#ifndef __CocoMagic__FairyInfo__
-#define __CocoMagic__FairyInfo__
+#ifndef __CocoMagic__FairyOneInfo__
+#define __CocoMagic__FairyOneInfo__
 
 #include "Common.h"
 
-class FairyInfo : public CCLayer
+class FairyOneInfo : public CCLayer
 {
 public:
     static CCScene* scene();
@@ -15,7 +15,7 @@ public:
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
-    CREATE_FUNC(FairyInfo);
+    CREATE_FUNC(FairyOneInfo);
     
     void InitSprites();
     

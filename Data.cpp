@@ -5,9 +5,19 @@ int iGameVersion;
 int iBinaryVersion;
 class MyInfo* myInfo;
 std::vector<class Friend*> friendList;
+std::vector<class Msg*> msgData;
+
 std::vector<class PriceTopaz*> priceTopaz;
 std::vector<class PriceStarCandy*> priceStarCandy;
-std::vector<class Msg*> msgData;
+std::vector<class MagicStaffBuildUpInfo*> magicStaffBuildupInfo;
+std::vector<class SkillSlotInfo*> skillSlotInfo;
+std::vector<class PrerequisiteInfo*> prerequisiteInfo;
+std::vector<class FairyInfo*> fairyInfo;
+std::vector<class FairyBuildUpInfo*> fairyBuildUpInfo;
+std::vector<class SkillInfo*> skillInfo;
+std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
+std::vector<class SkillPropertyInfo*> skillPropertyInfo;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)
@@ -110,7 +120,7 @@ int MyInfo::GetStaffLv()
 {
     return staffLv;
 }
-int MyInfo::GetStaffLvNext()
+/*int MyInfo::GetStaffLvNext()
 {
     return staffLvNext;
 }
@@ -125,7 +135,7 @@ int MyInfo::GetMPNextCostStarcandy()
 int MyInfo::GetMPNextCostTopaz()
 {
     return mpNextCostTopaz;
-}
+}*/
 
 int MyInfo::GetHighScore()
 {
@@ -238,6 +248,69 @@ void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
     this->mpFairy = mpFairy;
     this->staffLv = staffLv;
 }
+
+void MyInfo::SetProfileSkill(int id, int level)
+{
+    this->profileSkillId = id;
+    this->profileSkillLv = level;
+}
+int MyInfo::GetProfileSkillId()
+{
+    return profileSkillId;
+}
+int MyInfo::GetProfileSkillLv()
+{
+    return profileSkillLv;
+}
+void MyInfo::SetPracticeSkill(int id, int level)
+{
+    this->practiceSkillId = id;
+    this->practiceSkillLv = level;
+}
+int MyInfo::GetPracticeSkillId()
+{
+    return practiceSkillId;
+}
+int MyInfo::GetPracticeSkillLv()
+{
+    return practiceSkillLv;
+}
+
+void MyInfo::AddSkillSlot(int id, int csi, int usi)
+{
+    mySkillSlot.push_back( new MySkillSlot(id, csi, usi) );
+}
+void MyInfo::AddFairy(int cfi, int ufi, int level, int isUse)
+{
+    myFairy.push_back( new MyFairy(cfi, ufi, level, isUse) );
+}
+void MyInfo::AddSkill(int csi, int usi, int level, int exp)
+{
+    mySkill.push_back( new MySkill(csi, usi, level, exp) );
+}
+
+
+MySkillSlot::MySkillSlot(int id, int csi, int usi)
+{
+    this->id = id;
+    this->common_skill_id = csi;
+    this->user_skill_id = usi;
+}
+MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
+{
+    this->common_fairy_id = cfi;
+    this->user_fairy_id = ufi;
+    this->level = level;
+    this->isUse = isUse;
+}
+MySkill::MySkill(int csi, int usi, int level, int exp)
+{
+    this->common_skill_id = csi;
+    this->user_skill_id = usi;
+    this->level = level;
+    this->exp = exp;
+}
+/*
 void MyInfo::SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCostTopaz, int staffNextPercent)
 {
     this->staffLvNext = staffLvNext;
@@ -245,6 +318,7 @@ void MyInfo::SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCo
     this->mpNextCostTopaz = mpNextCostTopaz;
     this->mpStaffPercentNext = staffNextPercent;
 }
+*/
 
 
 
@@ -276,7 +350,7 @@ Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int poti
     this->fairyId = fairyId;
     this->fairyLevel = fairyLevel;
     this->skillId = skillId;
-    this->skilllevel = skillLevel;
+    this->skillLevel = skillLevel;
 }
 
 void Friend::SetSprite(CCTexture2D* texture)
@@ -407,6 +481,23 @@ bool Friend::IsMaster()
     return propertyMaster;
 }
 
+int Friend::GetFairyId()
+{
+    return fairyId;
+}
+int Friend::GetFairyLv()
+{
+    return fairyLevel;
+}
+int Friend::GetSkillId()
+{
+    return skillId;
+}
+int Friend::GetSkillLv()
+{
+    return skillLevel;
+}
+
 ////////////////////////////////////////////////////////////////////////
 bool compare(Friend *f1, Friend *f2)
 {
@@ -423,10 +514,27 @@ bool compare(Friend *f1, Friend *f2)
     
     return f1->GetWeeklyHighScore() > f2->GetWeeklyHighScore();
 }
+bool compare2(MagicStaffBuildUpInfo* m1, MagicStaffBuildUpInfo* m2)
+{
+    return m1->GetLevel() < m2->GetLevel();
+}
 
 void DataProcess::SortFriendListByScore()
 {
     std::sort(friendList.begin(), friendList.end(), compare);
+}
+void DataProcess::SortMagicStaffBuildUpInfo()
+{
+    std::sort(magicStaffBuildupInfo.begin(), magicStaffBuildupInfo.end(), compare2);
+}
+std::string DataProcess::FindSkillNameById(int skillId)
+{
+    for (int i = 0 ; i < skillInfo.size() ; i++)
+    {
+        if (skillInfo[i]->GetId() == skillId)
+            return skillInfo[i]->GetName();
+    }
+    return "";
 }
 
 
@@ -459,50 +567,160 @@ std::string Msg::GetContent()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-PriceTopaz::PriceTopaz(int id, int count, int price, int bonus)
+PriceTopaz::PriceTopaz(int id, int count, int KRW, int USD, int bonus)
 {
-    this->id = id;
-    this->count = count;
-    this->price = price;
-    this->bonus = bonus;
+    this->nId = id;
+    this->nCount = count;
+    this->nPriceKRW = KRW;
+    this->nPriceUSD = USD;
+    this->nBonus = bonus;
 }
 int PriceTopaz::GetId()
 {
-    return id;
+    return nId;
 }
 int PriceTopaz::GetCount()
 {
-    return count;
+    return nCount;
 }
-int PriceTopaz::GetPrice()
+int PriceTopaz::GetPrice(int deviceType)
 {
-    return price;
+    if (deviceType == 1)
+        return nPriceKRW;
+    return nPriceUSD;
 }
 int PriceTopaz::GetBonus()
 {
-    return bonus;
+    return nBonus;
 }
 
 PriceStarCandy::PriceStarCandy(int id, int count, int price, int bonus)
 {
-    this->id = id;
-    this->count = count;
-    this->price = price;
-    this->bonus = bonus;
+    this->nId = id;
+    this->nCount = count;
+    this->nPrice = price;
+    this->nBonus = bonus;
 }
 int PriceStarCandy::GetId()
 {
-    return id;
+    return nId;
 }
 int PriceStarCandy::GetCount()
 {
-    return count;
+    return nCount;
 }
 int PriceStarCandy::GetPrice()
 {
-    return price;
+    return nPrice;
 }
 int PriceStarCandy::GetBonus()
 {
-    return bonus;
+    return nBonus;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+MagicStaffBuildUpInfo::MagicStaffBuildUpInfo(int level, int bonusMP, int cs, int ct)
+{
+    this->nLevel = level;
+    this->nBonusMP_percent = bonusMP;
+    this->nCost_starcandy = cs;
+    this->nCost_topaz = ct;
+}
+int MagicStaffBuildUpInfo::GetCost_StarCandy()
+{
+    return nCost_starcandy;
+}
+int MagicStaffBuildUpInfo::GetCost_Topaz()
+{
+    return nCost_topaz;
+}
+int MagicStaffBuildUpInfo::GetLevel()
+{
+    return nLevel;
+}
+int MagicStaffBuildUpInfo::GetBonusMPPercent()
+{
+    return nBonusMP_percent;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+SkillSlotInfo::SkillSlotInfo(int id, int costType, int cost)
+{
+    this->nId = id;
+    this->nCostType = costType;
+    this->nCost = cost;
+}
+
+
+PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, int value2)
+{
+    this->nId = id;
+    this->nCategory = category;
+    this->nType = type;
+    this->nValue1 = value1;
+    this->nValue2 = value2;
+}
+
+FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int pid)
+{
+    this->nId = id;
+    this->nType = type;
+    this->nGrade = grade;
+    this->nCost_starcandy = cs;
+    this->nCost_topaz = ct;
+    this->nPid = pid;
+}
+
+FairyBuildUpInfo::FairyBuildUpInfo(int id, int level, int ability, int refId, int cs, int ct)
+{
+    this->nId = id;
+    this->nLevel = level;
+    this->nAbility = ability;
+    this->nRefId = refId;
+    this->nCost_starcandy = cs;
+    this->nCost_topaz = ct;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SkillInfo::SkillInfo(int id, std::string name, int type, int maxLevel, int mp, int staffLv, int skillId, int skillLv)
+{
+    this->nId = id;
+    this->sName = name;
+    this->nType = type;
+    this->nMaxLevel = maxLevel;
+    this->nRequiredMP = mp;
+    this->nRequiredStaffLv = staffLv;
+    this->nRequiredSkillId = skillId;
+    this->nRequiredSkillLv = skillLv;
+}
+int SkillInfo::GetId()
+{
+    return nId;
+}
+std::string SkillInfo::GetName()
+{
+    return sName;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs)
+{
+    this->nId = id;
+    this->sName = name;
+    this->nSkillLv = skillLv;
+    this->nSkillMaxExp = maxExp;
+    this->nAbility1 = ability1;
+    this->nAbility2 = ability2;
+    this->nProbability = prob;
+    this->nCost_starcandy = cs;
+}
+
+SkillPropertyInfo::SkillPropertyInfo(int id, int cost)
+{
+    this->nId = id;
+    this->nCost_topaz = cost;
 }

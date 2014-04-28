@@ -19,7 +19,7 @@
 #include "Sketchbook.h"
 #include "popup/DegreeInfo.h"
 #include "popup/Profile.h"
-#include "popup/FairyInfo.h"
+#include "popup/FairyOneInfo.h"
 #include "popup/NoImage.h"
 #include "puzzle/Puzzle.h"
 #include "ParticleTest.h"
@@ -121,8 +121,6 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
     return rt;
 }
 */
-
-
 
 std::string Common::MakeComma(int number)
 {
@@ -283,7 +281,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
-    else if (to == "FairyInfo") nextScene = FairyInfo::scene();
+    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene();
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
     
@@ -300,7 +298,8 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((Splash*)obj)->EndScene();
         }
     }
-    if (from == "Ranking") {
+    else if (from == "Ranking")
+    {
         if (isReplaced)
         {
             //CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
@@ -664,11 +663,11 @@ void SpriteClass::AddChild(int idx)
         else if (obj->type == 1) ((Sketchbook*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Sketchbook*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
-    else if (obj->parentType == "FairyInfo") // 부모가 어떤 scene
+    else if (obj->parentType == "FairyOneInfo") // 부모가 어떤 scene
     {
-        if (obj->type == 0)      ((FairyInfo*)obj->parent)->addChild(obj->sprite, obj->zOrder);
-        else if (obj->type == 1) ((FairyInfo*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
-        else                     ((FairyInfo*)obj->parent)->addChild(obj->label, obj->zOrder);
+        if (obj->type == 0)      ((FairyOneInfo*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((FairyOneInfo*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((FairyOneInfo*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
     else if (obj->parentType == "NoImage") // 부모가 어떤 scene
     {
@@ -713,7 +712,7 @@ void* SpriteClass::FindSpriteByName(std::string name)
         {
             if (spriteObj[i]->type == 0)
                 return (void*)spriteObj[i]->sprite;
-            else if (spriteObj[i]->type == 0)
+            else if (spriteObj[i]->type == 1)
                 return (void*)spriteObj[i]->sprite9;
         }
     }

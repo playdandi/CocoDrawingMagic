@@ -8,9 +8,9 @@
 #define HTTP_VERSION 0
 #define HTTP_LOGIN 1
 #define HTTP_MYINFO 2
-#define HTTP_PRICE 3
-#define HTTP_FRIENDS 4
-#define HTTP_PROFILE_IMAGE 5
+//#define HTTP_PRICE 3
+#define HTTP_FRIENDS 3
+#define HTTP_PROFILE_IMAGE 4
 
 using namespace cocos2d::extension;
 
@@ -42,6 +42,8 @@ public:
 //    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
 //    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
+    void XMLParseGameData();
+    void WriteResFile(char* data, int size);
     void XmlParseVersion(char* data, int size);
     void XmlParseLogin(char* data, int size);
     void XmlParseMyInfo(char* data, int size);
@@ -59,6 +61,8 @@ protected:
     bool isLoading;
     bool isStarting;
     bool isKeyBackClicked;
+    
+    int gameVersion; // 새로 받은 게임버전
     
     //CCSprite* m_pEditNameSprite;
     //CCTextFieldTTF* m_pEditName;

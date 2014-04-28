@@ -212,16 +212,9 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 std::string number = spriteClass->spriteObj[i]->name.substr(25);
                 int idx = std::atoi(number.c_str());
-                data.push_back(priceStarCandy[idx]->GetId());
+                data.push_back(idx);
                 data.push_back(priceStarCandy[idx]->GetPrice());
-                data.push_back(priceStarCandy[idx]->GetCount());
-                /*
-                if (number == "0") data.push_back(priceStarCandy[0]->GetPrice());
-                else if (number == "1") data.push_back(priceStarCandy[1]->GetPrice());
-                else if (number == "2") data.push_back(priceStarCandy[2]->GetPrice());
-                else if (number == "3") data.push_back(priceStarCandy[3]->GetPrice());
-                else if (number == "4") data.push_back(priceStarCandy[4]->GetPrice());
-                 */
+                
                 Common::ShowPopup(this, "BuyStarCandy", "NoImage", false, BUY_STARCANDY_TRY, BTN_2, data);
             }
         }

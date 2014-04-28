@@ -102,12 +102,7 @@ void CocoRoom::Notification(CCObject* obj)
             sprintf(val, "%dLv (+ %d%%)", myInfo->GetStaffLv(), myInfo->GetMPStaffPercent());
             ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(4))->setString(val);
             
-            // 지팡이 일반/고급 다음 cost 갱신
-            sprintf(val, "x %d", myInfo->GetMPNextCostStarcandy());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(5))->setString(val);
-            sprintf(val, "x %d", myInfo->GetMPNextCostTopaz());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(6))->setString(val);
-            
+            // 지팡이 다음 강화에 필요한 cost 및 버튼 그림 갱신
             SetFullStaffBtn();
         }
         // 요정의 정보 갱신
@@ -323,27 +318,22 @@ void CocoRoom::MakeSpritesCoco()
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_fine.png",
                         ccp(0, 0), ccp(746, 587), CCSize(0, 0), "", "Layer", coco, 5) );
 
-    ///if (myInfo->GetStaffLvNext() == 0)
-    //{
         // 만렙인 경우
         spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png1", ccp(0, 0), ccp(205, 531), CCSize(0, 0), "", "Layer", coco, 5, 0, 0) );
         spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png2", ccp(0, 0), ccp(652, 531), CCSize(0, 0), "", "Layer", coco, 5, 0, 0) );
         sprintf(val, "강화 완료");
         spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(270, 541), ccc3(22,56,0), "", "Layer", coco, 5, 0, 0, 7) );
         spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(720, 541), ccc3(22,56,0), "", "Layer", coco, 5, 0, 0, 8) );
-    //}
-    //else
-    //{
+
         // 일반적인 경우
         spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "button/btn_receive_starcandy.png",
                         ccp(0, 0), ccp(224, 531), CCSize(0, 0), "", "Layer", coco, 5) );
         spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "button/btn_receive_topaz.png",
                         ccp(0, 0), ccp(671, 531), CCSize(0, 0), "", "Layer", coco, 5) );
-        sprintf(val, "x %d", myInfo->GetMPNextCostStarcandy());
+        sprintf(val, "x %d", magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy());
         spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(300, 541), ccc3(22,56,0), "", "Layer", coco, 5, 0, 255, 5) );
-        sprintf(val, "x %d", myInfo->GetMPNextCostTopaz());
+        sprintf(val, "x %d", magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz());
         spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(750, 541), ccc3(22,56,0), "", "Layer", coco, 5, 0, 255, 6) );
-    //}
     
     SetFullStaffBtn();
     
@@ -353,8 +343,28 @@ void CocoRoom::MakeSpritesCoco()
 
 void CocoRoom::SetFullStaffBtn()
 {
+    // 일반적인 경우
+    if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
+    {
+        // 지팡이 일반/고급 다음 cost 갱신
+        char val[20];
+        sprintf(val, "x %d", magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(5))->setString(val);
+        sprintf(val, "x %d", magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(6))->setString(val);
+        
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_starcandy.png"))->setOpacity(255);
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_topaz.png"))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(5))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(6))->setOpacity(255);
+        
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png1"))->setOpacity(0);
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(0);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setOpacity(0);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setOpacity(0);
+    }
     // 만렙인 경우
-    if (myInfo->GetStaffLvNext() == 0)
+    else
     {
         ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_starcandy.png"))->setOpacity(0);
         ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_topaz.png"))->setOpacity(0);
@@ -365,19 +375,6 @@ void CocoRoom::SetFullStaffBtn()
         ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(255);
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setOpacity(255);
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setOpacity(255);
-    }
-    // 일반적인 경우
-    else
-    {
-        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_starcandy.png"))->setOpacity(255);
-        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_topaz.png"))->setOpacity(255);
-        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(5))->setOpacity(255);
-        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(6))->setOpacity(255);
-        
-        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png1"))->setOpacity(0);
-        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(0);
-        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setOpacity(0);
-        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setOpacity(0);
     }
 }
 
@@ -593,20 +590,12 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                
-                
-                if (myInfo->GetStaffLvNext() == 0)
-                {
-                    // 이미 지팡이 만렙
-                    //std::vector<int> nullData;
-                    //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_FULL_LEVEL, BTN_1, nullData);
-                }
-                else
+                if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
                 {
                     sound->playClick();
                     std::vector<int> data;
                     data.push_back(0);
-                    data.push_back(myInfo->GetMPNextCostStarcandy());
+                    data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_StarCandy());
                     Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
                 }
             }
@@ -616,20 +605,12 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                
-                
-                if (myInfo->GetStaffLvNext() == 0)
-                {
-                    // 이미 지팡이 만렙
-                    //std::vector<int> nullData;
-                    //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_FULL_LEVEL, BTN_1, nullData);
-                }
-                else
+                if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
                 {
                     sound->playClick();
                     std::vector<int> data;
                     data.push_back(0);
-                    data.push_back(myInfo->GetMPNextCostTopaz());
+                    data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_Topaz());
                     Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data);
                 }
             }

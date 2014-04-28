@@ -34,6 +34,7 @@ void Splash::onExit()
     CCLog("Splash :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 
@@ -249,7 +250,7 @@ void Splash::XmlParseVersion(char* data, int size)
     {
         // 버전 정보를 받는다.
         //xml_node setting = nodeResult.child("setting");
-        int gameVersion = nodeResult.child("game-version").text().as_int();
+        gameVersion = nodeResult.child("game-version").text().as_int();
         int binaryVersion = nodeResult.child("binary-version").text().as_int();
         std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
         // 나중에 마켓버전도 받자.
@@ -265,47 +266,308 @@ void Splash::XmlParseVersion(char* data, int size)
         if (gameVersion != iGameVersion)
         {
             CCLog("게임 버전 다름");
+            m_pMsgLabel->setString("못생긴 리소스 설득 중...");
             // 밸런스 파일 업데이트 !
-            
-            iGameVersion = gameVersion;
-            CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", iGameVersion);
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(balanceFileUrl.c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+            req->setTag("999");
+            CCHttpClient::getInstance()->send(req);
+            req->release();
         }
-        
-        // 로그인 시도
-        m_pMsgLabel->setString("로그인 중...");
-        char temp[255];
-        std::string url = "http://14.63.225.203/cogma/game/login.php?";
-        sprintf(temp, "game_version=%d&", iGameVersion);
-        url += temp;
-        sprintf(temp, "kakao_id=%d&", mKakaoId);
-        url += temp;
-        sprintf(temp, "push_token=TEST_PUSH_VALUE&");
-        url += temp;
-        sprintf(temp, "device_type=%d&", mDeviceType);
-        url += temp;
-        sprintf(temp, "nick_name=ijpark&");
-        url += temp;
-        sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
-        url += temp;
-        
-        CCLog("url = %s", url.c_str());
-        
-        // post request
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-        // write data
-        //char postData[25];
-        //sprintf(postData, "user_name=%s", sUsername.c_str());
-        //req->setRequestData(postData, strlen(postData));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
+        else
+        {
+            // 새 리소스 XML parsing
+            m_pMsgLabel->setString("못생긴 리소스 배치 중...");
+            XMLParseGameData();
+            
+            // 로그인 시도
+            m_pMsgLabel->setString("로그인 중...");
+            char temp[255];
+            std::string url = "http://14.63.225.203/cogma/game/login.php?";
+            sprintf(temp, "game_version=%d&", iGameVersion);
+            url += temp;
+            sprintf(temp, "kakao_id=%d&", mKakaoId);
+            url += temp;
+            sprintf(temp, "push_token=TEST_PUSH_VALUE&");
+            url += temp;
+            sprintf(temp, "device_type=%d&", mDeviceType);
+            url += temp;
+            sprintf(temp, "nick_name=ijpark&");
+            url += temp;
+            sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+            url += temp;
+            //CCLog("url = %s", url.c_str());
+            
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(url.c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
     }
     else
     {
         CCLog("failed code = %d", code);
     }
+}
+
+void Splash::XMLParseGameData()
+{
+    //std::string filepath = CCFileUtils::sharedFileUtils()->fullPathForFilename("gamedata.xml");
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
+    CCLog("filepath = %s", filepath.c_str());
+    
+    // read file
+    unsigned long iSize = 0;
+    unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(), "rb", &iSize);
+    
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(pBuffer, iSize);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // variables
+    int id;
+    int count, price, price_KRW, price_USD, bonus;
+    int level, bonusMP, cost_starcandy, cost_topaz;
+    int costType, cost;
+    int category, type, value1, value2;
+    int grade, pid;
+    int ability, refId, ability2;
+    std::string skillName;
+    int maxLevel, mp, staffLv, skillId, skillLv;
+    int maxExp, prob;
+    xml_named_node_iterator it;
+    
+    xml_node nodeResult = xmlDoc.child("client-data");
+    
+    // price topaz
+    xml_object_range<xml_named_node_iterator> its = nodeResult.child("price_topaz_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "bIndex") id = ait->as_int();
+            else if (name == "nCount") count = ait->as_int();
+            else if (name == "nPriceKRW") price_KRW = ait->as_int();
+            else if (name == "nPriceUSD") price_USD = ait->as_int();
+            else if (name == "nBonusPercentage") bonus = ait->as_int();
+        }
+        priceTopaz.push_back( new PriceTopaz(id, count, price_KRW, price_USD, bonus) );
+    }
+    
+    // price starcandy
+    its = nodeResult.child("price_starcandy_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "bIndex") id = ait->as_int();
+            else if (name == "nCount") count = ait->as_int();
+            else if (name == "nPriceTopaz") price = ait->as_int();
+            else if (name == "nBonusPercentage") bonus = ait->as_int();
+        }
+        priceStarCandy.push_back( new PriceStarCandy(id, count, price, bonus) );
+    }
+    
+    // magicstaff buildup info
+    its = nodeResult.child("magic_staff_define_client").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nMagicStaffLevel") level = ait->as_int();
+            else if (name == "nMagicStaffBonusMP") bonusMP = ait->as_int();
+            else if (name == "nStarCandyCostValue") cost_starcandy = ait->as_int();
+            else if (name == "nTopazCostValue") cost_topaz = ait->as_int();
+        }
+        magicStaffBuildupInfo.push_back( new MagicStaffBuildUpInfo(level, bonusMP, cost_starcandy, cost_topaz) );
+    }
+    DataProcess::SortMagicStaffBuildUpInfo(); // level 오름차순 정렬
+    
+    // skill slot info
+    its = nodeResult.child("skill_slot_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "bSlotID") id = ait->as_int();
+            else if (name == "bCostType") costType = ait->as_int();
+            else if (name == "nCostValue") cost = ait->as_int();
+        }
+        skillSlotInfo.push_back( new SkillSlotInfo(id, costType, cost) );
+    }
+    
+    // prerequisite info
+    its = nodeResult.child("prerequisite_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nPrerequisiteID") id = ait->as_int();
+            else if (name == "bCategory") category = ait->as_int();
+            else if (name == "nType") type = ait->as_int();
+            else if (name == "nValue1") value1 = ait->as_int();
+            else if (name == "nValue2") value2 = ait->as_int();
+        }
+        prerequisiteInfo.push_back( new PrerequisiteInfo(id, category, type, value1, value2) );
+    }
+    
+    // fairy info
+    its = nodeResult.child("fairy_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nFairyID") id = ait->as_int();
+            else if (name == "nFairyType") type = ait->as_int();
+            else if (name == "nFairyGrade") grade = ait->as_int();
+            else if (name == "nStarCandyCostValue") cost_starcandy = ait->as_int();
+            else if (name == "nTopazCostValue") cost_topaz = ait->as_int();
+            else if (name == "nPrerequisiteID") pid = ait->as_int();
+        }
+        fairyInfo.push_back( new FairyInfo(id, type, grade, cost_starcandy, cost_topaz, pid) );
+    }
+    
+    // fairy buildup info
+    its = nodeResult.child("fairy_detail_define_client").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nFairyID") id = ait->as_int();
+            else if (name == "nFairyLevel") level = ait->as_int();
+            else if (name == "nFairyEffectValue") ability = ait->as_int();
+            else if (name == "nFairyEffectRefID") refId = ait->as_int();
+            else if (name == "nStarCandyCostValue") cost_starcandy = ait->as_int();
+            else if (name == "nTopazCostValue") cost_topaz = ait->as_int();
+        }
+        fairyBuildUpInfo.push_back( new FairyBuildUpInfo(id, level, ability, refId, cost_starcandy, cost_topaz) );
+    }
+    
+    // skill info
+    its = nodeResult.child("skill_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nSkillID") id = ait->as_int();
+            else if (name == "charSkillName") skillName = ait->as_string();
+            else if (name == "bSkillType") type = ait->as_int();
+            else if (name == "nSkillMaxLevel") maxLevel = ait->as_int();
+            else if (name == "nRequireMP") mp = ait->as_int();
+            else if (name == "nRequireStaffLevel") staffLv = ait->as_int();
+            else if (name == "nRequireSkillID") skillId = ait->as_int();
+            else if (name == "nRequireSkillLevel") skillLv = ait->as_int();
+        }
+        skillInfo.push_back( new SkillInfo(id, skillName, type, maxLevel, mp, staffLv, skillId, skillLv) );
+    }
+    
+    // skill buildup info
+    its = nodeResult.child("skill_detail_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nSkillID") id = ait->as_int();
+            else if (name == "charSkillName") skillName = ait->as_string();
+            else if (name == "nSkillLevel") level = ait->as_int();
+            else if (name == "nSkillMaxExp") maxExp = ait->as_int();
+            else if (name == "nSkillEffectValue") ability = ait->as_int();
+            else if (name == "nSkillEffectValue2") ability2 = ait->as_int();
+            else if (name == "nSkillEffectProbability") prob = ait->as_int();
+            else if (name == "nStarCandyCostValue") cost_starcandy = ait->as_int();
+        }
+        skillBuildUpInfo.push_back( new SkillBuildUpInfo(id, skillName, level, maxExp, ability, ability2, prob, cost_starcandy) );
+    }
+    
+    // skill property buy info
+    its = nodeResult.child("skill_properties_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "bSkillPropertiesID") id = ait->as_int();
+            else if (name == "nCostValue") cost_topaz = ait->as_int();
+        }
+        
+        skillPropertyInfo.push_back( new SkillPropertyInfo(id, cost_topaz) );
+    }
+}
+
+void Splash::WriteResFile(char* data, int size)
+{
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
+    CCLog("filepath = %s", filepath.c_str());
+    
+    FILE* ptr_fp;
+    if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
+    {
+        CCLog("FILE OPEN ERROR !");
+        exit(1);
+    }
+    
+    size_t realSize = strlen(data);
+    size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
+    if (fwriteSize != realSize)
+    {
+        CCLog("FILE WRITE ERROR !");
+        exit(1);
+    }
+    fclose(ptr_fp);
+    CCLog("FILE WRITE done~");
+    
+    // UserDefault에 바뀐 gameVersion 저장.
+    iGameVersion = gameVersion;
+    CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", iGameVersion);
+    
+    // 새 리소스 XML parsing
+    m_pMsgLabel->setString("못생긴 리소스 배치 중...");
+    XMLParseGameData();
+    
+    // 로그인 시도
+    m_pMsgLabel->setString("로그인 중...");
+    char temp[255];
+    std::string url = "http://14.63.225.203/cogma/game/login.php?";
+    sprintf(temp, "game_version=%d&", iGameVersion);
+    url += temp;
+    sprintf(temp, "kakao_id=%d&", mKakaoId);
+    url += temp;
+    sprintf(temp, "push_token=TEST_PUSH_VALUE&");
+    url += temp;
+    sprintf(temp, "device_type=%d&", mDeviceType);
+    url += temp;
+    sprintf(temp, "nick_name=ijpark&");
+    url += temp;
+    sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+    url += temp;
+    //CCLog("url = %s", url.c_str());
+    
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl(url.c_str());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
 }
 
 void Splash::XmlParseLogin(char* data, int size)
@@ -385,10 +647,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
-        int staffLvNext = nodeResult.child("next-staff").attribute("staff-level").as_int();
-        int mpNextCostStarcandy = nodeResult.child("next-staff").attribute("star-candy-cost-value").as_int();
-        int mpNextCostTopaz= nodeResult.child("next-staff").attribute("topaz-cost-value").as_int();
-        int staffNextPercent= nodeResult.child("next-staff").attribute("bonus-mp").as_int();
+        int practiceUserSkillId = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
         
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
@@ -410,14 +669,67 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int master = nodeResult.child("properties").attribute("master").as_int();
         
         myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
-        myInfo->SetNextStaff(staffLvNext, mpNextCostStarcandy, mpNextCostTopaz, staffNextPercent);
+        
+        int profileSkillId = nodeResult.child("profile-skill").attribute("id").as_int();
+        int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
+        myInfo->SetProfileSkill(profileSkillId, profileSkillLv);
+        
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-slot").children("slot");
+        int id, csi, usi;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+            }
+            myInfo->AddSkillSlot(id, csi, usi);
+        }
+        
+        its = nodeResult.child("fairy-list").children("fairy");
+        int cfi, ufi, level, isUse;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-fairy-id") cfi = ait->as_int();
+                else if (name == "user-fairy-id") ufi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "is-use") isUse = ait->as_int();
+            }
+            myInfo->AddFairy(cfi, ufi, level, isUse);
+        }
+        
+        its = nodeResult.child("skill-list").children("skill");
+        int exp;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp);
+            
+            // 현재 연습 중인 스킬 id 가져오기
+            if (usi == practiceUserSkillId)
+            {
+                myInfo->SetPracticeSkill(csi, level);
+            }
+        }
         
         
         // 친구 리스트 정보를 받는다.
-        m_pMsgLabel->setString("상품 정보를 불러오는 중...");
+        m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
         char temp[50];
-        std::string url = "http://14.63.225.203/cogma/game/get_pricelist.php?";
-        sprintf(temp, "device_type=%d", myInfo->GetDeviceType());
+        std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+        sprintf(temp, "kakao_id=%d", mKakaoId);
         url += temp;
         CCLog("url = %s", url.c_str());
         
@@ -427,6 +739,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
+
     }
     else
     {
@@ -437,6 +750,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
 
 void Splash::XmlParsePrice(char* data, int size)
 {
+    /*
     // xml parsing
     xml_document xmlDoc;
     xml_parse_result result = xmlDoc.load_buffer(data, size);
@@ -504,6 +818,7 @@ void Splash::XmlParsePrice(char* data, int size)
     {
         CCLog("잘못된 device type 값입니다.");
     }
+     */
 }
 
 void Splash::XmlParseFriends(char* data, int size)
@@ -634,6 +949,13 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
     
+    // gameVersion 변경으로 resource XML 파일 받았을 경우
+    if (atoi(res->getHttpRequest()->getTag()) == 999)
+    {
+        WriteResFile(dumpData, (int)buffer->size());
+        return;
+    }
+    
     // parse xml data
     httpStatus++;
     switch (httpStatus-1)
@@ -644,8 +966,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseLogin(dumpData, buffer->size()); break;
         case HTTP_MYINFO:
             XmlParseMyInfo(dumpData, buffer->size()); break;
-        case HTTP_PRICE:
-            XmlParsePrice(dumpData, buffer->size()); break;
+        //case HTTP_PRICE:
+        //    XmlParsePrice(dumpData, buffer->size()); break;
         case HTTP_FRIENDS:
             XmlParseFriends(dumpData, buffer->size()); break;
         default:
@@ -660,14 +982,11 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             int index = atoi(res->getHttpRequest()->getTag());
             friendList[index]->SetSprite(texture);
             
-            //CCLog("callback : %d", profileCnt);
-            
             if (profileCnt == (int)friendList.size())
             {
                 // 1) 로고랑 글자를 없앤다.
                 // 2) 배경화면 축소하면서 Ranking 시작.
                 LastActionStart();
-                //Common::ShowNextScene(this, "Splash", "Ranking", true);
             }
             break;
     }
