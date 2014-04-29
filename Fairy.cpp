@@ -152,4 +152,27 @@ CCLayer* Fairy::MakeSun()
     return fairyLayer;
 }
 
+CCLayer* Fairy::MakeEmpty()
+{
+    CCLayer* fairyLayer = CCLayer::create();
+    
+    CCSprite* sp = CCSprite::createWithSpriteFrameName("icon/icon_fairy_empty.png");
+    sp->setAnchorPoint(ccp(0.5, 0.5));
+    sp->setPosition(ccp(0, 0));
+    fairyLayer->addChild(sp, 50);
+    
+    return fairyLayer;
+}
+
+CCLayer* Fairy::GetFairy(int id)
+{
+    CCLayer* picture = CCLayer::create();
+    switch (id)
+    {
+        case 0: picture = MakeEmpty(); break;
+        case 1: picture = MakeFlower(); picture->setScale(1.0f); break;
+        case 2: picture = MakeSun(); picture->setScale(1.0f); break;
+    }
+    return picture;
+}
 

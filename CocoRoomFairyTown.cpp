@@ -146,17 +146,16 @@ void CocoRoomFairyTown::MakeScroll()
         }
         
         // 그림
-        CCLayer* picture;
+        CCLayer* picture = Fairy::GetFairy(fairyInfo[i]->GetId());
         switch (fairyInfo[i]->GetId())
         {
-            case 1: picture = Fairy::MakeFlower(); picture->setScale(0.7f); break;
-            case 2: picture = Fairy::MakeSun(); picture->setScale(0.8f); break;
+            case 1: picture->setScale(0.7f); break;
+            case 2: picture->setScale(0.8f); break;
         }
         picture->setAnchorPoint(ccp(0, 0));
         picture->setPosition(ccp(290/2, 290/2+30));
         itemLayer->addChild(picture, 10);
-        
-        
+
         // grade
         if (fairyInfo[i]->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png%d", i);
         else if (fairyInfo[i]->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png%d", i);

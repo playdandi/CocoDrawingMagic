@@ -64,6 +64,8 @@ bool GameReady::init()
     }
     
     InitSprites();
+    InitFairy();
+    InitSkill();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -123,6 +125,18 @@ void GameReady::Notification(CCObject* obj)
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
     }
+    else if (param->intValue() == 3)
+    {
+        // 코코 정보가 바뀌었을 경우 (지팡이 강화 등으로)
+    }
+    else if (param->intValue() == 4)
+    {
+        // 요정 정보가 바뀐 경우 (요정 선택변경, 요정 강화 등)
+    }
+    else if (param->intValue() == 5)
+    {
+        // 스킬 정보가 바뀐 경우 (게임준비->스케치북->게임준비 돌아올 때)
+    }
 }
 
 
@@ -144,14 +158,14 @@ void GameReady::InitSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", ccp(0, 0), ccp(77, 726), CCSize(929, 200), "", "GameReady", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2", ccp(0, 0), ccp(92, 1143), CCSize(309, 236), "", "GameReady", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png3", ccp(0, 0), ccp(408, 1143), CCSize(309, 236), "", "GameReady", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(725, 1143), CCSize(263, 236), "", "GameReady", this, 1) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png3", ccp(0, 0), ccp(408, 1143), CCSize(309, 236), "", "GameReady", this, 1) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(725, 1143), CCSize(263, 236), "", "GameReady", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png5", ccp(0, 0), ccp(49, 458), CCSize(982, 223), "", "GameReady", this, 1) );
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", ccp(0, 0), ccp(77, 488), CCSize(782, 177), "", "GameReady", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(112, 1165), CCSize(274, 53), "", "GameReady", this, 1, 128) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2", ccp(0, 0), ccp(425, 1165), CCSize(274, 53), "", "GameReady", this, 1, 128) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png3", ccp(0, 0), ccp(744, 1165), CCSize(228, 53), "", "GameReady", this, 1, 128) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2", ccp(0, 0), ccp(425, 1165), CCSize(274, 53), "", "GameReady", this, 1, 128) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png3", ccp(0, 0), ccp(744, 1165), CCSize(228, 53), "", "GameReady", this, 1, 128) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png4", ccp(0, 0), ccp(867, 497), CCSize(136, 63), "", "GameReady", this, 1) );
     
     
@@ -283,6 +297,138 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("따뜻한 불꽃그림", fontList[0], 30, ccp(0.5, 0.5), ccp(860, 1193), ccc3(255,255,255), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("행복하지 않을 이유가 하나도 없습니다.", fontList[0], 36, ccp(0, 0), ccp(97, 736), ccc3(0,0,0), CCSize(909, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "GameReady", this, 5) );
 }
+
+
+void GameReady::InitFairy()
+{
+    fairyLayer = CCLayer::create();
+    fairyLayer->setAnchorPoint(ccp(0, 0));
+    fairyLayer->setPosition(ccp(408, 1143));
+    this->addChild(fairyLayer, 10);
+    
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png3", ccp(0, 0), ccp(0, 0), CCSize(309, 236), "", "Layer", fairyLayer, 1) );
+    
+    // elf board
+//    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2", ccp(0, 0), ccp(0, 0), CCSize(309, 236), "", "Layer", fairyLayer, 5) );
+    
+    int fid = myInfo->GetActiveFairyId();
+    int flv = myInfo->GetActiveFairyLevel();
+    CCLog("fid flv : %d %d", fid, flv);
+    FairyInfo* f = FairyInfo::GetObj(fid);
+    
+    // 요정 그림
+    CCLayer* picture = Fairy::GetFairy(fid);
+    picture->setAnchorPoint(ccp(0, 0));
+    if (fid == 0)
+    {
+        picture->setPosition(ccp(309/2, 236/2+23));
+        picture->setScale(0.9f);
+    }
+    else if (fid == 1)
+    {
+        picture->setPosition(ccp(309/2+10, 236/2+23));
+        picture->setScale(0.63f);
+    }
+    else if (fid == 2)
+    {
+        picture->setPosition(ccp(309/2, 236/2+15));
+        picture->setScale(0.7f);
+    }
+    fairyLayer->addChild(picture, 6);
+    
+    // 요정 등급
+    char fname[30];
+    if (fid > 0)
+    {
+        if (f->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png");
+        else if (f->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png");
+        else if (f->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png");
+        else if (f->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png");
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(11, 165), CCSize(0, 0), "", "Layer", fairyLayer, 5) );
+    }
+    
+    // 요정 레벨 (+그 배경)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "", "Layer", fairyLayer, 7) );
+    sprintf(fname, "%d Lv", flv);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 24, ccp(0.5, 0.5), ccp(97, 202), ccc3(255,255,255), "", "Layer", fairyLayer, 7) );
+    
+    if (fid > 0)
+    {
+        // 요정 이름
+        if (fid == 0) sprintf(fname, "요정 없음");
+        else sprintf(fname, "%s", f->GetName().c_str());
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 30, ccp(0, 0), ccp(13, 85), ccc3(255,255,255), "", "Layer", fairyLayer, 7) );
+    }
+    
+    // 요정 특수능력 (+그 배경)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 7) );
+    
+    if (fid == 0) sprintf(fname, "요정 없음");
+    else sprintf(fname, "%s", FairyInfo::FindAbilityName(f->GetType()).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 7) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 7) );
+}
+
+void GameReady::InitSkill()
+{
+    skillLayer = CCLayer::create();
+    skillLayer->setAnchorPoint(ccp(0, 0));
+    skillLayer->setPosition(ccp(725, 1143));
+    this->addChild(skillLayer, 10);
+    
+    int sid = myInfo->GetPracticeSkillId();
+    int slv = myInfo->GetPracticeSkillLv();
+    CCLog("sid slv = %d %d", sid, slv);
+    
+    // 배경판
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(0, 0), CCSize(263, 236), "", "Layer", skillLayer, 1) );
+    
+    // 스킬 이름 (+그 배경)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2", ccp(0, 0), ccp(19, 22), CCSize(228, 53), "", "Layer", skillLayer, 5) );
+    CCPoint pos = spriteClass->FindParentCenterPos("background/bg_gameready_name.png2");
+    if (sid == 0) // 배운 스킬이 없는 경우
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("스킬 없음", fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
+    }
+    
+    // 스킬 문양 (+그 배경판)
+    //ccp(760, 850)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(63, 81), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+    if (sid > 0) // 스킬이 있는 경우에만 실제 문양
+    {
+        char skillName[20];
+        // ccp(60, 160);
+        // 스킬 옆에 삼각형 아이콘 색깔 (속성별로)
+        switch (sid / 10)
+        {
+            case 2: // fire
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_red.png", ccp(0, 0), ccp(63, 161), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+                break;
+            case 1: // water
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_blue.png", ccp(0, 0), ccp(63, 161), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+                break;
+            case 3: // land
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_green.png", ccp(0, 0), ccp(63, 161), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+                break;
+            default: // master
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_purple.png", ccp(0, 0), ccp(63, 161), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+                break;
+        }
+        // 스킬 문양
+        sprintf(skillName, "skill/skill_%d.png", sid);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
+        // 스킬 이름
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 1) );
+        
+        // Lv. <- 이 그림
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797-699, 850-772), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+        // 레벨 숫자 이미지
+        CCSize size = ((CCSprite*)spriteClass->FindSpriteByName("number/level_lv.png"))->getContentSize();
+        sprintf(skillName, "number/level_%d.png", slv % 10);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797-699+size.width, 850-772+3), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+    }
+}
+
 
 void GameReady::MakeScroll()
 {

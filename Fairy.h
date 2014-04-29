@@ -10,8 +10,10 @@ using namespace cocos2d;
 class Fairy
 {
 public:
+    static CCLayer* MakeEmpty();
     static CCLayer* MakeSun();
     static CCLayer* MakeFlower();
+    static CCLayer* GetFairy(int id);
 };
 
 #endif /* defined(__CocoMagic__Fairy__) */

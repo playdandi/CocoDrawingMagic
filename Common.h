@@ -6,6 +6,7 @@
 #include "CCPlatformConfig.h"
 #include "Sound.h"
 #include "Data.h"
+#include "Fairy.h"
 
 USING_NS_CC;
 

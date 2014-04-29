@@ -2,6 +2,7 @@
 #define __CocoMagic__Profile__
 
 #include "Common.h"
+#include "../Fairy.h"
 
 class Profile : public CCLayer
 {
@@ -35,6 +36,8 @@ private:
     CCSprite* pBlack;
     CCLayer* scoreLayer;
     CCLayer* profileLayer;
+    CCLayer* skillLayer;
+    CCLayer* fairyLayer;
     SpriteClass* spriteClass;
 };
 

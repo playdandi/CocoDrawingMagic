@@ -29,6 +29,8 @@ public:
     CREATE_FUNC(GameReady);
     
     void InitSprites();
+    void InitFairy();
+    void InitSkill();
     void MakeScroll();
     
     void EndScene();
@@ -49,6 +51,9 @@ private:
     CCSprite* pBlack;
     CCSprite* pBlackClose;
     std::vector<CCLayer*> itemNumLayer;
+    
+    CCLayer* fairyLayer;
+    CCLayer* skillLayer;
     
     CCScrollView* scrollView;
     

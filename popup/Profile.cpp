@@ -29,6 +29,7 @@ void Profile::onExit()
     CCLog("Profile :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void Profile::keyBackClicked()
@@ -211,33 +212,70 @@ void Profile::InitSprites()
 
 void Profile::InitFairy()
 {
+    fairyLayer = CCLayer::create();
+    fairyLayer->setAnchorPoint(ccp(0, 0));
+    fairyLayer->setPosition(ccp(382, 797-25));
+    this->addChild(fairyLayer, 10);
     
-    // elf board
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2",
-                ccp(0, 0), ccp(382, 797-25), CCSize(309, 236), "", "Profile", this, 5) );
+    // 배경보드
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2", ccp(0, 0), ccp(0, 0), CCSize(309, 236), "", "Layer", fairyLayer, 5) );
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
+    CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
+    CCLayer* picture = Fairy::GetFairy(fid);
+    picture->setAnchorPoint(ccp(0, 0));
+    if (fid == 0)
+    {
+        picture->setPosition(ccp(309/2, 236/2+23));
+        picture->setScale(0.9f);
+    }
+    else if (fid == 1)
+    {
+        picture->setPosition(ccp(309/2+10, 236/2+23));
+        picture->setScale(0.63f);
+    }
+    else if (fid == 2)
+    {
+        picture->setPosition(ccp(309/2, 236/2+15));
+        picture->setScale(0.7f);
+    }
+    fairyLayer->addChild(picture, 6);
     
     // 요정 등급
     char fname[30];
-    if (f->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png");
-    else if (f->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png");
-    else if (f->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png");
-    else if (f->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png");
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(25, 219), CCSize(0, 0), "", "Layer", , 90) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_grade_a.png", ccp(0, 0), ccp(11, 165), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    if (fid > 0)
+    {
+        if (f->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png");
+        else if (f->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png");
+        else if (f->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png");
+        else if (f->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png");
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(11, 165), CCSize(0, 0), "", "Layer", fairyLayer, 5) );
+    }
     
     // 요정 레벨 (+그 배경)
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "", "Layer", fairyLayer, 7) );
+    sprintf(fname, "%d Lv", flv);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 24, ccp(0.5, 0.5), ccp(97, 202), ccc3(255,255,255), "", "Layer", fairyLayer, 7) );
     
-    // 요정 이름
+    if (fid > 0)
+    {
+        // 요정 이름
+        if (fid == 0) sprintf(fname, "요정 없음");
+        else sprintf(fname, "%s", f->GetName().c_str());
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 30, ccp(0, 0), ccp(13, 85), ccc3(255,255,255), "", "Layer", fairyLayer, 7) );
+    }
     
     // 요정 특수능력 (+그 배경)
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 7) );
+
+    if (fid == 0) sprintf(fname, "요정 없음");
+    else sprintf(fname, "%s", FairyInfo::FindAbilityName(f->GetType()).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 7) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 7) );
 }
 
 void Profile::InitSkill()
