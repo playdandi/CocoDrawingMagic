@@ -1,5 +1,6 @@
 #include "Splash.h"
 #include "pugixml/pugixml.hpp"
+#include "Fairy.h"
 
 using namespace pugi;
 
@@ -61,6 +62,7 @@ bool Splash::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
     
     // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));

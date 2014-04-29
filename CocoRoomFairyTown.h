@@ -2,6 +2,7 @@
 #define __CocoMagic__CocoRoomFairyTown__
 
 #include "Common.h"
+#include "Fairy.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
 
@@ -12,6 +13,7 @@ class CocoRoomFairyTown : public CCLayer,
                         public CCScrollViewDelegate
 {
 public:
+    ~CocoRoomFairyTown();
     static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
@@ -37,15 +39,16 @@ protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollView;
     bool isScrolling;
     bool scrollViewTouch;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
     
-    std::vector<int> grade;
-    std::vector<std::string> name;
+    CCScrollView* scrollView;
+    std::vector<CCLayer*> itemLayers;
+    CCLayer* scrollContainer;
 };
 
 #endif /* defined(__CocoMagic__CocoRoomFairyTown__) */

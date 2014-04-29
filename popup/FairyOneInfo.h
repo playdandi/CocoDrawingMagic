@@ -1,12 +1,13 @@
 #ifndef __CocoMagic__FairyOneInfo__
 #define __CocoMagic__FairyOneInfo__
 
-#include "Common.h"
+#include "../Common.h"
+#include "../Fairy.h"
 
 class FairyOneInfo : public CCLayer
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int idx);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -25,12 +26,12 @@ public:
 protected:
     CCSize winSize;
     
-    CCSprite* pBlack;
-    
     bool isTouched;
     
+    bool isByTopaz;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
 };
 

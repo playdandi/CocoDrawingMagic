@@ -289,6 +289,35 @@ void MyInfo::AddSkill(int csi, int usi, int level, int exp)
     mySkill.push_back( new MySkill(csi, usi, level, exp) );
 }
 
+int MyInfo::GetActiveFairyId()
+{
+    for (int i = 0 ; i < myFairy.size() ; i++)
+    {
+        if (myFairy[i]->IsUse())
+            return myFairy[i]->GetId();
+    }
+    return -1;
+}
+int MyInfo::GetActiveFairyLevel()
+{
+    for (int i = 0 ; i < myFairy.size() ; i++)
+    {
+        if (myFairy[i]->IsUse())
+            return myFairy[i]->GetLevel();
+    }
+    return -1;
+}
+std::vector<class MyFairy*> MyInfo::GetFairyList()
+{
+    return myFairy;
+}
+void MyInfo::ClearFairyList()
+{
+    for (int i = 0 ; i < myFairy.size() ; i++)
+        delete myFairy[i];
+    myFairy.clear();
+}
+
 
 MySkillSlot::MySkillSlot(int id, int csi, int usi)
 {
@@ -303,6 +332,18 @@ MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
     this->level = level;
     this->isUse = isUse;
 }
+bool MyFairy::IsUse()
+{
+    return (isUse == 1);
+}
+int MyFairy::GetId()
+{
+    return common_fairy_id;
+}
+int MyFairy::GetLevel()
+{
+    return level;
+}
 MySkill::MySkill(int csi, int usi, int level, int exp)
 {
     this->common_skill_id = csi;
@@ -310,15 +351,6 @@ MySkill::MySkill(int csi, int usi, int level, int exp)
     this->level = level;
     this->exp = exp;
 }
-/*
-void MyInfo::SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCostTopaz, int staffNextPercent)
-{
-    this->staffLvNext = staffLvNext;
-    this->mpNextCostStarcandy = mpNextCostStarcandy;
-    this->mpNextCostTopaz = mpNextCostTopaz;
-    this->mpStaffPercentNext = staffNextPercent;
-}
-*/
 
 
 
@@ -664,15 +696,86 @@ PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, i
     this->nValue2 = value2;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int pid)
 {
     this->nId = id;
     this->nType = type;
+    this->sName = MakeName(this->nId);
     this->nGrade = grade;
     this->nCost_starcandy = cs;
     this->nCost_topaz = ct;
     this->nPid = pid;
 }
+std::string FairyInfo::MakeName(int id)
+{
+    switch (id)
+    {
+        case 1: return "꽃등신"; break;
+        case 2: return "은근해"; break;
+    }
+    return "노네임";
+}
+std::string FairyInfo::FindAbilityName(int type)
+{
+    switch (type)
+    {
+        case 1: return "연결피스 더 많이!"; break;
+        case 2: return "미션 추가 경험치"; break;
+        case 3: return "착용스킬 능력향상"; break;
+        case 4: return "보너스 점수"; break;
+        case 5: return "보너스 시간"; break;
+        case 6: return "아이템 더 쓴다!"; break;
+        case 7: return "지팡이 강화 좋게!"; break;
+        case 8: return "MP 증가"; break;
+    }
+    return "";
+}
+std::string FairyInfo::GetDescription()
+{
+    switch (this->nId)
+    {
+        case 1: return "나같이 꽃같은 등신봤어~?"; break;
+        case 2: return "(은근은근) (은근은근)"; break;
+    }
+    return "할 말이 없네요";
+}
+int FairyInfo::GetType()
+{
+    return nType;
+}
+int FairyInfo::GetId()
+{
+    return nId;
+}
+int FairyInfo::GetGrade()
+{
+    return nGrade;
+}
+int FairyInfo::GetCostTopaz()
+{
+    return nCost_topaz;
+}
+int FairyInfo::GetCostStarCandy()
+{
+    return nCost_starcandy;
+}
+std::string FairyInfo::GetName()
+{
+    return sName;
+}
+FairyInfo* FairyInfo::GetObj(int id)
+{
+    for (int i = 0 ; i < fairyInfo.size() ; i++)
+    {
+        if (fairyInfo[i]->GetId() == id)
+            return fairyInfo[i];
+    }
+    return NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FairyBuildUpInfo::FairyBuildUpInfo(int id, int level, int ability, int refId, int cs, int ct)
 {
@@ -682,6 +785,43 @@ FairyBuildUpInfo::FairyBuildUpInfo(int id, int level, int ability, int refId, in
     this->nRefId = refId;
     this->nCost_starcandy = cs;
     this->nCost_topaz = ct;
+}
+int FairyBuildUpInfo::GetAbility(int id, int level)
+{
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
+    {
+        if (fairyBuildUpInfo[i]->nId == id && fairyBuildUpInfo[i]->nLevel == level)
+            return fairyBuildUpInfo[i]->nAbility;
+    }
+    return -1;
+}
+int FairyBuildUpInfo::GetCostTopaz(int id, int level)
+{
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
+    {
+        if (fairyBuildUpInfo[i]->nId == id && fairyBuildUpInfo[i]->nLevel == level)
+            return fairyBuildUpInfo[i]->nCost_topaz;
+    }
+    return -1;
+}
+int FairyBuildUpInfo::GetCostStarCandy(int id, int level)
+{
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
+    {
+        if (fairyBuildUpInfo[i]->nId == id && fairyBuildUpInfo[i]->nLevel == level)
+            return fairyBuildUpInfo[i]->nCost_starcandy;
+    }
+    return -1;
+}
+int FairyBuildUpInfo::GetMaxLevel(int id)
+{
+    int ret = -1;
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
+    {
+        if (fairyBuildUpInfo[i]->nId == id && fairyBuildUpInfo[i]->nLevel > ret)
+            ret = fairyBuildUpInfo[i]->nLevel;
+    }
+    return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

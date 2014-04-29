@@ -155,8 +155,10 @@ void NoImage::InitSprites()
             deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
+        case BUY_FAIRY_BY_TOPAZ_NOMONEY:
             sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
+        case BUY_FAIRY_BY_STARCANDY_NOMONEY:
             sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
@@ -170,16 +172,23 @@ void NoImage::InitSprites()
             sprintf(text, "강화 실패!\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ"); break;
         case UPGRADE_STAFF_FULL_LEVEL:
             sprintf(text, "어머? 이미 만렙이에요~"); break;
+        case BUY_FAIRY_BY_STARCANDY_TRY:
+        case BUY_FAIRY_BY_TOPAZ_TRY:
+            sprintf(text, "'%s' 요정을 구매하시겠습니까?", fairyInfo[d[0]]->GetName().c_str()); break;
+        case BUY_FAIRY_OK:
+            sprintf(text, "요정을 구매하였습니다!"); break;
+        case BUY_FAIRY_FAIL:
+            sprintf(text, "요정을 구매하지 못하였습니다. 다시 시도해 주세요."); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
     // 가격표
-    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
+    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
                     ccp(0, 0), ccp(493, 723), CCSize(201, 77), "", "NoImage", this, 5) );
         
-        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY)
+        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
         else
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
@@ -233,7 +242,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         // 팝업창에서 '확인' 버튼 하나만 있는 경우.
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
-                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL) )
+                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL) )
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -355,20 +364,59 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
                 {
-                    // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
-                    std::string url = "http://14.63.225.203/cogma/game/upgrade_staff.php?";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    // 토파즈vs별사탕 구분 및 가격
                     int costType = (type == UPGRADE_STAFF_BY_TOPAZ_TRY) ? 2 : 1;
-                    sprintf(temp, "cost_type=%d&", costType);
-                    url += temp;
                     int cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz();
                     if (costType == 1) // 일반강화는 별사탕
                         cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
-                    sprintf(temp, "cost_value=%d", cost);
-                    url += temp;
-                    CCLog("upgradestaff url = %s", url.c_str());
-                    HttpRequest(url);
+                    
+                    // 잔액 부족
+                    if (costType == 1 && myInfo->GetTopaz() < cost)
+                        ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
+                    else if (costType == 2 && myInfo->GetStarCandy() < cost)
+                        ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
+                    else
+                    {
+                        // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
+                        std::string url = "http://14.63.225.203/cogma/game/upgrade_staff.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        sprintf(temp, "cost_type=%d&", costType);
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", cost);
+                        url += temp;
+                        CCLog("upgradestaff url = %s", url.c_str());
+                        HttpRequest(url);
+                    }
+                }
+                else if (type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
+                {
+                    // 토파즈vs별사탕 구분 및 가격
+                    int costType = (type == BUY_FAIRY_BY_TOPAZ_TRY) ? 2 : 1;
+                    int cost = fairyInfo[d[0]]->GetCostTopaz();
+                    if (costType == 1) // 별사탕으로 산다면,
+                        cost = fairyInfo[d[0]]->GetCostStarCandy();
+                 
+                    // 잔액 부족
+                    if (costType == 1 && myInfo->GetTopaz() < cost)
+                        ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
+                    else if (costType == 2 && myInfo->GetStarCandy() < cost)
+                        ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
+                    else
+                    {
+                        // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
+                        std::string url = "http://14.63.225.203/cogma/game/purchase_fairy.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        sprintf(temp, "fairy_id=%d&", fairyInfo[d[0]]->GetId());
+                        url += temp;
+                        sprintf(temp, "cost_type=%d&", costType);
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", cost);
+                        url += temp;
+                        CCLog("buy fairy url = %s", url.c_str());
+                        HttpRequest(url);
+                    }
                 }
             }
         }
@@ -468,6 +516,9 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
             XmlParseUpgradeStaff(dumpData, buffer->size()); break;
+        case BUY_FAIRY_BY_TOPAZ_TRY:
+        case BUY_FAIRY_BY_STARCANDY_TRY:
+            XmlParseBuyFairy(dumpData, buffer->size()); break;
     }
 }
 
@@ -770,6 +821,68 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
     {
         // 이미 지팡이 만렙
         ReplaceScene("NoImage", UPGRADE_STAFF_FULL_LEVEL, BTN_1);
+    }
+    else
+    {
+        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+}
+
+void NoImage::XmlParseBuyFairy(char* data, int size)
+{
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // myFairy list 갱신
+        myInfo->ClearFairyList();
+        
+        std::string name;
+        int cfi, ufi, level, isUse;
+        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("fairy-list").children("fairy");
+        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "common-fairy-id") cfi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "user-fairy-id") ufi = ait->as_int();
+                else if (name == "is-use") isUse = ait->as_int();
+            }
+            myInfo->AddFairy(cfi, ufi, level, isUse);
+        }
+        
+        // GameReady에 topaz, starcandy, mp 정보 변경시킨다.
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        
+        // CocoRoomFairyTown에 요정리스트 정보 갱신한다.
+        
+        // CocoRoom에 요정슬롯 정보 갱신한다.
+    }
+    else if (code == 3)
+    {
+        // 잔액 부족
+        if (type == BUY_FAIRY_BY_TOPAZ_TRY)
+            ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
+        else
+            ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
     }
     else
     {

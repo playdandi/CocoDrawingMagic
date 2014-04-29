@@ -33,6 +33,7 @@ public:
     void XmlParseMsg(char* data, int size);
     void XmlParseSendTopaz(char* data, int size);
     void XmlParseUpgradeStaff(char* data, int size);
+    void XmlParseBuyFairy(char* data, int size);
     
 protected:
     CCSize winSize;

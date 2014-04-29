@@ -281,7 +281,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
-    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene();
+    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
     
@@ -354,6 +354,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
+    else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
     else if (from == "NoImage") {
         if (isReplaced) ((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
         else            ((NoImage*)obj)->addChild(popup, 200, 200);

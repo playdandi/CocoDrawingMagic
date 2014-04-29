@@ -1233,7 +1233,7 @@ void Effect::ShowStarCandy(std::vector<CCPoint> pos)
         gameLayer->addChild(candy, 2000);
         
         //CCRepeatForever::create(CCRotateBy::create(0.1f, 90))
-        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create( CCFadeIn::create(0.1f), CCEaseOut::create(CCMoveTo::create(1.0f, ccp(gameLayer->m_winSize.width/2, gameLayer->vs.height+gameLayer->vo.y-370)), 1.0f), CCFadeOut::create(0.3f), NULL), NULL),
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create( CCFadeIn::create(0.1f), CCEaseOut::create(CCMoveTo::create(0.5f, ccp(gameLayer->m_winSize.width/2, gameLayer->vs.height+gameLayer->vo.y-370)), 0.5f), CCFadeOut::create(0.2f), NULL), NULL),
             CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
         candy->runAction(action);
         
@@ -1246,6 +1246,7 @@ void Effect::ShowStarCandy(std::vector<CCPoint> pos)
         candy->runAction(action);
          */
         
+        /*
         // 별 파티클
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/basic_starcandy.plist");
         m_emitter->retain();
@@ -1260,6 +1261,7 @@ void Effect::ShowStarCandy(std::vector<CCPoint> pos)
         m_emitter->runAction(action2);
         //m_emitter->setDuration(0.2f);
         //m_emitter->setAutoRemoveOnFinish(true);
+         */
     }
 }
 void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)

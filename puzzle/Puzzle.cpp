@@ -262,8 +262,8 @@ void Puzzle::InitSprites()
     // 코코 그림자, 요정 그림자
     //vs.height+vo.y-480
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/coco_shadow.png", ccp(0.5, 0.5), ccp(215, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "anim/fairy/sun_shadow.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20) );
-    ((CCSprite*)spriteClass->FindSpriteByName("anim/fairy/sun_shadow.png"))->setScale(1.25f);
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "sun/sun_shadow.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20) );
+    ((CCSprite*)spriteClass->FindSpriteByName("sun/sun_shadow.png"))->setScale(1.25f);
     
     // 마법진
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 1) );
@@ -516,21 +516,21 @@ void Puzzle::InitFairy()
 {
     fairyLayer = CCLayer::create();
     
-    CCSprite* face = CCSprite::createWithSpriteFrameName("anim/fairy/sun_face.png");
+    CCSprite* face = CCSprite::createWithSpriteFrameName("sun/sun_face.png");
     face->setAnchorPoint(ccp(0.5, 0.5));
     face->setPosition(ccp(0, 0));
     fairyLayer->addChild(face, 1000);
-    CCSprite* mouth = CCSprite::createWithSpriteFrameName("anim/fairy/sun_mouth.png");
+    CCSprite* mouth = CCSprite::createWithSpriteFrameName("sun/sun_mouth.png");
     mouth->setAnchorPoint(ccp(0.5, 0.5));
     mouth->setPosition(ccp(0, -30));
     fairyLayer->addChild(mouth, 1000);
     
     CCLayer* eyeLayer = CCLayer::create();
-    CCSprite* eye1 = CCSprite::createWithSpriteFrameName("anim/fairy/sun_eye.png");
+    CCSprite* eye1 = CCSprite::createWithSpriteFrameName("sun/sun_eye.png");
     eye1->setAnchorPoint(ccp(0.5, 0.5));
     eye1->setPosition(ccp(0, 0));
     eyeLayer->addChild(eye1, 1000);
-    CCSprite* eye2 = CCSprite::createWithSpriteFrameName("anim/fairy/sun_eye.png");
+    CCSprite* eye2 = CCSprite::createWithSpriteFrameName("sun/sun_eye.png");
     eye2->setAnchorPoint(ccp(0.5, 0.5));
     eye2->setPosition(ccp(70, 0));
     eyeLayer->addChild(eye2, 1000);
@@ -542,7 +542,7 @@ void Puzzle::InitFairy()
     float x, y;
     for (int i = 0 ; i < 8 ; i++)
     {
-        CCSprite* temp = CCSprite::createWithSpriteFrameName("anim/fairy/sun_head.png");
+        CCSprite* temp = CCSprite::createWithSpriteFrameName("sun/sun_head.png");
         temp->setAnchorPoint(ccp(0.5, 0.5));
         if (i == 0)      { x = 0; y = r; }
         else if (i == 1) { x = r/sqrt(2); y = r/sqrt(2); }

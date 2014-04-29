@@ -82,6 +82,12 @@ public:
     void AddSkillSlot(int id, int csi, int usi);
     void AddFairy(int cfi, int ufi, int level, int isUse);
     void AddSkill(int csi, int usi, int level, int exp);
+    
+    int GetActiveFairyId();
+    int GetActiveFairyLevel();
+    
+    std::vector<class MyFairy*> GetFairyList();
+    void ClearFairyList();
 
 private:
     bool settingKakaoMsg;
@@ -137,6 +143,9 @@ class MyFairy
 {
 public:
     MyFairy(int cfi, int ufi, int level, int isUse);
+    bool IsUse();
+    int GetId();
+    int GetLevel();
 private:
     int common_fairy_id;
     int user_fairy_id;
@@ -318,9 +327,20 @@ class FairyInfo
 {
 public:
     FairyInfo(int id, int type, int grade, int cs, int ct, int pid);
+    std::string MakeName(int id);
+    static std::string FindAbilityName(int type);
+    std::string GetDescription();
+    int GetId();
+    int GetGrade();
+    int GetType();
+    int GetCostTopaz();
+    int GetCostStarCandy();
+    std::string GetName();
+    static FairyInfo* GetObj(int id);
 private:
     int nId;
     int nType;
+    std::string sName;
     int nGrade;
     int nCost_starcandy;
     int nCost_topaz;
@@ -331,6 +351,10 @@ class FairyBuildUpInfo
 {
 public:
     FairyBuildUpInfo(int id, int level, int ability, int refId, int cs, int ct);
+    int GetAbility(int id, int level);
+    static int GetMaxLevel(int id);
+    static int GetCostTopaz(int id, int level);
+    static int GetCostStarCandy(int id, int level);
 private:
     int nId;
     int nLevel;

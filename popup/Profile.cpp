@@ -211,15 +211,33 @@ void Profile::InitSprites()
 
 void Profile::InitFairy()
 {
+    
     // elf board
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2",
                 ccp(0, 0), ccp(382, 797-25), CCSize(309, 236), "", "Profile", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_grade_a.png",
-                ccp(0, 0), ccp(11, 165), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png",
-                ccp(0, 0), ccp(55, 187), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1",
-                ccp(0, 0), ccp(19, 22), CCSize(274, 53), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    
+    int fid = friendList[profile_index]->GetFairyId();
+    int flv = friendList[profile_index]->GetFairyLv();
+    FairyInfo* f = FairyInfo::GetObj(fid);
+    
+    // 요정 그림
+    
+    // 요정 등급
+    char fname[30];
+    if (f->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png");
+    else if (f->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png");
+    else if (f->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png");
+    else if (f->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png");
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(25, 219), CCSize(0, 0), "", "Layer", , 90) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_grade_a.png", ccp(0, 0), ccp(11, 165), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    
+    // 요정 레벨 (+그 배경)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
+    
+    // 요정 이름
+    
+    // 요정 특수능력 (+그 배경)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "background/bg_board_brown.png2", "1", NULL, 5, 1) );
 }
 
 void Profile::InitSkill()
