@@ -362,7 +362,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
 }
 
 
-SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
+SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha, int tag)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -381,7 +381,8 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite->setAnchorPoint(ap);
         obj->sprite->setPosition(pos);
         obj->sprite->setOpacity(alpha);
-        //CCLog("sprite retain : %d", obj->sprite->retainCount());
+        if (tag != -1)
+            obj->sprite->setTag(tag);
     }
     else if (spriteType == 1) // sprite-9
     {
@@ -396,7 +397,8 @@ SpriteObject* SpriteObject::Create(int spriteType, std::string name, CCPoint ap,
         obj->sprite9->setPosition(pos);
         obj->sprite9->setContentSize(size);
         obj->sprite9->setOpacity(alpha);
-        //CCLog("sprite9 retain : %d", obj->sprite9->retainCount());
+        if (tag != -1)
+            obj->sprite9->setTag(tag);
     }
 
     // parent 관련 대입

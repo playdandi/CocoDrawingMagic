@@ -23,6 +23,7 @@ void FairyOneInfo::onExit()
 {
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void FairyOneInfo::keyBackClicked()
@@ -108,7 +109,7 @@ void FairyOneInfo::InitSprites()
                     ccp(0, 0), ccp(404, 971), CCSize(440, 58), "", "FairyOneInfo", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977), ccc3(121,71,0), "", "FairyOneInfo", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977+3), ccc3(255,219,53), "", "FairyOneInfo", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::FindAbilityName(fairyInfo[fairy_idx]->GetType()), fontList[0], 36, ccp(0, 0), ccp(574, 977), ccc3(255,255,255), "", "FairyOneInfo", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::GetAbilityDesc(fairyInfo[fairy_idx]->GetType()), fontList[0], 36, ccp(0, 0), ccp(574, 977), ccc3(255,255,255), "", "FairyOneInfo", this, 5) );
     
     // 요정 묘사
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(fairyInfo[fairy_idx]->GetDescription(), fontList[0], 36, ccp(0, 0), ccp(210, 875), ccc3(117,86,47), CCSize(730, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "FairyOneInfo", this, 5) );
@@ -222,6 +223,10 @@ void FairyOneInfo::EndScene()
 {
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoomFairyTown", param);
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

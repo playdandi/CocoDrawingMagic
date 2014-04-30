@@ -34,27 +34,36 @@ public:
     void InitSprites();
     void MakeSprites(int state);
     void MakeSpritesCoco();
-    void SetFullStaffBtn();
+    void SetStaffBuildUp();
     void MakeScrollCoco();
     void MakeSpritesFairy();
+    void SetFairyBuildUp();
     void MakeScrollFairy();
     void MakeSpritesCandy();
+    
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseFairyList(char* data, int size);
     
 protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollViewCoco;
-    CCScrollView* scrollViewFairy;
     bool isScrolling;
-    CCLayer* containerCoco;
-    CCLayer* containerFairy;
+    bool isFairySlotTouched;
     
 private:
     SpriteClass* spriteClass;
     SpriteClass* spriteClassCoco;
     SpriteClass* spriteClassFairy;
     SpriteClass* spriteClassCandy;
+    
+    SpriteClass* spriteClassFairySlot;
+    SpriteClass* spriteClassCocoSlot;
+    
+    CCScrollView* scrollViewCoco;
+    CCScrollView* scrollViewFairy;
+    CCLayer* containerCoco;
+    CCLayer* containerFairy;
     
     int curState;
     CCLayer* coco;

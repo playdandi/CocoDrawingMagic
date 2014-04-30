@@ -113,10 +113,10 @@ bool Puzzle::init()
     
     skillNum.push_back(7); // 막타
     skillNum.push_back(15);
-    skillNum.push_back(23);
+    //skillNum.push_back(23);
     
     for (int i = 0 ; i < skillNum.size() ; i++) {
-        if (skillNum[i] == 6 || skillNum[i] == 14)
+        if (skillNum[i] == 14)
             skillProb.push_back(10);
         else
             skillProb.push_back(100);
@@ -1796,7 +1796,7 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
         {
             CCLog("bomb callback 7 (%d)", (int)queue_pos);
             //skill->F7_Callback(this, skill);
-            skill->F7_Continue(skill, (int)queue_pos);
+            //skill->F7_Continue(skill, (int)queue_pos);
             return; // Falling은 F7 (스킬) 함수쪽에서 한다.
         }
         

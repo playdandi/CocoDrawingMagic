@@ -691,46 +691,37 @@ void PuzzleSkill::F7(int num, int queue_pos)
     F7_callbackCnt = 0;
     if (F7_callbackCnt < count && (int)result_double_pos[F7_callbackCnt].size() > 0)
     {
-        m_pGameLayer->GetEffect()->PlayEffect_6_Fire(result_double_pos[F7_callbackCnt], queue_pos); // 코코가 던지는 불
+        //m_pGameLayer->GetEffect()->PlayEffect_6_Fire(result_double_pos[F7_callbackCnt], queue_pos, F7_callbackCnt); // 코코가 던지는 불
+        m_pGameLayer->GetEffect()->PlayEffect_6_Fire(result_double_pos, queue_pos, 0);
     }
-    /*
-    // 하나의 vector로 결과를 만든다. (좌표를 양수/음수로 몇 번째 한붓그리기 덩어리인지 구분하도록 한다)
-    result_pos.clear();
-    for (int i = 0 ; i < count ; i++)
-    {
-        for (int j = 0 ; j < result_double_pos[i].size() ; j++)
-        {
-            if (i % 2 == 0)
-                result_pos.push_back(result_double_pos[i][j]);
-            else
-                result_pos.push_back(ccp(-(int)result_double_pos[i][j].x, -(int)result_double_pos[i][j].y));
-        }
-    }
-    result_pos_temp = result_pos;
-    
-    // 덩어리가 하나도 없으면 실행하지 않는다.
-    if ((int)result_pos.size() == 0)
-        return;
-    
-    // 코코이펙트
-    m_pGameLayer->PlayEffect(num);
-    
-    // 덩어리마다 시간차로 터뜨린다.
-    F7_callbackCnt = 0;
-    F7_callbackCntMini = -1;
-    F7_Callback(NULL, this);
-     */
 }
-//void PuzzleSkill::F7_Callback(CCNode* sender, void* pointer)
+
 void PuzzleSkill::F7_Continue(void* pointer, int queue_pos)
 {
+    CCLog("F7 콜백 끝 : Falling 시작");
+    PuzzleSkill* ps = (PuzzleSkill*)pointer;
+    int x, y;
+    for (int i = 0 ; i < ps->result_double_pos.size() ; i++)
+    {
+        for (int j = 0 ; j < ps->result_double_pos[i].size() ; j++)
+        {
+            // 실제로 제거
+            x = (int)ps->result_double_pos[i][j].x;
+            y = (int)ps->result_double_pos[i][j].y;
+            ps->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(abs(x), abs(y));
+            ps->m_pGameLayer->SetSpriteP8Null(abs(x), abs(y));
+        }
+    }
+    
+    ps->m_pGameLayer->Falling(queue_pos);
+    
+    /*
     PuzzleSkill* ps = (PuzzleSkill*)pointer;
     ps->F7_callbackCnt++;
     CCLog("F7 콜백 숫자 : %d", ps->F7_callbackCnt);
     if (ps->F7_callbackCnt < (int)ps->result_double_pos.size() && (int)ps->result_double_pos[ps->F7_callbackCnt].size() > 0)
     {
-        ps->m_pGameLayer->GetEffect()->PlayEffect_6_Fire(ps->result_double_pos[ps->F7_callbackCnt], queue_pos); // 코코가 던지는 불
-//        ps->m_pGameLayer->Bomb(ps->result_double_pos[ps->F7_callbackCnt]);
+       // ps->m_pGameLayer->GetEffect()->PlayEffect_6_Fire(ps->result_double_pos[ps->F7_callbackCnt], queue_pos, ps->F7_callbackCnt);
     }
     else
     {
@@ -749,8 +740,8 @@ void PuzzleSkill::F7_Continue(void* pointer, int queue_pos)
         }
         
         ps->m_pGameLayer->Falling(queue_pos);
-        //ps->m_pGameLayer->Falling(ps->queuePos);
     }
+    */
     
     /*
     PuzzleSkill* ps = (PuzzleSkill*)data;
@@ -1149,7 +1140,6 @@ void PuzzleSkill::W7(int num)
         CCLog("스킬 발동 : 시간을 얼리다!!");
         W7_isTimeSlowed = true;
         W7_RemainTime = 5000;
-//        m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W7Timer), 5.0f);
         
         // 이펙트 실행
         m_pGameLayer->PlayEffect(num, NULL);
@@ -1265,6 +1255,10 @@ void PuzzleSkill::M5(int num)
 std::vector<CCPoint> PuzzleSkill::GetResult()
 {
     return result_pos;
+}
+std::vector< std::vector<CCPoint> > PuzzleSkill::GetResultDouble()
+{
+    return result_double_pos;
 }
 std::vector<CCPoint> PuzzleSkill::GetResultEnd()
 {

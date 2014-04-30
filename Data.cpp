@@ -289,7 +289,7 @@ void MyInfo::AddSkill(int csi, int usi, int level, int exp)
     mySkill.push_back( new MySkill(csi, usi, level, exp) );
 }
 
-int MyInfo::GetActiveFairyId()
+int MyInfo::GetActiveFairyId() // 현재 사용중인 요정의 common id
 {
     for (int i = 0 ; i < myFairy.size() ; i++)
     {
@@ -298,7 +298,16 @@ int MyInfo::GetActiveFairyId()
     }
     return -1;
 }
-int MyInfo::GetActiveFairyLevel()
+int MyInfo::GetActiveFairyUserId() // 현재 사용중인 요정의 user id
+{
+    for (int i = 0 ; i < myFairy.size() ; i++)
+    {
+        if (myFairy[i]->IsUse())
+            return myFairy[i]->GetUserId();
+    }
+    return -1;
+}
+int MyInfo::GetActiveFairyLevel() // 현재 사용중인 요정의 레벨
 {
     for (int i = 0 ; i < myFairy.size() ; i++)
     {
@@ -307,11 +316,19 @@ int MyInfo::GetActiveFairyLevel()
     }
     return -1;
 }
-std::vector<class MyFairy*> MyInfo::GetFairyList()
+std::vector<class MyFairy*> MyInfo::GetFairyList() // 내가 산 요정 리스트를 모두 get
 {
     return myFairy;
 }
-void MyInfo::ClearFairyList()
+std::vector<class MySkill*> MyInfo::GetSkillList() // 내가 산 스킬 모두 get
+{
+    return mySkill;
+}
+std::vector<class MySkillSlot*> MyInfo::GetSlot() // 내가 산 슬롯 get
+{
+    return mySkillSlot;
+}
+void MyInfo::ClearFairyList() // 내 요정 리스트 갱신할 때 clear하기 위한 용도
 {
     for (int i = 0 ; i < myFairy.size() ; i++)
         delete myFairy[i];
@@ -324,6 +341,18 @@ MySkillSlot::MySkillSlot(int id, int csi, int usi)
     this->id = id;
     this->common_skill_id = csi;
     this->user_skill_id = usi;
+}
+int MySkillSlot::GetId()
+{
+    return id;
+}
+int MySkillSlot::GetCommonId()
+{
+    return common_skill_id;
+}
+int MySkillSlot::GetUserId()
+{
+    return user_skill_id;
 }
 MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
 {
@@ -339,6 +368,10 @@ bool MyFairy::IsUse()
 int MyFairy::GetId()
 {
     return common_fairy_id;
+}
+int MyFairy::GetUserId()
+{
+    return user_fairy_id;
 }
 int MyFairy::GetLevel()
 {
@@ -430,8 +463,17 @@ void Friend::SetPotionSprite()
         {
             potionSprite = potion;
         }
-        
-        
+    }
+}
+void Friend::ChangeMyFairyInfo()
+{
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+        {
+            friendList[i]->fairyId = myInfo->GetActiveFairyId();
+            friendList[i]->fairyLevel = myInfo->GetActiveFairyLevel();
+        }
     }
 }
 CCLabelTTF* Friend::GetPotionLabelMin()
@@ -717,7 +759,24 @@ std::string FairyInfo::MakeName(int id)
     }
     return "노네임";
 }
-std::string FairyInfo::FindAbilityName(int type)
+std::string FairyInfo::GetAbilityName(FairyInfo* f, int level) // 추가속성 문구
+{
+    int ability = FairyBuildUpInfo::GetAbility(f->nId, level);
+    char temp[30];
+    
+    switch (f->nType)
+    {
+        case 1: sprintf(temp, "연결 + %d%%", ability); break;
+        case 4: sprintf(temp, "점수 + %d%%", ability); break;
+        case 5: sprintf(temp, "시간 + %d초", ability); break;
+        case 8: sprintf(temp, "MP + %d", ability); break;
+        default: sprintf(temp, ""); break;
+    }
+    
+    std::string res = temp;
+    return res;
+}
+std::string FairyInfo::GetAbilityDesc(int type) // 특수능력
 {
     switch (type)
     {
@@ -786,7 +845,7 @@ FairyBuildUpInfo::FairyBuildUpInfo(int id, int level, int ability, int refId, in
     this->nCost_starcandy = cs;
     this->nCost_topaz = ct;
 }
-int FairyBuildUpInfo::GetAbility(int id, int level)
+int FairyBuildUpInfo::GetAbility(int id, int level) // 한 요정(id)이 어떤 레벨일 때 능력치가 얼마인가?
 {
     for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
     {

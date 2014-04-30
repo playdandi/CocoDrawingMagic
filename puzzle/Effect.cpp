@@ -465,7 +465,6 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_17(std::vector<CCPoint> pos)
 {
-    //return;
     // 땅2A : green 사이클 주변부 이펙트
     int x, y;
     for (int i = 0 ; i < pos.size() ; i++)
@@ -473,7 +472,13 @@ void Effect::PlayEffect_17(std::vector<CCPoint> pos)
         x = (int)pos[i].x;
         y = (int)pos[i].y;
         
-//
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land2.plist");
+        m_emitter->retain();
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(1.0f);
+        gameLayer->addChild(m_emitter, 2000);
+        m_emitter->setAutoRemoveOnFinish(true);
         
         //CCActionInterval* action = CCRipple3D::create(3.0f, CCSizeMake(PIECE8_WIDTH, PIECE8_HEIGHT), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH, 4, 160);
         //CCActionInterval* ripple = CCRipple3D::create(1.0f, CCSizeMake(30, 30), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH/2, 4, 160);
@@ -834,44 +839,92 @@ void Effect::Effect7_15_23_Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_6(int num)
 {
-    // F7 : 코코타임
-    
-    //if (num > 0) // (코코 바꾸기 + 코코 주위 링)
-   // {
-        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7_coco.plist");
-        m_emitter->retain();
-        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(ccp(100+100, gameLayer->vs.height+gameLayer->vo.y-500+150));
-        m_emitter->setScale(1.2f);
-        gameLayer->addChild(m_emitter, 2000);
-        m_emitter->setAutoRemoveOnFinish(true);
-    //}
-}
-void Effect::PlayEffect_6_Fire(std::vector<CCPoint> pos, int queue_pos)
-{
-    skillPos = pos;
-    queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
-    
-    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7.plist");
+    // F7 : 코코타임 (코코 주위의 링)
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7_coco.plist");
     m_emitter->retain();
     m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    m_emitter->setPosition(ccp(100+100, gameLayer->vs.height+gameLayer->vo.y-500+150));
-    m_emitter->setScale(1.0f);
+    //m_emitter->setPosition(ccp(100+100, gameLayer->vs.height+gameLayer->vo.y-500+150));
+    m_emitter->setPosition(ccp(100, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60));
+    m_emitter->setScale(1.2f);
     gameLayer->addChild(m_emitter, 2000);
+    m_emitter->setAutoRemoveOnFinish(true);
+}
+void Effect::PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt)
+{
+    // F7 : 코코타임 (덩어리에 생기는 이펙트들)
+    // 1회 : fire7_1, 2회 : fire7_2, 3회부터 : fire7_3 + (덩어리 기준 이펙트 1개 공통)
     
-    CCActionInterval* action = CCSequence::create( CCEaseIn::create(CCMoveTo::create(0.1f, gameLayer->SetTouch8Position((int)pos[0].x, (int)pos[0].y)), 0.1f),
-            CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect6Callback), this), NULL);
-    m_emitter->runAction(action);
+    queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
+    callbackCnt = 0;
+    
+    Effect6Callback(NULL, this);
 }
 void Effect::Effect6Callback(CCNode* sender, void* pointer)
 {
-    ((CCParticleSystemQuad*)sender)->setDuration(0.1f);
-    ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
-   
     Effect* pThis = (Effect*)pointer;
-    pThis->gameLayer->Bomb(pThis->queuePos, pThis->skillPos);
-    // sound
-    pThis->gameLayer->GetSound()->PlayBomb();
+    
+    // 이전 덩어리 이펙트 삭제
+    if (pThis->callbackCnt > 0)
+    {
+        ((CCParticleSystemQuad*)sender)->setDuration(0.01f);
+        ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
+    }
+    
+    if (pThis->callbackCnt < pThis->gameLayer->GetSkill()->GetResultDouble().size() &&
+        pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt].size() > 0)
+    {
+        int x, y;
+        int minx = 999, miny = 999, maxx = -1, maxy = -1;
+        for (int i = 0 ; i < pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt].size() ; i++)
+        {
+            x = pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt][i].x;
+            y = pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt][i].y;
+            minx = std::min(minx, x);
+            miny = std::min(miny, y);
+            maxx = std::max(maxx, x);
+            maxy = std::max(maxy, y);
+            
+            CCParticleSystemQuad* m_emitter;
+            if (pThis->callbackCnt == 0)
+                m_emitter = CCParticleSystemQuad::create("particles/fire7_1.plist");
+            else if (pThis->callbackCnt == 1)
+                m_emitter = CCParticleSystemQuad::create("particles/fire7_2.plist");
+            else
+                m_emitter = CCParticleSystemQuad::create("particles/fire7_3.plist");
+            m_emitter->retain();
+            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+            m_emitter->setPosition(pThis->gameLayer->SetTouch8Position(x, y));
+            m_emitter->setScale(1.5f);
+            m_emitter->setAutoRemoveOnFinish(true);
+            pThis->gameLayer->addChild(m_emitter, 2000);
+        }
+        
+        // 폭발 액션
+        pThis->gameLayer->Bomb(pThis->queuePos, pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt]);
+        pThis->gameLayer->GetSound()->PlayBomb();
+        
+        pThis->callbackCnt++;
+        
+        // 덩어리 기준 이펙트 1개
+        float xx = (float)(maxx+minx)/2.0;
+        float yy = (float)(maxy+miny)/2.0;
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7_final.plist");
+        m_emitter->retain();
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(pThis->gameLayer->SetTouch8Position(xx, yy));
+        m_emitter->setScale(1.0f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        pThis->gameLayer->addChild(m_emitter, 2000);
+        
+        CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.25f),
+                CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect6Callback), pThis), NULL);
+        m_emitter->runAction(action);
+    }
+    else
+    {
+        // 콜백 끝
+        pThis->gameLayer->GetSkill()->F7_Continue(pThis->gameLayer->GetSkill(), pThis->queuePos);
+    }
 }
 
 void Effect::PlayEffect_2(std::vector<CCPoint> pos, int queue_pos)
@@ -1096,7 +1149,7 @@ void Effect::PlayEffect_14()
         // iced-bar
         iced_bar = CCSprite::createWithSpriteFrameName("background/bar_ice.png");
         iced_bar->setAnchorPoint(ccp(0.5, 0));
-        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y));
+        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y-25));
         gameLayer->addChild(iced_bar, 500);
         /*
         // stencil (타이머의 얼음을 가려주는 것)

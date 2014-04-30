@@ -40,18 +40,10 @@ protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollViewFire;
-    CCScrollView* scrollViewWater;
-    CCScrollView* scrollViewLand;
-    CCScrollView* scrollViewMaster;
-    CCScrollView* scrollViewSlot;
+    int curState;
+    
     bool isScrolling;
-    bool isScrollingSlot;
-    CCLayer* containerFire;
-    CCLayer* containerWater;
-    CCLayer* containerLand;
-    CCLayer* containerMaster;
-    CCLayer* containerSlot;
+    bool isSlotTouched;
     bool isScrollViewTouched;
     
 private:
@@ -60,14 +52,26 @@ private:
     SpriteClass* spriteClassWater;
     SpriteClass* spriteClassLand;
     SpriteClass* spriteClassMaster;
+    SpriteClass* spriteClassSlot;
     
-    int curState;
+    CCScrollView* scrollViewFire;
+    CCScrollView* scrollViewWater;
+    CCScrollView* scrollViewLand;
+    CCScrollView* scrollViewMaster;
+    CCScrollView* scrollViewSlot;
+    
+    CCLayer* containerFire;
+    CCLayer* containerWater;
+    CCLayer* containerLand;
+    CCLayer* containerMaster;
+    CCLayer* containerSlot;
+    
     CCLayer* fire;
     CCLayer* water;
     CCLayer* land;
     CCLayer* master;
     
-    std::vector<int> type;
+    std::vector<CCLayer*> itemLayers;
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

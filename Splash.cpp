@@ -1,6 +1,5 @@
 #include "Splash.h"
 #include "pugixml/pugixml.hpp"
-#include "Fairy.h"
 
 using namespace pugi;
 

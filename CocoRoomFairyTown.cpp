@@ -67,6 +67,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
+        CCLog("cocoroomfairytown 활성");
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
@@ -75,6 +76,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
+        CCLog("cocoroomfairytown 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
@@ -111,7 +113,7 @@ void CocoRoomFairyTown::MakeScroll()
     
     // container
     scrollContainer = CCLayer::create();
-    scrollContainer->setContentSize(CCSizeMake(870, ((int)(numOfList-1)/3 + 1)*(290+5)));
+    scrollContainer->setContentSize(CCSizeMake(870, ((int)((numOfList+10)-1)/3 + 1)*(290+5)));
    
     for (int i = 0 ; i < numOfList+10 ; i++)
     {
@@ -149,6 +151,7 @@ void CocoRoomFairyTown::MakeScroll()
         CCLayer* picture = Fairy::GetFairy(fairyInfo[i]->GetId());
         switch (fairyInfo[i]->GetId())
         {
+            case 0: picture->setScale(1.0f); break;
             case 1: picture->setScale(0.7f); break;
             case 2: picture->setScale(0.8f); break;
         }
@@ -180,6 +183,7 @@ void CocoRoomFairyTown::MakeScroll()
     scrollView->setDelegate(this);
     scrollView->setContentOffset(ccp(0, (904-40)-scrollContainer->getContentSize().height ));
     this->addChild(scrollView, 3);
+    
 }
 
 
@@ -272,9 +276,10 @@ void CocoRoomFairyTown::EndScene()
     delete spriteClass;
     
     CCLog("%d", scrollContainer->retainCount());
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->release();
-    scrollView->removeFromParentAndCleanup(true);
+    scrollView->removeFromParent();
     CCLog("%d", pBlack->retainCount());
     CCLog("%d", scrollView->retainCount());
     

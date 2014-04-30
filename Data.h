@@ -84,9 +84,12 @@ public:
     void AddSkill(int csi, int usi, int level, int exp);
     
     int GetActiveFairyId();
+    int GetActiveFairyUserId();
     int GetActiveFairyLevel();
     
     std::vector<class MyFairy*> GetFairyList();
+    std::vector<class MySkill*> GetSkillList();
+    std::vector<class MySkillSlot*> GetSlot();
     void ClearFairyList();
 
 private:
@@ -134,6 +137,9 @@ class MySkillSlot
 {
 public:
     MySkillSlot(int id, int csi, int usi);
+    int GetId();
+    int GetCommonId();
+    int GetUserId();
 private:
     int id;
     int common_skill_id;
@@ -145,6 +151,7 @@ public:
     MyFairy(int cfi, int ufi, int level, int isUse);
     bool IsUse();
     int GetId();
+    int GetUserId();
     int GetLevel();
 private:
     int common_fairy_id;
@@ -184,6 +191,9 @@ public:
     CCSprite* GetPotionSprite();
     CCLabelTTF* GetPotionLabelMin();
     CCLabelTTF* GetPotionLabelSec();
+
+    static void ChangeMyFairyInfo();
+    
     int GetWeeklyHighScore();
     int GetHighScore();
     int GetScoreUpdateTime();
@@ -328,7 +338,8 @@ class FairyInfo
 public:
     FairyInfo(int id, int type, int grade, int cs, int ct, int pid);
     std::string MakeName(int id);
-    static std::string FindAbilityName(int type);
+    static std::string GetAbilityName(FairyInfo* f, int level);
+    static std::string GetAbilityDesc(int type);
     std::string GetDescription();
     int GetId();
     int GetGrade();
@@ -351,7 +362,7 @@ class FairyBuildUpInfo
 {
 public:
     FairyBuildUpInfo(int id, int level, int ability, int refId, int cs, int ct);
-    int GetAbility(int id, int level);
+    static int GetAbility(int id, int level);
     static int GetMaxLevel(int id);
     static int GetCostTopaz(int id, int level);
     static int GetCostStarCandy(int id, int level);

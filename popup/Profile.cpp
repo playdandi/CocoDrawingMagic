@@ -273,7 +273,7 @@ void Profile::InitFairy()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 7) );
 
     if (fid == 0) sprintf(fname, "요정 없음");
-    else sprintf(fname, "%s", FairyInfo::FindAbilityName(f->GetType()).c_str());
+    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 7) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 7) );
 }

@@ -75,7 +75,7 @@ public:
     void M5(int num);
     
     std::vector<CCPoint> GetResult();
-    //std::vector<CCPoint> GetResultDouble();
+    std::vector< std::vector<CCPoint> > GetResultDouble();
     std::vector<CCPoint> GetResultEnd();
     void ResultClear();
     

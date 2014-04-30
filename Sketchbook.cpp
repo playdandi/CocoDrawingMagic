@@ -23,6 +23,7 @@ void Sketchbook::onExit()
 {
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void Sketchbook::keyBackClicked()
@@ -61,20 +62,30 @@ bool Sketchbook::init()
     // scrollview init.
     scrollViewFire = CCScrollView::create();
     scrollViewFire->retain();
+    fire->addChild(scrollViewFire, 5);
+    
     scrollViewWater = CCScrollView::create();
     scrollViewWater->retain();
+    water->addChild(scrollViewWater, 5);
+    
     scrollViewLand = CCScrollView::create();
     scrollViewLand->retain();
+    land->addChild(scrollViewLand, 5);
+    
     scrollViewMaster = CCScrollView::create();
     scrollViewMaster->retain();
+    master->addChild(scrollViewMaster, 5);
+    
     scrollViewSlot = CCScrollView::create();
     scrollViewSlot->retain();
+    this->addChild(scrollViewSlot, 5);
     
     spriteClass = new SpriteClass();
     spriteClassFire = new SpriteClass();
     spriteClassWater = new SpriteClass();
     spriteClassLand = new SpriteClass();
     spriteClassMaster = new SpriteClass();
+    spriteClassSlot = new SpriteClass();
     
     InitSprites();
     MakeScrollSlot();
@@ -154,15 +165,23 @@ void Sketchbook::MakeScroll(int state)
     if (curState == state)
         return;
     
-    // 초기화
+    // sprites init
+    spriteClassFire->RemoveAllObjects();
+    spriteClassWater->RemoveAllObjects();
+    spriteClassLand->RemoveAllObjects();
+    spriteClassMaster->RemoveAllObjects();
+    
+    // scrollview init
+    scrollViewFire->removeAllChildren();
+    scrollViewWater->removeAllChildren();
+    scrollViewLand->removeAllChildren();
+    scrollViewMaster->removeAllChildren();
+    
+    // layer init
     fire->removeAllChildren();
-    spriteClassFire->spriteObj.clear();
     water->removeAllChildren();
-    spriteClassWater->spriteObj.clear();
     land->removeAllChildren();
-    spriteClassLand->spriteObj.clear();
     master->removeAllChildren();
-    spriteClassMaster->spriteObj.clear();
     
     if (state == 0)
         MakeScrollFire();
@@ -178,18 +197,10 @@ void Sketchbook::MakeScroll(int state)
 
 void Sketchbook::MakeScrollFire()
 {
-    int numOfList = 8;
-    type.push_back(0);
-    type.push_back(1);
-    type.push_back(2);
-    type.push_back(3);
-    type.push_back(3);
-    type.push_back(2);
-    type.push_back(1);
-    type.push_back(0);
+    int numOfList = myInfo->GetSkillList().size();
     
     containerFire = CCLayer::create();
-    containerFire->setPosition(ccp(0, 0));
+    containerFire->setContentSize(CCSizeMake(872, numOfList*196));
     
     char name[50], name2[50];
     for (int i = 0 ; i < numOfList; i++)
@@ -198,25 +209,23 @@ void Sketchbook::MakeScrollFire()
         itemLayer->setContentSize(CCSizeMake(872, 196));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*196));
         containerFire->addChild(itemLayer, 5);
+        itemLayers.push_back(itemLayer);
+        
+        //myInfo->
+        // 스킬 목록 받아서, '불' 속성만 표시하자!!
         
         sprintf(name, "background/bg_board_brown.png%d", i);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name,
-                        ccp(0, 0), ccp(0, 0), CCSize(872, 196), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 196), "", "Layer", itemLayer, 5) );
         sprintf(name, "icon/icon_skill_division_red.png%d", i);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(25, 122), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 122), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         sprintf(name, "background/bg_skill_brown.png%d", i);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(25, 41), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 41), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         sprintf(name2, "skill/skill_orange_%d.png", i+1);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2,
-                        ccp(0, 0), ccp(25+8, 41+8), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(25+8, 41+8), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         sprintf(name, "icon/icon_auto_effect.png%d", i);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(114, 153), CCSize(0, 0), "", "Layer", itemLayer, 6) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(114, 153), CCSize(0, 0), "", "Layer", itemLayer, 6) );
         sprintf(name, "background/bg_gameready_name.png%d", i);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name,
-                        ccp(0, 0), ccp(169, 106), CCSize(442, 69), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(169, 106), CCSize(442, 69), "", "Layer", itemLayer, 5) );
         
         spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel("따뜻한 불꽃그림", fontList[0], 48, ccp(0.5, 0.5), spriteClassFire->FindParentCenterPos(name), ccc3(255,255,255), name, "1", NULL, 5) );
         spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel("주변 빨간구슬을 터뜨리면 점수상승", fontList[0], 30, ccp(0, 0), ccp(169, 96-26), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
@@ -226,7 +235,7 @@ void Sketchbook::MakeScrollFire()
         sprintf(name, "background/bg_progress_bar.png%d", i);
         spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name,
                         ccp(0, 0), ccp(130, 30), CCSize(412, 31), "", "Layer", itemLayer, 5) );
-        
+        /*
         if (type[i] == 0)
         {
             sprintf(name, "button/btn_red_mini.png%d", i);
@@ -272,25 +281,20 @@ void Sketchbook::MakeScrollFire()
                             ccp(25, 36), CCSize(0, 0), name, "0", NULL, 5) );
             spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel("30", fontList[0], 36, ccp(0, 0), ccp(115, 40), ccc3(78,47,8), name, "0", NULL, 5) );
         }
+         */
     }
     
     for (int i = 0 ; i < spriteClassFire->spriteObj.size() ; i++)
         spriteClassFire->AddChild(i);
     
-    // scrollview 내용 전체크기
-    containerFire->setContentSize(CCSizeMake(872, numOfList*196));
-    // scrollView 생성
-    //scrollViewFire = CCScrollView::create();
-    scrollViewFire->retain();
     scrollViewFire->setDirection(kCCScrollViewDirectionVertical);
-    scrollViewFire->setViewSize(CCSizeMake(929, 904-50)); // (내용 1개 크기, 노란보드 세로크기)
-    scrollViewFire->setContentSize(containerFire->getContentSize());
+    scrollViewFire->setViewSize(CCSizeMake(929, 904-50));
     scrollViewFire->setAnchorPoint(ccp(0, 0));
     scrollViewFire->setPosition(ccp(77, 492+30));
     scrollViewFire->setContainer(containerFire);
+    scrollViewFire->setContentSize(containerFire->getContentSize());
     scrollViewFire->setDelegate(this);
     scrollViewFire->setContentOffset(ccp(0, 904-50-(numOfList*196)), false);
-    fire->addChild(scrollViewFire, 5);
 }
 
 void Sketchbook::MakeScrollWater()
@@ -308,6 +312,7 @@ void Sketchbook::MakeScrollMaster()
 
 void Sketchbook::MakeScrollSlot()
 {
+    /*
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
     scrollContainer->setPosition(ccp(91, 242));
@@ -341,6 +346,39 @@ void Sketchbook::MakeScrollSlot()
     //scrollView->setContentOffset(ccp(-(numOfSlots-5)*146, 0), false);
     //scrollView->setContentOffset(ccp((numOfSlots)*146, 0), false);
     this->addChild(scrollViewSlot, 50);
+    */
+    
+    
+    int numOfList = myInfo->GetSlot().size();
+    CCLog("# slot : %d", numOfList);
+    
+    // container 초기화
+    containerSlot = CCLayer::create();
+    containerSlot->setContentSize(CCSizeMake(numOfList*(146+5), 146));
+    
+    char fname[50];
+    int scid;
+    for (int i = 0 ; i < numOfList ; i++)
+    {
+        sprintf(fname, "background/bg_skill_yellow.png%d", i);
+        spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
+        
+        scid = myInfo->GetSlot()[i]->GetCommonId();
+        CCLog("slot common id = %d", scid);
+        if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
+        {
+            spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, "", ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4) );
+        }
+    }
+    
+    // scrollView 생성
+    scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
+    scrollViewSlot->setViewSize(CCSizeMake(782-40, 177-20));
+    scrollViewSlot->setContainer(containerSlot);
+    scrollViewSlot->setContentSize(containerSlot->getContentSize());
+    scrollViewSlot->setAnchorPoint(ccp(0, 0));
+    scrollViewSlot->setPosition(ccp(77+20, 228+10));
+    scrollViewSlot->setDelegate(this);
 }
 
 
@@ -349,10 +387,15 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (isTouched)
         return false;
     isTouched = true;
+    isSlotTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
+    
+    // 슬롯 터치 시
+    if (scrollViewSlot->boundingBox().containsPoint(point))
+        isSlotTouched = true;
     
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -397,10 +440,10 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
         {
-            if (curState == 0 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
                 ; // 슬롯 구매
-            else if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-                ; // 요정의 마을
+            //else if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            //    ; // 요정의 마을
         }
     }
     
@@ -410,22 +453,25 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void Sketchbook::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
+    CCPoint point = pTouch->getLocation();
     isTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;
+    
+    if (scrollViewSlot->boundingBox().containsPoint(point) && !isScrolling && isSlotTouched)
+    {
+        Common::ShowNextScene(this, "Sketchbook", "MagicList", false);
+    }
 }
 
 
 void Sketchbook::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    //CCLog("Sketchbook - scrolling~");
 }
 
 void Sketchbook::scrollViewDidZoom(CCScrollView* view)

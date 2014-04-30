@@ -58,6 +58,9 @@ private:
     CCScrollView* scrollView;
     
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassCoco;
+    SpriteClass* spriteClassFairy;
+    SpriteClass* spriteClassSkill;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */
