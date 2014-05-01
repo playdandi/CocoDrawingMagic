@@ -386,6 +386,17 @@ MySkill::MySkill(int csi, int usi, int level, int exp)
     this->level = level;
     this->exp = exp;
 }
+MySkill* MySkill::GetObj(int scid)
+{
+    MySkill* ms;
+    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+    {
+        ms = myInfo->GetSkillList()[i];
+        if (ms->GetCommonId() == scid)
+            return ms;
+    }
+    return NULL;
+}
 int MySkill::GetCommonId()
 {
     return common_skill_id;
@@ -948,6 +959,22 @@ int SkillInfo::GetMaxLevel()
 {
     return nMaxLevel;
 }
+int SkillInfo::GetRequiredSkillId()
+{
+    return nRequiredSkillId;
+}
+int SkillInfo::GetRequiredSkillLv()
+{
+    return nRequiredSkillLv;
+}
+int SkillInfo::GetRequiredStaffLv()
+{
+    return nRequiredStaffLv;
+}
+int SkillInfo::GetRequiredMP()
+{
+    return nRequiredMP;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs)
@@ -963,16 +990,31 @@ SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int ma
 }
 int SkillBuildUpInfo::GetMaxExp(int sid, int level)
 {
+    SkillBuildUpInfo* sbi;
     for (int i = 0 ; i < skillBuildUpInfo.size() ; i++)
     {
-        SkillBuildUpInfo* sbi = skillBuildUpInfo[i];
+        sbi = skillBuildUpInfo[i];
         if (sbi->nId == sid && sbi->nSkillLv == level)
             return sbi->nSkillMaxExp;
     }
     return -1;
 }
+bool SkillBuildUpInfo::IsMastered(int sid, int level)
+{
+    SkillBuildUpInfo* sbi;
+    int maxLevel = -1;
+    for (int i = 0 ; i < skillBuildUpInfo.size() ; i++)
+    {
+        sbi = skillBuildUpInfo[i];
+        if (sbi->nId == sid)
+            maxLevel = std::max(maxLevel, sbi->nSkillLv);
+    }
+    if (maxLevel == level)
+        return true;
+    return false;
+}
 
-///////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SkillPropertyInfo::SkillPropertyInfo(int id, int cost)
 {

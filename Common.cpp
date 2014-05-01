@@ -17,6 +17,7 @@
 #include "RequestPotion.h"
 #include "Setting.h"
 #include "Sketchbook.h"
+#include "popup/SketchDetail.h"
 #include "popup/DegreeInfo.h"
 #include "popup/Profile.h"
 #include "popup/FairyOneInfo.h"
@@ -285,9 +286,10 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
+    else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc);
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
-    
+
     
     // go
     if (from == "Splash")
@@ -653,6 +655,12 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((Sketchbook*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Sketchbook*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Sketchbook*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "SketchDetail") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((SketchDetail*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((SketchDetail*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((SketchDetail*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
     else if (obj->parentType == "FairyOneInfo") // 부모가 어떤 scene
     {

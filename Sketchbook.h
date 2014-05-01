@@ -37,6 +37,8 @@ public:
     
     void SetMenuChange(int state);
     
+    SkillInfo* GetNextSkillInfo(int state);
+    
     void EndScene();
     void EndSceneCallback();
     

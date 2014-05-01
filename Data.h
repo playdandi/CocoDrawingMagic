@@ -163,6 +163,7 @@ class MySkill
 {
 public:
     MySkill(int csi, int usi, int level, int exp);
+    static MySkill* GetObj(int scid);
     int GetCommonId();
     int GetUserId();
     int GetLevel();
@@ -388,6 +389,10 @@ public:
     std::string GetName();
     static SkillInfo* GetSkillInfo(int sid);
     int GetMaxLevel();
+    int GetRequiredSkillId();
+    int GetRequiredSkillLv();
+    int GetRequiredStaffLv();
+    int GetRequiredMP();
     bool IsActive();
 private:
     int nId;
@@ -405,6 +410,7 @@ class SkillBuildUpInfo
 {
 public:
     SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs);
+    static bool IsMastered(int sid, int level);
     static int GetMaxExp(int sid, int level);
 private:
     int nId;
