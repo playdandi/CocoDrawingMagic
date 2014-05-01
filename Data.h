@@ -412,6 +412,7 @@ public:
     SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs);
     static bool IsMastered(int sid, int level);
     static int GetMaxExp(int sid, int level);
+    static int GetCost(int sid, int level);
 private:
     int nId;
     std::string sName;

@@ -310,6 +310,7 @@ void Sketchbook::MakeScrollFire()
     containerFire->setContentSize(CCSizeMake(929, numOfList*206));
     
     SkillInfo* sInfo;
+    int id;
     
     char name[50], name2[50];
     for (int i = 0 ; i < numOfList+1; i++)
@@ -328,8 +329,13 @@ void Sketchbook::MakeScrollFire()
         containerFire->addChild(itemLayer, 5);
         spriteClassFire->layers.push_back(itemLayer);
         
+        
+        if (i == numOfList)
+            id = sInfo->GetId();
+        else
+            id = ms[i]->GetCommonId();
         sprintf(name, "background/bg_board_brown.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5) );
+        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
         
         // 스킬 배경
         sprintf(name, "icon/icon_skill_division_red.png%d", i+3);
@@ -602,9 +608,17 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     CCPoint p;
     for (int i = 0 ; i < spriteClassFire->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name.substr(0, 29) == "background/bg_board_brown.png")
+        if (spriteClassFire->spriteObj[i]->name.substr(0, 29) == "background/bg_board_brown.png")
         {
-            
+            // 스케치북에서 버튼 외의 영역을 눌렀을 때 스킬상세 팝업창이 뜨게 하자.
+            p = spriteClassFire->spriteObj[i]->sprite9->convertToNodeSpace(point);
+            CCSize size = spriteClassFire->spriteObj[i]->sprite9->getContentSize();
+            if (isScrollViewTouched && !isScrolling &&
+                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= 600 && (int)p.y <= size.height)
+            {
+                int id = spriteClassFire->spriteObj[i]->sprite9->getTag();
+                Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
+            }
         }
         else if (spriteClassFire->spriteObj[i]->name.substr(0, 23) == "button/btn_red_mini.png")
         {
@@ -617,7 +631,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 int id = spriteClassFire->spriteObj[i]->sprite->getTag();
                 
                 // 불 스킬 중 '연습' 누를 때
-                if (id < 0)
+                if (id < 0) // 이때 id는 user_id
                 {
                     char temp[255];
                     std::string url = "http://14.63.225.203/cogma/game/practice_skill.php?";
@@ -635,7 +649,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     req->release();
                 }
                 // 연습량이 다 차서 레벨업을 해야 하는 경우 (강화)
-                else
+                else // 이때 id는 common_id
                 {
                     Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
                 }

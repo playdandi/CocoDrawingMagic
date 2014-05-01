@@ -999,6 +999,17 @@ int SkillBuildUpInfo::GetMaxExp(int sid, int level)
     }
     return -1;
 }
+int SkillBuildUpInfo::GetCost(int sid, int level)
+{
+    SkillBuildUpInfo* sbi;
+    for (int i = 0 ; i < skillBuildUpInfo.size() ; i++)
+    {
+        sbi = skillBuildUpInfo[i];
+        if (sbi->nId == sid && sbi->nSkillLv == level)
+            return sbi->nCost_starcandy;
+    }
+    return -1;
+}
 bool SkillBuildUpInfo::IsMastered(int sid, int level)
 {
     SkillBuildUpInfo* sbi;

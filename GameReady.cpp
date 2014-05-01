@@ -299,10 +299,8 @@ void GameReady::InitSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("지팡이 24Lv", fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1190), ccc3(121,71,0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("지팡이 24Lv", fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1193), ccc3(255,219,53), "", "GameReady", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력없음", fontList[0], 30, ccp(0.5, 0.5), ccp(550, 1190), ccc3(121,71,0), "", "GameReady", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력없음", fontList[0], 30, ccp(0.5, 0.5), ccp(550, 1193), ccc3(255,219,53), "", "GameReady", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("따뜻한 불꽃그림", fontList[0], 30, ccp(0.5, 0.5), ccp(860, 1190), ccc3(121,71,0), "", "GameReady", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("따뜻한 불꽃그림", fontList[0], 30, ccp(0.5, 0.5), ccp(860, 1193), ccc3(255,255,255), "", "GameReady", this, 5) );
+    
+    // 아이템별 설명
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("행복하지 않을 이유가 하나도 없습니다.", fontList[0], 36, ccp(0, 0), ccp(97, 736), ccc3(0,0,0), CCSize(909, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "GameReady", this, 5) );
 }
 

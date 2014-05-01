@@ -35,10 +35,7 @@ protected:
     
 private:
     CCSprite* pBlack;
-    CCLayer* scoreLayer;
-    CCLayer* profileLayer;
-    CCLayer* skillLayer;
-    CCLayer* fairyLayer;
+    CCLayer* descLayer;
     SpriteClass* spriteClass;
 };
 
