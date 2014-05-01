@@ -154,6 +154,7 @@ public:
     void RemoveAllObjects();
     
     std::vector<SpriteObject*> spriteObj;
+    std::vector<CCLayer*> layers;
 };
 
 

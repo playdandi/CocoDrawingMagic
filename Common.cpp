@@ -265,7 +265,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     if (to == "Ranking") nextScene = Ranking::scene();
     else if (to == "GameReady") nextScene = GameReady::scene();
     else if (to == "Message") nextScene = Message::scene();
-    else if (to == "MagicList") nextScene = MagicList::scene();
+    else if (to == "MagicList") nextScene = MagicList::scene(etc);
     else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc);
     else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene();
     else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene();
@@ -277,15 +277,16 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "RequestTopaz") nextScene = RequestTopaz::scene();
     else if (to == "RequestPotion") nextScene = RequestPotion::scene();
     else if (to == "Setting") nextScene = Setting::scene();
-    else if (to == "Sketchbook") nextScene = Sketchbook::scene(etc);
-    
+    else if (to == "Sketchbook")
+    {
+        if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0);
+        else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1);
+    }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
-    
-    //else if (to == "ParticleTest") nextScene = ParticleTest::scene();
     
     
     // go
@@ -310,17 +311,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((Ranking*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
-    else if (from == "GameReady")
-    {
-        /*if (isReplaced)
-        {
-            CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
-            CCDirector::sharedDirector()->replaceScene(transition);
-            ((GameReady*)obj)->EndScene();
-        }
-        else*/
-            ((GameReady*)obj)->addChild(nextScene, 200, 200);
-    }
+    else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
@@ -339,6 +330,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((Puzzle*)obj)->EndScene();
         }
     }
+    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
@@ -582,10 +574,6 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((Profile*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Profile*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Profile*)obj->parent)->addChild(obj->label, obj->zOrder);
-        
-        //if (obj->type == 0) CCLog("added (0) : %d", obj->sprite->retainCount());
-        //if (obj->type == 1) CCLog("added (1) : %d", obj->sprite9->retainCount());
-        //if (obj->type == 2) CCLog("added (2) : %d", obj->label->retainCount());
     }
     else if (obj->parentType == "Message") // 부모가 어떤 scene
     {
@@ -779,6 +767,13 @@ void SpriteClass::RemoveAllObjects()
     
     // clear vector
     spriteObj.clear();
+    
+    // clear layers
+    for (int i = 0 ; i < layers.size() ; i++)
+    {
+        layers[i]->removeAllChildren();
+    }
+    layers.clear();
 }
 
 

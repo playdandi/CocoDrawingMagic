@@ -12,7 +12,7 @@ class Sketchbook : public CCLayer,
                    public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int tab);
+    static CCScene* scene(int tab, int fromWhere);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -25,6 +25,8 @@ public:
     
     CREATE_FUNC(Sketchbook);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void MakeScroll(int state);
     void MakeScrollFire();
@@ -33,8 +35,13 @@ public:
     void MakeScrollMaster();
     void MakeScrollSlot();
     
+    void SetMenuChange(int state);
+    
     void EndScene();
     void EndSceneCallback();
+    
+    void XmlParsePracticeSkill(char* data, int size);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
     
 protected:
     CCSize winSize;
@@ -47,6 +54,8 @@ protected:
     bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
+    
     SpriteClass* spriteClass;
     SpriteClass* spriteClassFire;
     SpriteClass* spriteClassWater;
@@ -70,8 +79,6 @@ private:
     CCLayer* water;
     CCLayer* land;
     CCLayer* master;
-    
-    std::vector<CCLayer*> itemLayers;
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

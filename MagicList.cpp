@@ -1,7 +1,11 @@
 #include "MagicList.h"
 
-CCScene* MagicList::scene()
+static int from;
+
+CCScene* MagicList::scene(int fromWhere)
 {
+    from = fromWhere;
+    
     CCScene* pScene = CCScene::create();
     MagicList* pLayer = MagicList::create();
     pScene->addChild(pLayer);
@@ -21,6 +25,7 @@ void MagicList::onExit()
     //CCLog("MagicList :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void MagicList::keyBackClicked()
@@ -40,7 +45,12 @@ bool MagicList::init()
     
     // notification
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    if (from == 0)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (from == 1)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (from == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     InitSprites();
     
@@ -141,7 +151,13 @@ void MagicList::EndScene()
     sound->playBoardMove(); // 이 scene만 사운드가 다르다.
     
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    if (from == 0)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (from == 1)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (from == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

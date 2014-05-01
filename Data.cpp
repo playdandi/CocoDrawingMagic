@@ -354,6 +354,7 @@ int MySkillSlot::GetUserId()
 {
     return user_skill_id;
 }
+
 MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
 {
     this->common_fairy_id = cfi;
@@ -377,12 +378,29 @@ int MyFairy::GetLevel()
 {
     return level;
 }
+
 MySkill::MySkill(int csi, int usi, int level, int exp)
 {
     this->common_skill_id = csi;
     this->user_skill_id = usi;
     this->level = level;
     this->exp = exp;
+}
+int MySkill::GetCommonId()
+{
+    return common_skill_id;
+}
+int MySkill::GetUserId()
+{
+    return user_skill_id;
+}
+int MySkill::GetLevel()
+{
+    return level;
+}
+int MySkill::GetExp()
+{
+    return exp;
 }
 
 
@@ -592,6 +610,10 @@ bool compare2(MagicStaffBuildUpInfo* m1, MagicStaffBuildUpInfo* m2)
 {
     return m1->GetLevel() < m2->GetLevel();
 }
+bool compare3(MySkill* ms1, MySkill* ms2)
+{
+    return ms1->GetCommonId() < ms2->GetCommonId();
+}
 
 void DataProcess::SortFriendListByScore()
 {
@@ -600,6 +622,10 @@ void DataProcess::SortFriendListByScore()
 void DataProcess::SortMagicStaffBuildUpInfo()
 {
     std::sort(magicStaffBuildupInfo.begin(), magicStaffBuildupInfo.end(), compare2);
+}
+void DataProcess::SortMySkillByCommonId(std::vector<MySkill*> mySkill)
+{
+    std::sort(mySkill.begin(), mySkill.end(), compare3);
 }
 std::string DataProcess::FindSkillNameById(int skillId)
 {
@@ -885,7 +911,7 @@ int FairyBuildUpInfo::GetMaxLevel(int id)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SkillInfo::SkillInfo(int id, std::string name, int type, int maxLevel, int mp, int staffLv, int skillId, int skillLv)
+SkillInfo::SkillInfo(int id, std::string name, int type, int maxLevel, int mp, int staffLv, int skillId, int skillLv, int isActive)
 {
     this->nId = id;
     this->sName = name;
@@ -895,6 +921,16 @@ SkillInfo::SkillInfo(int id, std::string name, int type, int maxLevel, int mp, i
     this->nRequiredStaffLv = staffLv;
     this->nRequiredSkillId = skillId;
     this->nRequiredSkillLv = skillLv;
+    this->bIsActive = (isActive == 1);
+}
+SkillInfo* SkillInfo::GetSkillInfo(int sid)
+{
+    for (int i = 0 ; i < skillInfo.size() ; i++)
+    {
+        if (skillInfo[i]->nId == sid)
+            return skillInfo[i];
+    }
+    return NULL;
 }
 int SkillInfo::GetId()
 {
@@ -903,6 +939,14 @@ int SkillInfo::GetId()
 std::string SkillInfo::GetName()
 {
     return sName;
+}
+bool SkillInfo::IsActive()
+{
+    return bIsActive;
+}
+int SkillInfo::GetMaxLevel()
+{
+    return nMaxLevel;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -917,6 +961,18 @@ SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int ma
     this->nProbability = prob;
     this->nCost_starcandy = cs;
 }
+int SkillBuildUpInfo::GetMaxExp(int sid, int level)
+{
+    for (int i = 0 ; i < skillBuildUpInfo.size() ; i++)
+    {
+        SkillBuildUpInfo* sbi = skillBuildUpInfo[i];
+        if (sbi->nId == sid && sbi->nSkillLv == level)
+            return sbi->nSkillMaxExp;
+    }
+    return -1;
+}
+
+///////////
 
 SkillPropertyInfo::SkillPropertyInfo(int id, int cost)
 {

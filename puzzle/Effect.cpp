@@ -277,6 +277,15 @@ void Effect::PlayEffect_8(std::vector<CCPoint> pos)
         x = (int)pos[i].x;
         y = (int)pos[i].y;
         
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/water1.plist");
+        m_emitter->retain();
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(1.0f);
+        gameLayer->addChild(m_emitter, 2000);
+        m_emitter->setAutoRemoveOnFinish(true);
+        
+        /*
         CCSprite* moon = CCSprite::createWithSpriteFrameName("pieces/moon_1.png");
         moon->setAnchorPoint(ccp(0.5, 0.5));
         moon->setPosition(gameLayer->SetTouch8Position(x, y));
@@ -300,6 +309,7 @@ void Effect::PlayEffect_8(std::vector<CCPoint> pos)
         
         clip->runAction(action);
         layer->runAction(moveLayerAction);
+         */
     }
 }
 
@@ -454,11 +464,7 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
         
         ((CCParticleSystem*)sender)->setDuration(0.1);
         ((CCParticleSystem*)sender)->setAutoRemoveOnFinish(true);
-        
-        //sender->removeAllChildrenWithCleanup(true);
-        //sender->removeFromParentAndCleanup(true);
-        
-        //pThis->gameLayer->Falling(pThis->queue_pos_now);
+
         pThis->gameLayer->Falling(pThis->queuePos);
     }
 }
@@ -476,22 +482,9 @@ void Effect::PlayEffect_17(std::vector<CCPoint> pos)
         m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
-        m_emitter->setScale(1.0f);
+        //m_emitter->setScale(1.0f);
         gameLayer->addChild(m_emitter, 2000);
         m_emitter->setAutoRemoveOnFinish(true);
-        
-        //CCActionInterval* action = CCRipple3D::create(3.0f, CCSizeMake(PIECE8_WIDTH, PIECE8_HEIGHT), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH, 4, 160);
-        //CCActionInterval* ripple = CCRipple3D::create(1.0f, CCSizeMake(30, 30), gameLayer->SetTouch8Position(x, y), PIECE8_WIDTH/2, 4, 160);
-        //CCActionInterval* wave = CCWaves::create(0.5f, CCSizeMake(5, 5), 2, 10, true, true);
-        //CCFiniteTimeAction* action = CCSequence::create(ripple,
-        //        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), NULL),
-        //        NULL);
-        
-        //CCLog("RIPPLE!");
-        //gameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
-        
-        //gameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(wave);
-        
     }
 }
 
@@ -842,9 +835,7 @@ void Effect::PlayEffect_6(int num)
     // F7 : 코코타임 (코코 주위의 링)
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7_coco.plist");
     m_emitter->retain();
-    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    //m_emitter->setPosition(ccp(100+100, gameLayer->vs.height+gameLayer->vo.y-500+150));
-    m_emitter->setPosition(ccp(100, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60));
+    m_emitter->setPosition(ccp(200, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+150));
     m_emitter->setScale(1.2f);
     gameLayer->addChild(m_emitter, 2000);
     m_emitter->setAutoRemoveOnFinish(true);

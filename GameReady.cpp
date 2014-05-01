@@ -145,7 +145,9 @@ void GameReady::Notification(CCObject* obj)
     }
     else if (param->intValue() == 5)
     {
+        CCLog("게임레디 : 스킬 바꾸자!");
         // 스킬 정보가 바뀐 경우 (게임준비->스케치북->게임준비 돌아올 때)
+        InitSkill();
     }
 }
 
@@ -314,7 +316,6 @@ void GameReady::InitFairy()
         pic->removeAllChildren();
     fairyLayer->removeAllChildren();
     
-
     fairyLayer->setAnchorPoint(ccp(0, 0));
     fairyLayer->setPosition(ccp(408, 1143));
     
@@ -390,7 +391,6 @@ void GameReady::InitSkill()
     spriteClassSkill->RemoveAllObjects();
     skillLayer->removeAllChildren();
     
-    
     skillLayer->setAnchorPoint(ccp(0, 0));
     skillLayer->setPosition(ccp(725, 1143));
     
@@ -403,10 +403,10 @@ void GameReady::InitSkill()
     
     skillLayer->setContentSize(CCSizeMake(263, 236));
     
-    // 스킬 이름 (+그 배경)
+    // 스킬 배경=
     spriteClassSkill->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2", ccp(0, 0), ccp(19, 22), CCSize(228, 53), "", "Layer", skillLayer, 5) );
     CCPoint pos = spriteClassSkill->FindParentCenterPos("background/bg_gameready_name.png2");
-    if (sid == 0) // 배운 스킬이 없는 경우
+    if (sid == 0) // 배운 스킬이 없는 경우 '스킬 없음' 표시
     {
         spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel("스킬 없음", fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
     }

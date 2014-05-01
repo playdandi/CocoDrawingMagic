@@ -345,7 +345,7 @@ void Splash::XMLParseGameData()
     int grade, pid;
     int ability, refId, ability2;
     std::string skillName;
-    int maxLevel, mp, staffLv, skillId, skillLv;
+    int maxLevel, mp, staffLv, skillId, skillLv, isActive;
     int maxExp, prob;
     xml_named_node_iterator it;
     
@@ -463,7 +463,7 @@ void Splash::XMLParseGameData()
     }
     
     // skill info
-    its = nodeResult.child("skill_define").children("Data");
+    its = nodeResult.child("skill_define_client").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
     {
         for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -477,8 +477,9 @@ void Splash::XMLParseGameData()
             else if (name == "nRequireStaffLevel") staffLv = ait->as_int();
             else if (name == "nRequireSkillID") skillId = ait->as_int();
             else if (name == "nRequireSkillLevel") skillLv = ait->as_int();
+            else if (name == "bIsActive") isActive = ait->as_int();
         }
-        skillInfo.push_back( new SkillInfo(id, skillName, type, maxLevel, mp, staffLv, skillId, skillLv) );
+        skillInfo.push_back( new SkillInfo(id, skillName, type, maxLevel, mp, staffLv, skillId, skillLv, isActive) );
     }
     
     // skill buildup info
@@ -724,6 +725,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
                 myInfo->SetPracticeSkill(csi, level);
             }
         }
+        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
         
         
         // 친구 리스트 정보를 받는다.
@@ -747,79 +749,6 @@ void Splash::XmlParseMyInfo(char *data, int size)
         // failed msg
         CCLog("failed code = %d", code);
     }
-}
-
-void Splash::XmlParsePrice(char* data, int size)
-{
-    /*
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        int id, count, price, bonus;
-        
-        // topaz 가격 정보를 받는다.
-        xml_object_range<xml_named_node_iterator> topaz = nodeResult.child("price-topaz").children("topaz");
-        for (xml_named_node_iterator it = topaz.begin() ; it != topaz.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                std::string name = ait->name();
-                if (name == "id") id = ait->as_int();
-                else if (name == "count") count = ait->as_int();
-                else if (name == "price") price = ait->as_int();
-                else if (name == "bonus-percentage") bonus = ait->as_int();
-            }
-            priceTopaz.push_back( new PriceTopaz(id, count, price, bonus) );
-        }
-        // starCandy 가격 정보를 받는다.
-        xml_object_range<xml_named_node_iterator> sc = nodeResult.child("price-starcandy").children("starcandy");
-        for (xml_named_node_iterator it = sc.begin() ; it != sc.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                std::string name = ait->name();
-                if (name == "id") id = ait->as_int();
-                else if (name == "count") count = ait->as_int();
-                else if (name == "price") price = ait->as_int();
-                else if (name == "bonus-percentage") bonus = ait->as_int();
-            }
-            priceStarCandy.push_back( new PriceStarCandy(id, count, price, bonus) );
-        }
-
-                    
-        // 친구 리스트 정보를 받는다.
-        m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
-        char temp[50];
-        std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
-        sprintf(temp, "kakao_id=%d", mKakaoId);
-        url += temp;
-        CCLog("url = %s", url.c_str());
-        
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
-    }
-    else if (code == 10)
-    {
-        CCLog("잘못된 device type 값입니다.");
-    }
-     */
 }
 
 void Splash::XmlParseFriends(char* data, int size)

@@ -163,6 +163,10 @@ class MySkill
 {
 public:
     MySkill(int csi, int usi, int level, int exp);
+    int GetCommonId();
+    int GetUserId();
+    int GetLevel();
+    int GetExp();
 private:
     int common_skill_id;
     int user_skill_id;
@@ -239,6 +243,7 @@ class DataProcess
 public:
     static void SortFriendListByScore();
     static void SortMagicStaffBuildUpInfo();
+    static void SortMySkillByCommonId(std::vector<MySkill*> mySkill);
     static std::string FindSkillNameById(int skillId);
 };
 
@@ -378,9 +383,12 @@ private:
 class SkillInfo
 {
 public:
-    SkillInfo(int id, std::string name, int type, int maxLevel, int mp, int staffLv, int skillId, int skillLv);
+    SkillInfo(int id, std::string name, int type, int maxLevel, int mp, int staffLv, int skillId, int skillLv, int isActive);
     int GetId();
     std::string GetName();
+    static SkillInfo* GetSkillInfo(int sid);
+    int GetMaxLevel();
+    bool IsActive();
 private:
     int nId;
     std::string sName;
@@ -390,12 +398,14 @@ private:
     int nRequiredStaffLv;
     int nRequiredSkillId;
     int nRequiredSkillLv;
+    bool bIsActive;
 };
 
 class SkillBuildUpInfo
 {
 public:
     SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs);
+    static int GetMaxExp(int sid, int level);
 private:
     int nId;
     std::string sName;

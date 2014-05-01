@@ -373,7 +373,6 @@ void Puzzle::InitCoco()
     cocoLayer->addChild(staff, 104);
     
     cocoLayer->setScale(0.8f);
-    //cocoLayer->setPosition(ccp(100, vs.height+vo.y-500));
     cocoLayer->setPosition(ccp(100, vo.y+tbSize.height+boardSize.height+60));
     this->addChild(cocoLayer, 1000);
     
