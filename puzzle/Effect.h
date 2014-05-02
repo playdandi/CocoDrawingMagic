@@ -40,9 +40,18 @@ public:
     void Effect19Callback(CCNode* sender, void* pointer);
     void Effect19CallbackNewSprite(CCNode* sender, void* pointer);
     
-    void PlayEffect_7_15_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬
-    void Effect7_15_23_Callback(CCNode* sender, void* pointer);
-    void Effect7_15_23_Icon_Callback(CCNode* sender, void* pointer);
+    void PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (불)
+    void Effect7_Comet(float f);
+    void Effect7_Callback_1(CCNode* sender, void* pointer);
+    void Effect7_Callback_2(CCNode* sender, void* pointer);
+    void Effect7_Callback_3(CCNode* sender, void* pointer);
+    bool Effect7_Check(int x, int y, Effect* ef);
+    void Effect7_Callback_Chain(int x, int y, Effect* ef);
+    void Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer);
+    
+    void PlayEffect_15_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (물, 땅)
+    void Effect15_23_Callback(CCNode* sender, void* pointer);
+    void Effect15_23_Icon_Callback(CCNode* sender, void* pointer);
     
     void PlayEffect_6(int num); // F7 : 코코 변신 + 코코 주위 링
     void PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt); // F7 : 불 이펙트
@@ -77,6 +86,13 @@ private:
     CCLayer* timerLayer;
     CCDrawNode* stencil;
     CCClippingNode* clip;
+    
+    CCSprite* F8_bg;
+    CCParticleSystemQuad* m_F8_fountain;
+    std::vector<CCPoint> F8Pos;
+    std::vector<CCPoint> F8PosPoint;
+    int F8_callbackCnt;
+    int F8_finishCnt;
     
     CCSprite* A8_icon;
     

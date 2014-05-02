@@ -42,11 +42,11 @@ public:
 
     void F7(int num, int queue_pos);
     void F7_Continue(void* pointer, int queue_pos);
-    //void F7_Callback(CCNode* sender, void* data);
-    
     void F7Recur(int x, int y, int type, std::vector<CCPoint>& v);
+
+    void F8(int num, int queue_pos);
+    void F8Check(int x, int y);
     void A8(int num, int queue_pos);
-    //void A8Callback();
     std::vector<CCPoint> A8GetPos();
     void A8Clear();
     
@@ -61,7 +61,6 @@ public:
     bool W7GetVar();
     void W7SetTime(int time);
     int W7GetTime();
-    //void W7Timer(float f);
     
     void E3(int num);
     void E4(int num, int queue_pos);
@@ -112,6 +111,8 @@ private:
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
     int F7_callbackCntMini;
+    
+    int F8_check[COLUMN_COUNT][ROW_COUNT];
     
     int A8_cnt;
     int A8_callbackCnt;

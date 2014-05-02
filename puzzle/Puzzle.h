@@ -8,6 +8,14 @@
 #include "Effect.h"
 #include "Sound.h"
 
+#define SKILL_STOPTIME 0
+#define SKILL_BASIC 1
+#define SKILL_CYCLE 2
+#define SKILL_DOUBLESIX 3
+#define SKILL_COCOTIME 4
+#define SKILL_FINAL 5
+#define SKILL_DONE 6
+
 class Effect;
 class PuzzleSkill;
 class PuzzleP8Set;

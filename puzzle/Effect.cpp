@@ -46,9 +46,9 @@ void Effect::PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos)
             
         case 14: PlayEffect_14(); break;
         
-        case 7: PlayEffect_7_15_23(skillNum, pos, queue_pos); break;
-        case 15: PlayEffect_7_15_23(skillNum, pos, queue_pos); break;
-        case 23: PlayEffect_7_15_23(skillNum, pos, queue_pos); break;
+        case 7: PlayEffect_7(skillNum, pos, queue_pos); break;
+        case 15: PlayEffect_15_23(skillNum, pos, queue_pos); break;
+        case 23: PlayEffect_15_23(skillNum, pos, queue_pos); break;
         
         case 6: PlayEffect_6(skillNum); break;
 //        case -6: PlayEffect_6(skillNum, queue_pos); break;
@@ -632,7 +632,219 @@ void Effect::PlayEffectCallback(CCNode* sender, void* data)
 }
 
 
-void Effect::PlayEffect_7_15_23(int num, std::vector<CCPoint> pos, int queue_pos)
+static int timer, total;
+static Effect* eff;
+void Effect::PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos)
+{
+    callbackCnt = 0;
+    skillPos = pos;
+    queuePos = queue_pos;
+    
+    // 어두운 배경
+    F8_bg = NULL;
+    F8_bg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, gameLayer->m_winSize.width, gameLayer->m_winSize.height));
+    F8_bg->setPosition(ccp(0, 0));
+    F8_bg->setAnchorPoint(ccp(0, 0));
+    F8_bg->setColor(ccc3(0, 0, 0));
+    F8_bg->setOpacity(0);
+    gameLayer->addChild(F8_bg, z1);
+    CCActionInterval* action = CCFadeTo::create(0.5f, 127);
+    F8_bg->runAction(action);
+    
+    // 마법진 위에 용 출현
+    A8_icon = CCSprite::createWithSpriteFrameName("icon/dragon.png");
+    A8_icon->setScale(1.2f);
+    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+130));
+    A8_icon->setOpacity(0);
+    gameLayer->addChild(A8_icon, z1);
+    CCActionInterval* action2 = CCSequence::create(
+            CCSpawn::create( CCMoveBy::create(0.8f, ccp(0, 100)),
+                             CCSequence::create(CCFadeIn::create(0.4f), CCFadeOut::create(0.4f), NULL), NULL),
+            CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_Callback_1), this), NULL);
+    A8_icon->runAction(action2);
+    eff = this;
+}
+
+void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true); // 용 삭제
+    Effect* ef = (Effect*)pointer;
+    
+    // fountain effect 출현
+    ef->m_F8_fountain = CCParticleSystemQuad::create("particles/fire8_fountain.plist");
+    ef->m_F8_fountain->retain();
+    ef->m_F8_fountain->setAnchorPoint(ccp(0.5, 0.5));
+    ef->m_F8_fountain->setPosition(ccp(ef->gameLayer->m_winSize.width/2, ef->gameLayer->vo.y+ef->gameLayer->tbSize.height+ef->gameLayer->boardSize.height+120));
+    ef->m_F8_fountain->setScale(2.0f);
+    ef->gameLayer->addChild(ef->m_F8_fountain, 1500);
+    
+    // 혜성 시작
+    ef->callbackCnt = 0;
+    ef->F8_finishCnt = 0;
+    timer = 0;
+    total = (int)ef->skillPos.size();
+    CCLog("혜성 TOTAL : %d", total);
+    //eff = ef;
+    CCLog("callback cnt : %d", ef->callbackCnt);
+    ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
+}
+
+void Effect::Effect7_Comet(float f)
+{
+    //CCLog("in timer callbackCnt : %d", eff->callbackCnt+1);
+    //timer++;
+    //CCLog("timer : %d / %d", timer, total);
+    //if (timer <= total)
+        Effect7_Callback_2(NULL, eff);
+    //else
+    //    eff->gameLayer->unschedule(schedule_selector(Effect::Effect7_Comet));
+}
+
+void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구기
+{
+    Effect* ef = (Effect*)pointer;
+
+    CCLog("혜성 callback cnt : %d", ef->callbackCnt+1);
+    int x = (int)ef->skillPos[ef->callbackCnt].x;
+    int y = (int)ef->skillPos[ef->callbackCnt].y;
+    CCPoint pos = ef->gameLayer->SetTouch8Position(x, y);
+
+    ef->callbackCnt++;
+    int cbCnt = ef->callbackCnt;
+    
+    // 혜성이 떨어진다~!
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_comet.plist");
+    m_emitter->retain();
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition((int)pos.x+400, (int)pos.y+1920);
+    m_emitter->setScale(2.0f);
+    ef->gameLayer->addChild(m_emitter, 1500);
+    
+    CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.4f, pos),
+            CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), (void*)cbCnt), NULL);
+    m_emitter->runAction(action);
+}
+
+void Effect::Effect7_Callback_3(CCNode* sender, void* cnt) // 혜성 떨어지고 폭파
+{
+    ((CCParticleSystemQuad*)sender)->setDuration(0.1f);
+    ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
+    
+    Effect* ef = eff;
+    int x = (int)ef->skillPos[(int)cnt-1].x;
+    int y = (int)ef->skillPos[(int)cnt-1].y;
+    CCLog("Effect : bomb start = %d (%d, %d)", (int)cnt, x, y);
+    ef->F8Pos.clear();
+    ef->F8PosPoint.clear();
+    
+    if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
+    {
+        CCLog("big fire : %d %d", x, y);
+        Effect7_Callback_Chain(x, y, ef);
+        
+        for (int i = 0 ; i < ef->F8PosPoint.size() ; i++)
+        {
+            x = (int)ef->F8PosPoint[i].x;
+            y = (int)ef->F8PosPoint[i].y;
+            CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_bigfire.plist");
+            m_emitter->retain();
+            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+            m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
+            m_emitter->setScale(2.0f);
+            m_emitter->setAutoRemoveOnFinish(true);
+            ef->gameLayer->addChild(m_emitter, 1500);
+        }
+    }
+    else
+    {
+        CCLog("small fire : %d %d", x, y);
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
+        m_emitter->retain();
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(2.0f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        ef->gameLayer->addChild(m_emitter, 1500);
+        ef->F8Pos.push_back(ccp(x, y));
+    }
+    
+    ef->F8_callbackCnt = 0;
+    for (int i = 0 ; i < ef->F8Pos.size() ; i++)
+    {
+        x = (int)ef->F8Pos[i].x;
+        y = (int)ef->F8Pos[i].y;
+        CCFiniteTimeAction* action = CCSequence::create(
+                CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL),
+                CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_4), ef), NULL);
+        ef->gameLayer->GetSpriteP8(x, y)->runAction(action);
+    }
+}
+
+void Effect::Effect7_Callback_Chain(int x, int y, Effect* ef)
+{
+    // bigfire 위치 저장용
+    ef->F8PosPoint.push_back(ccp(x, y));
+    
+    for (int xx = x-1; xx <= x+1; xx++)
+    {
+        for (int yy = y-1; yy <= y+1; yy++)
+        {
+            if ((xx == 0 && yy == 0) || (xx == 0 && yy == ROW_COUNT-1) ||
+                (xx == COLUMN_COUNT-1 && yy == 0) || (xx == COLUMN_COUNT-1 && yy == ROW_COUNT-1))
+                continue;
+            if (xx < 0 || xx > COLUMN_COUNT-1 || yy < 0 || yy > ROW_COUNT-1)
+                continue;
+            if (Effect7_Check(xx, yy, ef))
+                continue;
+            if (ef->gameLayer->GetSpriteP8(xx, yy) == NULL)
+                continue;
+            
+            ef->F8Pos.push_back(ccp(xx, yy));
+            
+            if (ef->gameLayer->GetPuzzleP8Set()->GetType(xx, yy) == PIECE_RED && !(xx == x && yy == y))
+                Effect7_Callback_Chain(xx, yy, ef);
+        }
+    }
+}
+bool Effect::Effect7_Check(int x, int y, Effect* ef)
+{
+    for (int i = 0 ; i < ef->F8Pos.size() ; i++)
+    {
+        if ((int)ef->F8Pos[i].x == x && (int)ef->F8Pos[i].y == y)
+            return true;
+    }
+    return false;
+}
+
+void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
+{
+    Effect* ef = (Effect*)pointer;
+    ef->F8_callbackCnt++;
+    
+    if (ef->F8_callbackCnt == (int)ef->F8Pos.size())
+    {
+        //CCLog("effect7 bomb callback (%d)", (int)ef->queuePos);
+        for (int i = 0 ; i < ef->F8Pos.size() ; i++)
+        {
+            ef->gameLayer->GetPuzzleP8Set()->RemoveChild((int)ef->F8Pos[i].x, (int)ef->F8Pos[i].y);
+            ef->gameLayer->SetSpriteP8Null((int)ef->F8Pos[i].x, (int)ef->F8Pos[i].y);
+        }
+        
+        // 완전히 끝
+        ef->F8_finishCnt++;
+        CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
+        if (ef->F8_finishCnt == (int)ef->skillPos.size())
+        {
+            ef->gameLayer->Falling((int)ef->queuePos);
+            
+            ef->m_F8_fountain->setDuration(0.01f);
+            ef->m_F8_fountain->setAutoRemoveOnFinish(true);
+            ef->F8_bg->removeFromParentAndCleanup(true);
+        }
+    }
+}
+
+void Effect::PlayEffect_15_23(int num, std::vector<CCPoint> pos, int queue_pos)
 {
     skillPos.clear();
     skillPos = pos;
@@ -680,13 +892,13 @@ void Effect::PlayEffect_7_15_23(int num, std::vector<CCPoint> pos, int queue_pos
         {
             // 적용 대상의 모든 피스마다 '음영처리 및 점점 줄어들기' 액션
             action = CCSequence::create( CCSpawn::create(CCFadeTo::create(0.8f, 100), CCScaleTo::create(0.8f, gameLayer->GetPuzzleP8Set()->GetSprite(x, y)->getScale()*0.9f), NULL),
-                CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_15_23_Callback), this), NULL);
+                CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect15_23_Callback), this), NULL);
         }
         else
         {
             // 원래 기존 한붓그리기 된 위치이므로, 그냥 딜레이만 주자.
             action = CCSequence::create( CCDelayTime::create(0.8f),
-                        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_15_23_Callback), this), NULL);
+                        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect15_23_Callback), this), NULL);
         }
         gameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
         
@@ -705,16 +917,16 @@ void Effect::PlayEffect_7_15_23(int num, std::vector<CCPoint> pos, int queue_pos
     
     // 용, 여신, 나무에 대한 액션
     CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(0.5f), NULL), CCDelayTime::create(0.3f), CCFadeOut::create(0.5f),
-        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_15_23_Icon_Callback), this), NULL);
+        CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect15_23_Icon_Callback), this), NULL);
     A8_icon->runAction(action);
 }
 
-void Effect::Effect7_15_23_Icon_Callback(CCNode* sender, void* pointer)
+void Effect::Effect15_23_Icon_Callback(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true);
 }
 
-void Effect::Effect7_15_23_Callback(CCNode* sender, void* pointer)
+void Effect::Effect15_23_Callback(CCNode* sender, void* pointer)
 {
     Effect* pThis = (Effect*)pointer;
     

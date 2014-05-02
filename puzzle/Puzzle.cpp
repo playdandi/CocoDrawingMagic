@@ -1365,12 +1365,13 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             sound->PlayBomb();
             
             // 스킬 실행 (오토마타 표 참조)
-            WaitThread((touch_cnt-1)%QUEUE_CNT);
-            //skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
-            //m_iState[(touch_cnt-1)%QUEUE_CNT] = 1;
-            //InvokeSkills((touch_cnt-1)%QUEUE_CNT);
+            //WaitThread((touch_cnt-1)%QUEUE_CNT);
             
-            //m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
+            skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
+            m_iState[(touch_cnt-1)%QUEUE_CNT] = SKILL_STOPTIME;
+            InvokeSkills((touch_cnt-1)%QUEUE_CNT);
+            
+            m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
         }
         
         // 3개 미만으로 한붓그리기가 되었다면, 원상태로 복구시킨다.
@@ -1410,77 +1411,41 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void Puzzle::InvokeSkills(int queue_pos)
 {
-    if (m_iState[queue_pos] == 1)
+    // ------- 순서도 ------- //
+    // 0) '시간을 얼리다' 적용
+    // 1) 한붓그리기 위치 폭발 (+ 10개추가점수/별사탕 등도 포함)
+    // 2) 사이클 주변부 검사 : 적용되었다면 주변부까지 바로 터뜨리자.
+    // Falling...
+    // 3) '6개이상 한번더' 검사
+    //  - 적용되었다면, Bomb + Falling...
+    // 4) '코코타임' 검사
+    //  - 적용되었다면, Bomb + Falling...
+    // 5) 속성별 마지막 스킬 검사
+    //  - 적용되었다면, Bomb + Falling...
+    
+    if (m_iState[queue_pos] == SKILL_STOPTIME) // 제일 처음 : '시간을 얼리다' 검사
     {
-        CCLog("state(%d) 1", queue_pos);
+        CCLog("state(%d) STOPTIME", queue_pos);
         // W5(시간을얼리다)
         skill->Invoke(14, NULL);
-        
-        // 마지막(8번) 스킬이 적용되었다면,
-        if (skill->IsApplied(7, queue_pos) || skill->IsApplied(15, queue_pos) || skill->IsApplied(23, queue_pos))
-        {
-            // cycle(2A)이 적용되었다면,
-            if (skill->IsApplied(1, queue_pos) || skill->IsApplied(9, queue_pos) || skill->IsApplied(17, queue_pos))
-            {
-                m_iState[queue_pos] = 2;
-            }
-            else // 아니라면,
-            {
-                m_iState[queue_pos] = 3;
-            }
-        }
-        else
-        {
-            // cycle이 적용됨과 관계없이, 한붓그리기 한 것을 터뜨리기
-            m_iState[queue_pos] = 4;
-        }
-        
+ 
+        m_iState[queue_pos] = SKILL_BASIC;
         InvokeSkills(queue_pos);
     }
-    else if (m_iState[queue_pos] == 2) // 사이클 주변부 터뜨리기
+    else if (m_iState[queue_pos] == SKILL_BASIC) // 추가점수, +10 스킬, 기본 한붓그리기 폭발
     {
-        CCLog("state(%d) 2", queue_pos);
-        // '8번' 스킬 적용된 경우
-        if (skill->IsApplied(7, queue_pos) || skill->IsApplied(15, queue_pos) || skill->IsApplied(23, queue_pos))
-        {
-            m_iNextState[queue_pos] = 3;
-        }
-        else
-        {
-            m_iNextState[queue_pos] = 5;
-        }
-   
-        //WaitThread(queue_pos);
-        //WaitOrder(queue_pos);
-        
-        // 8번, cycle 모두 적용된 경우 : cycle에서 나온 주변부 터뜨리기
-        skill->Invoke(1, queue_pos); skill->Invoke(9, queue_pos); skill->Invoke(17, queue_pos);
-    }
-    else if (m_iState[queue_pos] == 3) // 마지막 8번 스킬
-    {
-        CCLog("state(%d) 3", queue_pos);
-        m_iNextState[queue_pos] = 5;
-        
-        //WaitThread(queue_pos);
-        //CCLog("state(%d) 3 : wait done, get started", queue_pos);
-        //WaitOrder(queue_pos);
-        
-        // 8번 적용된 경우 : 8번 스킬 '준비' & '실행'
-        skill->Invoke(7, queue_pos); skill->Invoke(15, queue_pos); skill->Invoke(23, queue_pos);
-    }
-    else if (m_iState[queue_pos] == 4) // 추가점수, +10 스킬 (기본 한붓그리기 폭발)
-    {
-        CCLog("state(%d) 4", queue_pos);
+        CCLog("state(%d) BASIC", queue_pos);
         if (skill->IsApplied(1, queue_pos) || skill->IsApplied(9, queue_pos) || skill->IsApplied(17, queue_pos))
         {
-            m_iNextState[queue_pos] = 2;
+            m_iNextState[queue_pos] = SKILL_CYCLE; // 사이클 주변부 적용
         }
         else
         {
-            m_iNextState[queue_pos] = 5;
+            m_iNextState[queue_pos] = SKILL_DOUBLESIX; // 그게 아니면 바로 6개이상*2 state로 넘어가자.
         }
         
-        Lock(queue_pos);
+        if (m_iSkillSP == 0) // 스킬 semaphore가 1 이상이면, 굳이 터치lock을 할 필요가 없다. (전체 lock이 되어있으니까)
+            Lock(queue_pos);
         
         // 기본 이펙트 적용
         effect->PlayEffect(-100, NULL, piece8xy[queue_pos]);
@@ -1493,15 +1458,24 @@ void Puzzle::InvokeSkills(int queue_pos)
         
         Bomb(queue_pos, piece8xy[queue_pos]);
     }
-    else if (m_iState[queue_pos] == 5) // 6개 이상 제거 시, 한번 더 제거
+    else if (m_iState[queue_pos] == SKILL_CYCLE) // 사이클 주변부 터뜨리기
     {
-        CCLog("state(%d) 5", queue_pos);
-        m_iNextState[queue_pos] = 7;
+        CCLog("state(%d) CYCLE", queue_pos);
+
+        //WaitThread(queue_pos);
+        //WaitOrder(queue_pos);
+        
+        m_iNextState[queue_pos] = SKILL_DOUBLESIX;
+        skill->Invoke(1, queue_pos); skill->Invoke(9, queue_pos); skill->Invoke(17, queue_pos);
+    }
+    else if (m_iState[queue_pos] == SKILL_DOUBLESIX) // 6개 이상 제거 시, 한번 더 제거
+    {
+        CCLog("state(%d) DOUBLESIX", queue_pos);
+        m_iNextState[queue_pos] = SKILL_COCOTIME;
         
         //WaitThread(queue_pos);
         //WaitOrder(queue_pos);
         
-        // 6개 이상 제거 시, 한 번 더 제거
         skill->Invoke(5, queue_pos); skill->Invoke(13, queue_pos); skill->Invoke(21, queue_pos);
 
         if (!(skill->IsApplied(5, queue_pos) || skill->IsApplied(13, queue_pos) || skill->IsApplied(21, queue_pos)))
@@ -1511,16 +1485,14 @@ void Puzzle::InvokeSkills(int queue_pos)
             InvokeSkills(queue_pos);
         }
     }
-    else if (m_iState[queue_pos] == 7)
+    else if (m_iState[queue_pos] == SKILL_COCOTIME) // 코코타임
     {
-        CCLog("state(%d) 7", queue_pos);
-        m_iNextState[queue_pos] = -1;
-        //m_iNextState = 8;
+        CCLog("state(%d) COCOTIME", queue_pos);
+        m_iNextState[queue_pos] = SKILL_FINAL;
         
         //WaitThread(queue_pos);
         //WaitOrder(queue_pos);
         
-        // 코코타임
         skill->Invoke(6, queue_pos);
         
         if (!skill->IsApplied(6, queue_pos))
@@ -1530,22 +1502,28 @@ void Puzzle::InvokeSkills(int queue_pos)
             InvokeSkills(queue_pos);
         }
     }
-    //else if (m_iState == 8)
-    //{
-        /*
-        CCLog("state 8");
-        m_iNextState = -1;
-        
-        // MT*2
-        skill->Invoke(3);
-        
-        SetSkillLock(false);
-        */
-    //}
-    
-    else if (m_iState[queue_pos] == -1)
+    else if (m_iState[queue_pos] == SKILL_FINAL) // 마지막 (속성별 8번) 스킬
     {
-        CCLog("state(%d) -1 : DONE", queue_pos);
+        CCLog("state(%d) FINAL", queue_pos);
+        m_iNextState[queue_pos] = SKILL_DONE;
+        //m_iState[queue_pos] = m_iNextState[queue_pos];
+        
+        //WaitThread(queue_pos);
+        //WaitOrder(queue_pos);
+        
+        skill->Invoke(7, queue_pos); skill->Invoke(15, queue_pos); skill->Invoke(23, queue_pos);
+        
+        if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos) && !skill->IsApplied(23, queue_pos))
+        {
+            // 스킬이 발동되지 않았으면 다음으로 넘긴다.
+            m_iState[queue_pos] = m_iNextState[queue_pos];
+            InvokeSkills(queue_pos);
+        }
+    }
+    
+    else if (m_iState[queue_pos] == SKILL_DONE)
+    {
+        CCLog("state(%d) DONE!", queue_pos);
         // 모든 스킬이 끝났다. 원상태로 되돌리자.
         
         // skill Lock을 푼다.
@@ -1602,7 +1580,7 @@ void Puzzle::Lock(int queue_pos)
 
 void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
 {
-    CCLog("Bomb(%d)", queue_pos);
+    CCLog("Bomb(%d) start : size = %d", queue_pos, (int)bomb_pos.size());
     //Lock(queue_pos);
     
     int x, y;
@@ -1652,24 +1630,15 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
         x = (int)bomb_pos[i].x;
         y = (int)bomb_pos[i].y;
 
-        /*
-        // 8각형 주변의 diamond중에 터지지 않은 diamond를 마저 지운다.
-        if (x > 0 && y > 0 && x < COLUMN_COUNT && y < ROW_COUNT) // leftdown
-            puzzleP4set->RemoveChild(x, y);
-        if (x > 0 && y+1 > 0 && x < COLUMN_COUNT && y+1 < ROW_COUNT) // leftup
-            puzzleP4set->RemoveChild(x, y+1);
-        if (x+1 > 0 && y > 0 && x+1 < COLUMN_COUNT && y < ROW_COUNT) // rightdown
-            puzzleP4set->RemoveChild(x+1, y);
-        if (x+1 > 0 && y+1 > 0 && x+1 < COLUMN_COUNT && y+1 < ROW_COUNT) // rightup
-            puzzleP4set->RemoveChild(x+1, y+1);
-        */
         float bombTime = 0.15f;
-        if (m_iState[queue_pos] == 2)
+        if (m_iState[queue_pos] == SKILL_CYCLE)
             bombTime = 0.60f;
+        else if (m_iState[queue_pos] == SKILL_FINAL && globalType[queue_pos] == PIECE_RED)
+            bombTime = 0.05f;
         
         // 터지는 액션
         CCFiniteTimeAction* action;
-        if (m_iState[queue_pos] == 5 && globalType[queue_pos] == PIECE_BLUE) // 6개이상 한번더 : 터지고 살짝 딜레이를 준다.
+        if (m_iState[queue_pos] == SKILL_DOUBLESIX && globalType[queue_pos] == PIECE_BLUE) // 6개이상 한번더(blue) : 터지고 살짝 딜레이를 준다.
         {
             action = CCSequence::create(
                         CCSpawn::create(CCScaleTo::create(bombTime, 1.5f), CCFadeOut::create(bombTime), NULL),
@@ -1690,6 +1659,9 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
     // show starcandy
     effect->ShowStarCandy(bomb_pos);
 
+    if (m_iState[queue_pos] == SKILL_FINAL && globalType[queue_pos] == PIECE_RED)
+        return;
+    
     // update score
     UpdateScore(0, bomb_pos.size());
     // update starcandy
@@ -1708,9 +1680,9 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
     
     if (m_iBombCallbackCnt[(int)queue_pos] == m_iBombCallbackCntMax[(int)queue_pos])
     {
-        if (m_iState[(int)queue_pos] == 2) // cycle 주변부 폭발 완료
+        if (m_iState[(int)queue_pos] == SKILL_CYCLE) // cycle 주변부 폭발 완료
         {
-            CCLog("bomb callback 2 (%d)", (int)queue_pos);
+            CCLog("bomb callback (%d) CYCLE", (int)queue_pos);
             std::vector<CCPoint> temp = skill->A2GetPos();
             for (int i = 0 ; i < temp.size() ; i++)
             {
@@ -1720,9 +1692,51 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
             temp.clear();
             skill->A2Clear();
         }
-        else if (m_iState[(int)queue_pos] == 3) // 8번 스킬 폭발 완료
+        else if (m_iState[(int)queue_pos] == SKILL_BASIC) // 한붓그리기 부분 폭발 완료
         {
-            CCLog("bomb callback 3 (%d)", (int)queue_pos);
+            CCLog("bomb callback (%d) BASIC", (int)queue_pos);
+            // 추가점수 , +10 은 따로 둔 callback에서 처리하도록 하자
+            
+            for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
+            {
+                int x = (int)piece8xy[(int)queue_pos][i].x;
+                int y = (int)piece8xy[(int)queue_pos][i].y;
+                puzzleP8set->RemoveChild(x, y);
+                spriteP8[x][y] = NULL;
+            }
+            
+            if (m_iNextState[(int)queue_pos] == SKILL_CYCLE) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
+            {
+                m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
+                
+                InvokeSkills((int)queue_pos);
+                piece8xy[(int)queue_pos].clear();
+                
+                return; // drop을 하지 않고 바로 터뜨려야 하므로, Falling()으로 넘어가지 않는다.
+            }
+            else
+                piece8xy[(int)queue_pos].clear();
+        }
+        else if (m_iState[(int)queue_pos] == SKILL_DOUBLESIX)
+        {
+            CCLog("bomb callback (%d) DOUBLESIX", (int)queue_pos);
+            std::vector<CCPoint> temp = skill->GetResult(); //skill->A4BGetPos();
+            for (int i = 0 ; i < temp.size() ; i++)
+            {
+                puzzleP8set->RemoveChild((int)temp[i].x, (int)temp[i].y);
+                spriteP8[(int)temp[i].x][(int)temp[i].y] = NULL;
+            }
+            temp.clear();
+            skill->ResultClear();
+        }
+        else if (m_iState[(int)queue_pos] == SKILL_COCOTIME)
+        {
+            CCLog("bomb callback (%d) COCOTIME", (int)queue_pos);
+            return; // Falling은 F7 (스킬) 함수쪽에서 한다.
+        }
+        else if (m_iState[(int)queue_pos] == SKILL_FINAL) // 8번 스킬 폭발 완료
+        {
+            CCLog("bomb callback (%d) FINAL", (int)queue_pos);
             std::vector<CCPoint> temp = skill->A8GetPos();
             for (int i = 0 ; i < temp.size() ; i++)
             {
@@ -1740,63 +1754,6 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                 spriteP8[x][y] = NULL;
             }
             piece8xy[(int)queue_pos].clear();
-        }
-        else if (m_iState[(int)queue_pos] == 4) // 한붓그리기 부분 폭발 완료
-        {
-            CCLog("bomb callback 4 (%d)", (int)queue_pos);
-            // 추가점수 , +10 은 따로 둔 callback에서 처리하도록 하자
-            
-            for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
-            {
-                int x = (int)piece8xy[(int)queue_pos][i].x;
-                int y = (int)piece8xy[(int)queue_pos][i].y;
-                puzzleP8set->RemoveChild(x, y);
-                spriteP8[x][y] = NULL;
-            }
-            
-            if (m_iNextState[(int)queue_pos] == 2) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
-            {
-                CCLog("bomb callback 4 nextcycle (%d)", (int)queue_pos);
-                m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
-                
-                InvokeSkills((int)queue_pos);
-                piece8xy[(int)queue_pos].clear();
-                
-                return; // drop을 하지 않고 바로 터뜨려야 하므로, Falling()으로 넘어가지 않는다.
-            }
-            else
-                piece8xy[(int)queue_pos].clear();
-        }
-        else if (m_iState[(int)queue_pos] == 5)
-        {
-            CCLog("bomb callback 5 (%d)", (int)queue_pos);
-            std::vector<CCPoint> temp = skill->GetResult(); //skill->A4BGetPos();
-            for (int i = 0 ; i < temp.size() ; i++)
-            {
-                puzzleP8set->RemoveChild((int)temp[i].x, (int)temp[i].y);
-                spriteP8[(int)temp[i].x][(int)temp[i].y] = NULL;
-            }
-            temp.clear();
-            skill->ResultClear();
-        }
-        else if (m_iState[(int)queue_pos] == 6)
-        {
-            CCLog("bomb callback 6 (%d)", (int)queue_pos);
-            std::vector<CCPoint> temp = skill->GetResult(); //skill->A4AGetPos();
-            for (int i = 0 ; i < temp.size() ; i++)
-            {
-                puzzleP8set->RemoveChild((int)temp[i].x, (int)temp[i].y);
-                spriteP8[(int)temp[i].x][(int)temp[i].y] = NULL;
-            }
-            temp.clear();
-            skill->ResultClear();
-        }
-        else if (m_iState[(int)queue_pos] == 7)
-        {
-            CCLog("bomb callback 7 (%d)", (int)queue_pos);
-            //skill->F7_Callback(this, skill);
-            //skill->F7_Continue(skill, (int)queue_pos);
-            return; // Falling은 F7 (스킬) 함수쪽에서 한다.
         }
         
         // 새로운 8각형 piece들의 drop을 시작한다.
@@ -1887,7 +1844,7 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         {
             for (int y = 1 ; y < ROW_COUNT ; y++)
             {
-                if (puzzleP4set->GetType(x, y) != BLOCKED) //m_pBoardSP[x][y]->GetType() != BLOCKED)
+                if (puzzleP4set->GetType(x, y) != BLOCKED)
                 {
                     if (puzzleP4set->GetObject(x, y) != NULL)
                         puzzleP4set->RemoveChild(x, y);
@@ -1897,16 +1854,19 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
             }
         }
         
-        // lock을 모두 해제한다. (semaphore를 1씩 감소시킨다)
-        int x, y;
-        //CCLog("lock size : %d", (int)lock8xy[queue_pos].size());
-        for (int i = 0 ; i < lock8xy[queue].size() ; i++)
+        if (m_iSkillSP == 0)
         {
-            x = lock8xy[queue][i].x;
-            y = lock8xy[queue][i].y;
-            m_bLockP8[x][y]--;
+            // lock을 모두 해제한다. (semaphore를 1씩 감소시킨다)
+            int x, y;
+            //CCLog("lock size : %d", (int)lock8xy[queue_pos].size());
+            for (int i = 0 ; i < lock8xy[queue].size() ; i++)
+            {
+                x = lock8xy[queue][i].x;
+                y = lock8xy[queue][i].y;
+                m_bLockP8[x][y]--;
+            }
+            lock8xy[queue].clear();
         }
-        lock8xy[queue].clear();
         
         /************ LOCK print ****************/
         /*
@@ -1926,20 +1886,6 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
         CCLog("Falling callback (%d) - 다음 스킬 : %d", queue, m_iState[(int)queue_pos]);
         InvokeSkills((int)queue_pos);
-        
-        // 아직 발동할 스킬이 남아있으면 실행한다.
-        /*
-        if (m_iNextState != -1)
-        {
-            m_iState = m_iNextState;
-            InvokeSkills();
-            return;
-        }
-        else
-        {
-            SetSkillLock(false);
-        }
-        */
     }
 }
 
@@ -1969,7 +1915,7 @@ void Puzzle::WaitOrder(int queue_pos)
     CCLog("WaitOrder (%d) : %d %d", queue_pos, queue_pos, drop_order%QUEUE_CNT);
 
     skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
-    m_iState[(touch_cnt-1)%QUEUE_CNT] = 1;
+    m_iState[(touch_cnt-1)%QUEUE_CNT] = SKILL_STOPTIME;
     InvokeSkills((touch_cnt-1)%QUEUE_CNT);
     
     m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.

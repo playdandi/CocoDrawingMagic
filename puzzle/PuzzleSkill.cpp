@@ -213,7 +213,7 @@ void PuzzleSkill::Invoke(int skillNum, int queue_pos)
         case 4:  F5(skillNum); break;
         case 5:  A6(skillNum, queue_pos); break;
         case 6:  F7(skillNum, queue_pos); break;
-        case 7:  A8(skillNum, queue_pos); break;
+        case 7:  F8(skillNum, queue_pos); break;
             
         case 8:  A1(skillNum, queue_pos); break;
         case 9:  A2(skillNum, queue_pos); break;
@@ -841,6 +841,76 @@ void PuzzleSkill::F7Recur(int x, int y, int type, std::vector<CCPoint>& v)
         F7Recur(x+1, y, type, v);
 }
 
+void PuzzleSkill::F8(int num, int queue_pos)
+{
+    // 붉은 용의 숨결
+    A8_pos.clear();
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+            F8_check[x][y] = 0;
+    F8_check[0][0] = F8_check[0][ROW_COUNT-1] = F8_check[COLUMN_COUNT-1][0] = F8_check[COLUMN_COUNT-1][ROW_COUNT-1] = -1;
+    
+    int count = rand()%skillLevel[num] + 7;
+    
+    // 카운트 개수만큼 랜덤한 위치를 구한다.
+    int x, y, ch;
+    while ((int)A8_pos.size() < count)
+    {
+        x = rand()%COLUMN_COUNT;
+        y = rand()%ROW_COUNT;
+        if (F8_check[x][y] == 0)
+        {
+            A8_pos.push_back(ccp(x, y));
+            F8_check[x][y]++;
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
+            {
+                F8Check(x, y);
+            }
+        }
+        
+        ch = 0;
+        for (int i = 0 ; i < COLUMN_COUNT ; i++)
+            for (int j = 0 ; j < ROW_COUNT ; j++)
+                if (F8_check[i][j] > 0)
+                    ch++;
+        if (ch >= 45)
+            break;
+    }
+    /*
+    // 작은 폭발들이 먼저 일어나도록 정렬한다.
+    CCPoint temp;
+    for (int i = 0 ; i < A8_pos.size() ; i++)
+    {
+        for (int j = i+1; j < A8_pos.size() ; j++)
+        {
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType((int)A8_pos[j].x, (int)A8_pos[j].y) != PIECE_RED)
+            {
+                temp = A8_pos[i];
+                A8_pos[i] = A8_pos[j];
+                A8_pos[j] = temp;
+            }
+        }
+    }
+    */
+    CCLog("용의 숨결 혜성 수 : %d", (int)A8_pos.size());
+    m_pGameLayer->PlayEffect(num, queue_pos);
+}
+
+void PuzzleSkill::F8Check(int x, int y)
+{
+    for (int xx = x-1; xx <= x+1; xx++)
+    {
+        for (int yy = y-1; yy <= y+1; yy++)
+        {
+            if (F8_check[xx][yy] == 0)
+            {
+                F8_check[xx][yy]++;
+                if (m_pGameLayer->GetPuzzleP8Set()->GetType(xx, yy) == PIECE_RED)
+                    F8Check(xx, yy);
+            }
+        }
+    }
+}
 
 void PuzzleSkill::A8(int num, int queue_pos)
 {
@@ -896,22 +966,6 @@ void PuzzleSkill::A8(int num, int queue_pos)
                     temp.push_back(ccp(x, y));
                 }
             }
-            /*
-             PuzzleP8Set* puzzleP8set = m_pGameLayer->GetPuzzleP8Set();
-             if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == curType ||
-             (x > 0 && !(x-1 == 0 && (y == 0 || y == ROW_COUNT-1)) && puzzleP8set->GetType(x-1, y) == curType) ||
-             (y > 0 && !((x == 0 || x == COLUMN_COUNT-1) && y-1 == 0) && puzzleP8set->GetType(x, y-1) == curType) ||
-             (x < COLUMN_COUNT-1 && !(x+1 == COLUMN_COUNT-1 && (y == 0 || y == ROW_COUNT-1)) && puzzleP8set->GetType(x+1, y) == curType) ||
-             (y < ROW_COUNT-1 && !((x == 0 || x == COLUMN_COUNT-1) && y+1 == ROW_COUNT-1) && puzzleP8set->GetType(x, y+1) == curType) ||
-             
-             (x > 0 && y > 0 && !(x-1 == 0 && y-1 == 0) && m_pGameLayer->IsConnected(x, y) && puzzleP8set->GetType(x-1, y-1) == curType) ||
-             (x > 0 && y+1 < ROW_COUNT && !(x-1 == 0 && y+1 == ROW_COUNT) && m_pGameLayer->IsConnected(x, y+1) && puzzleP8set->GetType(x-1, y+1) == curType) ||
-             (x+1 < COLUMN_COUNT && y > 0 && !(x+1 == COLUMN_COUNT && y-1 == 0) && m_pGameLayer->IsConnected(x+1, y) && puzzleP8set->GetType(x+1, y-1) == curType) ||
-             (x+1 < COLUMN_COUNT && y+1 < ROW_COUNT && !(x+1 == COLUMN_COUNT && y+1 == ROW_COUNT) && m_pGameLayer->IsConnected(x+1, y+1) && puzzleP8set->GetType(x+1, y+1) == curType) )
-             {
-             temp.push_back(ccp(x, y));
-             }
-             */
         }
     }
     
