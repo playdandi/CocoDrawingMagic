@@ -27,6 +27,9 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    
 protected:
     CCSize winSize;
     bool isTouched;

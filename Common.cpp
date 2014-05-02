@@ -349,6 +349,14 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
+    else if (from == "SketchDetail") {
+        if(isReplaced) {
+            CCNode* parent = ((SketchDetail*)obj)->getParent();
+            ((SketchDetail*)obj)->EndScene();
+            parent->addChild(popup, 200, 200);
+        }
+        else ((SketchDetail*)obj)->addChild(popup, 200, 200);
+    }
     else if (from == "NoImage") {
         if (isReplaced) ((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
         else            ((NoImage*)obj)->addChild(popup, 200, 200);

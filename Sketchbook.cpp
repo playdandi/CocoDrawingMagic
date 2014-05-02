@@ -20,6 +20,11 @@ CCScene* Sketchbook::scene(int tab, int fromWhere)
 	return pScene;
 }
 
+int Sketchbook::FromWhere()
+{
+    return from;
+}
+
 void Sketchbook::onEnter()
 {
     CCDirector* pDirector = CCDirector::sharedDirector();
@@ -112,6 +117,11 @@ void Sketchbook::Notification(CCObject* obj)
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
     }
+    else if (param->intValue() == 2)
+    {
+        // 스킬 정보 갱신
+        MakeScroll(curState, true);
+    }
 }
 
 void Sketchbook::InitSprites()
@@ -191,11 +201,11 @@ void Sketchbook::InitSprites()
         spriteClass->AddChild(i);
 }
 
-void Sketchbook::MakeScroll(int state)
+void Sketchbook::MakeScroll(int state, bool isFromPopup)
 {
     CCLog("make scroll");
     // select button을 눌렀을 때 이 함수를 통해 어떤 layer를 보여줄 지 결정한다.
-    if (curState == state)
+    if (curState == state && !isFromPopup)
         return;
     
     // sprites init

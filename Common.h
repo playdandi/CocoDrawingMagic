@@ -90,7 +90,10 @@ USING_NS_CC;
 #define UPGRADE_FAIRY_FAIL 41
 #define UPGRADE_FAIRY_BY_TOPAZ_NOMONEY 42
 #define UPGRADE_FAIRY_BY_STARCANDY_NOMONEY 43
-
+#define UPGRADE_SKILL_OK 44
+#define UPGRADE_SKILL_FAIL 45
+#define PURCHASE_SKILL_OK 46
+#define PURCHASE_SKILL_FAIL 47
 
 using namespace cocos2d;
 using namespace cocos2d::extension;

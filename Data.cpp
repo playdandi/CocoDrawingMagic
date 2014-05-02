@@ -334,6 +334,12 @@ void MyInfo::ClearFairyList() // 내 요정 리스트 갱신할 때 clear하기 
         delete myFairy[i];
     myFairy.clear();
 }
+void MyInfo::ClearSkillList() // 내 스킬 리스트 갱신할 때 clear하기 위한 용도
+{
+    for (int i = 0 ; i < mySkill.size() ; i++)
+        delete mySkill[i];
+    mySkill.clear();
+}
 
 
 MySkillSlot::MySkillSlot(int id, int csi, int usi)

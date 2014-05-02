@@ -91,6 +91,7 @@ public:
     std::vector<class MySkill*> GetSkillList();
     std::vector<class MySkillSlot*> GetSlot();
     void ClearFairyList();
+    void ClearSkillList();
 
 private:
     bool settingKakaoMsg;

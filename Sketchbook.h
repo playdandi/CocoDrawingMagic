@@ -28,7 +28,7 @@ public:
     void Notification(CCObject* obj);
     
     void InitSprites();
-    void MakeScroll(int state);
+    void MakeScroll(int state, bool isFromPopup = false);
     void MakeScrollFire();
     void MakeScrollWater();
     void MakeScrollLand();
@@ -45,10 +45,12 @@ public:
     void XmlParsePracticeSkill(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
+    int FromWhere();
+    
 protected:
     CCSize winSize;
     bool isTouched;
-    
+     
     int curState;
     
     bool isScrolling;

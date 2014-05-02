@@ -64,6 +64,8 @@ bool NoImage::init()
     //else if (type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK)
     else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_FULL_LEVEL)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
     
     InitSprites();
     
@@ -179,6 +181,13 @@ void NoImage::InitSprites()
             sprintf(text, "요정을 구매하였습니다!"); break;
         case BUY_FAIRY_FAIL:
             sprintf(text, "요정을 구매하지 못하였습니다. 다시 시도해 주세요."); break;
+        case UPGRADE_SKILL_OK:
+            sprintf(text, "축하해요! '%s'의 레벨이 %d가 되었어요!", SkillInfo::GetSkillInfo(d[0])->GetName().c_str(), d[1]); break;
+        case UPGRADE_SKILL_FAIL:
+        case PURCHASE_SKILL_FAIL:
+            sprintf(text, "에러 발생. 다시 시도해주세요."); break;
+        case PURCHASE_SKILL_OK:
+            sprintf(text, "축하해요! '%s' 마법을 새로 배웠어요!", SkillInfo::GetSkillInfo(d[0])->GetName().c_str()); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
@@ -242,7 +251,8 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         // 팝업창에서 '확인' 버튼 하나만 있는 경우.
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
-                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL) )
+                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL || type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL ||
+                  type == PURCHASE_SKILL_FAIL || type == PURCHASE_SKILL_OK) )
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -456,6 +466,8 @@ void NoImage::EndScene()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
     else if (type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

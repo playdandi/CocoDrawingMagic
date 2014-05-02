@@ -1,4 +1,8 @@
 #include "SketchDetail.h"
+#include "Sketchbook.h"
+#include "../pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 static int skill_common_id;
 
@@ -305,7 +309,25 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 if (btnStatus == 1) // 레벨업 해야하는 경우 (강화)
                 {
                     // upgrade skill
-                    //http://14.63.225.203/cogma/game/upgrade_skill.php?kakao_id=1000&user_skill_id=1&cost_value=8000
+                    MySkill* ms = MySkill::GetObj(skill_common_id);
+                    
+                    char temp[255];
+                    std::string url = "http://14.63.225.203/cogma/game/upgrade_skill.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "user_skill_id=%d&", ms->GetUserId());
+                    url += temp;
+                    sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1)); // 레벨+1
+                    url += temp;
+                    CCLog("url = %s", url.c_str());
+                    
+                    CCHttpRequest* req = new CCHttpRequest();
+                    req->setUrl(url.c_str());
+                    req->setRequestType(CCHttpRequest::kHttpPost);
+                    req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
+                    req->setTag("0");
+                    CCHttpClient::getInstance()->send(req);
+                    req->release();
                 }
                 else if (btnStatus == 2) // 일반적인 경우
                 {
@@ -316,6 +338,24 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     // purchase skill
                     //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
+                    
+                    char temp[255];
+                    std::string url = "http://14.63.225.203/cogma/game/purchase_skill.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "skill_id=%d&", skill_common_id);
+                    url += temp;
+                    sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, 1)); // 새로 배우니 당연히 레벨 1
+                    url += temp;
+                    CCLog("url = %s", url.c_str());
+                    
+                    CCHttpRequest* req = new CCHttpRequest();
+                    req->setUrl(url.c_str());
+                    req->setRequestType(CCHttpRequest::kHttpPost);
+                    req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
+                    req->setTag("1");
+                    CCHttpClient::getInstance()->send(req);
+                    req->release();
                 }
             }
         }
@@ -357,3 +397,111 @@ void SketchDetail::EndScene()
 void SketchDetail::EndSceneCallback()
 {
 }
+
+
+void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    int tag = atoi(res->getHttpRequest()->getTag());
+    if (tag == 0 || tag == 1)
+        XmlParseUpgradeOrPurchaseSkill(dumpData, (int)buffer->size(), tag);
+}
+void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 나의 스킬 리스트 갱신
+        myInfo->ClearSkillList();
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
+        int csi, usi, level, exp;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp);
+        }
+        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        
+        // 돈 정보 화면 갱신
+        CCString* param = CCString::create("2");
+        int from = ((Sketchbook*)this->getParent())->FromWhere();
+        if (from == 0) // Ranking의 돈 정보 갱신
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        else if (from == 1) // GameReady의 돈 정보 갱신
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        
+        // 스케치북 스킬리스트 화면 정보 갱신
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        
+        // 성공/실패 팝업창 띄우기
+        std::vector<int> data;
+        data.push_back(skill_common_id); // 스킬 common id
+        data.push_back(MySkill::GetObj(skill_common_id)->GetLevel()); // 증가한 스킬 레벨
+        if (tag == 0) // 스킬을 레벨업한 경우
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_OK, BTN_1, data);
+        else if (tag == 1) // 스킬을 새로 배운 경우
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_OK, BTN_1, data);
+    }
+    else
+    {
+        std::vector<int> nullData;
+        if (tag == 0) // UPGRADE SKILL 실패한 경우
+        {
+            if (code == 10) CCLog("SketchDetail : 가지고 있는 스킬 아님");
+            else if (code == 11) CCLog("SketchDetail : 스킬이 만렙임");
+            else if (code == 12) CCLog("SketchDetail : 연습량 미달");
+            else if (code == 4) CCLog("SketchDetail : 가격 잘못되었음. 재부팅.");
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_FAIL, BTN_1, nullData);
+        }
+        else if (tag == 1) // PURCHASE SKILL 실패한 경우
+        {
+            if (code == 10) CCLog("SketchDetail : 존재하지 않는 스킬 ID");
+            else if (code == 11) CCLog("SketchDetail : 해당 스킬 속성을 지닌 마법사가 아님");
+            else if (code == 12) CCLog("SketchDetail : 요구 MP 미달");
+            else if (code == 13) CCLog("SketchDetail : 요구 지팡이 Lv 미달");
+            else if (code == 14) CCLog("SketchDetail : 요구 스킬 소유/Lv 미달");
+            else if (code == 15) CCLog("SketchDetail : 이미 배운 스킬");
+            else if (code == 4) CCLog("SketchDetail : 가격 잘못되었음. 재부팅.");
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_FAIL, BTN_1, nullData);
+        }
+    }
+}
+
