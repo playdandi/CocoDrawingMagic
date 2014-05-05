@@ -171,7 +171,11 @@ protected:
     int m_iSkillSP; // 스킬 lock에 관한 semaphore
     
     // Bomb()에서 연결피스 지울 때 사용되는 변수
-    bool P8Bombed[COLUMN_COUNT][ROW_COUNT];    
+    bool P8Bombed[COLUMN_COUNT][ROW_COUNT];
+    
+    bool isGameOver;
+    
+    int iTouchRound;
     
 private:
     Sound* sound;
@@ -180,7 +184,8 @@ private:
     CCSprite* pBlackOpen;
     
     int iScore;
-    CCLabelTTF* pScoreLabel;
+    //CCLabelTTF* pScoreLabel;
+    CCLayer* pScoreLayer;
     int iStarCandy;
     CCLabelTTF* pStarCandyLabel;
     int iCombo;
@@ -188,6 +193,10 @@ private:
     int iComboTimer;
     int iTimer;
     CCLabelTTF* pTimerLabel;
+    
+    CCLayer* timerLayer;
+    CCDrawNode* timerStencil;
+    CCClippingNode* timerClip;
     
     SpriteClass* spriteClass;
     

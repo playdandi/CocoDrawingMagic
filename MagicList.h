@@ -22,6 +22,11 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void SendToParent();
+    
+    void XmlParseSkillSlot(char* data, int size);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    
 protected:
     CCSize winSize;
     bool isTouched;

@@ -40,13 +40,14 @@ public:
     void Effect19Callback(CCNode* sender, void* pointer);
     void Effect19CallbackNewSprite(CCNode* sender, void* pointer);
     
-    void PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (불)
+    //void PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (불)
+    void PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos);
     void Effect7_Comet(float f);
     void Effect7_Callback_1(CCNode* sender, void* pointer);
     void Effect7_Callback_2(CCNode* sender, void* pointer);
     void Effect7_Callback_3(CCNode* sender, void* pointer);
-    bool Effect7_Check(int x, int y, Effect* ef);
-    void Effect7_Callback_Chain(int x, int y, Effect* ef);
+    //bool Effect7_Check(int x, int y, Effect* ef);
+    //void Effect7_Callback_Chain(int x, int y, Effect* ef);
     void Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer);
     
     void PlayEffect_15_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (물, 땅)
@@ -69,12 +70,15 @@ public:
     void ShowStarCandy_Callback(CCNode* sender, void* data);
     void ShowStarCandy_Callback_Done(CCNode* sender, void* pointer);
     
+    void RemoveAllObjects();
+    
 private:
     Effect* pThis;
     Puzzle* gameLayer;
     bool isDone[NUMOFSKILL];
     
     std::vector<CCPoint> skillPos;
+    std::vector< std::vector<CCPoint> > skillDoublePos;
     CCPoint deltaPos;
     int callbackCnt;
     int callbackAll;
@@ -87,11 +91,12 @@ private:
     CCDrawNode* stencil;
     CCClippingNode* clip;
     
+    std::vector<int> cbCnt;
     CCSprite* F8_bg;
     CCParticleSystemQuad* m_F8_fountain;
     std::vector<CCPoint> F8Pos;
     std::vector<CCPoint> F8PosPoint;
-    int F8_callbackCnt;
+    std::vector<int> F8_bomb_cbCnt;
     int F8_finishCnt;
     
     CCSprite* A8_icon;

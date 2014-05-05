@@ -46,7 +46,7 @@ void Effect::PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos)
             
         case 14: PlayEffect_14(); break;
         
-        case 7: PlayEffect_7(skillNum, pos, queue_pos); break;
+        //case 7: PlayEffect_7(skillNum, pos, queue_pos); break;
         case 15: PlayEffect_15_23(skillNum, pos, queue_pos); break;
         case 23: PlayEffect_15_23(skillNum, pos, queue_pos); break;
         
@@ -613,7 +613,7 @@ void Effect::PlayEffect_21(std::vector<CCPoint> pos)
     {
         x = (int)pos[i].x;
         y = (int)pos[i].y;
-        CCLog("%d %d", x, y);
+        //CCLog("%d %d", x, y);
         
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land6.plist");
         m_emitter->retain();
@@ -632,13 +632,20 @@ void Effect::PlayEffectCallback(CCNode* sender, void* data)
 }
 
 
-static int timer, total;
-static Effect* eff;
-void Effect::PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos)
+//static int timer, total;
+//static int cbCnt;
+//static Effect* eff;
+//void Effect::PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos)
+void Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos)
 {
-    callbackCnt = 0;
+    //callbackCnt = 0;
+    cbCnt.clear();
     skillPos = pos;
+    skillDoublePos = pos_d;
     queuePos = queue_pos;
+    F8_bomb_cbCnt.clear();
+    for (int i = 0 ; i < pos.size() ; i++)
+        F8_bomb_cbCnt.push_back(0);
     
     // 어두운 배경
     F8_bg = NULL;
@@ -662,9 +669,30 @@ void Effect::PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos)
                              CCSequence::create(CCFadeIn::create(0.4f), CCFadeOut::create(0.4f), NULL), NULL),
             CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_Callback_1), this), NULL);
     A8_icon->runAction(action2);
-    eff = this;
+    //eff = this;
 }
 
+pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
+static int threadCnt;
+static int threadCntMax;
+static Effect* eff;
+void* thread(void* arg)
+{
+    CCLog("thread beginning...");
+    while(1)
+    {
+        CCLog("thread wait... (%d)", threadCnt);
+        pthread_mutex_lock(&lock2);
+            CCLog("thread sleep... (%d)", threadCnt);
+            usleep(200*1000);
+        pthread_mutex_unlock(&lock2);
+        if (threadCnt == threadCntMax) {
+            CCLog("thread EXIT !");
+            break;
+        }
+    }
+    return ((void*)0xdeadbeef);
+}
 void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true); // 용 삭제
@@ -680,18 +708,42 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
     
     // 혜성 시작
     ef->callbackCnt = 0;
+    //cbCnt = 0;
     ef->F8_finishCnt = 0;
-    timer = 0;
-    total = (int)ef->skillPos.size();
-    CCLog("혜성 TOTAL : %d", total);
-    //eff = ef;
-    CCLog("callback cnt : %d", ef->callbackCnt);
+    //timer = 0;
+    //total = (int)ef->skillPos.size();
+    //CCLog("혜성 TOTAL : %d", );
+    //CCLog("callback cnt : %d", cbCnt); //ef->callbackCnt);
+    eff = ef;
     ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
+    /*
+    threadCnt = 0;
+    threadCntMax = (int)ef->skillPos.size();
+    pthread_mutex_lock(&lock);
+    pthread_t tid;
+    pthread_create(&tid, NULL, thread, NULL);
+    usleep(100*2000);
+    pthread_mutex_unlock(&lock);
+    
+    CCLog("try callback start...");
+    for (int i = 0 ; i < ef->skillPos.size() ; i++)
+    {
+        //pthread_mutex_lock(&lock);
+        usleep(200*1000);
+            Effect7_Callback_2(NULL, ef);
+        //pthread_mutex_unlock(&lock);
+        threadCnt = i+1;
+    }
+    
+    void* ret;
+    pthread_join(tid, &ret);
+    CCLog("Thread finished with return value %p\n", ret);
+    */
 }
 
 void Effect::Effect7_Comet(float f)
 {
-    //CCLog("in timer callbackCnt : %d", eff->callbackCnt+1);
+    CCLog("in timer callbackCnt : %d", eff->callbackCnt+1);
     //timer++;
     //CCLog("timer : %d / %d", timer, total);
     //if (timer <= total)
@@ -710,7 +762,9 @@ void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구�
     CCPoint pos = ef->gameLayer->SetTouch8Position(x, y);
 
     ef->callbackCnt++;
-    int cbCnt = ef->callbackCnt;
+    ef->cbCnt.push_back(ef->callbackCnt);
+    //cbCnt++;
+    //int cbCnt = ef->callbackCnt;
     
     // 혜성이 떨어진다~!
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_comet.plist");
@@ -720,39 +774,50 @@ void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구�
     m_emitter->setScale(2.0f);
     ef->gameLayer->addChild(m_emitter, 1500);
     
-    CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.4f, pos),
-            CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), (void*)cbCnt), NULL);
+    CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.5f, pos),
+        CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), ef), NULL);
     m_emitter->runAction(action);
 }
 
-void Effect::Effect7_Callback_3(CCNode* sender, void* cnt) // 혜성 떨어지고 폭파
+void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어지고 폭파
 {
     ((CCParticleSystemQuad*)sender)->setDuration(0.1f);
     ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
     
-    Effect* ef = eff;
-    int x = (int)ef->skillPos[(int)cnt-1].x;
-    int y = (int)ef->skillPos[(int)cnt-1].y;
-    CCLog("Effect : bomb start = %d (%d, %d)", (int)cnt, x, y);
-    ef->F8Pos.clear();
-    ef->F8PosPoint.clear();
+    Effect* ef = (Effect*)pointer;
+    
+    int idx;
+    for (int i = 0 ; i < ef->cbCnt.size() ; i++)
+    {
+        if (ef->cbCnt[i] > 0)
+        {
+            idx = ef->cbCnt[i];
+            ef->cbCnt[i] *= -1;
+            break;
+        }
+    }
+    
+    int x = (int)ef->skillPos[idx-1].x;
+    int y = (int)ef->skillPos[idx-1].y;
+    CCLog("Effect : bomb start = %d (%d, %d)", (int)idx, x, y);
     
     if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
     {
         CCLog("big fire : %d %d", x, y);
-        Effect7_Callback_Chain(x, y, ef);
-        
-        for (int i = 0 ; i < ef->F8PosPoint.size() ; i++)
+        for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
         {
-            x = (int)ef->F8PosPoint[i].x;
-            y = (int)ef->F8PosPoint[i].y;
-            CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_bigfire.plist");
-            m_emitter->retain();
-            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-            m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
-            m_emitter->setScale(2.0f);
-            m_emitter->setAutoRemoveOnFinish(true);
-            ef->gameLayer->addChild(m_emitter, 1500);
+            x = ef->skillDoublePos[idx-1][i].x;
+            y = ef->skillDoublePos[idx-1][i].y;
+            if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
+            {
+                CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_bigfire.plist");
+                m_emitter->retain();
+                m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+                m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
+                m_emitter->setScale(2.0f);
+                m_emitter->setAutoRemoveOnFinish(true);
+                ef->gameLayer->addChild(m_emitter, 1500);
+            }
         }
     }
     else
@@ -765,21 +830,53 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* cnt) // 혜성 떨어지�
         m_emitter->setScale(2.0f);
         m_emitter->setAutoRemoveOnFinish(true);
         ef->gameLayer->addChild(m_emitter, 1500);
-        ef->F8Pos.push_back(ccp(x, y));
+        //ef->F8Pos.push_back(ccp(x, y));
     }
     
-    ef->F8_callbackCnt = 0;
-    for (int i = 0 ; i < ef->F8Pos.size() ; i++)
+    // 폭파!
+    CCLog("bomb (%d) : size = %d", idx, (int)ef->skillDoublePos[idx-1].size());
+    for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
     {
-        x = (int)ef->F8Pos[i].x;
-        y = (int)ef->F8Pos[i].y;
+        
+        x = ef->skillDoublePos[idx-1][i].x;
+        y = ef->skillDoublePos[idx-1][i].y;
         CCFiniteTimeAction* action = CCSequence::create(
-                CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL),
-                CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_4), ef), NULL);
+            CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL),
+            CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_4), ef), NULL);
+        ef->gameLayer->GetSpriteP8(x, y)->setTag(idx); // tag (idx)
         ef->gameLayer->GetSpriteP8(x, y)->runAction(action);
     }
 }
 
+void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
+{
+    Effect* ef = (Effect*)pointer;
+    int idx = ((CCSprite*)sender)->getTag();
+
+    ef->F8_bomb_cbCnt[idx-1]++;
+    if (ef->F8_bomb_cbCnt[idx-1] == (int)ef->skillDoublePos[idx-1].size())
+    {
+        for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
+        {
+            ef->gameLayer->GetPuzzleP8Set()->RemoveChild((int)ef->skillDoublePos[idx-1][i].x, (int)ef->skillDoublePos[idx-1][i].y);
+            ef->gameLayer->SetSpriteP8Null((int)ef->skillDoublePos[idx-1][i].x, (int)ef->skillDoublePos[idx-1][i].y);
+        }
+        
+        // 완전히 끝
+        ef->F8_finishCnt++;
+        CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
+        if (ef->F8_finishCnt == (int)ef->skillPos.size())
+        {
+            ef->gameLayer->Falling((int)ef->queuePos);
+            
+            ef->m_F8_fountain->setDuration(0.01f);
+            ef->m_F8_fountain->setAutoRemoveOnFinish(true);
+            ef->F8_bg->removeFromParentAndCleanup(true);
+        }
+    }
+}
+
+/*
 void Effect::Effect7_Callback_Chain(int x, int y, Effect* ef)
 {
     // bigfire 위치 저장용
@@ -815,34 +912,7 @@ bool Effect::Effect7_Check(int x, int y, Effect* ef)
     }
     return false;
 }
-
-void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
-{
-    Effect* ef = (Effect*)pointer;
-    ef->F8_callbackCnt++;
-    
-    if (ef->F8_callbackCnt == (int)ef->F8Pos.size())
-    {
-        //CCLog("effect7 bomb callback (%d)", (int)ef->queuePos);
-        for (int i = 0 ; i < ef->F8Pos.size() ; i++)
-        {
-            ef->gameLayer->GetPuzzleP8Set()->RemoveChild((int)ef->F8Pos[i].x, (int)ef->F8Pos[i].y);
-            ef->gameLayer->SetSpriteP8Null((int)ef->F8Pos[i].x, (int)ef->F8Pos[i].y);
-        }
-        
-        // 완전히 끝
-        ef->F8_finishCnt++;
-        CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
-        if (ef->F8_finishCnt == (int)ef->skillPos.size())
-        {
-            ef->gameLayer->Falling((int)ef->queuePos);
-            
-            ef->m_F8_fountain->setDuration(0.01f);
-            ef->m_F8_fountain->setAutoRemoveOnFinish(true);
-            ef->F8_bg->removeFromParentAndCleanup(true);
-        }
-    }
-}
+*/
 
 void Effect::PlayEffect_15_23(int num, std::vector<CCPoint> pos, int queue_pos)
 {
@@ -1561,5 +1631,10 @@ void Effect::ShowStarCandy_Callback_Done(CCNode* sender, void* pointer)
 
 
 
+
+void Effect::RemoveAllObjects()
+{
+    
+}
 
 

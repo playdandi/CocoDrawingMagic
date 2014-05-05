@@ -6,6 +6,9 @@ using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
+static int fromWhere;
+static int priority = 0;
+
 enum
 {
 	zBackground = 0,
@@ -14,8 +17,9 @@ enum
     zPieceConn = 3,
 };
 
-CCScene* Ranking::scene()
+CCScene* Ranking::scene(int from)
 {
+    fromWhere = from;
 	CCScene* pScene = CCScene::create();
 	Ranking* pLayer = Ranking::create();
 	pScene->addChild(pLayer);
@@ -29,6 +33,9 @@ void Ranking::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
+    
+    if (fromWhere != -1)
+        Common::ShowNextScene(this, "Ranking", "GameReady", false);
 }
 void Ranking::onPause()
 {
@@ -63,12 +70,23 @@ bool Ranking::init()
 		return false;
 	}
     
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("Ranking : touch prio = %d", this->getTouchPriority());
+    
     srand(time(NULL));
     
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+    // 퍼즐게임이 끝나고 돌아온 경우 다시 spriteFrameCache를 불러와야 한다.
+    if (fromWhere != -1)
+    {
+        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
+        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+    }
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
     
     spriteClass = new SpriteClass();
+    spriteClassProperty = new SpriteClass();
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -107,10 +125,6 @@ bool Ranking::init()
     if (opt1)
         sound->PlayBackgroundSound();
     
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
-    
-    //scrollViewLastPoint = ccp(0, 0);
     isOnceScrollViewTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;
@@ -118,7 +132,6 @@ bool Ranking::init()
     isKeyBackClicked = false;
     
     this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
-    //this->unschedule(schedule_selector(Ranking::PotionTimer));
     
 	return true;
 }
@@ -131,13 +144,21 @@ void Ranking::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCLog("noti 0 - ranking 터치 활성");
-        //CCDirector::sharedDirector()->resume();
+        CCLog("Ranking 터치 활성");
+
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        this->setTouchPriority(priority);
         isTouched = false;
         isKeyBackClicked = false;
+        CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
+        //CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        //isTouched = false;
+        //isKeyBackClicked = false;
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -176,11 +197,10 @@ void Ranking::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("noti 1 - 터치 비활성");
-        //CCDirector::sharedDirector()->pause();
-        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        CCLog("Ranking 터치 비활성");
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 2)
     {
@@ -226,6 +246,39 @@ void Ranking::Notification(CCObject* obj)
     {
         EndScene();
     }
+    else if (param->intValue() == 8)
+    {
+        // 스킬 속성 종류 갱신
+        InitProperties();
+    }
+}
+
+void Ranking::InitProperties()
+{
+    spriteClassProperty->RemoveAllObjects();
+    
+    CCPoint pos = ccp(848, 1611);
+    if (myInfo->IsFire())
+    {
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
+        pos = ccp(904, 1611);
+    }
+    if (myInfo->IsWater())
+    {
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
+    if (myInfo->IsLand())
+    {
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
+        pos = ccp(959, 1611);
+    }
+    
+    for (int i = 0 ; i < spriteClassProperty->spriteObj.size() ; i++)
+        spriteClassProperty->AddChild(i);
 }
 
 void Ranking::InitSprites()
@@ -254,25 +307,7 @@ void Ranking::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "Ranking", this, 5) );
     
     // property 문양 (mp 바로 밑에)
-    CCPoint pos = ccp(848, 1611);
-    if (myInfo->IsFire())
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
-        pos = ccp(904, 1611);
-    }
-    if (myInfo->IsWater())
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
-    }
-    if (myInfo->IsLand())
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
-    }
+    InitProperties();
     
     // 메인 지붕
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "Ranking", this, 1) );
@@ -476,7 +511,26 @@ void Ranking::MakeScroll()
 void Ranking::PotionTimer(float f)
 {
     char time[5];
-    int remainTime;
+    int remainTime, potion;
+    
+    potion = myInfo->GetPotion();
+    if (potion < 5) // 5개 이상 되면 할 필요없음.
+    {
+        // 나의 포션 정보 갱신
+        remainTime = myInfo->GetRemainPotionTimeNumber();
+        if (remainTime == 0)
+        {
+            remainTime = 720;
+            potion++;
+            
+            char name[25];
+            sprintf(name, "icon/icon_potion.png%d", potion-1);
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+        }
+        myInfo->SetPotion(potion, remainTime-1);
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+    }
+    
     for (int i = 0 ; i < friendList.size() ; i++)
     {
         remainTime = friendList[i]->GetRemainPotionTime();
@@ -535,7 +589,8 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "GameReady", false);
+                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1, priority-1);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png1")
@@ -585,7 +640,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
+                Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0, priority-1);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_addfriend.png")
@@ -677,29 +732,33 @@ void Ranking::EndScene()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    this->unschedule(schedule_selector(Ranking::PotionTimer));
+    
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Ranking");
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClassProperty->RemoveAllObjects();
+    delete spriteClassProperty;
     
     // itemLayer
     for (int i = 0 ; i < profileLayers.size() ; i++)
     {
         profileLayers[i]->removeAllChildren();
-        CCLog("ii : %d", profileLayers[i]->retainCount());
+        //CCLog("ii : %d", profileLayers[i]->retainCount());
     }
     profileLayers.clear();
     
     // background layer
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCLog("pBlack %d", pBlack->retainCount());
-    CCLog("pBackground %d", pBackground->retainCount());
+    //CCLog("pBlack %d", pBlack->retainCount());
+    //CCLog("pBackground %d", pBackground->retainCount());
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParent();
-    CCLog("%d", scrollView->retainCount());
+    //CCLog("%d", scrollView->retainCount());
     
     //this->removeFromParentAndCleanup(true);
     
@@ -710,11 +769,11 @@ void Ranking::EndScene()
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
     
-    CCLog("========================================");
-    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    CCLog("========================================");
+    //CCLog("========================================");
+    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+    //CCLog("========================================");
     
-    Common::ShowNextScene(this, "Ranking", "Puzzle", true);
+    Common::ShowNextScene(this, "Ranking", "Loading", true);
 }
 
 

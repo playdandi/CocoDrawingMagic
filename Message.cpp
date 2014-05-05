@@ -22,6 +22,7 @@ void Message::onExit()
 {
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void Message::keyBackClicked()

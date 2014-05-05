@@ -181,6 +181,11 @@ std::string MyInfo::GetRemainWeeklyRankTime()
     res = number + res;
     return res;
 }
+
+int MyInfo::GetRemainPotionTimeNumber()
+{
+    return remainPotionTime;
+}
 std::string MyInfo::GetRemainPotionTime()
 {
     std::string res = ":";
@@ -247,6 +252,18 @@ void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
     this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
     this->mpFairy = mpFairy;
     this->staffLv = staffLv;
+}
+void MyInfo::SetItem(std::vector<int> items)
+{
+    for (int i = 0 ; i < items.size() ; i++)
+        this->item[i] = items[i];
+}
+void MyInfo::SetProperties(int fire, int water, int land, int master)
+{
+    this->propertyFire = (fire == 1) ? true : false;
+    this->propertyWater = (water == 1) ? true : false;
+    this->propertyLand = (land == 1) ? true : false;
+    this->propertyMaster = (master == 1) ? true : false;
 }
 
 void MyInfo::SetProfileSkill(int id, int level)
@@ -340,6 +357,12 @@ void MyInfo::ClearSkillList() // 내 스킬 리스트 갱신할 때 clear하기 
         delete mySkill[i];
     mySkill.clear();
 }
+void MyInfo::ClearSkillSlot() // 내 스킬 슬롯 갱신할 때 clear하기 위한 용도
+{
+    for (int i = 0 ; i < mySkillSlot.size() ; i++)
+        delete mySkillSlot[i];
+    mySkillSlot.clear();
+}
 
 
 MySkillSlot::MySkillSlot(int id, int csi, int usi)
@@ -360,6 +383,12 @@ int MySkillSlot::GetUserId()
 {
     return user_skill_id;
 }
+void MySkillSlot::InsertSkill(int scid, int suid)
+{
+    this->common_skill_id = scid;
+    this->user_skill_id = suid;
+}
+
 
 MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
 {
@@ -770,7 +799,22 @@ SkillSlotInfo::SkillSlotInfo(int id, int costType, int cost)
     this->nCostType = costType;
     this->nCost = cost;
 }
+int SkillSlotInfo::GetCostType(int id)
+{
+    for (int i = 0 ; i < skillSlotInfo.size() ; i++)
+        if (skillSlotInfo[i]->nId == id)
+            return skillSlotInfo[i]->nCostType;
+    return -1;
+}
+int SkillSlotInfo::GetCost(int id)
+{
+    for (int i = 0 ; i < skillSlotInfo.size() ; i++)
+        if (skillSlotInfo[i]->nId == id)
+            return skillSlotInfo[i]->nCost;
+    return -1;
+}
 
+///////////////////////////////////////////////////////////////////////////////////////////
 
 PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, int value2)
 {
@@ -1037,4 +1081,13 @@ SkillPropertyInfo::SkillPropertyInfo(int id, int cost)
 {
     this->nId = id;
     this->nCost_topaz = cost;
+}
+int SkillPropertyInfo::GetCost(int id)
+{
+    for (int i = 0 ; i < skillPropertyInfo.size() ; i++)
+    {
+        if (skillPropertyInfo[i]->nId == id)
+            return skillPropertyInfo[i]->nCost_topaz;
+    }
+    return -1;
 }

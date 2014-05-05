@@ -12,7 +12,7 @@ class Sketchbook : public CCLayer,
                    public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int tab, int fromWhere);
+    static CCScene* scene(int tab, int fromWhere, int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -22,12 +22,12 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    
-    CREATE_FUNC(Sketchbook);
+    virtual void registerWithTouchDispatcher(void);
     
     void Notification(CCObject* obj);
     
     void InitSprites();
+    void CheckProperties();
     void MakeScroll(int state, bool isFromPopup = false);
     void MakeScrollFire();
     void MakeScrollWater();
@@ -36,6 +36,7 @@ public:
     void MakeScrollSlot();
     
     void SetMenuChange(int state);
+    void SetTouchLock(bool val);
     
     SkillInfo* GetNextSkillInfo(int state);
     
@@ -46,6 +47,8 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     int FromWhere();
+    
+    CREATE_FUNC(Sketchbook);
     
 protected:
     CCSize winSize;

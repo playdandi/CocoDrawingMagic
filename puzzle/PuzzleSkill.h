@@ -45,7 +45,7 @@ public:
     void F7Recur(int x, int y, int type, std::vector<CCPoint>& v);
 
     void F8(int num, int queue_pos);
-    void F8Check(int x, int y);
+    void F8Check(int x, int y, int idx);
     void A8(int num, int queue_pos);
     std::vector<CCPoint> A8GetPos();
     void A8Clear();
@@ -77,6 +77,8 @@ public:
     std::vector< std::vector<CCPoint> > GetResultDouble();
     std::vector<CCPoint> GetResultEnd();
     void ResultClear();
+    
+    void RemoveAllObjects();
     
 protected:
     Puzzle* m_pGameLayer;

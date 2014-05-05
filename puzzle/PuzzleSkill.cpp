@@ -853,19 +853,21 @@ void PuzzleSkill::F8(int num, int queue_pos)
     int count = rand()%skillLevel[num] + 7;
     
     // 카운트 개수만큼 랜덤한 위치를 구한다.
-    int x, y, ch;
+    int x, y, ch, idx = 0;
     while ((int)A8_pos.size() < count)
     {
         x = rand()%COLUMN_COUNT;
         y = rand()%ROW_COUNT;
         if (F8_check[x][y] == 0)
         {
-            A8_pos.push_back(ccp(x, y));
-            F8_check[x][y]++;
+            idx++;
+            A8_pos.push_back(ccp(x, y)); // 혜성이 떨어질 위치
+            
+            //F8_check[x][y]++;
             if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
-            {
-                F8Check(x, y);
-            }
+                F8Check(x, y, idx);
+            else
+                F8_check[x][y] = idx;
         }
         
         ch = 0;
@@ -892,21 +894,39 @@ void PuzzleSkill::F8(int num, int queue_pos)
         }
     }
     */
+    
+    // 2차원 vector에 저장
+    for (int i = 0 ; i < result_double_pos.size() ; i++)
+        result_double_pos[i].clear();
+    result_double_pos.clear();
+    for (int k = 1; k <= idx; k++)
+    {
+        std::vector<CCPoint> temp;
+        for (int x = 0 ; x < COLUMN_COUNT ; x++)
+            for (int y = 0 ; y < ROW_COUNT ; y++)
+                if (F8_check[x][y] == k)
+                    temp.push_back(ccp(x, y));
+        result_double_pos.push_back(temp);
+    }
+    
     CCLog("용의 숨결 혜성 수 : %d", (int)A8_pos.size());
-    m_pGameLayer->PlayEffect(num, queue_pos);
+    //m_pGameLayer->PlayEffect(num, queue_pos);
+    m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
 }
 
-void PuzzleSkill::F8Check(int x, int y)
+void PuzzleSkill::F8Check(int x, int y, int idx)
 {
     for (int xx = x-1; xx <= x+1; xx++)
     {
         for (int yy = y-1; yy <= y+1; yy++)
         {
+            if (xx < 0 || xx > COLUMN_COUNT-1 || yy < 0 || yy > ROW_COUNT-1)
+                continue;
             if (F8_check[xx][yy] == 0)
             {
-                F8_check[xx][yy]++;
-                if (m_pGameLayer->GetPuzzleP8Set()->GetType(xx, yy) == PIECE_RED)
-                    F8Check(xx, yy);
+                F8_check[xx][yy] = idx;
+                if (m_pGameLayer->GetPuzzleP8Set()->GetType(xx, yy) == PIECE_RED && !(xx == x && yy == y))
+                    F8Check(xx, yy, idx);
             }
         }
     }
@@ -1322,3 +1342,11 @@ void PuzzleSkill::ResultClear()
 {
     result_pos.clear();
 }
+
+
+
+void PuzzleSkill::RemoveAllObjects()
+{
+    
+}
+

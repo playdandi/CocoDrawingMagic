@@ -5,15 +5,17 @@
 using namespace pugi;
 
 static int skill_common_id;
+static int priority;
 
 SketchDetail::~SketchDetail(void)
 {
     CCLog("SketchDetail destructor");
 }
 
-CCScene* SketchDetail::scene(int id)
+CCScene* SketchDetail::scene(int id, int prio)
 {
     skill_common_id = id;
+    priority = prio;
     
     CCScene* pScene = CCScene::create();
     SketchDetail* pLayer = SketchDetail::create();
@@ -25,7 +27,7 @@ void SketchDetail::onEnter()
 {
     CCLog("SketchDetail :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void SketchDetail::onExit()
@@ -50,14 +52,21 @@ bool SketchDetail::init()
 		return false;
 	}
     
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("스케치디테일 : touch prio = %d", priority);
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SketchDetail::Notification), "SketchDetail", NULL);
     
     // notification
+    CCLog("스케치 디테일 1");
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    CCLog("스케치 디테일 2");
     
     // make sprites
     spriteClass = new SpriteClass();
@@ -75,17 +84,19 @@ void SketchDetail::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        this->setTouchPriority(priority);
         isTouched = false;
+        CCLog("스케치디테일 : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
 }
 
@@ -288,7 +299,6 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {

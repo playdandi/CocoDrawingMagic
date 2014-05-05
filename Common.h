@@ -94,6 +94,14 @@ USING_NS_CC;
 #define UPGRADE_SKILL_FAIL 45
 #define PURCHASE_SKILL_OK 46
 #define PURCHASE_SKILL_FAIL 47
+#define BUY_PROPERTY_TRY 48
+#define BUY_PROPERTY_OK 49
+#define BUY_PROPERTY_FAIL 50
+#define BUY_SKILLSLOT_BY_STARCANDY_TRY 51
+#define BUY_SKILLSLOT_BY_TOPAZ_TRY 52
+#define BUY_SKILLSLOT_OK 53
+#define BUY_SKILLSLOT_FAIL 54
+#define BUY_SKILLSLOT_FULL 55
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -115,10 +123,11 @@ public:
     
     static std::string MakeComma(int number);
     static std::string InsertComma(std::string number);
+    static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
     static CCLayer* MakeItemNumberLayer(std::string number);
-    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1);
-    static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data);
+    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int priority = -1);
+    static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
 };
 
 

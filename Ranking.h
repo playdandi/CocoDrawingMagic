@@ -13,7 +13,7 @@ class Ranking : public CCLayer,
 {
 public:
 	bool init();
-    static CCScene* scene();
+    static CCScene* scene(int from = -1);
 	
     virtual void onEnter();
     virtual void onPause();
@@ -31,6 +31,7 @@ public:
     void Notification(CCObject* obj);
     
     void InitSprites();
+    void InitProperties();
     void MakeScroll();
     
     void PotionTimer(float f);
@@ -52,6 +53,7 @@ private:
     CCSprite* pBlack;
     
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassProperty;
     
     std::vector<CCLayer*> profileLayers;
     CCScrollView* scrollView;

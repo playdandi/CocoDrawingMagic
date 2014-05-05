@@ -7,13 +7,15 @@ using namespace pugi;
 static int type;
 static int btn;
 static std::vector<int> d;
+static int fromWhere;
 
-CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data)
+CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc)
 {
     // data
     type = popupType;
     btn = btnType;
     d = data;
+    fromWhere = etc;
     
     CCScene* pScene = CCScene::create();
     NoImage* pLayer = NoImage::create();
@@ -62,10 +64,12 @@ bool NoImage::init()
     else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
     //else if (type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK)
-    else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_FULL_LEVEL)
+    else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_FULL_LEVEL || fromWhere == 3)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL)
+    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL || type == BUY_PROPERTY_TRY || fromWhere == 1)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (fromWhere == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     
     InitSprites();
     
@@ -188,16 +192,38 @@ void NoImage::InitSprites()
             sprintf(text, "에러 발생. 다시 시도해주세요."); break;
         case PURCHASE_SKILL_OK:
             sprintf(text, "축하해요! '%s' 마법을 새로 배웠어요!", SkillInfo::GetSkillInfo(d[0])->GetName().c_str()); break;
+        case BUY_SKILLSLOT_BY_STARCANDY_TRY:
+        case BUY_SKILLSLOT_BY_TOPAZ_TRY:
+            sprintf(text, "%d번째 슬롯을 구매하시겠습니까?", d[0]); break;
+        case BUY_SKILLSLOT_OK:
+            sprintf(text, "슬롯을 성공적으로 구매하였습니다."); break;
+        case BUY_SKILLSLOT_FAIL:
+            sprintf(text, "슬롯 구매를 실패하였습니다. 다시 시도해 주세요."); break;
+        case BUY_SKILLSLOT_FULL:
+            sprintf(text, "이미 모든 슬롯을 구매하였습니다."); break;
+        case BUY_PROPERTY_TRY:
+            switch (d[0])
+            {
+                case 1: sprintf(text, "'불'속성 마법을 배우게 됩니다. '불'속성을 습득하시겠습니까?"); break;
+                case 2: sprintf(text, "'물'속성 마법을 배우게 됩니다. '물'속성을 습득하시겠습니까?"); break;
+                case 3: sprintf(text, "'땅'속성 마법을 배우게 됩니다. '땅'속성을 습득하시겠습니까?"); break;
+                case 4: sprintf(text, "'궁극'속성 마법을 배우게 됩니다. '궁극'속성을 습득하시겠습니까?"); break;
+            }
+            break;
+        case BUY_PROPERTY_FAIL:
+            sprintf(text, "속성 습득을 실패하였습니다. 다시 시도해 주세요."); break;
+        case BUY_PROPERTY_OK:
+            sprintf(text, "새로운 속성을 습득하였습니다. 더욱 풍부해진 마법들을 새로 익혀 보세요!"); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
     // 가격표
-    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
+    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_PROPERTY_TRY)
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
                     ccp(0, 0), ccp(493, 723), CCSize(201, 77), "", "NoImage", this, 5) );
         
-        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
+        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
         else
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
@@ -252,7 +278,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         // 팝업창에서 '확인' 버튼 하나만 있는 경우.
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
                  (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL || type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL ||
-                  type == PURCHASE_SKILL_FAIL || type == PURCHASE_SKILL_OK) )
+                  type == PURCHASE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == BUY_SKILLSLOT_FAIL || type == BUY_SKILLSLOT_FULL || type == BUY_SKILLSLOT_OK || type == BUY_PROPERTY_OK || type == BUY_PROPERTY_FAIL) )
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -428,6 +454,45 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         HttpRequest(url);
                     }
                 }
+                else if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
+                {
+                    CCLog("슬롯 구매");
+                    // 스킬 슬롯 구매
+                    //http://14.63.225.203/cogma/game/upgrade_skill_slot.php?kakao_id=1000&slot_id=1&cost_value=1000
+                    char temp[255];
+                    std::string url = "http://14.63.225.203/cogma/game/upgrade_skill_slot.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "slot_id=%d&", d[0]);
+                    url += temp;
+                    sprintf(temp, "cost_value=%d", d[1]);
+                    url += temp;
+                    CCLog("url = %s", url.c_str());
+                    
+                    HttpRequest(url);
+                }
+                else if (type == BUY_PROPERTY_TRY)
+                {
+                    CCLog("스킬 열기");
+                    // 스킬 새 속성 열기
+                    //http://14.63.225.203/cogma/game/purchase_skill_type.php?kakao_id=1000&skill_type=2&cost_value=0
+                    char temp[255];
+                    std::string url = "http://14.63.225.203/cogma/game/purchase_skill_type.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
+                    int sType;
+                    if (d[0] == 1) sType = 2;
+                    else if (d[0] == 2) sType = 1;
+                    else sType = d[0];
+                    sprintf(temp, "skill_type=%d&", sType);
+                    url += temp;
+                    sprintf(temp, "cost_value=%d", d[1]);
+                    url += temp;
+                    CCLog("url = %s", url.c_str());
+                    
+                    HttpRequest(url);
+                }
             }
         }
     }
@@ -449,7 +514,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void NoImage::ReplaceScene(std::string to, int type, int btnType)
 {
-    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d);
+    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere);
     this->removeFromParentAndCleanup(true);
 }
 
@@ -464,10 +529,12 @@ void NoImage::EndScene()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
     else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
-    else if (type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY)
+    else if (type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || fromWhere == 3)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL)
+    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL || type == BUY_PROPERTY_TRY || type == BUY_PROPERTY_FAIL || type == BUY_PROPERTY_OK || fromWhere == 1)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (fromWhere == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -531,6 +598,11 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
         case BUY_FAIRY_BY_TOPAZ_TRY:
         case BUY_FAIRY_BY_STARCANDY_TRY:
             XmlParseBuyFairy(dumpData, buffer->size()); break;
+        case BUY_SKILLSLOT_BY_STARCANDY_TRY:
+        case BUY_SKILLSLOT_BY_TOPAZ_TRY:
+            XmlParseBuySkillSlot(dumpData, buffer->size()); break;
+        case BUY_PROPERTY_TRY:
+            XmlParseBuySkillProperty(dumpData, buffer->size()); break;
     }
 }
 
@@ -900,5 +972,119 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
     {
         ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
-    
 }
+
+void NoImage::XmlParseBuySkillSlot(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // skill-slot 갱신
+        myInfo->ClearSkillSlot();
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-slot").children("slot");
+        int id, csi, usi;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+            }
+            myInfo->AddSkillSlot(id, csi, usi);
+        }
+        
+        // 부모 scene에 슬롯 정보 갱신된 것 전달
+        CCString* param = CCString::create("9");
+        if (fromWhere == 1)
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        else if (fromWhere == 2)
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        else if (fromWhere == 3)
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+        
+        ReplaceScene("NoImage", BUY_SKILLSLOT_OK, BTN_1);
+    }
+    else
+    {
+        if (code == 3) CCLog("슬롯구매 : 금액 부족");
+        else if (code == 4) CCLog("슬롯구매 : 금액이 맞지 않음. 재부팅.");
+        else if (code == 10) CCLog("슬롯구매 : 이미 구매한 슬롯 or 이전 단계 구매하지 않음");
+        else if (code == 11) CCLog("슬롯구매 : 슬롯 개수 MAX");
+        else CCLog("슬롯구매 : (code = %d) 기타 에러", code);
+        
+        ReplaceScene("NoImage", BUY_SKILLSLOT_FAIL, BTN_1);
+    }
+}
+
+void NoImage::XmlParseBuySkillProperty(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // property 정보 갱신
+        int fire = nodeResult.child("properties").attribute("fire").as_int();
+        int water = nodeResult.child("properties").attribute("water").as_int();
+        int land = nodeResult.child("properties").attribute("land").as_int();
+        int master = nodeResult.child("properties").attribute("master").as_int();
+        myInfo->SetProperties(fire, water, land, master);
+        
+        // 각 scene에 property 정보 갱신된 것 전달
+        CCString* param = CCString::create("8");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        
+        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
+    }
+    else
+    {
+        if (code == 3) CCLog("스킬속성구매 : 금액 부족");
+        else if (code == 4) CCLog("스킬속성구매 : 금액이 맞지 않음. 재부팅.");
+        else if (code == 10) CCLog("스킬속성구매 : 해당 속성 이미 보유");
+        else if (code == 11) CCLog("스킬속성구매 : 마스터 타입은 구매불가");
+        else CCLog("스킬속성구매 : (code = %d) 기타 에러", code);
+        
+        ReplaceScene("NoImage", BUY_PROPERTY_FAIL, BTN_1);
+    }
+}
+
+
+

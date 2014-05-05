@@ -6,7 +6,7 @@
 class NoImage : public CCLayer
 {
 public:
-    static CCScene* scene(int popupType, int btnType, std::vector<int> data);
+    static CCScene* scene(int popupType, int btnType, std::vector<int> data, int etc);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -34,6 +34,8 @@ public:
     void XmlParseSendTopaz(char* data, int size);
     void XmlParseUpgradeStaff(char* data, int size);
     void XmlParseBuyFairy(char* data, int size);
+    void XmlParseBuySkillSlot(char* data, int size);
+    void XmlParseBuySkillProperty(char* data, int size);
     
 protected:
     CCSize winSize;

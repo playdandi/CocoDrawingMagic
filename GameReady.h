@@ -13,7 +13,7 @@ class GameReady : public CCLayer,
 {
 public:
     ~GameReady(void);
-    static CCScene* scene();
+    static CCScene* scene(int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -23,18 +23,21 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
+    virtual void registerWithTouchDispatcher(void);
     
     void Notification(CCObject* obj);
     
     CREATE_FUNC(GameReady);
     
     void InitSprites();
+    void InitProperties();
     void InitFairy();
     void InitSkill();
-    void MakeScroll();
+    void MakeScrollSlot();
+    
+    void PotionTimer(float f);
     
     void EndScene();
-    //void EndSceneCallback();
     void EndSceneCallback(CCNode* sender, void* data);
     
 protected:
@@ -55,12 +58,15 @@ private:
     CCLayer* fairyLayer;
     CCLayer* skillLayer;
     
-    CCScrollView* scrollView;
+    CCLayer* containerSlot;
+    CCScrollView* scrollViewSlot;
     
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassProperty;
     SpriteClass* spriteClassCoco;
     SpriteClass* spriteClassFairy;
     SpriteClass* spriteClassSkill;
+    SpriteClass* spriteClassSlot;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */

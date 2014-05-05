@@ -60,6 +60,7 @@ public:
     
     int GetItem(int idx);
     int GetPotion();
+    int GetRemainPotionTimeNumber();
     std::string GetRemainPotionTime();
     bool IsFire();
     bool IsWater();
@@ -70,7 +71,8 @@ public:
     void SetMoney(int topaz, int starcandy);
     void SetPotion(int potion, int remainPotionTime);
     void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
-    //void SetNextStaff(int staffLvNext, int mpNextCostStarcandy, int mpNextCostTopaz, int staffNextPercent);
+    void SetItem(std::vector<int> items);
+    void SetProperties(int fire, int water, int land, int master);
     
     void SetProfileSkill(int id, int level);
     int GetProfileSkillId();
@@ -92,6 +94,7 @@ public:
     std::vector<class MySkillSlot*> GetSlot();
     void ClearFairyList();
     void ClearSkillList();
+    void ClearSkillSlot();
 
 private:
     bool settingKakaoMsg;
@@ -138,6 +141,7 @@ class MySkillSlot
 {
 public:
     MySkillSlot(int id, int csi, int usi);
+    void InsertSkill(int scid, int suid);
     int GetId();
     int GetCommonId();
     int GetUserId();
@@ -321,6 +325,8 @@ class SkillSlotInfo
 {
 public:
     SkillSlotInfo(int id, int costType, int cost);
+    static int GetCostType(int id);
+    static int GetCost(int id);
 private:
     int nId;
     int nCostType;
@@ -429,6 +435,7 @@ class SkillPropertyInfo
 {
 public:
     SkillPropertyInfo(int id, int cost);
+    static int GetCost(int id);
 private:
     int nId;
     int nCost_topaz;

@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "pugixml/pugixml.hpp"
+#include "Loading.h"
 #include "Ranking.h"
 #include "GameReady.h"
 #include "Sound.h"
@@ -122,6 +123,62 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
     return rt;
 }
 */
+
+CCLayer* Common::MakeScoreLayer(int num)
+{
+    CCLayer* layer = CCLayer::create();
+    
+    int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
+    int offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
+    char name[30];
+    int totalWidth = 0;
+    
+    std::string number = MakeComma(num);
+    //CCLog("number = %s", number.c_str());
+    
+    std::vector<CCSprite*> sprites;
+    //for (int i = number.size()-1 ; i >= 0 ; i--)
+    for (int i = 0 ; i < number.size() ; i++)
+    {
+        if (number[i] == ',')
+            sprintf(name, "number/count_comma.png");
+        else
+            sprintf(name, "number/count_%c.png", number[i]);
+        CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
+        //CCLog("%c", number[i]);
+        //temp->setAnchorPoint(ccp(1, 0));
+        temp->setAnchorPoint(ccp(0, 0));
+        //if (i == number.size()-1)
+        if (i == 0)
+        {
+            temp->setPosition(ccp(0, offset[number[i]-'0']));
+            totalWidth += (int)temp->getContentSize().width;
+        }
+        else
+        {
+            if (number[i] == ',')
+            {
+                temp->setPosition(ccp(totalWidth-3, 0));
+                totalWidth += (int)temp->getContentSize().width-3;
+            }
+            else
+            {
+                temp->setPosition(ccp(totalWidth - offsetX[number[i]-'0'], offset[number[i]-'0']));
+                //temp->setPosition(ccp(totalWidth, offset[number[i]-'0']));
+                //totalWidth -= ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
+                totalWidth += ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
+            }
+        }
+        
+        layer->addChild(temp, 100);
+        sprites.push_back(temp);
+    }
+    sprites.clear();
+    
+    layer->setContentSize(CCSizeMake(totalWidth, 0));
+
+    return layer;
+}
 
 std::string Common::MakeComma(int number)
 {
@@ -260,11 +317,14 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
 // from       : 이 함수를 불러온 scene 이름
 // to         : 이동할 scene 이름
 // isReplaced : replaceScene을 할 경우 true, otherwise, false.
-void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc)
+void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc, int priority)
 {
+    if (from == "Sketchbook")
+        ((Sketchbook*)obj)->SetTouchLock(false);
+    
     CCScene* nextScene;
-    if (to == "Ranking") nextScene = Ranking::scene();
-    else if (to == "GameReady") nextScene = GameReady::scene();
+    if (to == "Ranking") nextScene = Ranking::scene(etc);
+    else if (to == "GameReady") nextScene = GameReady::scene(priority);
     else if (to == "Message") nextScene = Message::scene();
     else if (to == "MagicList") nextScene = MagicList::scene(etc);
     else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc);
@@ -280,13 +340,15 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Setting") nextScene = Setting::scene();
     else if (to == "Sketchbook")
     {
-        if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0);
-        else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1);
+        if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
+        else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
     }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
-    else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc);
+    else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc, priority);
+    
+    else if (to == "Loading") nextScene = Loading::scene();
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
 
@@ -304,13 +366,13 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Ranking")
     {
         if (isReplaced)
-        {
-            //CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
             CCDirector::sharedDirector()->replaceScene(nextScene);
-            //((Ranking*)obj)->EndScene();
-        }
         else
             ((Ranking*)obj)->addChild(nextScene, 200, 200);
+    }
+    else if (from == "Loading")
+    {
+        if (isReplaced) CCDirector::sharedDirector()->replaceScene(nextScene);
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
@@ -326,20 +388,21 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         if (isReplaced)
         {
             CCLog("back to RANKING");
-            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
             CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
             CCDirector::sharedDirector()->replaceScene(transition);
-            ((Puzzle*)obj)->EndScene();
         }
     }
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
-void Common::ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data)
+void Common::ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc, int priority)
 {
+    if (from == "Sketchbook")
+        ((Sketchbook*)obj)->SetTouchLock(false);
+    
     CCScene* popup;
-    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data);
+    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
     
     if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
@@ -348,6 +411,8 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
+    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
+    else if (from == "GameReady") ((GameReady*)obj)->addChild(popup, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {
         if(isReplaced) {
@@ -793,6 +858,38 @@ void SpriteClass::RemoveAllObjects()
 }
 
 
+/*
+void Common::thread_sleep(struct timespec *ti)
+{
+    pthread_mutex_t mtx;
+    pthread_cond_t cnd;
+    pthread_mutex_init(&mtx, 0);
+    pthread_cond_init(&cnd, 0);
+    pthread_mutex_lock(&mtx);
+    pthread_cond_timedwait(&cnd, &mtx, ti);
+    pthread_mutex_unlock(&mtx);
+    pthread_cond_destroy(&cnd);
+    pthread_mutex_destroy(&mtx);
+}
 
+void Common::sleep(unsigned long secs, unsigned long msecs)
+{
+    struct timeval tv;
+    struct timespec ti;
+    gettimeofday(&tv,NULL);
+    unsigned long offset=time(0);
+    int plat = CCPlatformUtils::GetPlatform();
+    if(platWINDOWS)//windows
+    {
+        ti.tv_sec =offset+secs;
+        ti.tv_nsec=0;
+    }else if(platPLAT_ANDROID||platIPAD||platIPHONE)//Linux
+    {
+        ti.tv_sec=tv.tv_sec;
+        ti.tv_nsec=tv.tv_usec*1000+msecs*1000*1000;
+    }
+    thread_sleep(&ti);
+}
+*/
 
 

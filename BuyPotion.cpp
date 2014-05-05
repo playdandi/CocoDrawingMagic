@@ -116,6 +116,10 @@ void BuyPotion::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션 5개로 교환하기", fontList[0], 36,
                 ccp(0, 0), ccp(470, 47), ccc3(78,47,8), "background/bg_degree_desc.png", "1", NULL, 2) );
     
+    // 코코 그림
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_potion.png", ccp(0.5, 0.5), ccp(75+929/2, 492+904/2+70), CCSize(0, 0), "", "BuyPotion", this, 5) );
+    ((CCSprite*)spriteClass->FindSpriteByName("image/coco_potion.png"))->setScale(1.15f);
+    
     // button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png1",
                     ccp(0, 0), ccp(71, 193), CCSize(0, 0), "", "BuyPotion", this, 1) );

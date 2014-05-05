@@ -7,7 +7,7 @@ class SketchDetail : public CCLayer
 {
 public:
     ~SketchDetail(void);
-    static CCScene* scene(int id);
+    static CCScene* scene(int id, int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

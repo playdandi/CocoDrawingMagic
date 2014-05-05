@@ -61,7 +61,7 @@ bool Splash::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
     
     // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
@@ -896,8 +896,6 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseLogin(dumpData, buffer->size()); break;
         case HTTP_MYINFO:
             XmlParseMyInfo(dumpData, buffer->size()); break;
-        //case HTTP_PRICE:
-        //    XmlParsePrice(dumpData, buffer->size()); break;
         case HTTP_FRIENDS:
             XmlParseFriends(dumpData, buffer->size()); break;
         default:

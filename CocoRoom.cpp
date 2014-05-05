@@ -271,9 +271,37 @@ void CocoRoom::MakeSpritesCoco()
     
     // stone floor
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "background/stone_floor.png",
-                        ccp(0, 0), ccp(100, 730+offset), CCSize(0, 0), "", "Layer", coco, 3) );
+                        ccp(0, 0), ccp(95, 740+offset), CCSize(0, 0), "", "Layer", coco, 1) );
     
     // coco character
+    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(0, "image/coco_room.png", ccp(0.5, 0), ccp(315, 840+offset), CCSize(0, 0), "", "Layer", coco, 5) );
+    ((CCSprite*)spriteClassCoco->FindSpriteByName("image/coco_room.png"))->setScale(0.95f);
+    
+    CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(1.0f, ccp(0, +5)), CCMoveBy::create(1.0f, ccp(0, -5)), NULL);
+    CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
+    ((CCSprite*)spriteClassCoco->FindSpriteByName("image/coco_room.png"))->runAction(rep);
+    // 지팡이 particle
+    CCSprite* sp = CCSprite::create("particles/effect_10.png");
+    CCParticleSystem* par = CCParticleFlower::create();
+    par->retain();
+    par->setTexture(sp->getTexture());
+    par->setAnchorPoint(ccp(0.5, 0.5));
+    par->setPosition(ccp(474, 1094+offset));
+    par->setStartSize(65);
+    par->setLife(0.4);
+    par->setSpeed(120);
+    par->setSpeedVar(70);
+    ccColor4F startColor = par->getStartColor();
+    startColor.r = 0.95f;
+    startColor.g = 0.95f;
+    startColor.b = 0.95f;
+    par->setStartColor(startColor);
+    par->setDuration(-1);
+    this->addChild(par, 100);
+    CCFiniteTimeAction* action2 = CCSequence::create(CCMoveBy::create(1.0f, ccp(0, +5)), CCMoveBy::create(1.0f, ccp(0, -5)), NULL);
+    CCAction* rep2 = CCRepeatForever::create((CCActionInterval*)action2);
+    par->runAction(rep2);
+
     
     // skill 그림
     CCPoint pos = ccp(608, 1182+offset);
