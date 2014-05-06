@@ -13,7 +13,7 @@ class CocoRoom : public CCLayer,
                  public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int tab);
+    static CCScene* scene(int tab, int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -52,6 +52,8 @@ protected:
     bool isFairySlotTouched;
     
 private:
+    CCParticleSystem* par;
+    
     SpriteClass* spriteClass;
     SpriteClass* spriteClassCoco;
     SpriteClass* spriteClassFairy;

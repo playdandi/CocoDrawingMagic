@@ -395,6 +395,7 @@ public:
     int GetId();
     std::string GetName();
     static SkillInfo* GetSkillInfo(int sid);
+    static std::string GetShortDesc(int sid);
     int GetMaxLevel();
     int GetRequiredSkillId();
     int GetRequiredSkillLv();

@@ -326,10 +326,10 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     if (to == "Ranking") nextScene = Ranking::scene(etc);
     else if (to == "GameReady") nextScene = GameReady::scene(priority);
     else if (to == "Message") nextScene = Message::scene();
-    else if (to == "MagicList") nextScene = MagicList::scene(etc);
-    else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc);
-    else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene();
-    else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene();
+    else if (to == "MagicList") nextScene = MagicList::scene(etc, priority);
+    else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc, priority);
+    else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene(priority);
+    else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene(priority);
     else if (to == "InviteFriend") nextScene = InviteFriend::scene();
     else if (to == "BuyTopaz") nextScene = BuyTopaz::scene(etc);
     else if (to == "BuyStarCandy") nextScene = BuyStarCandy::scene(etc);
@@ -345,7 +345,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
-    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
+    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc, priority);
     else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc, priority);
     
     else if (to == "Loading") nextScene = Loading::scene();
@@ -402,7 +402,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
         ((Sketchbook*)obj)->SetTouchLock(false);
     
     CCScene* popup;
-    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
+    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc, priority);
     
     if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);

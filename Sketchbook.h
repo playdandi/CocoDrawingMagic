@@ -29,7 +29,7 @@ public:
     void InitSprites();
     void CheckProperties();
     void MakeScroll(int state, bool isFromPopup = false);
-    void MakeScrollFire();
+    void MakeScrollFire(int idx);
     void MakeScrollWater();
     void MakeScrollLand();
     void MakeScrollMaster();

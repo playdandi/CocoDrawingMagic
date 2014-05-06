@@ -1,10 +1,12 @@
 #include "FairyOneInfo.h"
 
 int fairy_idx;
+static int priority;
 
-CCScene* FairyOneInfo::scene(int idx)
+CCScene* FairyOneInfo::scene(int idx, int prio)
 {
     fairy_idx = idx;
+    priority = prio;
     
     CCScene* pScene = CCScene::create();
     FairyOneInfo* pLayer = FairyOneInfo::create();
@@ -15,12 +17,14 @@ CCScene* FairyOneInfo::scene(int idx)
 
 void FairyOneInfo::onEnter()
 {
+    CCLog("FairyOneInfo : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void FairyOneInfo::onExit()
 {
+    CCLog("FairyOneInfo : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -34,13 +38,20 @@ void FairyOneInfo::keyBackClicked()
 
 bool FairyOneInfo::init()
 {
-    CCLog("FairyOneInfo :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
     
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("FairyOneInfo : touch prio = %d", priority);
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(FairyOneInfo::Notification), "FairyOneInfo", NULL);
     
     // notification post
     CCString* param = CCString::create("1");
@@ -49,6 +60,30 @@ bool FairyOneInfo::init()
     InitSprites();
     
     return true;
+}
+
+void FairyOneInfo::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
+        this->setTouchPriority(priority);
+        isTouched = false;
+        CCLog("FairyOneInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("FairyOneInfo : 터치 비활성");
+        //this->setKeypadEnabled(false);
+        //this->setTouchEnabled(false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
 }
 
 void FairyOneInfo::InitSprites()
@@ -230,6 +265,8 @@ void FairyOneInfo::EndScene()
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+    
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "FairyOneInfo");
     
     this->removeFromParentAndCleanup(true);
 }

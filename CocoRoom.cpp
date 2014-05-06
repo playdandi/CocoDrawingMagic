@@ -4,10 +4,12 @@
 using namespace pugi;
 
 static int tabNumber;
+static int priority;
 
-CCScene* CocoRoom::scene(int tab)
+CCScene* CocoRoom::scene(int tab, int prio)
 {
     tabNumber = tab;
+    priority = prio;
     
     CCScene* pScene = CCScene::create();
     CocoRoom* pLayer = CocoRoom::create();
@@ -18,12 +20,14 @@ CCScene* CocoRoom::scene(int tab)
 
 void CocoRoom::onEnter()
 {
+    CCLog("CocoRoom : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void CocoRoom::onExit()
 {
+    CCLog("CocoRoom : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -41,6 +45,11 @@ bool CocoRoom::init()
 	{
 		return false;
 	}
+
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("CocoRoom : touch prio = %d", priority);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -54,8 +63,11 @@ bool CocoRoom::init()
     // scrollView init.
     scrollViewCoco = CCScrollView::create();
     scrollViewCoco->retain();
+    scrollViewCoco->setTouchPriority(priority);
     scrollViewFairy = CCScrollView::create();
     scrollViewFairy->retain();
+    scrollViewFairy->setTouchPriority(priority);
+    
     containerCoco = CCLayer::create();
     containerFairy = CCLayer::create();
     
@@ -78,6 +90,8 @@ bool CocoRoom::init()
     spriteClassFairySlot = new SpriteClass();
     spriteClassCocoSlot = new SpriteClass();
     
+    par = NULL;
+    
     InitSprites();
     curState = -1;
     MakeSprites(tabNumber);
@@ -91,12 +105,13 @@ void CocoRoom::Notification(CCObject* obj)
     
     if (param->intValue() == 0)
     {
-        CCLog("cocoRoom 활성");
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
+        this->setTouchPriority(priority);
         isTouched = false;
+        CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 코코의 정보 갱신
         if (curState == 0)
@@ -128,11 +143,11 @@ void CocoRoom::Notification(CCObject* obj)
     }
     else if (param->intValue() == 1)
     {
-        CCLog("cocoRoom 비활성");
         // 터치 비활성
+        CCLog("CocoRoom : 터치 비활성");
+        //this->setKeypadEnabled(false);
+        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
@@ -140,18 +155,29 @@ int offset = -110;
 
 void CocoRoom::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height-250));
+    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
-    pBlack->setOpacity(220);
+    pBlack->setOpacity(200);
     this->addChild(pBlack, 0);
-    CCSprite* pBlack2 = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, 250));
-    pBlack2->setPosition(ccp(0, winSize.height-250));
-    pBlack2->setAnchorPoint(ccp(0, 0));
-    pBlack2->setColor(ccc3(0, 0, 0));
-    pBlack2->setOpacity(100);
-    this->addChild(pBlack2, 0);
+    
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "CocoRoom", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png2", ccp(0, 0), ccp(390, 1666), CCSize(290, 75), "", "CocoRoom", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png3", ccp(0, 0), ccp(765, 1666), CCSize(290, 75), "", "CocoRoom", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15+10, 1656), CCSize(0, 0), "", "CocoRoom", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "CocoRoom", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "CocoRoom", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "CocoRoom", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "CocoRoom", this, 5) );
+    
+    // topaz
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0.5, 0), ccp((80+230+80)/2, 1686), ccc3(255,255,255), "", "CocoRoom", this, 5, 0, 255, 1) );
+    // starcandy
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0.5, 0), ccp((390+290+390)/2, 1686), ccc3(255,255,255), "", "CocoRoom", this, 5, 0, 255, 2) );
+    // magic-point
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0.5, 0), ccp((765+765+290)/2, 1686), ccc3(255,255,255), "", "CocoRoom", this, 5, 0, 255, 3) );
+    
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_purple.png",
@@ -223,6 +249,8 @@ void CocoRoom::MakeSprites(int state)
     //spriteClass->spriteObj[size-3]->sprite9->setOpacity(255);
     //spriteClass->spriteObj[size-2]->label->setOpacity(255);
     //spriteClass->spriteObj[size-1]->label->setOpacity(255);
+    if (par != NULL)
+        par->setVisible(false);
     
     if (abs(state) == 1)
     {
@@ -230,6 +258,7 @@ void CocoRoom::MakeSprites(int state)
         MakeScrollCoco();
         for (int i = 0 ; i < spriteClassCoco->spriteObj.size() ; i++)
             spriteClassCoco->AddChild(i);
+        par->setVisible(true);
     }
     else if (abs(state) == 2)
     {
@@ -244,9 +273,9 @@ void CocoRoom::MakeSprites(int state)
     }
     else
     {
-        spriteClass->spriteObj[size-3]->sprite9->setOpacity(0);
-        spriteClass->spriteObj[size-2]->label->setOpacity(0);
-        spriteClass->spriteObj[size-1]->label->setOpacity(0);
+        //spriteClass->spriteObj[size-3]->sprite9->setOpacity(0);
+        //spriteClass->spriteObj[size-2]->label->setOpacity(0);
+        //spriteClass->spriteObj[size-1]->label->setOpacity(0);
         MakeSpritesCandy();
         for (int i = 0 ; i < spriteClassCandy->spriteObj.size() ; i++)
             spriteClassCandy->AddChild(i);
@@ -282,7 +311,7 @@ void CocoRoom::MakeSpritesCoco()
     ((CCSprite*)spriteClassCoco->FindSpriteByName("image/coco_room.png"))->runAction(rep);
     // 지팡이 particle
     CCSprite* sp = CCSprite::create("particles/effect_10.png");
-    CCParticleSystem* par = CCParticleFlower::create();
+    par = CCParticleFlower::create();
     par->retain();
     par->setTexture(sp->getTexture());
     par->setAnchorPoint(ccp(0.5, 0.5));
@@ -595,8 +624,8 @@ void CocoRoom::SetFairyBuildUp()
 
 void CocoRoom::MakeSpritesCandy()
 {
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "todaycandy/bg_group.png",
-                        ccp(0, 0), ccp(108, 518), CCSize(0, 0), "", "Layer", candy, 5) );
+    //spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "todaycandy/bg_group.png",
+    //                    ccp(0, 0), ccp(108, 518), CCSize(0, 0), "", "Layer", candy, 5) );
     
     // 5 profiles
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile_noimage.png1",
@@ -696,7 +725,6 @@ void CocoRoom::MakeScrollFairy()
     }
     
     // scrollView 생성
-    //scrollViewFairy->retain();
     scrollViewFairy->setDirection(kCCScrollViewDirectionHorizontal);
     scrollViewFairy->setViewSize(CCSizeMake(782-40, 177-20));
     scrollViewFairy->setContainer(containerFairy);
@@ -720,28 +748,14 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png1")
+        if (spriteClass->spriteObj[i]->name.substr(0, 35) == "background/bg_sketchbook_select.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                int number = atoi(spriteClass->spriteObj[i]->name.substr(35, 36).c_str());
                 sound->playClickboard();
-                MakeSprites(0);
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png2")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                sound->playClickboard();
-                MakeSprites(1);
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "background/bg_sketchbook_select.png3")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                sound->playClickboard();
-                MakeSprites(2);
+                MakeSprites(number);
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
@@ -754,20 +768,20 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
         {
-            if (curState == 0 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
                 // 슬롯 구매
             }
-            else if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false); // 요정의 마을
-            }
             else if (curState == 2 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
+                Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false, -1, priority-1); // 요정의 마을
+            }
+            else if (curState == 3 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false, -1, priority-1); // 오.별 친구고르기
             }
         }
     }
@@ -784,7 +798,7 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(0);
                     data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_StarCandy());
-                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
                 }
             }
         }
@@ -799,7 +813,7 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(0);
                     data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_Topaz());
-                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data);
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data, -1, priority-1);
                 }
             }
         }
@@ -815,7 +829,7 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(0);
                 data.push_back(FairyBuildUpInfo::GetCostTopaz(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
             }
         }
         else if (spriteClassFairy->spriteObj[i]->name == "button/btn_green.png1")
@@ -826,7 +840,7 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(0);
                 data.push_back(FairyBuildUpInfo::GetCostStarCandy(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
             }
         }
     }

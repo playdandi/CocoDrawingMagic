@@ -124,7 +124,7 @@ void Loading::XmlParseGameStart(char* data, int size)
         int missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
         
         // 사용할 active 스킬 목록
-        int slot_id, slot_csi, slot_usi;
+        /*int slot_id, slot_csi, slot_usi;
         xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("slot");
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
@@ -136,6 +136,20 @@ void Loading::XmlParseGameStart(char* data, int size)
                 else if (name == "user-skill-id") slot_usi = ait->as_int();
             }
             //priceTopaz.push_back( new PriceTopaz(id, count, price_KRW, price_USD, bonus) );
+        }*/
+        myInfo->ClearSkillSlot();
+        xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("slot");
+        int id, csi, usi;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+            }
+            myInfo->AddSkillSlot(id, csi, usi);
         }
         
         // 돈 갱신

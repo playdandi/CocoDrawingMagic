@@ -993,6 +993,33 @@ SkillInfo* SkillInfo::GetSkillInfo(int sid)
     }
     return NULL;
 }
+std::string SkillInfo::GetShortDesc(int sid)
+{
+    switch (sid)
+    {
+        case 21: return "빨간구슬을 터뜨리면 추가점수"; break;
+        case 22: return "빨간구슬 사이클로 추가폭발"; break;
+        case 23: return "10개이상 제거 시 추가점수"; break;
+        case 24: return "매직타임의 마법진 폭발 2회"; break;
+        case 25: return "불의 정령 : 빨간구슬 모으기"; break;
+        case 26: return "6개이상 제거 시 두 번 폭발"; break;
+        case 27: return "코코의 자동 한붓그리기"; break;
+        case 28: return "10개이상 제거 시 용의 출현"; break;
+            
+        case 31: return "초록구슬을 터뜨리면 추가점수"; break;
+        case 32: return "초록구슬 사이클로 추가폭발"; break;
+        case 33: return "지팡이 레벨에 따른 추가별사탕"; break;
+        case 34: return "10개이상 제거 시 추가별사탕"; break;
+        case 35: return "땅의 정령 : 초록구슬 복사"; break;
+        case 36: return "6개이상 제거 시 두 번 폭발"; break;
+        case 37: return "확률적으로 포션 1개 획득"; break;
+        case 38: return "확률적으로 고대나무의 출현"; break;
+            
+        case 11: return "푸른구슬을 터뜨리면 추가점수"; break;
+        case 12: return "푸른구슬 사이클로 추가폭발"; break;
+    }
+    return "";
+}
 int SkillInfo::GetId()
 {
     return nId;

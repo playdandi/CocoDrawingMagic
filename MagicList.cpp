@@ -6,10 +6,14 @@ using namespace pugi;
 static int from;
 int sid[16] = {22, 25, 26, 28, 12, 15, 16, 18, 32, 35, 36, 38, 42, 43, 45, -1};
 
-CCScene* MagicList::scene(int fromWhere)
+static int priority;
+
+CCScene* MagicList::scene(int fromWhere, int prio)
 {
     from = fromWhere;
     CCLog("MagicList : from = %d", from);
+    
+    priority = prio;
     
     CCScene* pScene = CCScene::create();
     MagicList* pLayer = MagicList::create();
@@ -22,7 +26,7 @@ void MagicList::onEnter()
 {
     CCLog("MagicList :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void MagicList::onExit()
@@ -45,6 +49,12 @@ bool MagicList::init()
 	{
 		return false;
 	}
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("MagicList : touch prio = %d", this->getTouchPriority());
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // notification
@@ -58,11 +68,6 @@ bool MagicList::init()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     InitSprites();
-    
-    this->setTouchEnabled(true);
-    this->setKeypadEnabled(true);
-    this->setTouchPriority(-2);
-    CCLog("MagicList : touch prio = %d", this->getTouchPriority());
     
     return true;
 }
@@ -190,8 +195,6 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 for (int i = 0 ; i < myInfo->GetSlot().size() ; i++)
                 {
                     MySkillSlot* mss = myInfo->GetSlot()[i];
-                    if (mss->GetUserId() == 0)
-                        continue;
                     if (i == myInfo->GetSlot().size()-1)
                         sprintf(temp, "slot_id_list[%d]=%d&user_skill_id_list[%d]=%d", cnt, cnt+1, cnt, mss->GetUserId());
                     else

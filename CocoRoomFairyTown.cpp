@@ -1,12 +1,16 @@
 #include "CocoRoomFairyTown.h"
 
+static int priority;
+
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
     CCLog("CocoFairyTown 소멸자 실행");
 }
 
-CCScene* CocoRoomFairyTown::scene()
+CCScene* CocoRoomFairyTown::scene(int prio)
 {
+    priority = prio;
+    
     CCScene* pScene = CCScene::create();
     CocoRoomFairyTown* pLayer = CocoRoomFairyTown::create();
     pScene->addChild(pLayer);
@@ -18,7 +22,7 @@ void CocoRoomFairyTown::onEnter()
 {
     CCLog("CocoRoomFairyTown :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void CocoRoomFairyTown::onExit()
@@ -37,11 +41,15 @@ void CocoRoomFairyTown::keyBackClicked()
 
 bool CocoRoomFairyTown::init()
 {
-    //CCLog("CocoRoomFairyTown :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("CocoRoomFairyTown : touch prio = %d", priority);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -67,19 +75,20 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCLog("cocoroomfairytown 활성");
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
+        this->setTouchPriority(priority);
         isTouched = false;
+        CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("cocoroomfairytown 비활성");
+        CCLog("CocoRoomFairyTown : 터치 비활성");
+        //this->setKeypadEnabled(false);
+        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
@@ -181,9 +190,9 @@ void CocoRoomFairyTown::MakeScroll()
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setContainer(scrollContainer);
     scrollView->setDelegate(this);
+    scrollView->setTouchPriority(priority); // priority
     scrollView->setContentOffset(ccp(0, (904-40)-scrollContainer->getContentSize().height ));
     this->addChild(scrollView, 3);
-    
 }
 
 
@@ -241,7 +250,7 @@ void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 int idx = spriteClass->spriteObj[i]->sprite9->getTag();
-                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx);
+                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx, priority-1);
             }
         }
     }
@@ -275,13 +284,13 @@ void CocoRoomFairyTown::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     
-    CCLog("%d", scrollContainer->retainCount());
+    //CCLog("%d", scrollContainer->retainCount());
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->release();
     scrollView->removeFromParent();
-    CCLog("%d", pBlack->retainCount());
-    CCLog("%d", scrollView->retainCount());
+    //CCLog("%d", pBlack->retainCount());
+    //CCLog("%d", scrollView->retainCount());
     
     this->removeFromParentAndCleanup(true);
 }

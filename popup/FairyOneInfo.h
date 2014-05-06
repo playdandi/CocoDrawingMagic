@@ -7,7 +7,7 @@
 class FairyOneInfo : public CCLayer
 {
 public:
-    static CCScene* scene(int idx);
+    static CCScene* scene(int idx, int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -17,6 +17,8 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
     CREATE_FUNC(FairyOneInfo);
+    
+    void Notification(CCObject* obj);
     
     void InitSprites();
     

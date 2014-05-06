@@ -12,7 +12,7 @@ int drop_order;
 pthread_t thread;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t falling = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t touchRound = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t touchRound = PTHREAD_MUTEX_INITIALIZER;
 
 CCScene* Puzzle::scene()
 {
@@ -82,11 +82,56 @@ bool Puzzle::init()
     puzzleP4set->SetGameLayer(this);
     puzzleP4set->SetPuzzleLayer(puzzleLayer);
     
-    
     // skill algorithm
     skill = new PuzzleSkill();
     skill->SetGameLayer(this);
+    
     std::vector<int> skillNum, skillProb, skillLv;
+    
+    bool flag;
+    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+    {
+        flag = false;
+        MySkill* ms = myInfo->GetSkillList()[i];
+        if (!SkillInfo::GetSkillInfo(ms->GetCommonId())->IsActive())
+            flag = true;
+        else
+        {
+            CCLog("slot size = %d", (int)myInfo->GetSlot().size());
+            for (int j = 0 ; j < myInfo->GetSlot().size() ; j++)
+            {
+                MySkillSlot* mss = myInfo->GetSlot()[j];
+                CCLog("slot ; %d", mss->GetCommonId());
+                if (mss->GetCommonId() == ms->GetCommonId())
+                    flag = true;
+            }
+        }
+        
+        if (flag) // 사용할 스킬이니까 등록하자
+        {
+            int id = ms->GetCommonId();
+            if (id >= 21 && id <= 28) {
+                skillNum.push_back(id-21);
+                if (id == 27) skillProb.push_back(20);
+                else skillProb.push_back(100);
+            }
+            else if (id >= 11 && id <= 18) {
+                skillNum.push_back(id-3);
+                if (id == 17) skillProb.push_back(10);
+                else skillProb.push_back(100);
+            }
+            else if (id >= 31 && id <= 38) {
+                skillNum.push_back(id-15);
+                if (id == 38) skillProb.push_back(10);
+                else skillProb.push_back(100);
+            }
+            skillLv.push_back(4);
+            CCLog("%d", skillNum[skillNum.size()-1]);
+        }
+    }
+    skill->Init(skillNum, skillProb, skillLv);
+    
+    /*
     skillNum.push_back(0);
     skillNum.push_back(8);
     skillNum.push_back(16);
@@ -125,7 +170,7 @@ bool Puzzle::init()
         skillLv.push_back(4);
     }
     skill->Init(skillNum, skillProb, skillLv);
-    
+     */
 
 	m_winSize = CCDirector::sharedDirector()->getWinSize();
     srand(time(NULL));
@@ -715,8 +760,8 @@ void Puzzle::ComboTimer(float f)
 
 void Puzzle::SetTimer()
 {
-    iTimer = 1000 * 60 * 5;
-    pTimerLabel = CCLabelTTF::create("60", fontList[2].c_str(), 50);
+    iTimer = 1000 * PUZZLE_TIME;
+    pTimerLabel = CCLabelTTF::create("30", fontList[2].c_str(), 50);
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
     pTimerLabel->setPosition(ccp(40, 300));
     this->addChild(pTimerLabel, 1000);
@@ -745,7 +790,7 @@ void Puzzle::UpdateTimer(float f)
     iTimer -= 100;
     
     // timer 이동
-    float delta = (float)1000/(float)600;
+    float delta = (float)1000/(PUZZLE_TIME*10);
     CCPoint tl = timerLayer->getPosition();
     CCPoint tp = timerClip->getPosition();
     timerClip->setPosition(ccp(tp.x-delta, tp.y));
@@ -760,6 +805,8 @@ void Puzzle::UpdateTimer(float f)
         if (iTimer == 0) // game over
         {
             isGameOver = true;
+            
+            pthread_mutex_unlock(&lock);
             
             this->unschedule(schedule_selector(Puzzle::UpdateTimer));
             this->setTouchEnabled(false);

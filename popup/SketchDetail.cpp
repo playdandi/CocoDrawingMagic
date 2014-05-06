@@ -486,9 +486,9 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
         data.push_back(skill_common_id); // 스킬 common id
         data.push_back(MySkill::GetObj(skill_common_id)->GetLevel()); // 증가한 스킬 레벨
         if (tag == 0) // 스킬을 레벨업한 경우
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_OK, BTN_1, data);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_OK, BTN_1, data, -1, priority-1);
         else if (tag == 1) // 스킬을 새로 배운 경우
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_OK, BTN_1, data);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_OK, BTN_1, data, -1, priority-1);
     }
     else
     {
@@ -499,7 +499,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
             else if (code == 11) CCLog("SketchDetail : 스킬이 만렙임");
             else if (code == 12) CCLog("SketchDetail : 연습량 미달");
             else if (code == 4) CCLog("SketchDetail : 가격 잘못되었음. 재부팅.");
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_FAIL, BTN_1, nullData);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_FAIL, BTN_1, nullData, -1, priority-1);
         }
         else if (tag == 1) // PURCHASE SKILL 실패한 경우
         {
@@ -510,7 +510,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
             else if (code == 14) CCLog("SketchDetail : 요구 스킬 소유/Lv 미달");
             else if (code == 15) CCLog("SketchDetail : 이미 배운 스킬");
             else if (code == 4) CCLog("SketchDetail : 가격 잘못되었음. 재부팅.");
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_FAIL, BTN_1, nullData);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_FAIL, BTN_1, nullData, -1, priority-1);
         }
     }
 }

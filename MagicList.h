@@ -6,7 +6,7 @@
 class MagicList : public CCLayer
 {
 public:
-    static CCScene* scene(int fromWhere);
+    static CCScene* scene(int fromWhere, int prio);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

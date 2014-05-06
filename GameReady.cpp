@@ -206,10 +206,23 @@ void GameReady::InitSprites()
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
     
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "GameReady", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png2", ccp(0, 0), ccp(390, 1666), CCSize(290, 75), "", "GameReady", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png3", ccp(0, 0), ccp(765, 1666), CCSize(290, 75), "", "GameReady", this, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15+10, 1656), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "GameReady", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png2", ccp(0, 0), ccp(390, 1666), CCSize(290, 75), "", "GameReady", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png3", ccp(0, 0), ccp(765, 1666), CCSize(290, 75), "", "GameReady", this, 1) );
+    
+    // topaz
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0.5, 0), ccp((80+230+80)/2, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 1) );
+    // starcandy
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0.5, 0), ccp((390+290+390)/2, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 2) );
+    // magic-point
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0.5, 0), ccp((765+765+290)/2, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 3) );
+    
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1", ccp(0, 0), ccp(49, 687), CCSize(982, 725), "", "GameReady", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1", ccp(0, 0), ccp(77, 1126), CCSize(929, 268), "", "GameReady", this, 1) );
     
@@ -218,10 +231,6 @@ void GameReady::InitSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(112, 1165), CCSize(274, 53), "", "GameReady", this, 4, 128) );
     
-    
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(15, 1656), CCSize(0, 0), "", "GameReady", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "GameReady", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "GameReady", this, 5) );
     
     // property 문양 (mp 바로 밑에)
     InitProperties();
@@ -233,8 +242,6 @@ void GameReady::InitSprites()
     spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setFlipX(true);
     
     // 버튼들
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png1", ccp(0, 0), ccp(80+230-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png2", ccp(0, 0), ccp(390+290-55, 1679), CCSize(0, 0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_potion_time.png", ccp(0, 0), ccp(506, 1493), CCSize(0, 0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_topinfo_plus.png3", ccp(0, 0), ccp(645, 1498), CCSize(0, 0), "", "GameReady", this, 5) );
     
@@ -252,12 +259,6 @@ void GameReady::InitSprites()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 1000, 1, 0) );
     }
     
-    // topaz
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0, 0), ccp(110, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 1) );
-    // starcandy
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0, 0), ccp(420, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 2) );
-    // magic-point
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0, 0), ccp(800, 1686), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 3) );
     // potion-remain-time
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "GameReady", this, 5, 0, 255, 4) );
 
@@ -703,7 +704,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1);
+                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1, priority-1);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
@@ -711,7 +712,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3);
+                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3, priority-1);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
@@ -740,7 +741,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (fairyLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2);
+        Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2, priority-1);
     }
     else if (skillLayer->boundingBox().containsPoint(point))
     {
@@ -767,7 +768,7 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isScrolling && isScrollViewTouched && scrollViewSlot->boundingBox().containsPoint(point))
     {
         sound->playBoardMove(); // 이 scene만 사운드가 다르다.
-        Common::ShowNextScene(this, "GameReady", "MagicList", false);
+        Common::ShowNextScene(this, "GameReady", "MagicList", false, 0, priority-1);
     }
     
     isScrolling = false;

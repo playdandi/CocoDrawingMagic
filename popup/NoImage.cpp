@@ -8,14 +8,19 @@ static int type;
 static int btn;
 static std::vector<int> d;
 static int fromWhere;
+static int priority;
 
-CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc)
+static int newSkillType;
+
+CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc, int prio)
 {
     // data
     type = popupType;
     btn = btnType;
     d = data;
     fromWhere = etc;
+    
+    priority = prio;
     
     CCScene* pScene = CCScene::create();
     NoImage* pLayer = NoImage::create();
@@ -27,7 +32,7 @@ CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int e
 void NoImage::onEnter()
 {
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
     CCLayer::onEnter();
 }
 void NoImage::onExit()
@@ -50,6 +55,11 @@ bool NoImage::init()
 	{
 		return false;
 	}
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(priority);
+    CCLog("NoImage : touch prio = %d", priority);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -481,11 +491,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
                     // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
-                    int sType;
-                    if (d[0] == 1) sType = 2;
-                    else if (d[0] == 2) sType = 1;
-                    else sType = d[0];
-                    sprintf(temp, "skill_type=%d&", sType);
+                    if (d[0] == 1) newSkillType = 2;
+                    else if (d[0] == 2) newSkillType = 1;
+                    else newSkillType = d[0];
+                    sprintf(temp, "skill_type=%d&", newSkillType);
                     url += temp;
                     sprintf(temp, "cost_value=%d", d[1]);
                     url += temp;
@@ -514,7 +523,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void NoImage::ReplaceScene(std::string to, int type, int btnType)
 {
-    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere);
+    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere, priority);
     this->removeFromParentAndCleanup(true);
 }
 
@@ -578,6 +587,11 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
     dumpData[buffer->size()] = NULL;
     
     // parse xml data
+    if (atoi(res->getHttpRequest()->getTag()) == 99999)
+    {
+        XmlParseGetFirstSkill(dumpData, buffer->size());
+        return;
+    }
     switch (type)
     {
         case BUY_TOPAZ_TRY:
@@ -1071,8 +1085,29 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        // 돈 정보 갱신
+        param = CCString::create("3");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
-        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
+        //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
+        // 1번 스킬 배우기
+        char temp[255];
+        std::string url = "http://14.63.225.203/cogma/game/purchase_skill.php?";
+        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+        url += temp;
+        sprintf(temp, "skill_id=%d&", newSkillType*10+1); // 1이면 11번 스킬을 배우는 식
+        url += temp;
+        sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(newSkillType*10+1, 1)); // 새로 배우니 당연히 레벨 1
+        url += temp;
+        CCLog("url = %s", url.c_str());
+        
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
+        req->setTag("99999");
+        CCHttpClient::getInstance()->send(req);
+        req->release();
     }
     else
     {
@@ -1087,4 +1122,48 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
 }
 
 
+void NoImage::XmlParseGetFirstSkill(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 나의 스킬 리스트 갱신
+        myInfo->ClearSkillList();
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
+        int csi, usi, level, exp;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp);
+        }
+        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        
+        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
+    }
+}
 
