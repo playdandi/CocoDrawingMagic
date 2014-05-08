@@ -29,7 +29,6 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
     if (type != BLOCKED)
     {
         InitChild();
-        //CCLog("type ; %d", type);
         char name[25];
 
         if (lu == rd)
@@ -45,10 +44,6 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
                 rightup = CCSprite::createWithSpriteFrameName(name);
                 sprintf(name, "pieces/%d_link_ld.png", rd);
                 leftdown = CCSprite::createWithSpriteFrameName(name);
-                //m_rightup->initWithTexture(pPuzzlePiece4,
-                //CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
-                //m_leftdown->initWithTexture(pPuzzlePiece4,
-                //CCRectMake(lu*PIECE4_WIDTH+3*lu+1, 0, PIECE4_WIDTH, PIECE4_HEIGHT));
             }
         }
         if (ru == ld)

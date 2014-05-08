@@ -417,9 +417,9 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
                     
                     // 잔액 부족
-                    if (costType == 1 && myInfo->GetTopaz() < cost)
+                    if (costType == 2 && myInfo->GetTopaz() < cost)
                         ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
-                    else if (costType == 2 && myInfo->GetStarCandy() < cost)
+                    else if (costType == 1 && myInfo->GetStarCandy() < cost)
                         ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
@@ -444,9 +444,9 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         cost = fairyInfo[d[0]]->GetCostStarCandy();
                  
                     // 잔액 부족
-                    if (costType == 1 && myInfo->GetTopaz() < cost)
+                    if (costType == 2 && myInfo->GetTopaz() < cost)
                         ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
-                    else if (costType == 2 && myInfo->GetStarCandy() < cost)
+                    else if (costType == 1 && myInfo->GetStarCandy() < cost)
                         ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
@@ -587,11 +587,11 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
     dumpData[buffer->size()] = NULL;
     
     // parse xml data
-    if (atoi(res->getHttpRequest()->getTag()) == 99999)
+    /*if (atoi(res->getHttpRequest()->getTag()) == 99999)
     {
         XmlParseGetFirstSkill(dumpData, buffer->size());
         return;
-    }
+    }*/
     switch (type)
     {
         case BUY_TOPAZ_TRY:
@@ -1089,6 +1089,7 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
         param = CCString::create("3");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
+        /*
         //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
         // 1번 스킬 배우기
         char temp[255];
@@ -1108,6 +1109,28 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
         req->setTag("99999");
         CCHttpClient::getInstance()->send(req);
         req->release();
+         */
+        
+        // 나의 스킬 리스트 갱신
+        myInfo->ClearSkillList();
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
+        int csi, usi, level, exp;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp);
+        }
+        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+
+        // OK 창으로 넘어가자. 
+        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
     }
     else
     {
@@ -1121,7 +1144,7 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
     }
 }
 
-
+/*
 void NoImage::XmlParseGetFirstSkill(char* data, int size)
 {
     // xml parsing
@@ -1166,4 +1189,5 @@ void NoImage::XmlParseGetFirstSkill(char* data, int size)
         ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
     }
 }
+ */
 

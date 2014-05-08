@@ -49,6 +49,7 @@ void Sketchbook::registerWithTouchDispatcher(void)
 
 void Sketchbook::keyBackClicked()
 {
+    sound->playClick();
     EndScene();
 }
 
@@ -422,7 +423,7 @@ void Sketchbook::MakeScrollFire(int idx)
         sprintf(name, "background/bg_skill_brown.png%d", i+3);
         spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 51), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         // 스킬 문양
-        if (i == numOfList-1 && numOfList < 8) // '?' 스킬인 경우
+        if (i == numOfList-1) // '?' 스킬인 경우
         {
             spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0, 0), ccp(68, 80), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         }
@@ -706,6 +707,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= 600 && (int)p.y <= size.height)
             {
+                sound->playClick();
                 int id = spriteClassFire->spriteObj[i]->sprite9->getTag();
                 Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
             }
@@ -720,7 +722,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 int id = spriteClassFire->spriteObj[i]->sprite->getTag();
                 
-                // 불 스킬 중 '연습' 누를 때
+                // '연습' 누를 때
                 if (id < 0) // 이때 id는 user_id
                 {
                     char temp[255];
@@ -779,7 +781,7 @@ void Sketchbook::scrollViewDidZoom(CCScrollView* view)
 
 void Sketchbook::EndScene()
 {
-    sound->playClick();
+    //sound->playClick();
     CCString* param = CCString::create("0");
     if (from == 0)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);

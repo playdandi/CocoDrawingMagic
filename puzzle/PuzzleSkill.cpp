@@ -123,7 +123,7 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
     
             // 10개 이상 제거 시 추가점수/추가별사탕 - F3, E4
             else if (i == 2) {
-                if (pieceColor == PIECE_RED && m_pGameLayer->GetPiece8xy(false).size() >= 10)
+                if (pieceColor == PIECE_RED && m_pGameLayer->GetPiece8xy(false).size() >= 8)
                     Try(i, queue_pos);
             }
             else if (i == 19) {
@@ -148,6 +148,11 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
             // 코코타임
             else if (i == 6) {
                 if (pieceColor == PIECE_RED)
+                    Try(i, queue_pos);
+            }
+            // 시간을 얼리다
+            else if (i == 14) {
+                if (pieceColor == PIECE_BLUE)
                     Try(i, queue_pos);
             }
             
@@ -399,13 +404,15 @@ void PuzzleSkill::A2Clear()
 
 void PuzzleSkill::F3(int num, int queue_pos)
 {
-    CCLog("F3 !!!");
     // 뜨거운 것이 좋아 - 10개 이상 피스 제거 시 추가 점수
     F3_addedScore = skillLevel[num]*7000; // 나중에 보고 밸런스 조정
     m_pGameLayer->UpdateScore(1, F3_addedScore);
     
     // 이펙트 ('+' 그림)
     m_pGameLayer->PlayEffect(num, queue_pos);
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // '빛나는 하얀구체'를 마지막 피스 중앙에 보여주고 score칸으로 움직이는 action 발동 ???
 }
@@ -458,13 +465,6 @@ bool PuzzleSkill::IsSpiritAlive(int type)
 void PuzzleSkill::F5(int num)
 {
     // 위험한 불장난 - 모서리에 나타나는 불의 정령을 선택하면 모든 붉은 피스를 정중앙으로 모아준다.
-    CCLog("F5 실행");
-    // 정령 없으면 실행되지 않는다.
-    /*if (!isSpiritAlive[0])
-    {
-        m_pGameLayer->SetSpiritTouch(false);
-        return;
-    }*/
     
     result_pos.clear();
     result_pos_end.clear();
@@ -577,6 +577,9 @@ void PuzzleSkill::F5(int num)
         this->m_pGameLayer->SetSpiritTouch(false);
         return;
     }
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 정령을 화면에서 없애기
     GetEffect()->GetSpirit(0)->setDuration(0.3f);
@@ -714,107 +717,6 @@ void PuzzleSkill::F7_Continue(void* pointer, int queue_pos)
     }
     
     ps->m_pGameLayer->Falling(queue_pos);
-    
-    /*
-    PuzzleSkill* ps = (PuzzleSkill*)pointer;
-    ps->F7_callbackCnt++;
-    CCLog("F7 콜백 숫자 : %d", ps->F7_callbackCnt);
-    if (ps->F7_callbackCnt < (int)ps->result_double_pos.size() && (int)ps->result_double_pos[ps->F7_callbackCnt].size() > 0)
-    {
-       // ps->m_pGameLayer->GetEffect()->PlayEffect_6_Fire(ps->result_double_pos[ps->F7_callbackCnt], queue_pos, ps->F7_callbackCnt);
-    }
-    else
-    {
-        CCLog("F7 콜백 끝 : Falling 시작");
-        int x, y;
-        for (int i = 0 ; i < ps->result_double_pos.size() ; i++)
-        {
-            for (int j = 0 ; j < ps->result_double_pos[i].size() ; j++)
-            {
-                // 실제로 제거
-                x = (int)ps->result_double_pos[i][j].x;
-                y = (int)ps->result_double_pos[i][j].y;
-                ps->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(abs(x), abs(y));
-                ps->m_pGameLayer->SetSpriteP8Null(abs(x), abs(y));
-            }
-        }
-        
-        ps->m_pGameLayer->Falling(queue_pos);
-    }
-    */
-    
-    /*
-    PuzzleSkill* ps = (PuzzleSkill*)data;
-    
-    ps->F7_callbackCntMini++;
-    //CCLog("callback : %d %d", ps->F7_callbackCntMini, ps->F7_callbackCnt);
-    if (ps->F7_callbackCntMini < ps->F7_callbackCnt)
-        return;
-    
-    // 하나씩 터뜨리는데, 새 덩어리를 터뜨릴 때는 약간 딜레이를 두고 시작한다.
-    if (ps->F7_callbackCnt < (int)ps->result_pos.size())
-    {
-        std::vector<int> idx;
-        int x, y, bx, by;
-        for (int i = 0 ; i < ps->result_pos.size() ; i++)
-        {
-            x = (int)ps->result_pos[i].x;
-            y = (int)ps->result_pos[i].y;
-            bx = by = 0;
-            if (i > 0)
-            {
-                bx = (int)ps->result_pos[i-1].x;
-                by = (int)ps->result_pos[i-1].y;
-            }
-            
-            if (x == -100 && y == -100) // 이미 처리한 것들
-                continue;
-            if (!(bx == -100 && by == -100) && ((bx+by < 0 && x+y > 0) || (bx+by > 0 && x+y < 0)) ) // 덩어리가 끝남
-                break;
-        
-            ps->F7_callbackCnt++;
-            idx.push_back(i);
-        }
-        for (int i = 0 ; i < idx.size() ; i++)
-        {
-            x = (int)ps->result_pos[idx[i]].x;
-            y = (int)ps->result_pos[idx[i]].y;
-            ps->result_pos[idx[i]] = ccp(-100, -100);
-            // 폭파
-            CCFiniteTimeAction* action = CCSequence::create(
-                            CCSpawn::create(CCScaleTo::create(0.15f, 1.5f), CCFadeOut::create(0.15f), NULL),
-                            CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::F7_Callback), ps),
-                            NULL);
-            ps->m_pGameLayer->GetSpriteP8(abs(x), abs(y))->runAction(action);
-        }
-        
-        // update score
-        ps->m_pGameLayer->UpdateScore(0, idx.size());
-        // update combo
-        ps->m_pGameLayer->UpdateCombo();
-        
-        // show starcandy
-        ps->GetEffect()->ShowStarCandy(result_pos);
-
-        
-        idx.clear();
-    }
-    else
-    {
-        //CCLog("F7 callback : queue_pos = %d", ps->queuePos);
-        int x, y;
-        for (int i = 0 ; i < ps->result_pos_temp.size() ; i++)
-        {
-            // 실제로 제거
-            x = (int)ps->result_pos_temp[i].x;
-            y = (int)ps->result_pos_temp[i].y;
-            ps->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(abs(x), abs(y));
-            ps->m_pGameLayer->SetSpriteP8Null(abs(x), abs(y));
-        }
-        
-        ps->m_pGameLayer->Falling(ps->queuePos);
-    }
-     */
 }
 
 void PuzzleSkill::F7Recur(int x, int y, int type, std::vector<CCPoint>& v)
@@ -910,7 +812,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
     }
     
     CCLog("용의 숨결 혜성 수 : %d", (int)A8_pos.size());
-    //m_pGameLayer->PlayEffect(num, queue_pos);
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
     m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
 }
 
@@ -1076,15 +978,6 @@ void PuzzleSkill::W5(int num)
 {
     // 끝없는 물결 - 오른쪽상단 터치 시 일정 개수만큼 white/yellow -> blue로 바꾸기
     
-    // 정령 없으면 실행되지 않는다.
-    /*
-    if (!isSpiritAlive[1])
-    {
-        m_pGameLayer->SetSpiritTouch(false);
-        return;
-    }
-     */
-    
     result_pos.clear();
     
     std::vector<CCPoint> pos;
@@ -1112,7 +1005,6 @@ void PuzzleSkill::W5(int num)
         m_pGameLayer->SetSpiritTouch(false);
         return;
     }
-        
     
     // 모든 노란색/하얀색 피스 중 랜덤하게 스킬레벨에 비례한 개수만큼 선택한다.
     if (skillLevel[num] >= pos.size())
@@ -1145,6 +1037,9 @@ void PuzzleSkill::W5(int num)
                             CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::W5_Callback), this), NULL);
         m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
     }
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 정령을 화면에서 없애기
     GetEffect()->GetSpirit(1)->setDuration(0.3f);
@@ -1209,6 +1104,7 @@ void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
 void PuzzleSkill::W7(int num)
 {
     // 시간을 얼리다 - 5초 동안 시간을 2배속 늦춘다.
+    //CCLog("시간 얼리나?");
     if (!W7_isTimeSlowed)
     {
         CCLog("스킬 발동 : 시간을 얼리다!!");
@@ -1227,16 +1123,9 @@ int PuzzleSkill::W7GetTime()
 {
     return W7_RemainTime;
 }
-/*void PuzzleSkill::W7Timer(float f)
-{
-    // W5 스킬에 대한 timer
-    W7_isTimeSlowed = false;
-    m_pGameLayer->unschedule(schedule_selector(PuzzleSkill::W7Timer));
-}*/
 void PuzzleSkill::W7SetVar()
 {
     W7_isTimeSlowed = false;
-    // effect 실행
 }
 bool PuzzleSkill::W7GetVar()
 {
@@ -1263,6 +1152,9 @@ void PuzzleSkill::E4(int num, int queue_pos)
     
     // 이펙트 실행
     m_pGameLayer->PlayEffect(num, queue_pos);
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
 }
 
 

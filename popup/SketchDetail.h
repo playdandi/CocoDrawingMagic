@@ -24,7 +24,7 @@ public:
     void InitFairy();
     void InitSkill();
     
-    void EndScene();
+    void EndScene(bool isNoti);
     void EndSceneCallback();
     
     void XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag);

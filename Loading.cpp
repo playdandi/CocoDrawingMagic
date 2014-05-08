@@ -123,33 +123,24 @@ void Loading::XmlParseGameStart(char* data, int size)
         int missionVal = gameInfo.child("mission").attribute("value").as_int();
         int missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
         
-        // 사용할 active 스킬 목록
-        /*int slot_id, slot_csi, slot_usi;
-        xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("slot");
-        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                std::string name = ait->name();
-                if (name == "id") slot_id = ait->as_int();
-                else if (name == "common-skill-id") slot_csi = ait->as_int();
-                else if (name == "user-skill-id") slot_usi = ait->as_int();
-            }
-            //priceTopaz.push_back( new PriceTopaz(id, count, price_KRW, price_USD, bonus) );
-        }*/
+        // 사용할 active+passive 스킬 목록 (active의 경우, 슬롯 정보도 같이 갱신한다)
+        inGameSkill.clear();
         myInfo->ClearSkillSlot();
-        xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("slot");
-        int id, csi, usi;
+        xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("skill");
+        int id, csi, usi, isActive;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 std::string name = ait->name();
-                if (name == "id") id = ait->as_int();
+                if (name == "slot-id") id = ait->as_int();
                 else if (name == "common-skill-id") csi = ait->as_int();
                 else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "is-active") isActive = ait->as_int();
             }
-            myInfo->AddSkillSlot(id, csi, usi);
+            if (isActive == 0)
+                myInfo->AddSkillSlot(id, csi, usi);
+            inGameSkill.push_back(csi);
         }
         
         // 돈 갱신
@@ -169,6 +160,7 @@ void Loading::XmlParseGameStart(char* data, int size)
         }
         myInfo->SetItem(items);
         items.clear();
+        
         // 연습 스킬 갱신
         int practice_usi = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
         myInfo->SetPracticeSkill(0, 0);

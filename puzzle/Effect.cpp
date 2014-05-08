@@ -124,7 +124,7 @@ void Effect::SetSpirit(int type)
         fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
         fire->retain();
         fire->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(fire, 2000);
+        gameLayer->addChild(fire, 100);
     }
     else if (type == 1) // 물의 정령
     {
@@ -132,7 +132,7 @@ void Effect::SetSpirit(int type)
         water->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1));
         water->retain();
         water->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(water, 2000);
+        gameLayer->addChild(water, 100);
     }
     else // 땅의 정령
     {
@@ -140,7 +140,7 @@ void Effect::SetSpirit(int type)
         land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
         land->retain();
         land->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(land, 2000);
+        gameLayer->addChild(land, 100);
     }
     //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
     //batch->addChild(m_emitter);
@@ -777,6 +777,8 @@ void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구�
     CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.5f, pos),
         CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), ef), NULL);
     m_emitter->runAction(action);
+    
+    ef->gameLayer->GetSound()->PlayDesginatedSound(70);
 }
 
 void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어지고 폭파
@@ -1422,7 +1424,7 @@ void Effect::PlayEffect_14()
         // iced-bar
         iced_bar = CCSprite::createWithSpriteFrameName("background/bar_ice.png");
         iced_bar->setAnchorPoint(ccp(0.5, 0));
-        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y-25));
+        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y-45));
         gameLayer->addChild(iced_bar, 500);
         /*
         // stencil (타이머의 얼음을 가려주는 것)

@@ -31,6 +31,10 @@ public:
     
     virtual void keyBackClicked();
     
+    void Notification(CCObject* obj);
+    
+    void InitSkills();
+    void InitInfoBar();
     void InitSprites();
 	void InitBoard();
     void InitCoco();
@@ -127,6 +131,10 @@ public:
     CCSize tbSize;
     CCSize boardSize;
     
+    void GameEnd();
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseFriends(char* data, int size);
+    void XmlParseGameEnd(char* data, int size);
     
 protected:
     float PIECE8_WIDTH;
@@ -177,6 +185,11 @@ protected:
     
     int iTouchRound;
     
+    bool isMissionSuccess;
+    int isNewRecord;
+    
+    int XMLStatus;
+    
 private:
     Sound* sound;
     PuzzleSkill* skill;
@@ -198,6 +211,7 @@ private:
     CCDrawNode* timerStencil;
     CCClippingNode* timerClip;
     
+    SpriteClass* spriteClassInfo;
     SpriteClass* spriteClass;
     
     CCLayer* fairyLayer;

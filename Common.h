@@ -26,7 +26,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 45
+#define PUZZLE_TIME 130
 
 /*#define PIECE8_WIDTH  128//152
 #define PIECE8_HEIGHT 128//152

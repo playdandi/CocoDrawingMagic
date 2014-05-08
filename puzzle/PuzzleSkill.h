@@ -136,11 +136,6 @@ private:
     int E4_addedCandy;
 
     
-   // std::vector<CCPoint> A4A_pos;
-   // std::vector<CCPoint> A4A_pos_end;
-    
-   // std::vector<CCPoint> A4B_pos;
-    
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;
     std::vector<CCPoint> result_pos_end;

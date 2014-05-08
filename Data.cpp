@@ -18,6 +18,16 @@ std::vector<class SkillInfo*> skillInfo;
 std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
+std::vector<int> inGameSkill;
+std::vector<class Depth*> depth;
+
+
+////////////////////////////////////////////////////////////////////////////////
+Depth::Depth(std::string name, int priority)
+{
+    this->name = name;
+    this->priority = priority;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)
@@ -120,23 +130,6 @@ int MyInfo::GetStaffLv()
 {
     return staffLv;
 }
-/*int MyInfo::GetStaffLvNext()
-{
-    return staffLvNext;
-}
-int MyInfo::GetMPStaffPercentNext()
-{
-    return mpStaffPercentNext;
-}
-int MyInfo::GetMPNextCostStarcandy()
-{
-    return mpNextCostStarcandy;
-}
-int MyInfo::GetMPNextCostTopaz()
-{
-    return mpNextCostTopaz;
-}*/
-
 int MyInfo::GetHighScore()
 {
     return highScore;
@@ -264,6 +257,13 @@ void MyInfo::SetProperties(int fire, int water, int land, int master)
     this->propertyWater = (water == 1) ? true : false;
     this->propertyLand = (land == 1) ? true : false;
     this->propertyMaster = (master == 1) ? true : false;
+}
+void MyInfo::SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime)
+{
+    this->highScore = highScore;
+    this->weeklyHighScore = weeklyHighScore;
+    this->certificateType = certificateType;
+    this->remainWeeklyRankTime = remainWeeklyRankTime;
 }
 
 void MyInfo::SetProfileSkill(int id, int level)
@@ -540,6 +540,13 @@ void Friend::ChangeMyFairyInfo()
         }
     }
 }
+void Friend::SetScore(int highScore, int weeklyHighScore, int certificateType)
+{
+    this->highScore = highScore;
+    this->weeklyHighScore = weeklyHighScore;
+    this->certificateType = certificateType;
+}
+
 CCLabelTTF* Friend::GetPotionLabelMin()
 {
     return potionRemainTimeMin;

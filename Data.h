@@ -25,9 +25,18 @@ extern std::vector<class SkillInfo*> skillInfo;
 extern std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 extern std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
+extern std::vector<int> inGameSkill;
+extern std::vector<class Depth*> depth;
+
 using namespace cocos2d;
 
-
+class Depth
+{
+public:
+    Depth(std::string name, int priority);
+    int priority;
+    std::string name;
+};
 
 class MyInfo
 {
@@ -73,6 +82,7 @@ public:
     void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
     void SetItem(std::vector<int> items);
     void SetProperties(int fire, int water, int land, int master);
+    void SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime);
     
     void SetProfileSkill(int id, int level);
     int GetProfileSkillId();
@@ -190,6 +200,7 @@ public:
     void SetSprite(CCTexture2D* texture);
     void SetSprite();
     void SetPotionSprite();
+    void SetScore(int highScore, int weeklyHighScore, int certificateType);
     
     int GetKakaoId();
     CCSprite* GetProfile();

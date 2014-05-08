@@ -1,4 +1,7 @@
 #include "Puzzle.h"
+#include "../pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 enum
 {
@@ -50,12 +53,16 @@ void Puzzle::keyBackClicked()
 
 bool Puzzle::init()
 {
-    CCLog("puzzle init");
-    
 	if (CCLayer::init() == false)
 	{
 		return false;
 	}
+    
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Puzzle::Notification), "Puzzle", NULL);
     
     sound = new Sound();
     sound->PreLoadInGameSound();
@@ -67,10 +74,8 @@ bool Puzzle::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
-    //CCLog("========================================");
-    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    //CCLog("========================================");
     
+    spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
     
     puzzleLayer = new CCLayer();
@@ -85,92 +90,7 @@ bool Puzzle::init()
     // skill algorithm
     skill = new PuzzleSkill();
     skill->SetGameLayer(this);
-    
-    std::vector<int> skillNum, skillProb, skillLv;
-    
-    bool flag;
-    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
-    {
-        flag = false;
-        MySkill* ms = myInfo->GetSkillList()[i];
-        if (!SkillInfo::GetSkillInfo(ms->GetCommonId())->IsActive())
-            flag = true;
-        else
-        {
-            CCLog("slot size = %d", (int)myInfo->GetSlot().size());
-            for (int j = 0 ; j < myInfo->GetSlot().size() ; j++)
-            {
-                MySkillSlot* mss = myInfo->GetSlot()[j];
-                CCLog("slot ; %d", mss->GetCommonId());
-                if (mss->GetCommonId() == ms->GetCommonId())
-                    flag = true;
-            }
-        }
-        
-        if (flag) // 사용할 스킬이니까 등록하자
-        {
-            int id = ms->GetCommonId();
-            if (id >= 21 && id <= 28) {
-                skillNum.push_back(id-21);
-                if (id == 27) skillProb.push_back(20);
-                else skillProb.push_back(100);
-            }
-            else if (id >= 11 && id <= 18) {
-                skillNum.push_back(id-3);
-                if (id == 17) skillProb.push_back(10);
-                else skillProb.push_back(100);
-            }
-            else if (id >= 31 && id <= 38) {
-                skillNum.push_back(id-15);
-                if (id == 38) skillProb.push_back(10);
-                else skillProb.push_back(100);
-            }
-            skillLv.push_back(4);
-            CCLog("%d", skillNum[skillNum.size()-1]);
-        }
-    }
-    skill->Init(skillNum, skillProb, skillLv);
-    
-    /*
-    skillNum.push_back(0);
-    skillNum.push_back(8);
-    skillNum.push_back(16);
-    
-    skillNum.push_back(1);
-    skillNum.push_back(9);
-    skillNum.push_back(17);
-    
-    skillNum.push_back(5);
-    skillNum.push_back(13);
-    skillNum.push_back(21);
-    
-    skillNum.push_back(4); // 정령
-    skillNum.push_back(12); // 정령
-    
-    skillNum.push_back(10); // 콤보비례 추가점수
-    skillNum.push_back(11); // 콤보비례 추가사탕
-    
-    
-    skillNum.push_back(14); // 시간을 얼리다.
-
-    skillNum.push_back(2); // 10개이상 추가점수
-    skillNum.push_back(19); // 10개이상 추가별사탕
-
-    skillNum.push_back(6); // coco time
-    
-    skillNum.push_back(7); // 막타
-    skillNum.push_back(15);
-    //skillNum.push_back(23);
-    
-    for (int i = 0 ; i < skillNum.size() ; i++) {
-        if (skillNum[i] == 14)
-            skillProb.push_back(10);
-        else
-            skillProb.push_back(100);
-        skillLv.push_back(4);
-    }
-    skill->Init(skillNum, skillProb, skillLv);
-     */
+    InitSkills();
 
 	m_winSize = CCDirector::sharedDirector()->getWinSize();
     srand(time(NULL));
@@ -192,9 +112,6 @@ bool Puzzle::init()
     
     PlayEffect(100, NULL);
     
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
-    
     isMagicTime = false;
     isFeverTime = false;
     
@@ -212,43 +129,146 @@ bool Puzzle::init()
     isGameOver = false;
     
     iTouchRound = 0;
+    isMissionSuccess = false;
+    
+    XMLStatus = 0;
     
 	return true;
 }
 
-void Puzzle::InitSprites()
+void Puzzle::Notification(CCObject* obj)
 {
-    CCLog("Init Sprites");
-    CCLog("Real : %f , %f", m_winSize.width, m_winSize.height);
-    vs = CCDirector::sharedDirector()->getVisibleSize();
-    vo = CCDirector::sharedDirector()->getVisibleOrigin();
-    CCLog("visible : %f , %f", vs.width, vs.height);
-    CCLog("visible point : %f , %f", vo.x, vo.y);
+    CCString* param = (CCString*)obj;
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50), CCSize(1075,75+25), "", "Puzzle", this, 5) );
+    if (param->intValue() == 0)
+    {
+        // 종료하고 Ranking으로 돌아가자.
+        CCLog("Puzzle -> Ranking");
+        this->EndScene();
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("Puzzle 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+}
+
+void Puzzle::InitSkills()
+{
+    std::vector<int> skillNum, skillProb, skillLv;
+ /*
+    int id;
+    for (int i = 0 ; i < inGameSkill.size() ; i++)
+    {
+        id = inGameSkill[i];
+        MySkill* ms = MySkill::GetObj(id);
+        if (ms != NULL)
+        {
+            if (id >= 21 && id <= 28) {
+                skillNum.push_back(id-21);
+                if (id == 27) skillProb.push_back(20);
+                else skillProb.push_back(100);
+            }
+            else if (id >= 11 && id <= 18) {
+                skillNum.push_back(id-3);
+                if (id == 17) skillProb.push_back(10);
+                else skillProb.push_back(100);
+            }
+            else if (id >= 31 && id <= 38) {
+                skillNum.push_back(id-15);
+                if (id == 38) skillProb.push_back(10);
+                else skillProb.push_back(100);
+            }
+            CCLog("적용 스킬 : %d", id);
+            skillLv.push_back(ms->GetLevel());
+        }
+    }
+    
+    skill->Init(skillNum, skillProb, skillLv);
+    */
+    
+    // test //
+     skillNum.push_back(0);
+     skillNum.push_back(8);
+     skillNum.push_back(16);
+     
+     skillNum.push_back(1);
+     skillNum.push_back(9);
+     skillNum.push_back(17);
+     
+     skillNum.push_back(5);
+     skillNum.push_back(13);
+     skillNum.push_back(21);
+     
+     skillNum.push_back(4); // 정령
+     skillNum.push_back(12); // 정령
+     
+     skillNum.push_back(10); // 콤보비례 추가점수
+     skillNum.push_back(11); // 콤보비례 추가사탕
+     
+     skillNum.push_back(14); // 시간을 얼리다.
+     
+     skillNum.push_back(2); // 10개이상 추가점수
+     skillNum.push_back(19); // 10개이상 추가별사탕
+     
+     skillNum.push_back(6); // coco time
+     
+     skillNum.push_back(7); // 막타
+     skillNum.push_back(15);
+     skillNum.push_back(23);
+     
+     for (int i = 0 ; i < skillNum.size() ; i++) {
+         if (skillNum[i] == 14 || skillNum[i] == 6)
+             skillProb.push_back(10);
+         else if (skillNum[i] == 23)
+             skillProb.push_back(20);
+         else
+             skillProb.push_back(100);
+         skillLv.push_back(4);
+     }
+     skill->Init(skillNum, skillProb, skillLv);
+}
+
+void Puzzle::InitInfoBar()
+{
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50), CCSize(1075,75+25), "", "Puzzle", this, 5) );
     
     // 별사탕 숫자배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png1", ccp(0, 0.5), ccp(100, vo.y+vs.height-47), CCSize(160, 50+10), "", "Puzzle", this, 6) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png1", ccp(0, 0.5), ccp(100, vo.y+vs.height-47), CCSize(160, 50+10), "", "Puzzle", this, 6) );
     
     // 별사탕
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(50, vo.y+vs.height-30), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(125, vs.height+vo.y-60), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_3.png", ccp(1, 0.5), ccp(95, vs.height+vo.y-47), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_4.png", ccp(1, 0.5), ccp(110, vs.height+vo.y-28), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(125, vs.height+vo.y-60), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_3.png", ccp(1, 0.5), ccp(95, vs.height+vo.y-47), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_4.png", ccp(1, 0.5), ccp(110, vs.height+vo.y-28), CCSize(0, 0), "", "Puzzle", this, 20) );
     
     // 게이지바 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png2", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(164, 35+15), "", "Puzzle", this, 6) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_gauge.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(149, 35), "", "Puzzle", this, 7) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png2", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(164, 35+15), "", "Puzzle", this, 6) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_gauge.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(149, 35), "", "Puzzle", this, 7) );
     // 게이지바 아이콘(모자)
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_gauge_big.png", ccp(1, 0.5), ccp(m_winSize.width-170-82+20, vo.y+vs.height-47), CCSize(0, 0), "", "Puzzle", this, 8) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_gauge_big.png", ccp(1, 0.5), ccp(m_winSize.width-170-82+20, vo.y+vs.height-47), CCSize(0, 0), "", "Puzzle", this, 8) );
     
     // pause button
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_pause.png", ccp(1, 0.5), ccp(m_winSize.width-25, vs.height+vo.y-50+5), CCSize(0, 0), "", "Puzzle", this, 20) );
-    
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_pause.png", ccp(1, 0.5), ccp(m_winSize.width-25, vs.height+vo.y-50+5), CCSize(0, 0), "", "Puzzle", this, 20) );
     
     // 값들 (별사탕 개수, 점수)
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("0", fontList[0], 40, ccp(1, 0.5), ccp(100+140, vo.y+vs.height-47), ccc3(255,255,255), "", "Puzzle", this, 20, 0, 255, 1) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("0", fontList[0], 48, ccp(0.5, 0.5), ccp(m_winSize.width/2, vs.height+vo.y-45), ccc3(255,255,255), "", "Puzzle", this, 20, 0, 255, 2) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel("0", fontList[0], 40, ccp(1, 0.5), ccp(100+140, vo.y+vs.height-47), ccc3(255,255,255), "", "Puzzle", this, 20, 0, 255, 1) );
+    
+    for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
+        spriteClassInfo->AddChild(i);
+}
+
+void Puzzle::InitSprites()
+{
+    //CCLog("Init Sprites");
+    //CCLog("Real : %f , %f", m_winSize.width, m_winSize.height);
+    vs = CCDirector::sharedDirector()->getVisibleSize();
+    vo = CCDirector::sharedDirector()->getVisibleOrigin();
+    //CCLog("visible : %f , %f", vs.width, vs.height);
+    //CCLog("visible point : %f , %f", vo.x, vo.y);
+    
+    InitInfoBar();
     
     // timer bar 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png2", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f), CCSize(1044, 63), "", "Puzzle", this, 4) );
@@ -369,7 +389,7 @@ void Puzzle::InitCoco()
     
     cocoLayer->setScale(0.8f);
     cocoLayer->setPosition(ccp(100, vo.y+tbSize.height+boardSize.height+60));
-    this->addChild(cocoLayer, 1000);
+    this->addChild(cocoLayer, 100);
     
     cocoFrameNumber = 0;
     
@@ -554,7 +574,7 @@ void Puzzle::InitFairy()
     fairyLayer->setScale(0.8f);
     //fairyLayer->setPosition(ccp(800, vs.height+vo.y-530));
     fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60));
-    this->addChild(fairyLayer, 1000);
+    this->addChild(fairyLayer, 100);
     
     // action
     CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
@@ -649,21 +669,26 @@ void Puzzle::SetScoreAndStarCandy()
     this->addChild(pScoreLayer, 5);
     
     iStarCandy = 0;
-    pStarCandyLabel = (CCLabelTTF*)spriteClass->FindLabelByTag(1);
+    pStarCandyLabel = (CCLabelTTF*)spriteClassInfo->FindLabelByTag(1);
 }
 
 void Puzzle::UpdateScore(int type, int data)
 {
+    //CCLog("before : %d %d", iScore, data);
     if (type == 0)
     {
-        // 기본점수 : (50 + 15(n-3)^1.2) * n
-        iScore += ( (50 + 15*pow(data-3, 1.20)) * data );
+        if (data < 3)
+            iScore += data * 1000;
+        else
+            // 기본점수 : (50 + 15(n-3)^1.2) * n
+            iScore += ( (50 + 15*pow(data-3, 1.20)) * data );
     }
     else if (type == 1)
     {
         // 기본 스킬에 의한 추가점수 (A1)
         iScore += data;
     }
+    //CCLog("after : %d", iScore);
 
     pScoreLayer->removeAllChildren();
     pScoreLayer->removeFromParentAndCleanup(true);
@@ -688,6 +713,7 @@ void Puzzle::UpdateStarCandy(int type, int data)
     }
     char s[5];
     sprintf(s, "%d", iStarCandy);
+    CCLog("%d", iStarCandy);
     pStarCandyLabel->setString(s);
 }
 
@@ -761,10 +787,10 @@ void Puzzle::ComboTimer(float f)
 void Puzzle::SetTimer()
 {
     iTimer = 1000 * PUZZLE_TIME;
-    pTimerLabel = CCLabelTTF::create("30", fontList[2].c_str(), 50);
+    pTimerLabel = CCLabelTTF::create("60", fontList[2].c_str(), 50);
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
     pTimerLabel->setPosition(ccp(40, 300));
-    this->addChild(pTimerLabel, 1000);
+    this->addChild(pTimerLabel, 100);
     
     this->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
 }
@@ -812,14 +838,12 @@ void Puzzle::UpdateTimer(float f)
             this->setTouchEnabled(false);
             this->setKeypadEnabled(false);
             sound->StopBackgroundSound();
-            EndScene();
             
-            // 게임결과화면 보여줌
-            //CCScene* pScene = PuzzleResult::scene();
-            //this->addChild(pScene, 2000, 2000);
+            spriteClassInfo->RemoveAllObjects();
+            delete spriteClassInfo;
             
-            // go to Ranking Scene
-            //Common::ShowNextScene(this, "Puzzle", "Ranking", true);
+            // 게임결과화면 로딩 위해 game_end protocol 호출
+            GameEnd();
         }
         
         // 정령 준비 발동 ('시간을 얼리다' 발동 중에는 NO!)
@@ -1927,6 +1951,248 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
     }
 }
 
+void Puzzle::GameEnd()
+{
+    //http://14.63.225.203/cogma/game/game_end.php?kakao_id=1000&score=150&mission=0&starcandy=10
+    char temp[255];
+    std::string url = "http://14.63.225.203/cogma/game/game_end.php?";
+    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    url += temp;
+    sprintf(temp, "score=%d&", iScore);
+    url += temp;
+    sprintf(temp, "mission=%d&", isMissionSuccess);
+    url += temp;
+    sprintf(temp, "starcandy=%d", iStarCandy);
+    url += temp;
+    CCLog("url = %s", url.c_str());
+    
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl(url.c_str());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
+}
+
+void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    switch (XMLStatus)
+    {
+        case 0: XmlParseGameEnd(dumpData, buffer->size()); break;
+        case 1: XmlParseFriends(dumpData, buffer->size()); break;
+        //case 2: XmlParseProfiles(dumpData, buffer->size()); break;
+    }
+    XMLStatus++;
+}
+
+void Puzzle::XmlParseFriends(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        //profileCnt = 0;
+        
+        int kakaoId;
+        std::string nickname;
+        std::string imageUrl;
+        int potionMsgStatus;
+        int weeklyHighScore;
+        int scoreUpdateTime;
+        int remainPotionTime;
+        int highScore;
+        int certificateType;
+        int fire;
+        int water;
+        int land;
+        int master;
+        int fairyId;
+        int fairyLevel;
+        int skillId;
+        int skillLevel;
+        
+        xml_object_range<xml_named_node_iterator> friends = nodeResult.child("friend-list").children("friend");
+        for (xml_named_node_iterator it = friends.begin() ; it != friends.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "kakao-id") kakaoId = ait->as_int();
+                else if (name == "nick-name") nickname = ait->as_string();
+                else if (name == "profile-image-url") imageUrl = ait->as_string();
+                else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
+                else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
+                else if (name == "high-score") highScore = ait->as_int();
+                else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
+                else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
+                else if (name == "certificate-type") certificateType = ait->as_int();
+                else if (name == "properties-fire") fire = ait->as_int();
+                else if (name == "properties-water") water = ait->as_int();
+                else if (name == "properties-land") land = ait->as_int();
+                else if (name == "properties-master") master = ait->as_int();
+                else if (name == "fairy-id") fairyId = ait->as_int();
+                else if (name == "fairy-level") fairyLevel = ait->as_int();
+                else if (name == "skill-id") skillId = ait->as_int();
+                else if (name == "skill-level") skillLevel = ait->as_int();
+            }
+            
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            // potion image 처리
+            friendList[(int)friendList.size()-1]->SetPotionSprite();
+            
+            // profile이 없으면 미리 NOIMAGE sprite를 만든다.
+            if (imageUrl == "")
+            {
+                //profileCnt++;
+                friendList[(int)friendList.size()-1]->SetSprite();
+            }
+        }
+        
+        // sort by { max[weeklyScore], min[scoreUpdateTime] }
+        DataProcess::SortFriendListByScore();
+        
+        /*
+        // get image by url (다 받으면 Ranking으로 넘어간다)
+        char tag[5];
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            CCLog("sorted : %d", friendList[i]->GetKakaoId());
+            if (friendList[i]->GetImageUrl() != "")
+            {
+                // get profile image sprite from URL
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(friendList[i]->GetImageUrl().c_str());
+                req->setRequestType(CCHttpRequest::kHttpGet);
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+                sprintf(tag, "%d", i);
+                req->setTag(tag);
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+        }
+         */
+    }
+    else
+    {
+        // failed msg
+        CCLog("failed code = %d", code);
+    }
+}
+
+void Puzzle::XmlParseGameEnd(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // new record 인가?
+        isNewRecord = nodeResult.child("new-record").text().as_int();
+        
+        // 돈 갱신
+        int topaz = nodeResult.child("topaz").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("starcandy").attribute("starcandy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 스킬 리스트 갱신
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
+        int csi, usi, level, exp, isActive;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+                else if (name == "is-active") isActive = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp);
+        }
+        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        
+        // score 정보 갱신
+        int highScore = nodeResult.child("score").attribute("high-score").as_int();
+        int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
+        int certificateType = nodeResult.child("score").attribute("certificate-type").as_int();
+        int remainWeeklyRankTime = nodeResult.child("score").attribute("remain-weekly-rank-time").as_int();
+        myInfo->SetScore(highScore, weeklyHighScore, certificateType, remainWeeklyRankTime);
+        // 친구리스트 호출의 필요성에 대한 검사
+        bool flag = true;
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            {
+                friendList[i]->SetScore(highScore, weeklyHighScore, certificateType);
+                if (i > 0 && highScore > friendList[i-1]->GetHighScore())
+                {
+                    flag = false;
+                    char temp[50];
+                    std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+                    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                    url += temp;
+                    CCLog("url = %s", url.c_str());
+                    
+                    CCHttpRequest* req = new CCHttpRequest();
+                    req->setUrl(url.c_str());
+                    req->setRequestType(CCHttpRequest::kHttpPost);
+                    req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+                    CCHttpClient::getInstance()->send(req);
+                    req->release();
+                }
+            }
+        }
+        
+        if (flag)
+        {
+            // 게임결과화면 띄우기
+            Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
+        }
+    }
+    else
+    {
+        // failed msg
+        CCLog("Puzzle : failed code = %d", code);
+    }
+}
 
 /*
 void* thread(void* arg)
@@ -2051,6 +2317,8 @@ CCLayer* Puzzle::GetFairyLayer()
 
 void Puzzle::EndScene()
 {
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Puzzle");
+    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
@@ -2063,7 +2331,10 @@ void Puzzle::EndScene()
     this->removeAllChildren();
     this->removeFromParentAndCleanup(true);
     
-    Common::ShowNextScene(this, "Puzzle", "Ranking", true, 1);
+    //if (isNewRecord)
+    //    Common::ShowNextScene(this, "Puzzle", "NewRecord", true, 1);
+    //else
+        Common::ShowNextScene(this, "Puzzle", "Ranking", true, 1);
 }
 
 void Puzzle::EndSceneCallback()

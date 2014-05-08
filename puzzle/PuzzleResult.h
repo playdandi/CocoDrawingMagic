@@ -24,20 +24,16 @@ public:
     
     void InitSprites();
     
-    void EndLayer();
-    void EndLayerCallback();
+    void EndScene();
+    void EndSceneCallback();
     
-    CCSize winSize;
+    CCSize m_winSize;
     
 protected:
-    CCTexture2D* tBackground;
-    CCTexture2D* tColorBG;
-    
-    CCSprite* pBackground;
     CCSprite* pBlack;
+    CCSprite* pBlackClose;
     
-    //static int res_cycleCnt;
-    //static int res_allCnt[12+1];
+    SpriteClass* spriteClass;
 };
 
 #endif /* defined(__magician__PuzzleResult__) */

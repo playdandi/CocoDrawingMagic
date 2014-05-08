@@ -40,7 +40,7 @@ void SketchDetail::onExit()
 
 void SketchDetail::keyBackClicked()
 {
-    EndScene();
+    EndScene(true);
 }
 
 
@@ -306,7 +306,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndScene();
+                EndScene(true);
                 return false;
             }
         }
@@ -341,7 +341,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (btnStatus == 2) // 일반적인 경우
                 {
-                    EndScene();
+                    EndScene(true);
                     break;
                 }
                 else if (btnStatus == 3) // '?'스킬의 요구조건을 모두 충족한 경우
@@ -385,12 +385,15 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = false;
 }
 
-void SketchDetail::EndScene()
+void SketchDetail::EndScene(bool isNoti)
 {
     sound->playClick();
     
-    CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    if (isNoti)
+    {
+        CCString* param = CCString::create("0");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    }
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

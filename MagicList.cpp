@@ -231,6 +231,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
                         
                         SendToParent();
+                        sound->playClick();
                         break;
                     }
                 }
@@ -248,6 +249,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
                             
                             SendToParent();
+                            sound->playClick();
                             break;
                         }
                     }

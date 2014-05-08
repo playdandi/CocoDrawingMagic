@@ -742,7 +742,6 @@ void Splash::XmlParseMyInfo(char *data, int size)
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
-
     }
     else
     {
@@ -860,11 +859,6 @@ void Splash::XmlParseFriends(char* data, int size)
 void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    //int statusCode = res->getResponseCode();
-    //char statusString[64] = {};
-    //sprintf(statusString, "Http Status Code: %d, tag = %s", statusCode, res->getHttpRequest()->getTag());
-    //CCLog("response code : %d", statusCode);
     
     if (!res || !res->isSucceed())
     {

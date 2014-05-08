@@ -114,7 +114,7 @@ void CocoRoom::Notification(CCObject* obj)
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 코코의 정보 갱신
-        if (curState == 0)
+        if (curState == 1)
         {
             // 총 mp, 요정 mp, 지팡이퍼센트, 지팡이레벨
             char val[20];
@@ -131,7 +131,7 @@ void CocoRoom::Notification(CCObject* obj)
             SetStaffBuildUp();
         }
         // 요정의 정보 갱신
-        else if (curState == 1)
+        else if (curState == 2)
         {
             SetFairyBuildUp();
         }

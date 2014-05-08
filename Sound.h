@@ -32,6 +32,7 @@ public:
     void PlayPieceClick(int idx);
     void PlayBomb();
     void PlaySkillSound(int skillNum);
+    void PlayDesginatedSound(int idx);
     
 private:
     std::string ext;

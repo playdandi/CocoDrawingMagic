@@ -24,6 +24,7 @@
 #include "popup/FairyOneInfo.h"
 #include "popup/NoImage.h"
 #include "puzzle/Puzzle.h"
+#include "puzzle/PuzzleResult.h"
 #include "ParticleTest.h"
 #include "Splash.h"
 
@@ -192,6 +193,7 @@ std::string Common::MakeComma(int number)
         if (i > 0 && (num.size() - i) % 3 == 0)
             result = "," + result;
     }
+    CCLog("number = %s", result.c_str());
     return result;
 }
 
@@ -351,14 +353,13 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Loading") nextScene = Loading::scene();
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
-
+    else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
     
     // go
     if (from == "Splash")
     {
         if (isReplaced)
         {
-            //CCScene* transition = CCTransitionFade::create(1.0f, nextScene);
             CCDirector::sharedDirector()->replaceScene(nextScene);
             ((Splash*)obj)->EndScene();
         }
@@ -380,6 +381,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
     
@@ -387,12 +389,12 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     {
         if (isReplaced)
         {
-            CCLog("back to RANKING");
             CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
             CCDirector::sharedDirector()->replaceScene(transition);
         }
+        else
+            ((Puzzle*)obj)->addChild(nextScene, 200, 200);
     }
-    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
@@ -417,7 +419,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "SketchDetail") {
         if(isReplaced) {
             CCNode* parent = ((SketchDetail*)obj)->getParent();
-            ((SketchDetail*)obj)->EndScene();
+            ((SketchDetail*)obj)->EndScene(false);
             parent->addChild(popup, 200, 200);
         }
         else ((SketchDetail*)obj)->addChild(popup, 200, 200);
@@ -754,6 +756,12 @@ void SpriteClass::AddChild(int idx)
         else if (obj->type == 1) ((Puzzle*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Puzzle*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
+    else if (obj->parentType == "PuzzleResult") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((PuzzleResult*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((PuzzleResult*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((PuzzleResult*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
 }
 
 void* SpriteClass::FindParentSprite(int idx, std::string parentName)
@@ -820,21 +828,21 @@ void SpriteClass::RemoveAllObjects()
                 if (spriteObj[i]->type == 0) { // delete sprite
                     //spriteObj[i]->sprite->autorelease();
                     //spriteObj[i]->sprite->release();
-                    //spriteObj[i]->sprite->removeFromParentAndCleanup(true);
+                    spriteObj[i]->sprite->removeFromParentAndCleanup(true);
                     //CCLog("type 0 : %d", spriteObj[i]->sprite->retainCount());
                     
                 }
                 else if (spriteObj[i]->type == 1) { // delete sprite-9
                     //spriteObj[i]->sprite9->autorelease();
                     //spriteObj[i]->sprite9->release();
-                    //spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
+                    spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
                     //CCLog("type 1 : %d", spriteObj[i]->sprite9->retainCount());
                     
                 }
                 else { // delete label
                     //spriteObj[i]->label->autorelease();
                     //spriteObj[i]->label->release();
-                    //spriteObj[i]->label->removeFromParentAndCleanup(true);
+                    spriteObj[i]->label->removeFromParentAndCleanup(true);
                     //CCLog("type 2 : %d", spriteObj[i]->label->retainCount());
                 }
             }
