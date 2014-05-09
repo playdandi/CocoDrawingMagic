@@ -6,14 +6,13 @@ using namespace pugi;
 static int from;
 int sid[16] = {22, 25, 26, 28, 12, 15, 16, 18, 32, 35, 36, 38, 42, 43, 45, -1};
 
-static int priority;
+//static int priority;
 
 CCScene* MagicList::scene(int fromWhere, int prio)
 {
     from = fromWhere;
-    CCLog("MagicList : from = %d", from);
     
-    priority = prio;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     MagicList* pLayer = MagicList::create();
@@ -26,7 +25,7 @@ void MagicList::onEnter()
 {
     CCLog("MagicList :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void MagicList::onExit()
@@ -50,9 +49,12 @@ bool MagicList::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("MagicList");
+    
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
+    this->setTouchPriority(Depth::GetCurPriority());
     CCLog("MagicList : touch prio = %d", this->getTouchPriority());
     
     winSize = CCDirector::sharedDirector()->getWinSize();
@@ -60,12 +62,15 @@ bool MagicList::init()
     // notification
     CCLog("MagicList init : from = %d", from);
     CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
     if (from == 0)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     else if (from == 1)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
     else if (from == 2)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    */
     
     InitSprites();
     
@@ -103,9 +108,7 @@ void MagicList::InitSprites()
         {
             sprintf(name, "background/bg_skill_yellow.png%c", (4*i+j)+'a');
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(127+j*229, 1451-i*160+offset), CCSize(0, 0), "", "Layer", layer, 20) );
-            //sprintf(name2, "background/bg_skill_select.png%c", (4*i+j)+'a');
             sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
-            CCLog("%s", name2);
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 21, 1, 0) );
             
             if (i == 0) sprintf(name2, "icon/icon_skill_division_red.png%d", j);
@@ -186,7 +189,6 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playBoardMove(); // 이 scene만 사운드가 다르다.
                 
                 // http://14.63.225.203/cogma/game/using_skill.php?kakao_id=1000&slot_id_list[0]=1&user_skill_id_list[0]=1&slot_id_list[1]=2&user_skill_id_list[1]=3
-                
                 char temp[255];
                 std::string url = "http://14.63.225.203/cogma/game/using_skill.php?";
                 sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
@@ -210,6 +212,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 req->setResponseCallback(this, httpresponse_selector(MagicList::onHttpRequestCompleted));
                 CCHttpClient::getInstance()->send(req);
                 req->release();
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 11) == "skill/skill")
@@ -265,56 +268,12 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void MagicList::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void MagicList::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
 }
 
-void MagicList::SendToParent() // 슬롯 정보 갱신
-{
-    CCString* param = CCString::create("9");
-    if (from == 0)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    else if (from == 1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-    else if (from == 2)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-}
-
-void MagicList::EndScene()
-{
-    CCString* param = CCString::create("0");
-    if (from == 0)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    else if (from == 1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-    else if (from == 2)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-    
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
-
-    CCFiniteTimeAction* action =
-    CCSequence::create(CCMoveTo::create(0.2f, ccp(0, winSize.height)),
-                       CCCallFunc::create(this, callfunc_selector(MagicList::EndSceneCallback)), NULL);
-    layer->runAction(action);
-}
-
-void MagicList::EndSceneCallback()
-{
-    //this->removeChild(pBlack);
-    //this->removeChild(pBackground);
-    //pBackground->autorelease();
-    //tBackground->autorelease();
-    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/gameready_MagicList_detail.png");
-    //CCLog("MagicList :: ELC - tBackground retain : %d", tBackground->retainCount());
-    //CCLog("MagicList :: init - pBackground retain : %d", pBackground->retainCount());
-    this->removeFromParentAndCleanup(true);
-    //CCLog("MagicList :: ELC - tBackground retain : %d", tBackground->retainCount());
-    //CCLog("MagicList :: init - pBackground retain : %d", pBackground->retainCount());
-}
 
 void MagicList::onHttpRequestCompleted(CCNode *sender, void *data)
 {
@@ -379,3 +338,55 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
         CCLog("failed code = %d", code);
     }
 }
+
+
+void MagicList::SendToParent() // 슬롯 정보 갱신
+{
+    CCString* param = CCString::create("9");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
+    if (from == 0)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (from == 1)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (from == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+     */
+}
+
+void MagicList::EndScene()
+{
+    CCFiniteTimeAction* action =
+    CCSequence::create(CCMoveTo::create(0.2f, ccp(0, winSize.height)),
+                       CCCallFunc::create(this, callfunc_selector(MagicList::EndSceneCallback)), NULL);
+    layer->runAction(action);
+}
+
+void MagicList::EndSceneCallback()
+{
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    /*
+    if (from == 0)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    else if (from == 1)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+    else if (from == 2)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+     */
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    layer->removeAllChildren();
+    
+    this->removeFromParentAndCleanup(true);
+}
+

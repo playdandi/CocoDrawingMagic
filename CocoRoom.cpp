@@ -4,12 +4,12 @@
 using namespace pugi;
 
 static int tabNumber;
-static int priority;
+//static int priority;
 
 CCScene* CocoRoom::scene(int tab, int prio)
 {
     tabNumber = tab;
-    priority = prio;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     CocoRoom* pLayer = CocoRoom::create();
@@ -22,7 +22,7 @@ void CocoRoom::onEnter()
 {
     CCLog("CocoRoom : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void CocoRoom::onExit()
@@ -46,27 +46,31 @@ bool CocoRoom::init()
 		return false;
 	}
 
+    // make depth tree
+    Depth::AddCurDepth("CocoRoom");
+    
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("CocoRoom : touch prio = %d", priority);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("CocoRoom : touch prio = %d", this->getTouchPriority());
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoom::Notification), "CocoRoom", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoom::Notification), Depth::GetCurName(), NULL);
     
     // notification
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
     
     // scrollView init.
     scrollViewCoco = CCScrollView::create();
     scrollViewCoco->retain();
-    scrollViewCoco->setTouchPriority(priority);
+    scrollViewCoco->setTouchPriority(Depth::GetCurPriority());
     scrollViewFairy = CCScrollView::create();
     scrollViewFairy->retain();
-    scrollViewFairy->setTouchPriority(priority);
+    scrollViewFairy->setTouchPriority(Depth::GetCurPriority());
     
     containerCoco = CCLayer::create();
     containerFairy = CCLayer::create();
@@ -106,10 +110,10 @@ void CocoRoom::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         //this->setKeypadEnabled(true);
         //this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
@@ -704,8 +708,6 @@ void CocoRoom::MakeScrollFairy()
     
     // container 초기화
     containerFairy = CCLayer::create();
-    //CCLayer* containerFairy = CCLayer::create();
-
     containerFairy->setContentSize(CCSizeMake(numOfList*(146+5), 146));
 
     char fname[50];
@@ -776,12 +778,14 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             else if (curState == 2 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false, -1, priority-1); // 요정의 마을
+                Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false); // 요정의 마을
+                //Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false, -1, priority-1); // 요정의 마을
             }
             else if (curState == 3 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false, -1, priority-1); // 오.별 친구고르기
+                Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
+                //Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false, -1, priority-1); // 오.별 친구고르기
             }
         }
     }
@@ -798,7 +802,8 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(0);
                     data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_StarCandy());
-                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                    //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
                 }
             }
         }
@@ -813,7 +818,8 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(0);
                     data.push_back(magicStaffBuildupInfo[myInfo->GetStaffLv()-1+1]->GetCost_Topaz());
-                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data, -1, priority-1);
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data);
+                    //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_TOPAZ_TRY, BTN_2, data, -1, priority-1);
                 }
             }
         }
@@ -829,7 +835,8 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(0);
                 data.push_back(FairyBuildUpInfo::GetCostTopaz(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
             }
         }
         else if (spriteClassFairy->spriteObj[i]->name == "button/btn_green.png1")
@@ -840,7 +847,8 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(0);
                 data.push_back(FairyBuildUpInfo::GetCostStarCandy(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
+                //Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data, -1, priority-1);
             }
         }
     }
@@ -912,11 +920,16 @@ void CocoRoom::scrollViewDidZoom(CCScrollView* view)
 
 
 void CocoRoom::EndScene()
-{
-    sound->playClick();
+{    
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
     
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
 
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -926,7 +939,6 @@ void CocoRoom::EndScene()
     scrollViewFairy->removeAllChildren();
     scrollViewFairy->removeFromParentAndCleanup(true);
 
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "CocoRoom");
     this->removeFromParentAndCleanup(true);
 }
 
@@ -994,9 +1006,9 @@ void CocoRoom::XmlParseFairyList(char* data, int size)
         }
         
         // 정보 갱신 (게임준비, 코코방_요정, 친구리스트의 내정보)
-        CCLog("what's the matter");
         CCString* param = CCString::create("4");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         Friend::ChangeMyFairyInfo();
         MakeSprites(-curState);
     }

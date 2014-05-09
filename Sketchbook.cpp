@@ -3,15 +3,16 @@
 
 using namespace pugi;
 
-static int tabNumber;
+//static int tabNumber;
 static int from; // 0 : from Ranking , 1 : from GameReady
-static int priority;
+//static int priority;
 
 CCScene* Sketchbook::scene(int tab, int fromWhere, int prio)
 {
     from = fromWhere;
-    tabNumber = tab;
-    priority = prio;
+    //tabNumber = tab;
+    
+    //priority = prio;
 
     CCScene* pScene = CCScene::create();
     Sketchbook* pLayer = Sketchbook::create();
@@ -29,7 +30,7 @@ void Sketchbook::onEnter()
 {
     CCLog("Sketchbook : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void Sketchbook::onExit()
@@ -42,7 +43,7 @@ void Sketchbook::onExit()
 
 void Sketchbook::registerWithTouchDispatcher(void)
 {
-    CCLog("Sketchbook :: registerWithTouchDispatcher");
+    //CCLog("Sketchbook :: registerWithTouchDispatcher");
     //CCDirector* pDirector = CCDirector::sharedDirector();
     //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
 }
@@ -62,33 +63,40 @@ bool Sketchbook::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("Sketchbook");
+    
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("스케치북 : touch prio = %d", priority);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("스케치북 : touch prio = %d", this->getTouchPriority());
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Sketchbook::Notification), "Sketchbook", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Sketchbook::Notification), Depth::GetCurName(), NULL);
     
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
     // notification post
     CCString* param = CCString::create("1");
     if (from == 0)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (from == 1)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    
+    */
     // scrollview init.
-    scrollViewFire = CCScrollView::create();
-    scrollViewFire->retain();
-    scrollViewFire->setDirection(kCCScrollViewDirectionVertical);
-    scrollViewFire->setViewSize(CCSizeMake(929, 914-40+offsets));
-    scrollViewFire->setAnchorPoint(ccp(0, 0));
-    scrollViewFire->setPosition(ccp(77, 492+20));
-    scrollViewFire->setDelegate(this);
-    scrollViewFire->setTouchPriority(priority);
-    this->addChild(scrollViewFire, 5);
+    scrollView = CCScrollView::create();
+    scrollView->retain();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 914-40+offsets));
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492+20));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 5);
     
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
@@ -98,19 +106,29 @@ bool Sketchbook::init()
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
     scrollViewSlot->setPosition(ccp(77+20, 228+12));
     scrollViewSlot->setDelegate(this);
-    scrollViewSlot->setTouchPriority(priority);
+    scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollViewSlot, 5);
     
     spriteClass = new SpriteClass();
-    spriteClassFire = new SpriteClass();
-    spriteClassWater = new SpriteClass();
-    spriteClassLand = new SpriteClass();
-    spriteClassMaster = new SpriteClass();
+    spriteClassBook = new SpriteClass();
     spriteClassSlot = new SpriteClass();
     
     InitSprites();
     MakeScrollSlot();
     
+    // 연습 중인 스킬이 속한 속성을 우선적으로 보여주는데, 만약 없다면 불/물/땅/궁극 순서대로 연 것 먼저 보여준다.
+    int tabNumber;
+    int pcsi = myInfo->GetPracticeSkillId();
+    if (21 <= pcsi && pcsi <= 28) tabNumber = 0;
+    else if (11 <= pcsi && pcsi <= 18) tabNumber = 1;
+    else if (31 <= pcsi && pcsi <= 38) tabNumber = 2;
+    else if (41 <= pcsi && pcsi <= 45) tabNumber = 3;
+    else {
+        if (myInfo->IsFire()) tabNumber = 0;
+        else if (myInfo->IsWater()) tabNumber = 1;
+        else if (myInfo->IsLand()) tabNumber = 2;
+        else if (myInfo->IsMaster()) tabNumber = 3;
+    }
     curState = -1;
     MakeScroll(tabNumber);
     
@@ -128,10 +146,10 @@ void Sketchbook::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         //this->setKeypadEnabled(true);
         //this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("스케치북 : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -268,28 +286,24 @@ void Sketchbook::CheckProperties()
 
 void Sketchbook::MakeScroll(int state, bool isFromPopup)
 {
-    CCLog("make scroll");
     // select button을 눌렀을 때 이 함수를 통해 어떤 layer를 보여줄 지 결정한다.
     if (curState == state && !isFromPopup)
         return;
     
     // sprites init
-    spriteClassFire->RemoveAllObjects();
-    spriteClassWater->RemoveAllObjects();
-    spriteClassLand->RemoveAllObjects();
-    spriteClassMaster->RemoveAllObjects();
+    spriteClassBook->RemoveAllObjects();
     
     // menu change
     SetMenuChange(state);
 
     if (state == 0)
-        MakeScrollFire(2);
+        MakeScrollBook(2);
     else if (state == 1)
-        MakeScrollFire(1);
+        MakeScrollBook(1);
     else if (state == 2)
-        MakeScrollFire(3);
-    else
-        MakeScrollMaster();
+        MakeScrollBook(3);
+    //else
+    //    MakeScrollBook(4);
     
     curState = state;
 }
@@ -319,25 +333,6 @@ void Sketchbook::SetMenuChange(int state)
     else ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_master.png"))->setOpacity(255);
 }
 
-/*CCLayer* Sketchbook::GetLvLayer(int level)
-{
-    CCLayer* layer = CCLayer::create();
-    char name[30];
-    int offset = 0;
-    
-    sprintf(name, "number/level_lv.png");
-    spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(0, 0), CCSize(0,0), "", "Layer", layer, 6) );
-    if (level >= 10)
-    {
-        sprintf(name, "number/level_%d.png", level / 10);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(43+3, 0), CCSize(0,0), "", "Layer", layer, 6) );
-        offset = spriteClassFire->spriteObj[spriteClassFire->spriteObj.size()-1]->sprite9->getContentSize().width + 2;
-    }
-    sprintf(name, "number/level_%d.png", level % 10);
-    spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(43+3+offset, 0), CCSize(0,0), "", "Layer", layer, 6) );
-    
-    return layer;
-}*/
 
 SkillInfo* Sketchbook::GetNextSkillInfo(int state)
 {
@@ -357,7 +352,7 @@ SkillInfo* Sketchbook::GetNextSkillInfo(int state)
         if (!flag)
             continue;
         
-        CCLog("next = %d", skillInfo[i]->GetId());
+        //CCLog("next = %d", skillInfo[i]->GetId());
         for (int j = 0 ; j < myInfo->GetSkillList().size() ; j++)
         {
             ms = myInfo->GetSkillList()[j];
@@ -370,7 +365,7 @@ SkillInfo* Sketchbook::GetNextSkillInfo(int state)
     return NULL;
 }
 
-void Sketchbook::MakeScrollFire(int idx)
+void Sketchbook::MakeScrollBook(int idx)
 {
     std::vector<MySkill*> ms;
     int numOfList = myInfo->GetSkillList().size();
@@ -383,11 +378,11 @@ void Sketchbook::MakeScrollFire(int idx)
     //if (numOfList < 8) // 항상 '?' 스킬이 하나 있기 때문에 (8개 다 배우지 않은 이상)
         numOfList++;
     
-    containerFire = CCLayer::create();
+    containerBook = CCLayer::create();
     if (numOfList > 8)
-        containerFire->setContentSize(CCSizeMake(929, (numOfList-1)*206));
+        containerBook->setContentSize(CCSizeMake(929, (numOfList-1)*206));
     else
-        containerFire->setContentSize(CCSizeMake(929, numOfList*206));
+        containerBook->setContentSize(CCSizeMake(929, numOfList*206));
     
     SkillInfo* sInfo;
     int id;
@@ -406,8 +401,8 @@ void Sketchbook::MakeScrollFire(int idx)
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setPosition(ccp(27, (numOfList-i-1)*206));
-        containerFire->addChild(itemLayer, 5);
-        spriteClassFire->layers.push_back(itemLayer);
+        containerBook->addChild(itemLayer, 5);
+        spriteClassBook->layers.push_back(itemLayer);
         
         
         if (i == numOfList-1)
@@ -415,22 +410,22 @@ void Sketchbook::MakeScrollFire(int idx)
         else
             id = ms[i]->GetCommonId();
         sprintf(name, "background/bg_board_brown.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
         
         // 스킬 배경
         sprintf(name, "icon/icon_skill_division_red.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 132), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 132), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         sprintf(name, "background/bg_skill_brown.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 51), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(25, 51), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         // 스킬 문양
         if (i == numOfList-1) // '?' 스킬인 경우
         {
-            spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0, 0), ccp(68, 80), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0, 0), ccp(68, 80), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         }
         else // 그 외
         {
             sprintf(name2, "skill/skill_%d.png", ms[i]->GetCommonId());
-            spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(25+8, 51+8), CCSize(0, 0), "", "Layer", itemLayer, 5) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(25+8, 51+8), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         }
         
         // 스킬 레벨
@@ -438,36 +433,36 @@ void Sketchbook::MakeScrollFire(int idx)
         {
             int offset = 0;
             sprintf(name, "number/level_lv.png%d", i+3);
-            spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53, 41), CCSize(0,0), "", "Layer", itemLayer, 6) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53, 41), CCSize(0,0), "", "Layer", itemLayer, 6) );
             if (ms[i]->GetLevel() >= 10)
             {
                 sprintf(name, "number/level_%d.png", ms[i]->GetLevel() / 10);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53+43+3, 41), CCSize(0,0), "",   "Layer", itemLayer, 6) );
-                offset = spriteClassFire->spriteObj[spriteClassFire->spriteObj.size()-1]->sprite->getContentSize().width;
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53+43+3, 41), CCSize(0,0), "",   "Layer", itemLayer, 6) );
+                offset = spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width;
             }
             sprintf(name, "number/level_%d.png", ms[i]->GetLevel() % 10);
-            spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53+43+3+offset, 41), CCSize(0,0), "", "Layer", itemLayer, 6) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(53+43+3+offset, 41), CCSize(0,0), "", "Layer", itemLayer, 6) );
         }
         
         // 스킬 이름 배경
         sprintf(name, "background/bg_gameready_name.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(169, 116), CCSize(442, 69), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(169, 116), CCSize(442, 69), "", "Layer", itemLayer, 5) );
         // 스킬 이름
-        CCPoint pos = spriteClassFire->FindParentCenterPos(name);
-        spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel(sInfo->GetName(), fontList[0], 48, ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), ccc3(255,255,255), name, "1", NULL, 5, 1) );
+        CCPoint pos = spriteClassBook->FindParentCenterPos(name);
+        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(sInfo->GetName(), fontList[0], 48, ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), ccc3(255,255,255), name, "1", NULL, 5, 1) );
         // 스킬 간략 설명
-        spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetShortDesc(sInfo->GetId()), fontList[0], 30, ccp(0.5, 0.5), ccp(169+(int)pos.x, 92), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetShortDesc(sInfo->GetId()), fontList[0], 30, ccp(0.5, 0.5), ccp(169+(int)pos.x, 92), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
         
         // '패시브' 스킬에 대해 '자동효과' 문구 넣기
         if (!sInfo->IsActive() && i < numOfList-1)
         {
             sprintf(name2, "icon/icon_auto_effect.png%d", i+3);
-            spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(114, 163), CCSize(0, 0), "", "Layer", itemLayer, 6) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(114, 163), CCSize(0, 0), "", "Layer", itemLayer, 6) );
         }
         
         // 연습량 프로그레스바
         sprintf(name, "background/bg_progress_bar.png%d", i+3);
-        spriteClassFire->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(133, 28), CCSize(412, 31), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(133, 28), CCSize(412, 31), "", "Layer", itemLayer, 5) );
         
         // 현재 경험치 (연습량) + 레벨업을 위한 max경험치 (연습량)
         if (i < numOfList-1)
@@ -480,8 +475,8 @@ void Sketchbook::MakeScrollFire(int idx)
             sprintf(name, "0");
             sprintf(name2, "/0");
         }
-        spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(0, 0), ccp(549, 31), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
-        spriteClassFire->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[2], 30, ccp(0, 0), ccp(582, 25), ccc3(182,142,142), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(0, 0), ccp(549, 31), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[2], 30, ccp(0, 0), ccp(582, 25), ccc3(182,142,142), "", "Layer", itemLayer, 5) );
         
         if (i < numOfList-1)
         {
@@ -489,27 +484,27 @@ void Sketchbook::MakeScrollFire(int idx)
             if (SkillBuildUpInfo::IsMastered(ms[i]->GetCommonId(), ms[i]->GetLevel()))
             {
                 sprintf(name, "button/btn_skill_master.png%d", i);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 61), CCSize(213, 95), "", "Layer", itemLayer, 5) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 61), CCSize(213, 95), "", "Layer", itemLayer, 5) );
                 sprintf(name2, "letter/letter_master.png%d", i);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassFire->spriteObj[spriteClassFire->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
             // '레벨업' 버튼
             else if (ms[i]->GetExp() == SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()))
             {
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, ms[i]->GetCommonId()) ); // 태그에 common_id를 둔다.
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, ms[i]->GetCommonId()) ); // 태그에 common_id를 둔다.
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassFire->spriteObj[spriteClassFire->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
             // '연습' 버튼
             else
             {
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -ms[i]->GetUserId()) ); // 태그에 user_id를 음수로 둔다.
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -ms[i]->GetUserId()) ); // 태그에 user_id를 음수로 둔다.
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassFire->spriteObj[spriteClassFire->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
         }
         else
@@ -519,46 +514,33 @@ void Sketchbook::MakeScrollFire(int idx)
                 MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
             {
                 sprintf(name, "button/btn_green_mini.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
             // 아닌 경우
             else
             {
                 sprintf(name, "button/btn_green_mini.png%d", i+3);
-                spriteClassFire->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
             }
         }
     }
 
     // sprite들 add child
-    for (int i = 0 ; i < spriteClassFire->spriteObj.size() ; i++)
-        spriteClassFire->AddChild(i);
+    for (int i = 0 ; i < spriteClassBook->spriteObj.size() ; i++)
+        spriteClassBook->AddChild(i);
 
     if (curState != -1)
     {
-        scrollViewFire->getContainer()->removeAllChildren();
-        scrollViewFire->getContainer()->removeFromParent();
+        scrollView->getContainer()->removeAllChildren();
+        scrollView->getContainer()->removeFromParent();
     }
     // scrollView에 container를 새 layer로 설정.
-    scrollViewFire->setContainer(containerFire);
-    scrollViewFire->setContentSize(containerFire->getContentSize());
+    scrollView->setContainer(containerBook);
+    scrollView->setContentSize(containerBook->getContentSize());
     // offset 변경
-    scrollViewFire->setContentOffset(ccp(0, scrollViewFire->minContainerOffset().y), false);
-}
-
-void Sketchbook::MakeScrollWater()
-{
-
-}
-void Sketchbook::MakeScrollLand()
-{
-    
-}
-void Sketchbook::MakeScrollMaster()
-{
-    
+    scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
 }
 
 void Sketchbook::MakeScrollSlot()
@@ -577,11 +559,11 @@ void Sketchbook::MakeScrollSlot()
         spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
         
         scid = myInfo->GetSlot()[i]->GetCommonId();
-        CCLog("slot common id = %d", scid);
+        //CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
             sprintf(fname2, "skill/skill_%d.png", scid);
-            spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4) );
+            spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }
     }
     
@@ -608,11 +590,10 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    CCLog("Sketchbook touch began");
     
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isSlotTouched = true;
-    if (scrollViewFire->boundingBox().containsPoint(point))
+    if (scrollView->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
     
@@ -637,7 +618,8 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(number); // 불(1), 물(2), 땅(3), 마스터(4)
                     data.push_back(SkillPropertyInfo::GetCost(number)); // 가격
-                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data, -1, priority-1);
+                    //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data, -1, priority-1);
+                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data);
                 }
                 break;
             }
@@ -657,15 +639,18 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 // 슬롯 구매
                 std::vector<int> data;
                 if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
-                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data, -1, priority-1);
+                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data);
+                    //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data, -1, priority-1);
                 else
                 {
                     data.push_back((int)myInfo->GetSlot().size()+1);
                     data.push_back(SkillSlotInfo::GetCost((int)myInfo->GetSlot().size()+1));
                     if (SkillSlotInfo::GetCostType((int)myInfo->GetSlot().size()+1) == 1)
-                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1, priority-1);
+                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1);
+                        //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1, priority-1);
                     else
-                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1, priority-1);
+                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1);
+                        //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1, priority-1);
                 }
                 break;
             }
@@ -684,43 +669,45 @@ void Sketchbook::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCLog("sketchbook touch ended (isTouched = %d)", isTouched);
+    //CCLog("sketchbook touch ended (isTouched = %d)", isTouched);
     if (!isTouched)
         return;
     
     CCPoint point = pTouch->getLocation();
     
-    CCLog("%d %d", isScrolling, isSlotTouched);
+    //CCLog("%d %d", isScrolling, isSlotTouched);
     if (!isScrolling && isSlotTouched)
     {
-        Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1, priority-1);
+        //Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1, priority-1);
+        Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1);
     }
     
     CCPoint p;
-    for (int i = 0 ; i < spriteClassFire->spriteObj.size() ; i++)
+    for (int i = 0 ; i < spriteClassBook->spriteObj.size() ; i++)
     {
-        if (spriteClassFire->spriteObj[i]->name.substr(0, 29) == "background/bg_board_brown.png")
+        if (spriteClassBook->spriteObj[i]->name.substr(0, 29) == "background/bg_board_brown.png")
         {
             // 스케치북에서 버튼 외의 영역을 눌렀을 때 스킬상세 팝업창이 뜨게 하자.
-            p = spriteClassFire->spriteObj[i]->sprite9->convertToNodeSpace(point);
-            CCSize size = spriteClassFire->spriteObj[i]->sprite9->getContentSize();
+            p = spriteClassBook->spriteObj[i]->sprite9->convertToNodeSpace(point);
+            CCSize size = spriteClassBook->spriteObj[i]->sprite9->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= 600 && (int)p.y <= size.height)
             {
                 sound->playClick();
-                int id = spriteClassFire->spriteObj[i]->sprite9->getTag();
-                Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                int id = spriteClassBook->spriteObj[i]->sprite9->getTag();
+                Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
+                //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
             }
         }
-        else if (spriteClassFire->spriteObj[i]->name.substr(0, 23) == "button/btn_red_mini.png")
+        else if (spriteClassBook->spriteObj[i]->name.substr(0, 23) == "button/btn_red_mini.png")
         {
-            p = spriteClassFire->spriteObj[i]->sprite->convertToNodeSpace(point);
-            CCSize size = spriteClassFire->spriteObj[i]->sprite->getContentSize();
+            p = spriteClassBook->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClassBook->spriteObj[i]->sprite->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClick();
-                int id = spriteClassFire->spriteObj[i]->sprite->getTag();
+                int id = spriteClassBook->spriteObj[i]->sprite->getTag();
                 
                 // '연습' 누를 때
                 if (id < 0) // 이때 id는 user_id
@@ -743,22 +730,24 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 연습량이 다 차서 레벨업을 해야 하는 경우 (강화)
                 else // 이때 id는 common_id
                 {
-                    Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                    //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                    Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
                 }
             }
         }
-        else if (spriteClassFire->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
+        else if (spriteClassBook->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
         {
-            p = spriteClassFire->spriteObj[i]->sprite->convertToNodeSpace(point);
-            CCSize size = spriteClassFire->spriteObj[i]->sprite->getContentSize();
+            p = spriteClassBook->spriteObj[i]->sprite->convertToNodeSpace(point);
+            CCSize size = spriteClassBook->spriteObj[i]->sprite->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClick();
                 
                 // 요구조건을 만족한 경우, 만족하지 않은 경우 둘 다 팝업창을 띄운다.
-                int id = spriteClassFire->spriteObj[i]->sprite->getTag();
-                Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                int id = spriteClassBook->spriteObj[i]->sprite->getTag();
+                Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
+                //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
             }
         }
     }
@@ -781,24 +770,37 @@ void Sketchbook::scrollViewDidZoom(CCScrollView* view)
 
 void Sketchbook::EndScene()
 {
-    //sound->playClick();
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    if (from == 0)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (from == 1)
+    //if (from == 0)
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    //else if (from == 1)
+    //{
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    if (strcmp(Depth::GetCurName(), "GameReady") == 0)
     {
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        param = CCString::create("9");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        param = CCString::create("9"); // slot 갱신
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Sketchbook");
-    
-    scrollViewFire->removeAllChildren();
-    scrollViewFire->removeFromParent();
+
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    spriteClassBook->RemoveAllObjects();
+    delete spriteClassBook;
+    spriteClassSlot->RemoveAllObjects();
+    delete spriteClassSlot;
+
+    scrollView->removeAllChildren();
+    scrollView->removeFromParent();
     scrollViewSlot->removeAllChildren();
     scrollViewSlot->removeFromParent();
     
@@ -860,7 +862,8 @@ void Sketchbook::XmlParsePracticeSkill(char* data, int size)
         {
             CCNode* parent = this->getParent();
             EndScene();
-            Common::ShowNextScene(parent, "Ranking", "GameReady", false, priority);
+            //Common::ShowNextScene(parent, "Ranking", "GameReady", false, priority);
+            Common::ShowNextScene(parent, "Ranking", "GameReady", false);
         }
         else if (from == 1) // Sketchbook 없앤다.
         {

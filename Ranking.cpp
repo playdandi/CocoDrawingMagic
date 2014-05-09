@@ -7,7 +7,6 @@ using namespace cocos2d;
 using namespace cocos2d::extension;
 
 static int fromWhere;
-static int priority = 0;
 
 enum
 {
@@ -70,9 +69,12 @@ bool Ranking::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("Ranking");
+    
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
-    this->setTouchPriority(priority);
+    this->setTouchPriority(0);
     CCLog("Ranking : touch prio = %d", this->getTouchPriority());
     
     srand(time(NULL));
@@ -92,8 +94,6 @@ bool Ranking::init()
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Ranking::Notification), "Ranking", NULL);
-    // make depth tree
-    depth.push_back( new Depth("Ranking", priority) );
     
     /*
      - RGBA8888(kTexture2DPixelFormat_RGBA8888) : 최대 품질을 보장하며 32비트 픽셀 포맷이다. 단점은 다른 포맷들에 비해 메모리를 많이 소모한다는 점이다. 16비트 텍스처의 두 배나 되기 때문에 렌더링도 느리다. 이 픽셀 포맷이 적용된 이미지는 1024×1024 해상도에서 4MB, 2048×2048 해상도에서 16MB의 메모리를 사용한다. 다음에 설명할 RGB4444를 적용하면 이를 반으로 줄일 수 있다.
@@ -145,21 +145,13 @@ void Ranking::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCLog("Ranking 터치 활성");
-
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeyBackClicked = false;
         CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
-        
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
-        //CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
-        //isTouched = false;
-        //isKeyBackClicked = false;
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -600,7 +592,8 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1, priority-1);
+                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1, priority-1);
+                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
                 break;
             }
         }
@@ -651,7 +644,8 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0, priority-1);
+                //Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0, priority-1);
+                Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_addfriend.png")

@@ -193,7 +193,6 @@ std::string Common::MakeComma(int number)
         if (i > 0 && (num.size() - i) % 3 == 0)
             result = "," + result;
     }
-    CCLog("number = %s", result.c_str());
     return result;
 }
 
@@ -821,25 +820,26 @@ void SpriteClass::RemoveAllObjects()
         {
             if (spriteObj[i]->priority == curPriority)
             {
-                //CCLog("priority %d , idx %d , type %d", curPriority, i, spriteObj[i]->type);
+                //CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->name.c_str());
                 spriteObj[i]->name.clear();
                 spriteObj[i]->parentName.clear();
                 spriteObj[i]->parentType.clear();
-                if (spriteObj[i]->type == 0) { // delete sprite
+                if (spriteObj[i]->type == 0)
+                {
                     //spriteObj[i]->sprite->autorelease();
                     //spriteObj[i]->sprite->release();
                     spriteObj[i]->sprite->removeFromParentAndCleanup(true);
                     //CCLog("type 0 : %d", spriteObj[i]->sprite->retainCount());
-                    
                 }
-                else if (spriteObj[i]->type == 1) { // delete sprite-9
+                else if (spriteObj[i]->type == 1)
+                {
                     //spriteObj[i]->sprite9->autorelease();
                     //spriteObj[i]->sprite9->release();
                     spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
                     //CCLog("type 1 : %d", spriteObj[i]->sprite9->retainCount());
-                    
                 }
-                else { // delete label
+                else
+                {
                     //spriteObj[i]->label->autorelease();
                     //spriteObj[i]->label->release();
                     spriteObj[i]->label->removeFromParentAndCleanup(true);

@@ -30,8 +30,6 @@ public:
 protected:
     CCSize winSize;
     bool isTouched;
-    
-    CCScrollView* scrollView;
     bool isScrolling;
     
 private:

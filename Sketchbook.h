@@ -29,10 +29,7 @@ public:
     void InitSprites();
     void CheckProperties();
     void MakeScroll(int state, bool isFromPopup = false);
-    void MakeScrollFire(int idx);
-    void MakeScrollWater();
-    void MakeScrollLand();
-    void MakeScrollMaster();
+    void MakeScrollBook(int idx);
     void MakeScrollSlot();
     
     void SetMenuChange(int state);
@@ -64,28 +61,14 @@ private:
     CCSprite* pBlack;
     
     SpriteClass* spriteClass;
-    SpriteClass* spriteClassFire;
-    SpriteClass* spriteClassWater;
-    SpriteClass* spriteClassLand;
-    SpriteClass* spriteClassMaster;
+    SpriteClass* spriteClassBook;
     SpriteClass* spriteClassSlot;
     
-    CCScrollView* scrollViewFire;
-    CCScrollView* scrollViewWater;
-    CCScrollView* scrollViewLand;
-    CCScrollView* scrollViewMaster;
+    CCScrollView* scrollView;
     CCScrollView* scrollViewSlot;
     
-    CCLayer* containerFire;
-    CCLayer* containerWater;
-    CCLayer* containerLand;
-    CCLayer* containerMaster;
+    CCLayer* containerBook;
     CCLayer* containerSlot;
-    
-    CCLayer* fire;
-    CCLayer* water;
-    CCLayer* land;
-    CCLayer* master;
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

@@ -34,6 +34,12 @@ class Depth
 {
 public:
     Depth(std::string name, int priority);
+    static const char* GetCurName();
+    static const char* GetParentName();
+    static int GetCurPriority();
+    static void AddCurDepth(std::string name);
+    static void RemoveCurDepth();
+    
     int priority;
     std::string name;
 };

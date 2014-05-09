@@ -28,6 +28,35 @@ Depth::Depth(std::string name, int priority)
     this->name = name;
     this->priority = priority;
 }
+const char* Depth::GetParentName()
+{
+    return depth[depth.size()-2]->name.c_str();
+}
+const char* Depth::GetCurName()
+{
+    return depth[depth.size()-1]->name.c_str();
+}
+int Depth::GetCurPriority()
+{
+    return depth[depth.size()-1]->priority;
+}
+void Depth::AddCurDepth(std::string name)
+{
+    /*
+    int parentPriority;
+    if ((int)depth.size() == 0)
+        parentPriority = 0;
+    else
+        parentPriority = depth[depth.size()-1]->priority;
+     */
+    int priority = (int)depth.size() * -1;
+    depth.push_back( new Depth(name, priority) );
+}
+void Depth::RemoveCurDepth()
+{
+    delete depth[depth.size()-1];
+    depth.pop_back();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)

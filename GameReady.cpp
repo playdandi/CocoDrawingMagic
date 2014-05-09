@@ -2,7 +2,7 @@
 #include "Ranking.h"
 #include "MagicList.h"
 
-static int priority;
+//static int priority;
 
 GameReady::~GameReady(void)
 {
@@ -11,7 +11,7 @@ GameReady::~GameReady(void)
 
 CCScene* GameReady::scene(int prio)
 {
-    priority = prio;
+//    priority = prio;
     
     CCScene* pScene = CCScene::create();
     GameReady* pLayer = GameReady::create();
@@ -24,7 +24,7 @@ void GameReady::onEnter()
 {
     CCLog("GameReady :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void GameReady::onExit()
@@ -55,19 +55,22 @@ bool GameReady::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("GameReady");
+    
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("게임준비 : touch prio = %d", priority);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("GameReady : touch prio = %d", Depth::GetCurPriority());
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(GameReady::Notification), "GameReady", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(GameReady::Notification), Depth::GetCurName(), NULL);
     
     // notification
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
@@ -77,7 +80,7 @@ bool GameReady::init()
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
     scrollViewSlot->setPosition(ccp(77+20, 488+12));
     scrollViewSlot->setDelegate(this);
-    scrollViewSlot->setTouchPriority(priority);
+    scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollViewSlot, 5);
     
     // spriteclass init.
@@ -126,10 +129,10 @@ void GameReady::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         //this->setKeypadEnabled(true);
         //this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
@@ -396,7 +399,7 @@ void GameReady::InitFairy()
     
     int fid = myInfo->GetActiveFairyId();
     int flv = myInfo->GetActiveFairyLevel();
-    CCLog("fid flv : %d %d", fid, flv);
+    //CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
@@ -540,11 +543,11 @@ void GameReady::MakeScrollSlot()
         spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
         
         scid = myInfo->GetSlot()[i]->GetCommonId();
-        CCLog("slot common id = %d", scid);
+        //CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
             sprintf(fname2, "skill/skill_%d.png", scid);
-            spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4) );
+            spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }
     }
     
@@ -704,7 +707,8 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1, priority-1);
+                //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1, priority-1);
+                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
@@ -712,7 +716,8 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3, priority-1);
+                //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3, priority-1);
+                Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3);
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
@@ -741,12 +746,14 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (fairyLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2, priority-1);
+        //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2, priority-1);
+        Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2);
     }
     else if (skillLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0, priority-1);
+        //Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0, priority-1);
+        Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
     }
  
     return true;
@@ -768,7 +775,8 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isScrolling && isScrollViewTouched && scrollViewSlot->boundingBox().containsPoint(point))
     {
         sound->playBoardMove(); // 이 scene만 사운드가 다르다.
-        Common::ShowNextScene(this, "GameReady", "MagicList", false, 0, priority-1);
+        //Common::ShowNextScene(this, "GameReady", "MagicList", false, 0, priority-1);
+        Common::ShowNextScene(this, "GameReady", "MagicList", false, 0);
     }
     
     isScrolling = false;
@@ -786,21 +794,24 @@ void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
     
     pThis->unschedule(schedule_selector(GameReady::PotionTimer));
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(pThis, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
     CCString* param;
     if (pThis->callbackType == 1) // 게임시작 버튼을 누른 경우
     {
         param = CCString::create("3");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
-    //else // x 버튼을 눌러 GameReady만 끈 경우
-    //    param = CCString::create("0");
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     pThis->setKeypadEnabled(false);
     pThis->setTouchEnabled(false);
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(pThis, "GameReady");
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
@@ -817,22 +828,18 @@ void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
     
     // background layer
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    //CCLog("pBlack %d", pBlack->retainCount());
-    //CCLog("pBlackClose %d", pBlackClose->retainCount());
     
     scrollViewSlot->getContainer()->removeAllChildren();
     scrollViewSlot->removeAllChildren();
     scrollViewSlot->removeFromParent();
-    //CCLog("%d", scrollViewSlot->retainCount());
     
-    //CCNode* parent = pThis->getParent();
     pThis->removeFromParentAndCleanup(true);
     
     if (pThis->callbackType == 1)
     {
         // Ranking도 끝낸다.
         param = CCString::create("4");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
 }
 
