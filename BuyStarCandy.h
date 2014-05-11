@@ -30,7 +30,6 @@ public:
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
@@ -41,8 +40,6 @@ private:
     SpriteClass* spriteClass;
     
     CCLayer* itemContainer;
-    std::vector<CCLayer*> layers;
-    std::vector<CCLayer*> numberLayers;
 };
 
 #endif /* defined(__CocoMagic__BuyStarCandy__) */

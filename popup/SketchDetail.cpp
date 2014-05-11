@@ -46,33 +46,30 @@ void SketchDetail::keyBackClicked()
 
 bool SketchDetail::init()
 {
-    CCLog("SketchDetail :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
+
+    // make depth tree
+    Depth::AddCurDepth("SketchDetail");
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(priority);
-    CCLog("스케치디테일 : touch prio = %d", priority);
+    CCLog("SketchDetail : touch prio = %d", priority);
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SketchDetail::Notification), Depth::GetCurName(), NULL);
+    
+    // notification
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
-    // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SketchDetail::Notification), "SketchDetail", NULL);
-    
-    // notification
-    CCLog("스케치 디테일 1");
-    CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-    CCLog("스케치 디테일 2");
-    
-    // make sprites
-    spriteClass = new SpriteClass();
     InitSprites();
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
 
     return true;
 }
@@ -81,6 +78,21 @@ void SketchDetail::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("SketchDetail : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("SketchDetail : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    /*
     if (param->intValue() == 0)
     {
         // 터치 활성
@@ -98,6 +110,7 @@ void SketchDetail::Notification(CCObject* obj)
         this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    */
 }
 
 
@@ -109,6 +122,8 @@ void SketchDetail::InitSprites()
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
+    
+    spriteClass = new SpriteClass();
     
     // make pop-up background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1", ccp(0, 0), ccp(49, 615), CCSize(982, 623+50), "", "SketchDetail", this, 1) );
@@ -188,10 +203,12 @@ void SketchDetail::InitSprites()
     
     
     // 문구
-    descLayer = CCLayer::create();
+    CCLayer* descLayer = CCLayer::create();
     descLayer->setAnchorPoint(ccp(0, 0));
     descLayer->setPosition(180, 950);
     this->addChild(descLayer, 5);
+    spriteClass->layers.push_back(descLayer);
+    
     if (isOpened)
     {
         
@@ -264,7 +281,6 @@ void SketchDetail::InitSprites()
         {
             btnStatus = 1;
             // '강화' 글자 필요함
-            
         }
         // 일반적인 경우
         else
@@ -289,6 +305,9 @@ void SketchDetail::InitSprites()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
         }
     }
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
 }
 
 
@@ -377,7 +396,6 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void SketchDetail::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -389,16 +407,20 @@ void SketchDetail::EndScene(bool isNoti)
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
     if (isNoti)
-    {
+    {        
+        // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
         CCString* param = CCString::create("0");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "SketchDetail");
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
@@ -407,9 +429,6 @@ void SketchDetail::EndScene(bool isNoti)
     this->removeFromParentAndCleanup(true);
 }
 
-void SketchDetail::EndSceneCallback()
-{
-}
 
 
 void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)

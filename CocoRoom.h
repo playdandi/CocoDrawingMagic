@@ -47,9 +47,8 @@ public:
 protected:
     CCSize winSize;
     bool isTouched;
-    
     bool isScrolling;
-    bool isFairySlotTouched;
+    bool isSlotTouched;
     
 private:
     CCParticleSystem* par;
@@ -62,8 +61,9 @@ private:
     SpriteClass* spriteClassFairySlot;
     SpriteClass* spriteClassCocoSlot;
     
-    CCScrollView* scrollViewCoco;
-    CCScrollView* scrollViewFairy;
+    CCScrollView* scrollView;
+    //CCScrollView* scrollViewCoco;
+    //CCScrollView* scrollViewFairy;
     CCLayer* containerCoco;
     CCLayer* containerFairy;
     

@@ -22,13 +22,13 @@ public:
     void InitSprites();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
     bool isTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
 };
 

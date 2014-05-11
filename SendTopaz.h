@@ -25,23 +25,24 @@ public:
     
     CREATE_FUNC(SendTopaz);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
     
-    CCScrollView* scrollView;
     bool isTouched;
     bool isScrolling;
     bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
-    
+    CCScrollView* scrollView;
 };
 
 #endif /* defined(__CocoMagic__SendTopaz__) */

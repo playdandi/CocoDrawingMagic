@@ -19,14 +19,13 @@ public:
     
     void Notification(CCObject* obj);
     
-    CREATE_FUNC(Profile);
-    
     void InitSprites();
     void InitFairy();
     void InitSkill();
     
     void EndScene();
-    void EndSceneCallback();
+    
+    CREATE_FUNC(Profile);
     
 protected:
     CCSize winSize;
@@ -34,10 +33,10 @@ protected:
     
 private:
     CCSprite* pBlack;
-    CCLayer* scoreLayer;
-    CCLayer* profileLayer;
-    CCLayer* skillLayer;
-    CCLayer* fairyLayer;
+    //CCLayer* scoreLayer;
+    //CCLayer* profileLayer;
+    //CCLayer* skillLayer;
+    //CCLayer* fairyLayer;
     SpriteClass* spriteClass;
 };
 

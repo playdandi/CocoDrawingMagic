@@ -15,14 +15,17 @@ CCScene* BuyStarCandy::scene(int parent)
 
 void BuyStarCandy::onEnter()
 {
+    CCLog("BuyStarCandy : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void BuyStarCandy::onExit()
 {
+    CCLog("BuyStarCandy : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void BuyStarCandy::keyBackClicked()
@@ -39,26 +42,33 @@ bool BuyStarCandy::init()
 		return false;
 	}
     
-    //CCLog("BuyStarCandy. init");
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("BuyStarCandy");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("BuyStarCandy : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyStarCandy::Notification), "BuyStarCandy", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyStarCandy::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
+     if (parent_id == 0) // 부모가 'Ranking'
+     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+     else if (parent_id == 1) // 부모가 'GameReady'
+     CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+     */
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
     
     isTouched = false;
     
@@ -72,17 +82,16 @@ void BuyStarCandy::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        CCLog("BuyStarCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
+        CCLog("BuyStarCandy 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
@@ -142,8 +151,10 @@ void BuyStarCandy::MakeScroll()
         sprintf(name, "%d", priceStarCandy[i]->GetCount());
         CCLayer* numberLayer = Common::MakeImageNumberLayer(name, 0);
         numberLayer->setPosition(ccp(214, 109+15));
-        numberLayers.push_back(numberLayer);
         itemLayer->addChild(numberLayer, 3);
+        
+        spriteClass->layers.push_back(numberLayer);
+        spriteClass->layers.push_back(itemLayer);
         
         // 보너스 숫자
         CCPoint bonus_pos;
@@ -199,6 +210,7 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 EndScene();
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
@@ -216,6 +228,7 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 data.push_back(priceStarCandy[idx]->GetPrice());
                 
                 Common::ShowPopup(this, "BuyStarCandy", "NoImage", false, BUY_STARCANDY_TRY, BTN_2, data);
+                break;
             }
         }
     }
@@ -226,7 +239,6 @@ bool BuyStarCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyStarCandy::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void BuyStarCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -234,33 +246,34 @@ void BuyStarCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = false;
 }
 
-/*
-void BuyStarCandy::scrollViewDidScroll(CCScrollView* view)
-{
-    isScrolling = true;
-}
-
-void BuyStarCandy::scrollViewDidZoom(CCScrollView* view)
-{
-}
-*/
 
 void BuyStarCandy::EndScene()
 {
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    /*
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyStarCandy");
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    itemContainer->removeAllChildren();
     
     this->removeFromParentAndCleanup(true);
 }
 
-void BuyStarCandy::EndSceneCallback()
-{
-}
+
+

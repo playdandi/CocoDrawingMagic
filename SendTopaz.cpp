@@ -15,14 +15,17 @@ CCScene* SendTopaz::scene(int idx)
 
 void SendTopaz::onEnter()
 {
+    CCLog("SendTopaz : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void SendTopaz::onExit()
 {
+    CCLog("SendTopaz : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void SendTopaz::keyBackClicked()
@@ -38,14 +41,37 @@ bool SendTopaz::init()
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("SendTopaz");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("SendTopaz : touch prio = %d", this->getTouchPriority());
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SendTopaz::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyTopaz", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    scrollView = CCScrollView::create();
+    scrollView->retain();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492-45+40));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 3);
     
     InitSprites();
     MakeScroll();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
     
     isTouched = false;
     isScrolling = false;
@@ -54,9 +80,29 @@ bool SendTopaz::init()
     return true;
 }
 
+void SendTopaz::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("SendTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("SendTopaz 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+}
+
 void SendTopaz::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
@@ -76,22 +122,16 @@ void SendTopaz::InitSprites()
                     ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "SendTopaz", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                     ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "SendTopaz", this, 1) );
-
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
 }
 
 void SendTopaz::MakeScroll()
-{    
-    int spriteClassSize = spriteClass->spriteObj.size();
-    
-    // make scroll
-    CCLayer* scrollContainer = CCLayer::create();
-    //scrollContainer->setAnchorPoint(ccp(0, 1));
-    scrollContainer->setPosition(ccp(77, 492+904+243));
-    //scrollContainer->setPosition(ccp(77, 492));
-    
+{
     int numOfList = friendList.size();
+    
+    CCLayer* scrollContainer = CCLayer::create();
+    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
+    scrollContainer->setPosition(ccp(77, 492+904+243));
+    
     int height = 0;
     char fname[50], fname2[50];
     for (int i = 0 ; i < numOfList ; i++)
@@ -131,24 +171,10 @@ void SendTopaz::MakeScroll()
         }
     }
     
-    // addchild
-    for (int i = spriteClassSize ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
-    
-     // scrollview 내용 전체크기
-     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
-     // scrollView 생성
-     scrollView = CCScrollView::create();
-     scrollView->retain();
-     scrollView->setDirection(kCCScrollViewDirectionVertical);
-     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
-     scrollView->setContentSize(scrollContainer->getContentSize());
-     scrollView->setAnchorPoint(ccp(0, 0));
-     scrollView->setPosition(ccp(77, 492-45+40));
-     scrollView->setContainer(scrollContainer);
-     scrollView->setDelegate(this);
-     scrollView->setContentOffset(ccp(0, 904+243+45-100-(numOfList*166)), false);
-     this->addChild(scrollView, 3);
+    // container 설정
+    scrollView->setContainer(scrollContainer);
+    scrollView->setContentSize(scrollContainer->getContentSize());
+    scrollView->setContentOffset(ccp(0, 904+243+45-100-(numOfList*166)), false);
 }
 
 
@@ -171,7 +197,6 @@ bool SendTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void SendTopaz::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -185,6 +210,7 @@ void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 EndScene();
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 26) == "button/btn_yellow_mini.png")
@@ -224,15 +250,26 @@ void SendTopaz::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyTopaz", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    scrollView->removeAllChildren();
+    scrollView->removeFromParentAndCleanup(true);
+    
     this->removeFromParentAndCleanup(true);
 }
 
-void SendTopaz::EndSceneCallback()
-{
-}
+
+

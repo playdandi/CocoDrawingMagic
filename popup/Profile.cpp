@@ -4,7 +4,7 @@ static int profile_index;
 
 Profile::~Profile(void)
 {
-    CCLog("Profile destructor");
+    //CCLog("Profile destructor");
 }
 
 CCScene* Profile::scene(int idx)
@@ -21,7 +21,7 @@ void Profile::onEnter()
 {
     CCLog("Profile :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void Profile::onExit()
@@ -40,41 +40,36 @@ void Profile::keyBackClicked()
 
 bool Profile::init()
 {
-    CCLog("Profile :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("Profile");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("Profile : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Profile::Notification), "Profile", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Profile::Notification), Depth::GetCurName(), NULL);
     
-    // notification
+    // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    // make sprites
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
     spriteClass = new SpriteClass();
     InitSprites();
     InitFairy();
     InitSkill();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    /*
-    CCLog("========================================");
-    for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
-    {
-        if (spriteClass->spriteObj[i]->type == 0)
-            CCLog("cur retain (0) : %d", spriteClass->spriteObj[i]->sprite->retainCount());
-        else if (spriteClass->spriteObj[i]->type == 1)
-            CCLog("cur retain (1) : %d", spriteClass->spriteObj[i]->sprite9->retainCount());
-        else
-            CCLog("cur retain (2) : %d", spriteClass->spriteObj[i]->label->retainCount());
-    }
-    CCLog("========================================");
-    /*/
+
     return true;
 }
 
@@ -85,17 +80,16 @@ void Profile::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        CCLog("Profile : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
+        CCLog("Profile : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
@@ -119,7 +113,7 @@ void Profile::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
                 ccp(0, 0), ccp(900, 1132+25), CCSize(0, 0), "", "Profile", this, 1) );
     
-    profileLayer = CCLayer::create();
+    CCLayer* profileLayer = CCLayer::create();
     profileLayer->setContentSize(CCSizeMake(862, 166));
     profileLayer->setPosition(ccp(115, 1050));
     this->addChild(profileLayer, 5);
@@ -160,13 +154,15 @@ void Profile::InitSprites()
     // 최고점수
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("최고점수", fontList[0], 36,
                     ccp(0, 0), ccp(282, 70), ccc3(117,86,47), "", "Layer", profileLayer, 5) );
-    //255,219,53
     
     char score[12];
     sprintf(score, "%d", friendList[idx]->GetHighScore());
-    scoreLayer = Common::MakeImageNumberLayer(score, 0);
+    CCLayer* scoreLayer = Common::MakeImageNumberLayer(score, 0);
     scoreLayer->setPosition(ccp(282, 36-25));
     profileLayer->addChild(scoreLayer, 5);
+    
+    spriteClass->layers.push_back(scoreLayer);
+    spriteClass->layers.push_back(profileLayer);
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png",
                 ccp(0, 0), ccp(0, 5-20), CCSize(0, 0), "", "Layer", profileLayer, 5) );
@@ -212,7 +208,7 @@ void Profile::InitSprites()
 
 void Profile::InitFairy()
 {
-    fairyLayer = CCLayer::create();
+    CCLayer* fairyLayer = CCLayer::create();
     fairyLayer->setAnchorPoint(ccp(0, 0));
     fairyLayer->setPosition(ccp(382, 797-25));
     this->addChild(fairyLayer, 10);
@@ -222,7 +218,6 @@ void Profile::InitFairy()
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
-    CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
@@ -244,6 +239,9 @@ void Profile::InitFairy()
         picture->setScale(0.7f);
     }
     fairyLayer->addChild(picture, 6);
+    
+    spriteClass->layers.push_back(picture);
+    spriteClass->layers.push_back(fairyLayer);
     
     // 요정 등급
     char fname[30];
@@ -335,7 +333,6 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("DegreeInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -343,22 +340,8 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                /*
-                CCLog("========================================");
-                for (int i = 0 ; i < spriteClass->spriteObj.size(); i++)
-                {
-                    if (spriteClass->spriteObj[i]->type == 0)
-                        CCLog("cur retain (0) : %d", spriteClass->spriteObj[i]->sprite->retainCount());
-                    else if (spriteClass->spriteObj[i]->type == 1)
-                        CCLog("cur retain (1) : %d", spriteClass->spriteObj[i]->sprite9->retainCount());
-                    else
-                        CCLog("cur retain (2) : %d", spriteClass->spriteObj[i]->label->retainCount());
-                }
-                CCLog("========================================");
-                */
-                
                 EndScene();
-                return false;
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_question_mini.png")
@@ -377,7 +360,6 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void Profile::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void Profile::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -389,64 +371,23 @@ void Profile::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Profile");
-    
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    
-    // score layer
-    if (friendList[profile_index]->GetHighScore() == -1)
-    {
-        //scoreLayer->getChildByTag(-1)->autorelease();
-        //scoreLayer->getChildByTag(-1)->removeFromParentAndCleanup(true);
-        //CCLog("scorelayer(-1) : %d", scoreLayer->getChildByTag(-1)->retainCount());
-    }
-    else
-    {
-        /*
-        int total = scoreLayer->getChildrenCount();
-        for (int i = 0 ; i < total ; i++)
-        {
-            //scoreLayer->getChildByTag(i)->autorelease();
-            scoreLayer->getChildByTag(i)->removeFromParentAndCleanup(true);
-            //CCLog("scorelayer(%d) : %d", i, scoreLayer->getChildByTag(i)->retainCount());
-        }
-        */
-        //scoreLayer->removeAllChildrenWithCleanup(true);
-    }
-    //scoreLayer->autorelease();
-    //scoreLayer->removeFromParentAndCleanup(true);
-    
-    // other layers
-    //profileLayer->autorelease();
-    //profileLayer->removeFromParentAndCleanup(true);
-    //pBlack->removeFromParentAndCleanup(true);
-    //pBlack->autorelease();
-    
-    //CCLog("pblack count : %d", pBlack->retainCount());
-    //CCLog("scoreLayer count : %d", scoreLayer->retainCount());
-    //CCLog("profileLayer count : %d", profileLayer->retainCount());
-    
-    // finally remove all children in this scene.
-    //this->removeAllChildrenWithCleanup(true);
-    //this->removeAllComponents();
 
-    // end scene
     this->removeFromParentAndCleanup(true);
-    
-    // 텍스쳐랑 spriteCache에서 둘 다 없애야 한다.
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFrameByName("background/bg_board_yellow.png");
-    //CCTextureCache::sharedTextureCache()->removeTextureForKey("background/bg_board_yellow.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
 }
 
-void Profile::EndSceneCallback()
-{
-}
+

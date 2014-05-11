@@ -1,12 +1,12 @@
 #include "FairyOneInfo.h"
 
 int fairy_idx;
-static int priority;
+//static int priority;
 
 CCScene* FairyOneInfo::scene(int idx, int prio)
 {
     fairy_idx = idx;
-    priority = prio;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     FairyOneInfo* pLayer = FairyOneInfo::create();
@@ -19,7 +19,7 @@ void FairyOneInfo::onEnter()
 {
     CCLog("FairyOneInfo : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void FairyOneInfo::onExit()
@@ -42,20 +42,24 @@ bool FairyOneInfo::init()
 	{
 		return false;
 	}
+
+    // make depth tree
+    Depth::AddCurDepth("FairyOneInfo");
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("FairyOneInfo : touch prio = %d", priority);
-    
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("FairyOneInfo : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(FairyOneInfo::Notification), "FairyOneInfo", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(FairyOneInfo::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoomFairyTown", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     
@@ -69,10 +73,8 @@ void FairyOneInfo::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("FairyOneInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -80,8 +82,6 @@ void FairyOneInfo::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("FairyOneInfo : 터치 비활성");
-        //this->setKeypadEnabled(false);
-        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
 }
@@ -117,6 +117,7 @@ void FairyOneInfo::InitSprites()
     picture->setAnchorPoint(ccp(0, 0));
     picture->setPosition(ccp(250, 1100));
     this->addChild(picture, 10);
+    spriteClass->layers.push_back(picture);
     
 
     // name + grade background
@@ -206,7 +207,6 @@ bool FairyOneInfo::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("FairyOneInfo : (%d , %d)", (int)point.x, (int)point.y);
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -256,21 +256,24 @@ void FairyOneInfo::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void FairyOneInfo::EndScene()
 {
-    CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoomFairyTown", param);
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
     
-    // remove all CCNodes
-    spriteClass->RemoveAllObjects();
-    delete spriteClass;
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "FairyOneInfo");
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;    
     
     this->removeFromParentAndCleanup(true);
 }
 
-void FairyOneInfo::EndSceneCallback()
-{
-}
+
+

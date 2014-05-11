@@ -496,8 +496,6 @@ SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPo
     obj->sprite->setPosition(pos);
     obj->sprite->setOpacity(alpha);
     obj->sprite->setScale(scale);
-    //CCLog("sprite retain(file) : %d", obj->sprite->retainCount());
-
 
     // parent 관련 대입
     obj->parentName = parentName;
@@ -523,8 +521,6 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
     obj->label->setTag(tag);
-    //obj->label->retain();
-    //CCLog("label retain : %d", obj->label->retainCount());
     
     // parent
     obj->parentName = parentName;
@@ -535,7 +531,6 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->zOrder = zOrder;
     
     obj->priority = priority;
-    
     
     return obj;
 }
@@ -599,13 +594,18 @@ void SpriteClass::AddChild(int idx)
 {
     SpriteObject* obj = spriteObj[idx];
 
-    //CCLog("%d : %s // %s", idx, obj->parentName.c_str(), obj->parentType.c_str());
-    
-    // -1 : 현재 scene, 0 : 이 안의 sprite, 1 : 이 안의 sprite9, 2 : 다른 곳의 layer
+    // 0 : 이 안의 sprite, 1 : 이 안의 sprite9
     if (obj->parentType == "0") // spriteObject중 하나의 sprite
+    {
         obj->parent = FindParentSprite(idx, obj->parentName);
+        obj->priority = FindParentPriority(idx, obj->parentName) + 1;
+    }
     else if (obj->parentType == "1") // spriteObject중 하나의 sprite-9
+    {
         obj->parent = FindParentSprite9(idx, obj->parentName);
+        obj->priority = FindParentPriority(idx, obj->parentName) + 1;
+    }
+
     // 이외에는 이미 obj->parent에 부모가 저장되어 있다.
     
     // 실제 addChild
@@ -627,13 +627,13 @@ void SpriteClass::AddChild(int idx)
         else if (obj->type == 1) ((CCLayer*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((CCLayer*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
-    else if (obj->parentType == "Ranking") // 부모가 layer
+    else if (obj->parentType == "Ranking") // 부모가 어떤 scene
     {
         if (obj->type == 0)      ((Ranking*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Ranking*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Ranking*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
-    else if (obj->parentType == "GameReady") // 부모가 layer
+    else if (obj->parentType == "GameReady") // 부모가 어떤 scene
     {
         if (obj->type == 0)      ((GameReady*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((GameReady*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
@@ -763,6 +763,16 @@ void SpriteClass::AddChild(int idx)
     }
 }
 
+int SpriteClass::FindParentPriority(int idx, std::string parentName)
+{
+    for (int i = 0 ; i < spriteObj.size() ; i++)
+    {
+        if (i != idx && spriteObj[i]->name == parentName)
+            return spriteObj[i]->priority;
+    }
+    return -1;
+}
+
 void* SpriteClass::FindParentSprite(int idx, std::string parentName)
 {
     for (int i = 0 ; i < spriteObj.size() ; i++)
@@ -859,9 +869,7 @@ void SpriteClass::RemoveAllObjects()
     
     // clear layers
     for (int i = 0 ; i < layers.size() ; i++)
-    {
         layers[i]->removeAllChildren();
-    }
     layers.clear();
 }
 

@@ -11,16 +11,17 @@ CCScene* DegreeInfo::scene()
 
 void DegreeInfo::onEnter()
 {
-    CCLog("MagicSlot :: onEnter");
+    CCLog("DegreeInfo :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void DegreeInfo::onExit()
 {
-    CCLog("MagicSlot :: onExit");
+    CCLog("DegreeInfo :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void DegreeInfo::keyBackClicked()
@@ -37,11 +38,20 @@ bool DegreeInfo::init()
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("DegreeInfo");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("DegreeInfo : touch prio = %d", this->getTouchPriority());
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Profile", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     
@@ -81,9 +91,7 @@ void DegreeInfo::InitSprites()
                     ccp(0, 0), ccp(110, 900), CCSize(0, 0), "", "DegreeInfo", this, 5) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
         spriteClass->AddChild(i);
-    }
 }
 
 
@@ -110,7 +118,6 @@ bool DegreeInfo::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void DegreeInfo::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void DegreeInfo::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -121,15 +128,22 @@ void DegreeInfo::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void DegreeInfo::EndScene()
 {
     sound->playClick();
+    
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Profile", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
     this->removeFromParentAndCleanup(true);
 }
 
-void DegreeInfo::EndSceneCallback()
-{
-}
+

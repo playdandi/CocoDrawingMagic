@@ -28,21 +28,25 @@ public:
     
     CREATE_FUNC(InviteFriend);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollView;
     bool isScrolling;
     bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
+    
+    CCScrollView* scrollView;
+    
     SpriteClass* spriteClass;
     
     std::vector<std::string> name;

@@ -47,7 +47,6 @@ private:
     SpriteClass* spriteClass;
     
     CCScrollView* scrollView;
-    std::vector<CCLayer*> itemLayers;
     CCLayer* scrollContainer;
 };
 

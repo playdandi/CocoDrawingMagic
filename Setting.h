@@ -23,7 +23,6 @@ public:
     void XmlParseResult(char* data, int size);
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
@@ -41,6 +40,7 @@ protected:
     bool potionMsgReserved;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
 };
 

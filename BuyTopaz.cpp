@@ -1,10 +1,10 @@
 #include "BuyTopaz.h"
 
-static int parent_id;
+//static int parent_id;
 
 CCScene* BuyTopaz::scene(int parent)
 {
-    parent_id = parent;
+    //parent_id = parent;
     
     CCScene* pScene = CCScene::create();
     BuyTopaz* pLayer = BuyTopaz::create();
@@ -15,14 +15,17 @@ CCScene* BuyTopaz::scene(int parent)
 
 void BuyTopaz::onEnter()
 {
+    CCLog("BuyTopaz : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void BuyTopaz::onExit()
 {
+    CCLog("BuyTopaz : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void BuyTopaz::keyBackClicked()
@@ -38,11 +41,21 @@ bool BuyTopaz::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("BuyTopaz");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("BuyTopaz : touch prio = %d", this->getTouchPriority());
+    
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyTopaz::Notification), "BuyTopaz", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyTopaz::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
@@ -51,8 +64,8 @@ bool BuyTopaz::init()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
     else if (parent_id == 3) // 부모가 'BuyStarCandy'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
+    */
     
-    CCLog("BuyTopaz. init");
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
@@ -72,17 +85,20 @@ void BuyTopaz::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        CCLog("BuyTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
+        CCLog("BuyTopaz : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
+        //this->setKeypadEnabled(false);
+        //this->setTouchEnabled(false);
     }
 }
 
@@ -130,7 +146,6 @@ void BuyTopaz::MakeScroll()
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
-        layers.push_back(itemLayer);
         itemLayer->setContentSize(CCSizeMake(862, 226));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*226));
         itemContainer->addChild(itemLayer, 2);
@@ -150,8 +165,10 @@ void BuyTopaz::MakeScroll()
         sprintf(name, "%d", priceTopaz[i]->GetCount());
         CCLayer* numberLayer = Common::MakeImageNumberLayer(name, 0);
         numberLayer->setPosition(ccp(214, 126));
-        numberLayers.push_back(numberLayer);
         itemLayer->addChild(numberLayer, 3);
+        
+        spriteClass->layers.push_back(numberLayer);
+        spriteClass->layers.push_back(itemLayer);
         
         // 보너스 숫자
         sprintf(name, "+ %d%%", priceTopaz[i]->GetBonus());
@@ -266,7 +283,15 @@ void BuyTopaz::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    /*
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
@@ -275,34 +300,17 @@ void BuyTopaz::EndScene()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
     else if (parent_id == 3) // 부모가 'BuyStarCandy'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
-    
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyTopaz");
+    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    
-    // remove children in all layers
-    for (int i = 0 ; i < numberLayers.size(); i++)
-        numberLayers[i]->removeAllChildren();
-    for (int i = 0 ; i < layers.size(); i++)
-        layers[i]->removeAllChildren();
-    numberLayers.clear();
-    layers.clear();
-    
-    itemContainer->removeAllChildren();
-    
-    // remove all CCNodes
+    // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    itemContainer->removeAllChildren();
     
-    // end scene
     this->removeFromParentAndCleanup(true);
-    
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
 }
 
-void BuyTopaz::EndSceneCallback()
-{
-}
 

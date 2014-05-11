@@ -148,7 +148,7 @@ public:
     std::string name;
     
     std::string parentName;
-    std::string parentType; // -1 : 현재 scene, 0 : 이 안의 sprite, 1 : 이 안의 sprite9, 2 : 다른 곳의 layer
+    std::string parentType; // 0 : 이 안의 sprite, 1 : 이 안의 sprite9
     void* parent;
     int zOrder;
     int priority;
@@ -158,6 +158,7 @@ class SpriteClass
 {
 public:
     void AddChild(int idx);
+    int FindParentPriority(int idx, std::string parentName);
     void* FindParentSprite(int idx, std::string parentName);
     void* FindParentSprite9(int idx, std::string parentName);
     void* FindSpriteByName(std::string name);

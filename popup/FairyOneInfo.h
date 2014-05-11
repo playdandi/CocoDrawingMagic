@@ -23,13 +23,10 @@ public:
     void InitSprites();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
-    
     bool isTouched;
-    
     bool isByTopaz;
     
 private:

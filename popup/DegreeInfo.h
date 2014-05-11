@@ -20,18 +20,13 @@ public:
     void InitSprites();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
-
-    CCSprite* pBlack;
-    
     bool isTouched;
     
-    CCLayer* l;
-    
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
 };
 

@@ -38,9 +38,9 @@ void Ranking::onEnter()
 }
 void Ranking::onPause()
 {
-    CCLog("Ranking :: onPause");
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    //CCLog("Ranking :: onPause");
+    //CCDirector* pDirector = CCDirector::sharedDirector();
+    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
 }
 void Ranking::onExit()
 {
@@ -186,6 +186,7 @@ void Ranking::Notification(CCObject* obj)
         // 포션 보내기에 대한 정보 업데이트
         //for (int i = 0 ; i < friendList.size() ; i++)
         //    friendList[i]->SetPotionSprite();
+        CCLog("Ranking 터치 활성 끝");
     }
     else if (param->intValue() == 1)
     {
@@ -500,6 +501,7 @@ void Ranking::MakeScroll()
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setContainer(scrollContainer);
     scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
     //scrollViewLastPoint = scrollView->getContentOffset();
     //scrollView->setBounceable(false);

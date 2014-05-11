@@ -40,15 +40,11 @@ public:
     
 protected:
     CCSize winSize;
-    
-    CCSprite* pBlack;
-    
     bool isTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
-    
-    
 };
 
 #endif /* defined(__CocoMagic__NoImage__) */

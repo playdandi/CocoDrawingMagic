@@ -38,8 +38,6 @@ public:
     void XmlParseMsg(char* data, int size);
     void XmlParseMsgReceiveOne(char* data, int size);
     
-    void ReleaseAll();
-    
 protected:
     CCSize winSize;
     bool isTouched;
@@ -53,7 +51,7 @@ private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
     SpriteClass* spriteClassScroll;
-    std::vector<CCLayer*> layer;
+    //std::vector<CCLayer*> layer;
     
     CCScrollView* scrollView;
     CCLayer* scrollContainer;

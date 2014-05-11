@@ -23,25 +23,25 @@ public:
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
     
-    CREATE_FUNC(RequestPotion);
+    void Notification(CCObject* obj);
     
     void InitSprites();
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
+    
+    CREATE_FUNC(RequestPotion);
     
 protected:
     CCSize winSize;
     bool isTouched;
-    
-    CCScrollView* scrollView;
     bool isScrolling;
     bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
-    
+    CCScrollView* scrollView;
 };
 
 #endif /* defined(__CocoMagic__RequestPotion__) */

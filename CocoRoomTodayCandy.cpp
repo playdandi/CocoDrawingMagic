@@ -1,10 +1,10 @@
 #include "CocoRoomTodayCandy.h"
 
-static int priority;
+//static int priority;
 
 CCScene* CocoRoomTodayCandy::scene(int prio)
 {
-    priority = prio;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     CocoRoomTodayCandy* pLayer = CocoRoomTodayCandy::create();
@@ -15,16 +15,17 @@ CCScene* CocoRoomTodayCandy::scene(int prio)
 
 void CocoRoomTodayCandy::onEnter()
 {
-    //CCLog("CocoRoomTodayCandy :: onEnter");
+    CCLog("CocoRoomTodayCandy :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void CocoRoomTodayCandy::onExit()
 {
-    //CCLog("CocoRoomTodayCandy :: onExit");
+    CCLog("CocoRoomTodayCandy :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void CocoRoomTodayCandy::keyBackClicked()
@@ -35,17 +36,35 @@ void CocoRoomTodayCandy::keyBackClicked()
 
 bool CocoRoomTodayCandy::init()
 {
-    CCLog("CocoRoomTodayCandy :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("CocoRoomTodayCandy");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("CocoRoomTodayCandy : touch prio = %d", this->getTouchPriority());
     
     // notification
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // scrollView 생성
+    scrollView = CCScrollView::create();
+    scrollView->retain();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 904-80));
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492+40));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 3);
     
     InitSprites();
     MakeScroll();
@@ -61,13 +80,12 @@ bool CocoRoomTodayCandy::init()
 
 void CocoRoomTodayCandy::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
-    
     
     spriteClass = new SpriteClass();
 
@@ -117,6 +135,7 @@ void CocoRoomTodayCandy::MakeScroll()
     // make scroll
     CCLayer* scrollContainer = CCLayer::create();
     scrollContainer->setPosition(ccp(77, 492+904+243));
+    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     
     int height = 0;
     char fname[50], fname2[50];
@@ -129,6 +148,7 @@ void CocoRoomTodayCandy::MakeScroll()
         itemLayer->setContentSize(CCSizeMake(862, 166));
         itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
         scrollContainer->addChild(itemLayer, 2);
+        spriteClass->layers.push_back(itemLayer);
         height++;
         
         // profile bg
@@ -170,20 +190,10 @@ void CocoRoomTodayCandy::MakeScroll()
         }
     }
     
-    // scrollview 내용 전체크기
-    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
-    // scrollView 생성
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904-80));
-    scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492+40));
+    // container 생성 + offset
     scrollView->setContainer(scrollContainer);
-    scrollView->setDelegate(this);
+    scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
-    this->addChild(scrollView, 3);
 }
 
 
@@ -205,7 +215,10 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
                 EndScene();
+                break;
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_question.png")
         {
@@ -218,7 +231,6 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void CocoRoomTodayCandy::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -250,7 +262,6 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void CocoRoomTodayCandy::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    //CCLog("CocoRoomTodayCandy - scrolling~");
 }
 
 void CocoRoomTodayCandy::scrollViewDidZoom(CCScrollView* view)
@@ -262,14 +273,21 @@ void CocoRoomTodayCandy::EndScene()
 {
     sound->playClick();
     
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
     scrollView->removeAllChildren();
-    scrollView->removeFromParent();
+    scrollView->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

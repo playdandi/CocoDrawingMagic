@@ -14,14 +14,17 @@ CCScene* Setting::scene()
 
 void Setting::onEnter()
 {
+    CCLog("Setting : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void Setting::onExit()
 {
+    CCLog("Setting : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void Setting::keyBackClicked()
@@ -37,39 +40,43 @@ bool Setting::init()
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("Setting");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("Setting : touch prio = %d", this->getTouchPriority());
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    spriteClass = new SpriteClass();
     InitSprites();
-    
-    selectedBtn = -1;
-    
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
-    
-    isTouched = false;
     
     // 팝업창을 나갈 때 서버 저장용 예비 변수들
     kakaoMsgReserved = myInfo->GetKakaoMsg();
     pushNotiReserved = myInfo->GetPushNotification();
     potionMsgReserved = myInfo->GetPotionMsg();
     
+    selectedBtn = -1;
+    isTouched = false;
+    
     return true;
 }
 
 void Setting::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
-    
-    spriteClass = new SpriteClass();
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_red.png",
@@ -89,16 +96,7 @@ void Setting::InitSprites()
                     ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", // id
                     ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Setting", this, 1) );
-    /*
-    //{{1052,281},{312,266}}
-    CCScale9Sprite* y1 = CCScale9Sprite::createWithSpriteFrameName("background/bg_board_yellow.png",
-                                                                   CCRectMake(100, 80, 100, 10));
-    y1->setAnchorPoint(ccp(0, 0));
-    y1->setPosition(ccp(77, 640));
-    y1->setContentSize(CCSize(643, 97));
-    this->addChild(y1, 3);
-     */
-    
+
     
     // text (version, kakaoID)
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("게임버전 : 1.0.0 ver", fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Setting", this, 4) );
@@ -235,11 +233,13 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     req->setResponseCallback(this, httpresponse_selector(Setting::onHttpRequestCompleted));
                     CCHttpClient::getInstance()->send(req);
                     req->release();
+                    break;
                 }
                 else
                 {
                     // 바뀐 게 없으면 그냥 끈다.
                     EndScene();
+                    break;
                 }
             }
         }
@@ -253,62 +253,13 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 selectedPos = spriteClass->spriteObj[i]->sprite->getPosition();
                 standardBtnPos.y = selectedPos.y;
                 selectedTouchPos = point;
+                break;
             }
         }
     }
     
     return true;
 }
-
-void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
-{
-    CCHttpResponse* res = (CCHttpResponse*) data;
-
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    
-    XmlParseResult(dumpData, buffer->size());
-}
-
-void Setting::XmlParseResult(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        CCLog("setting code 0 SUCCESS");
-        myInfo->SetSettingVariables(kakaoMsgReserved, pushNotiReserved, potionMsgReserved);
-        EndScene();
-    }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
-    }
-}
-
 
 void Setting::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -320,7 +271,6 @@ void Setting::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
         int x = (int)selectedPos.x + ((int)point.x-(int)selectedTouchPos.x);
         if (x < (int)standardBtnPos.x) x = (int)standardBtnPos.x;
         if (x > (int)standardBtnPos.x+(int)size.width) x = (int)standardBtnPos.x+(int)size.width;
-        //CCLog("x : %d", x);
     
         selectedSprite->setPosition(ccp((int)x, (int)selectedPos.y));
     }
@@ -392,19 +342,78 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     selectedBtn = -1;
 }
 
+void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    XmlParseResult(dumpData, buffer->size());
+}
+
+void Setting::XmlParseResult(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        CCLog("setting code 0 SUCCESS");
+        myInfo->SetSettingVariables(kakaoMsgReserved, pushNotiReserved, potionMsgReserved);
+        EndScene();
+    }
+    else
+    {
+        // failed msg
+        CCLog("failed code = %d", code);
+    }
+}
+
+
 void Setting::EndScene()
 {
     sound->playClick();
+    
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
     this->removeFromParentAndCleanup(true);
 }
 
-void Setting::EndSceneCallback()
-{
-}
+
+
 

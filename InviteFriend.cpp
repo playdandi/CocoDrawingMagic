@@ -11,14 +11,17 @@ CCScene* InviteFriend::scene()
 
 void InviteFriend::onEnter()
 {
+    CCLog("InviteFriend : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void InviteFriend::onExit()
 {
+    CCLog("InviteFriend : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void InviteFriend::keyBackClicked()
@@ -34,13 +37,36 @@ bool InviteFriend::init()
 		return false;
 	}
     
-    //CCLog("invite friend = init()");
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("InviteFriend");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("InviteFriend : touch prio = %d", this->getTouchPriority());
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(InviteFriend::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // scrollView 생성
+    scrollView = CCScrollView::create();
+    scrollView->retain();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492+20));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 3);
+    
+    spriteClass = new SpriteClass();
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -53,16 +79,35 @@ bool InviteFriend::init()
     return true;
 }
 
+void InviteFriend::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("InviteFriend : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("InviteFriend : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+}
+
+
 void InviteFriend::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
-    
-    spriteClass = new SpriteClass();
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
@@ -193,18 +238,10 @@ void InviteFriend::MakeScroll()
     
     // scrollview 내용 전체크기
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
-    // scrollView 생성
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
-    scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492+20));
+    
     scrollView->setContainer(scrollContainer);
-    scrollView->setDelegate(this);
+    scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
-    this->addChild(scrollView, 3);
 }
 
 
@@ -246,7 +283,6 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void InviteFriend::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    CCLog("invitefriend scrolling");
 }
 
 void InviteFriend::scrollViewDidZoom(CCScrollView* view)
@@ -257,19 +293,26 @@ void InviteFriend::scrollViewDidZoom(CCScrollView* view)
 void InviteFriend::EndScene()
 {
     sound->playClick();
+    
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
-}
-
-void InviteFriend::EndSceneCallback()
-{
 }
 

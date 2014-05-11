@@ -18,17 +18,16 @@ public:
     
     void Notification(CCObject* obj);
     
-    CREATE_FUNC(SketchDetail);
-    
     void InitSprites();
     void InitFairy();
     void InitSkill();
     
     void EndScene(bool isNoti);
-    void EndSceneCallback();
     
     void XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag);
     void onHttpRequestCompleted(CCNode *sender, void *data);
+    
+    CREATE_FUNC(SketchDetail);
     
 protected:
     CCSize winSize;
@@ -38,7 +37,6 @@ protected:
     
 private:
     CCSprite* pBlack;
-    CCLayer* descLayer;
     SpriteClass* spriteClass;
 };
 

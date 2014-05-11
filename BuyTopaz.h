@@ -28,7 +28,6 @@ public:
     void MakeScroll();
     
     void EndScene();
-    void EndSceneCallback();
     
 protected:
     CCSize winSize;
@@ -39,8 +38,6 @@ private: // 해제해야 하는 변수들은 여기에 넣자.
     SpriteClass* spriteClass;
     
     CCLayer* itemContainer;
-    std::vector<CCLayer*> layers;
-    std::vector<CCLayer*> numberLayers;
 };
 
 #endif /* defined(__CocoMagic__BuyTopaz__) */

@@ -8,7 +8,7 @@ static int type;
 static int btn;
 static std::vector<int> d;
 static int fromWhere;
-static int priority;
+//static int priority;
 
 static int newSkillType;
 
@@ -18,9 +18,9 @@ CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int e
     type = popupType;
     btn = btnType;
     d = data;
-    fromWhere = etc;
     
-    priority = prio;
+    fromWhere = etc;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     NoImage* pLayer = NoImage::create();
@@ -31,14 +31,17 @@ CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int e
 
 void NoImage::onEnter()
 {
+    CCLog("NoImage : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void NoImage::onExit()
 {
+    CCLog("NoImage : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void NoImage::keyBackClicked()
@@ -50,19 +53,24 @@ void NoImage::keyBackClicked()
 
 bool NoImage::init()
 {
-    CCLog("NoImage :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("NoImage");
+
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("NoImage : touch prio = %d", priority);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("NoImage : touch prio = %d", this->getTouchPriority());
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // notification post
+    CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
+    /*
     // notification post
     CCString* param = CCString::create("1");
     if (type == BUY_STARCANDY_TRY)
@@ -80,6 +88,9 @@ bool NoImage::init()
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
     else if (fromWhere == 2)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    */
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     
@@ -286,25 +297,20 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
         // 팝업창에서 '확인' 버튼 하나만 있는 경우.
+        /*
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
                  (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL || type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL ||
                   type == PURCHASE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == BUY_SKILLSLOT_FAIL || type == BUY_SKILLSLOT_FULL || type == BUY_SKILLSLOT_OK || type == BUY_PROPERTY_OK || type == BUY_PROPERTY_FAIL) )
+        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" && btn == BTN_1)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                //CCNode* parent = this->getParent();
                 EndScene();
-                /*
-                // 특정 scene은 그 부모의 scene까지 end 시킨다.
-                if (type == BUY_STARCANDY_OK || type == BUYPOTION_OK)
-                {
-                    parent->removeFromParentAndCleanup(true);
-                }
-                */
                 return true;
             }
         }
+        */
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -312,7 +318,20 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 char temp[255];
                 
-                if (type == POPUP_EXIT)
+                if (btn == BTN_1) // 팝업창에서 '확인' 버튼 하나만 있는 경우.
+                {
+                    //CCNode* parent = this->getParent();
+                    EndScene();
+                    /*
+                     // 특정 scene은 그 부모의 scene까지 end 시킨다.
+                     if (type == BUY_STARCANDY_OK || type == BUYPOTION_OK)
+                     {
+                     parent->removeFromParentAndCleanup(true);
+                     }
+                     */
+                    return true;
+                }
+                else if (type == POPUP_EXIT)
                 {
                     CCDirector::sharedDirector()->end();
                     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -523,12 +542,45 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void NoImage::ReplaceScene(std::string to, int type, int btnType)
 {
-    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere, priority);
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+
+    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere);
+    //Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere, priority);
+    
     this->removeFromParentAndCleanup(true);
 }
 
 void NoImage::EndScene()
 {
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
+    this->removeFromParentAndCleanup(true);
+    
+    /*
     CCString* param = CCString::create("0");
     if (type == POPUP_EXIT)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
@@ -549,11 +601,13 @@ void NoImage::EndScene()
     this->setTouchEnabled(false);
     
     this->removeFromParentAndCleanup(true);
+    */
 }
 
 void NoImage::EndSceneCallback()
 {
 }
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -587,11 +641,6 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
     dumpData[buffer->size()] = NULL;
     
     // parse xml data
-    /*if (atoi(res->getHttpRequest()->getTag()) == 99999)
-    {
-        XmlParseGetFirstSkill(dumpData, buffer->size());
-        return;
-    }*/
     switch (type)
     {
         case BUY_TOPAZ_TRY:

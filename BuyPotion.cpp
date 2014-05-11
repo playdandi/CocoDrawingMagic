@@ -1,10 +1,10 @@
 #include "BuyPotion.h"
 
-static int parent_id;
+//static int parent_id;
 
 CCScene* BuyPotion::scene(int parent)
 {
-    parent_id = parent;
+    //parent_id = parent;
     
     CCScene* pScene = CCScene::create();
     BuyPotion* pLayer = BuyPotion::create();
@@ -15,14 +15,17 @@ CCScene* BuyPotion::scene(int parent)
 
 void BuyPotion::onEnter()
 {
+    CCLog("BuyPotion : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void BuyPotion::onExit()
 {
+    CCLog("BuyPotion : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
+    CCLayer::onExit();
 }
 
 void BuyPotion::keyBackClicked()
@@ -39,18 +42,28 @@ bool BuyPotion::init()
 		return false;
 	}
     
-    //CCLog("BuyPotion. init");
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("BuyPotion");
+    
+    this->setTouchEnabled(true);
+    this->setKeypadEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("BuyPotion : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyPotion::Notification), "BuyPotion", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyPotion::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    /*
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    */
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
     
@@ -66,24 +79,23 @@ void BuyPotion::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        CCLog("BuyPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
+        CCLog("BuyPotion 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
 
 void BuyPotion::InitSprites()
 {
-    CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
@@ -162,6 +174,7 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "BuyPotion", "RequestPotion", false);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png2")
@@ -171,6 +184,7 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 std::vector<int> nullData;
                 Common::ShowPopup(this, "BuyPotion", "NoImage", false, BUYPOTION_1, BTN_2, nullData);
+                break;
             }
         }
     }
@@ -181,7 +195,6 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyPotion::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void BuyPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -192,22 +205,29 @@ void BuyPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyPotion::EndScene()
 {
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    /*
     if (parent_id == 0) // 부모가 'Ranking'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     else if (parent_id == 1) // 부모가 'GameReady'
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "BuyPotion");
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
     
     this->removeFromParentAndCleanup(true);
-}
-
-void BuyPotion::EndSceneCallback()
-{
 }
 
 

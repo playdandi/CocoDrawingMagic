@@ -79,8 +79,6 @@ CCLayer* Fairy::MakeFlower()
     fairyLayer->addChild(gleaf1, 25);
     fairyLayer->addChild(gleaf2, 25);
     
-    
-    
     // action
     //CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
     //CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);

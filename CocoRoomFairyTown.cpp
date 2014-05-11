@@ -1,6 +1,6 @@
 #include "CocoRoomFairyTown.h"
 
-static int priority;
+//static int priority;
 
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
@@ -9,7 +9,7 @@ CocoRoomFairyTown::~CocoRoomFairyTown()
 
 CCScene* CocoRoomFairyTown::scene(int prio)
 {
-    priority = prio;
+    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     CocoRoomFairyTown* pLayer = CocoRoomFairyTown::create();
@@ -22,7 +22,7 @@ void CocoRoomFairyTown::onEnter()
 {
     CCLog("CocoRoomFairyTown :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void CocoRoomFairyTown::onExit()
@@ -46,19 +46,33 @@ bool CocoRoomFairyTown::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("CocoRoomFairyTown");
+    
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("CocoRoomFairyTown : touch prio = %d", priority);
-    
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("CocoRoomFairyTown : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomFairyTown::Notification), "CocoRoomFairyTown", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomFairyTown::Notification), Depth::GetCurName(), NULL);
     
     // notification
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // scrollView 생성
+    scrollView = CCScrollView::create();
+    scrollView->retain();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 904-40));
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492+20));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority()); // priority
+    this->addChild(scrollView, 3);
     
     InitSprites();
     MakeScroll();
@@ -75,10 +89,8 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -86,8 +98,6 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoomFairyTown : 터치 비활성");
-        //this->setKeypadEnabled(false);
-        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
 }
@@ -101,7 +111,6 @@ void CocoRoomFairyTown::InitSprites()
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
-    
     
     spriteClass = new SpriteClass();
     
@@ -130,7 +139,7 @@ void CocoRoomFairyTown::MakeScroll()
         itemLayer->setContentSize(CCSizeMake(290, 290));
         itemLayer->setPosition(ccp(20+((290+5)*(i%3)), scrollContainer->getContentSize().height-(295)*(i/3+1) ) );
         scrollContainer->addChild(itemLayer, 2);
-        itemLayers.push_back(itemLayer);
+        spriteClass->layers.push_back(itemLayer);
         
         // bg
         sprintf(fname, "background/bg_board_brown.png_a%d", i);
@@ -180,19 +189,10 @@ void CocoRoomFairyTown::MakeScroll()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
     }
     
-    // scrollView 생성
-    scrollView = CCScrollView::create();
-    scrollView->retain();
-    scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904-40));
-    scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492+20));
+    // container 설정 + offset
     scrollView->setContainer(scrollContainer);
-    scrollView->setDelegate(this);
-    scrollView->setTouchPriority(priority); // priority
+    scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, (904-40)-scrollContainer->getContentSize().height ));
-    this->addChild(scrollView, 3);
 }
 
 
@@ -250,7 +250,8 @@ void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 int idx = spriteClass->spriteObj[i]->sprite9->getTag();
-                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx, priority-1);
+                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx);
+                //Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx, priority-1);
             }
         }
     }
@@ -272,25 +273,26 @@ void CocoRoomFairyTown::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    //CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
 
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "CocoRoomFairyTown");
-    
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    
-    //CCLog("%d", scrollContainer->retainCount());
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->release();
-    scrollView->removeFromParent();
-    //CCLog("%d", pBlack->retainCount());
-    //CCLog("%d", scrollView->retainCount());
+    scrollView->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

@@ -14,12 +14,14 @@ CCScene* Message::scene()
 
 void Message::onEnter()
 {
+    CCLog("Message : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void Message::onExit()
 {
+    CCLog("Message : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -38,14 +40,33 @@ bool Message::init()
 		return false;
 	}
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
+    // make depth tree
+    Depth::AddCurDepth("Message");
+    
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("Message : touch prio = %d", this->getTouchPriority());
     
     // notification observer
-    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Message::Notification), "Message", NULL);
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Message::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    // scrollView 생성
+    scrollView = CCScrollView::create();
+    scrollView->setDirection(kCCScrollViewDirectionVertical);
+    scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(77, 492+20));
+    scrollView->setDelegate(this);
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 3);
     
     // init sprites
     InitSprites();
@@ -67,8 +88,6 @@ bool Message::init()
     CCHttpClient::getInstance()->send(req);
     req->release();
     
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
     isTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;
@@ -82,12 +101,11 @@ void Message::Notification(CCObject* obj)
     
     if (param->intValue() == 0)
     {
-        CCLog("Message : noti 활성");
         // 터치 활성
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 메시지 data 갱신 (전체 포션 받기를 했을 때는 행하지 않는다)
         if (httpMsgIdx != -1)
@@ -112,11 +130,9 @@ void Message::Notification(CCObject* obj)
     }
     else if (param->intValue() == 1)
     {
-        CCLog("Message : noti 비활성");
         // 터치 비활성
+        CCLog("Message : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
     }
 }
 
@@ -164,6 +180,7 @@ void Message::MakeScroll()
     scrollContainer = CCLayer::create();
     scrollContainer->setAnchorPoint(ccp(0, 1));
     scrollContainer->setPosition(ccp(77, 492+904));
+    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
 
     char spriteName[35];
     for (int i = 0 ; i < numOfList ; i++)
@@ -172,7 +189,7 @@ void Message::MakeScroll()
         itemLayer->setContentSize(CCSizeMake(862, 166));
         itemLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(itemLayer, 2);
-        layer.push_back(itemLayer);
+        spriteClassScroll->layers.push_back(itemLayer);
         
         /*
           id : 메시지 인덱스
@@ -224,19 +241,10 @@ void Message::MakeScroll()
                         ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
     }
     
-    // scrollview 내용 전체크기
-    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
-    // scrollView 생성
-    scrollView = CCScrollView::create();
-    scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
-    scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492+20));
+    // container 세팅
     scrollView->setContainer(scrollContainer);
-    scrollView->setDelegate(this);
+    scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
-    this->addChild(scrollView, 3);
     
     // add child
     for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
@@ -247,9 +255,6 @@ void Message::RenewScroll()
 {
     // delete & init all scroll-related variables.
     spriteClassScroll->RemoveAllObjects();
-    for (int i = 0 ; i < layer.size() ; i++)
-        layer[i]->removeFromParentAndCleanup(true);
-    layer.clear();
     scrollContainer->removeFromParentAndCleanup(true);
     scrollView->removeFromParentAndCleanup(true);
     
@@ -500,101 +505,33 @@ void Message::scrollViewDidZoom(CCScrollView* view)
 void Message::EndScene()
 {
     sound->playClick();
+    
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    ReleaseAll();
+    spriteClassScroll->RemoveAllObjects();
+    delete spriteClassScroll;
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    
+    scrollContainer->removeAllChildren();
+    scrollView->removeAllChildren();
+    scrollView->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }
 
 void Message::EndSceneCallback()
 {
-}
-
-void Message::ReleaseAll()
-{
-    pBlack->autorelease();
-    //pBlack->release();
-    //pBlack->removeFromParentAndCleanup(true);
-    //CCLog("pBlack : %d", pBlack->retainCount());
-    
-    /*
-    // spriteClass release
-    int maxPriority = -1;
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        maxPriority = std::max(maxPriority, spriteClass->spriteObj[i]->priority);
-    for (int priority = maxPriority ; priority >= 0 ; priority--)
-    {
-        for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        {
-            if (spriteClass->spriteObj[i]->priority == priority)
-            {
-                //CCLog("%d : %d", i, spriteClass->spriteObj[i]->type);
-                if (spriteClass->spriteObj[i]->type == 0)
-                {
-                    //spriteClass->spriteObj[i]->sprite->removeAllChildrenWithCleanup(true);
-                    //spriteClass->spriteObj[i]->sprite->removeFromParentAndCleanup(true);
-                    //spriteClass->spriteObj[i]->sprite->autorelease();
-                    //spriteClass->spriteObj[i]->sprite = NULL;
-                }
-                else if (spriteClass->spriteObj[i]->type == 1)
-                {
-                    //spriteClass->spriteObj[i]->sprite9->removeAllChildrenWithCleanup(true);
-                    //spriteClass->spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
-                    //spriteClass->spriteObj[i]->sprite9->autorelease();
-                    //spriteClass->spriteObj[i]->sprite9 = NULL;
-                }
-                else
-                {
-                    //spriteClass->spriteObj[i]->label->removeAllChildrenWithCleanup(true);
-                    //spriteClass->spriteObj[i]->label->removeFromParentAndCleanup(true);
-                    //spriteClass->spriteObj[i]->label->autorelease();
-                    //spriteClass->spriteObj[i]->label = NULL;
-                }
-            }
-        }
-    }
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        if (spriteClass->spriteObj[i]->type == 0)
-            CCLog("sprite : %d", spriteClass->spriteObj[i]->sprite->retainCount());
-        else if (spriteClass->spriteObj[i]->type == 1)
-            CCLog("sprite : %d", spriteClass->spriteObj[i]->sprite9->retainCount());
-        else
-            CCLog("sprite : %d", spriteClass->spriteObj[i]->label->retainCount());
-    }
-    */
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        delete spriteClass->spriteObj[i];
-    spriteClass->spriteObj.clear();
-    delete spriteClass;
-    
-    // layers
-    for (int i = 0 ; i < layer.size() ; i++)
-    {
-        layer[i]->removeAllChildren();
-        //layer[i]->removeFromParentAndCleanup(true);
-        //CCLog("layer %d : %d", i, layer[i]->retainCount());
-        //layer[i]->release();
-        //layer[i]->autorelease();
-    }
-    layer.clear();
-    
-    // scrollview
-    scrollContainer->removeAllChildren();
-    //scrollContainer->removeFromParentAndCleanup(true);
-    //scrollContainer->autorelease();
-    scrollView->removeAllChildren();
-    //scrollView->removeFromParentAndCleanup(true);
-    //scrollView->autorelease();
-
-    
-    this->removeAllChildren();
 }
 
 

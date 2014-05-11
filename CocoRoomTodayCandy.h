@@ -35,12 +35,13 @@ protected:
     CCSize winSize;
     bool isTouched;
     
-    CCScrollView* scrollView;
     bool isScrolling;
     bool isScrollViewTouched;
     
 private:
+    CCSprite* pBlack;
     SpriteClass* spriteClass;
+    CCScrollView* scrollView;
     
     std::vector<bool> selected;
 };

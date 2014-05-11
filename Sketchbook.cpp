@@ -675,7 +675,6 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     CCPoint point = pTouch->getLocation();
     
-    //CCLog("%d %d", isScrolling, isSlotTouched);
     if (!isScrolling && isSlotTouched)
     {
         //Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1, priority-1);
