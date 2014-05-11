@@ -122,8 +122,6 @@ void CocoRoom::Notification(CCObject* obj)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
@@ -160,9 +158,16 @@ void CocoRoom::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoom : 터치 비활성");
-        //this->setKeypadEnabled(false);
-        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 9)
+    {
+        // 스킬 슬롯 정보 갱신
+        spriteClassCocoSlot->RemoveAllObjects();
+        MakeScrollCoco();
+        char name[7];
+        sprintf(name, "%d", (int)myInfo->GetSlot().size());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(100))->setString(name);
     }
 }
 
@@ -231,8 +236,6 @@ void CocoRoom::InitSprites()
             ccp(0, 0), ccp(77, 228), CCSize(782, 177), "", "CocoRoom", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", // slot plus
             ccp(0, 0), ccp(896, 317), CCSize(0, 0), "", "CocoRoom", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png", // 개수 배경
-            ccp(0, 0), ccp(867, 242), CCSize(136, 63), "", "CocoRoom", this, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -240,7 +243,6 @@ void CocoRoom::InitSprites()
 
 void CocoRoom::MakeSprites(int state)
 {
-    CCLog("make sprites %d (%d)", curState, state);
     if (curState == state)
         return;
     
@@ -250,8 +252,6 @@ void CocoRoom::MakeSprites(int state)
 //    if (curState != -1)
 //        scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
-    //scrollViewCoco->removeAllChildren();
-    //scrollViewFairy->removeAllChildren();
     
     // layer init.
     spriteClassCoco->RemoveAllObjects();
@@ -280,7 +280,6 @@ void CocoRoom::MakeSprites(int state)
     }
     else if (abs(state) == 2)
     {
-        CCLog("MakeSprites : make sprites fairy");
         MakeSpritesFairy();
         for (int i = 0 ; i < spriteClassFairy->spriteObj.size() ; i++)
             spriteClassFairy->AddChild(i);
@@ -305,12 +304,14 @@ void CocoRoom::MakeSprites(int state)
 
 void CocoRoom::MakeSpritesCoco()
 {
+    // 슬롯 부분
+    spriteClassCoco->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png", ccp(0, 0), ccp(867, 242), CCSize(136, 63), "", "CocoRoom", this, 1) );
     // 구입 개수
     char val[6];
     sprintf(val, "%d", (int)myInfo->GetSlot().size());
-    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 48, ccp(0, 0), ccp(892, 248), ccc3(255,219,53), "", "CocoRoom", this, 5) );
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 48, ccp(0, 0), ccp(892, 248), ccc3(255,219,53), "", "CocoRoom", this, 5, 0, 255, 100) ); // 현재 개수
     sprintf(val, "/ %d", (int)skillSlotInfo.size());
-    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(927, 248), ccc3(182,142,142), "", "CocoRoom", this, 5) );
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(927, 248), ccc3(182,142,142), "", "CocoRoom", this, 5) ); // 전체 슬롯 개수
     
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
                         ccp(0, 0), ccp(441, 1290+offset), CCSize(543, 61), "", "Layer", coco, 5) );
@@ -749,6 +750,7 @@ void CocoRoom::MakeScrollFairy()
 }
 
 
+
 bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     if (isTouched)
@@ -787,19 +789,33 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (curState == 1 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                sound->playClickboard();
                 // 슬롯 구매
+                sound->playClick();
+                std::vector<int> data;
+                if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data);
+                else
+                {
+                    data.push_back((int)myInfo->GetSlot().size()+1);
+                    data.push_back(SkillSlotInfo::GetCost((int)myInfo->GetSlot().size()+1));
+                    if (SkillSlotInfo::GetCostType((int)myInfo->GetSlot().size()+1) == 1)
+                        Common::ShowPopup(this, "CocoRoom", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1);
+                    else
+                        Common::ShowPopup(this, "CocoRoom", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1);
+                }
+                break;
             }
             else if (curState == 2 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                sound->playClickboard();
+                sound->playClick();
                 Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false); // 요정의 마을
-                //Common::ShowNextScene(this, "CocoRoom", "CocoRoomFairyTown", false, -1, priority-1); // 요정의 마을
+                break;
             }
             else if (curState == 3 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                sound->playClickboard();
+                sound->playClick();
                 Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
+                break;
                 //Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false, -1, priority-1); // 오.별 친구고르기
             }
         }

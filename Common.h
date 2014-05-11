@@ -48,6 +48,8 @@ USING_NS_CC;
 #define BTN_1 0
 #define BTN_2 1
 // 어떤 팝업창인지 구분하기 위한 predefined type
+#define NEED_TO_BUY_TOPAZ -2
+#define NEED_TO_BUY_STARCANDY -1
 #define BUY_STARCANDY_TRY 0
 #define BUY_STARCANDY_OK 1
 #define BUY_STARCANDY_FAIL 2

@@ -115,6 +115,10 @@ void BuyPotion::InitSprites()
                     ccp(0, 0), ccp(49, 458), CCSize(982, 954), "", "BuyPotion", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                     ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "BuyPotion", this, 1) );
+    CCSprite* bg = CCSprite::create("images/buyPotion_bg.png");
+    bg->setAnchorPoint(ccp(0, 0));
+    bg->setPosition(ccp(75, 528+132+28));
+    this->addChild(bg, 2);
     
     // 내용
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
@@ -129,8 +133,8 @@ void BuyPotion::InitSprites()
                 ccp(0, 0), ccp(470, 47), ccc3(78,47,8), "background/bg_degree_desc.png", "1", NULL, 2) );
     
     // 코코 그림
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_potion.png", ccp(0.5, 0.5), ccp(75+929/2, 492+904/2+70), CCSize(0, 0), "", "BuyPotion", this, 5) );
-    ((CCSprite*)spriteClass->FindSpriteByName("image/coco_potion.png"))->setScale(1.15f);
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_potion.png", ccp(0.5, 0.5), ccp(75+929/2+50, 492+904/2+45), CCSize(0, 0), "", "BuyPotion", this, 5) );
+    ((CCSprite*)spriteClass->FindSpriteByName("image/coco_potion.png"))->setScale(1.05f);
     
     // button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png1",
@@ -226,6 +230,7 @@ void BuyPotion::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/buyPotion_bg.png");
     
     this->removeFromParentAndCleanup(true);
 }

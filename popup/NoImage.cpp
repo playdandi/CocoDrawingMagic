@@ -124,6 +124,11 @@ void NoImage::InitSprites()
     char text[150], cost[10];
     switch (type)
     {
+        //case BUY_STARCANDY_FAIL:
+        case NEED_TO_BUY_TOPAZ:
+            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        case NEED_TO_BUY_STARCANDY:
+            sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NETWORK_FAIL:
             sprintf(text, "[오류] 다시 시도해 주세요."); break;
         case BUY_TOPAZ_TRY:
@@ -134,16 +139,14 @@ void NoImage::InitSprites()
             sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", priceStarCandy[d[0]]->GetCount()); break;
         case BUY_STARCANDY_OK:
             sprintf(text, "별사탕을 성공적으로 구매하였습니다."); break;
-        case BUY_STARCANDY_FAIL:
-            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case POPUP_EXIT:
-            sprintf(text, "정말 그만둘꼬얌?"); break;
+            sprintf(text, "코코가 그리는 마법을 종료하시겠습니까?"); break;
         case BUYPOTION_1:
             sprintf(text, "토파즈 5개를 사용하여 포션 5개를 구매하시겠습니까?"); break;
         case BUYPOTION_OK:
             sprintf(text, "포션 5개를 구매하였습니다."); break;
-        case BUYPOTION_FAIL:
-            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        //case BUYPOTION_FAIL:
+        //    sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case POTION_SEND_TRY:
             sprintf(text, "%s님에게 포션을 1개 보내시겠습니까?", friendList[d[0]]->GetNickname().c_str()); break;
         case POTION_SEND_OK:
@@ -181,12 +184,12 @@ void NoImage::InitSprites()
             deltaX = 150;
             deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
-        case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
-        case BUY_FAIRY_BY_TOPAZ_NOMONEY:
-            sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
-        case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
-        case BUY_FAIRY_BY_STARCANDY_NOMONEY:
-            sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        //case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
+        //case BUY_FAIRY_BY_TOPAZ_NOMONEY:
+        //    sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
+        //case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
+        //case BUY_FAIRY_BY_STARCANDY_NOMONEY:
+        //    sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
             deltaX = 150;
@@ -338,6 +341,20 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     exit(0);
                     #endif
                 }
+                else if (type == NEED_TO_BUY_TOPAZ)
+                {
+                    CCNode* parent = this->getParent();
+                    EndScene();
+                    Common::ShowNextScene(parent, Depth::GetCurName(), "BuyTopaz", false, 3); // curName == 결국 부모
+                    break;
+                }
+                else if (type == NEED_TO_BUY_STARCANDY)
+                {
+                    CCNode* parent = this->getParent();
+                    EndScene();
+                    Common::ShowNextScene(parent, Depth::GetCurName(), "BuyStarCandy", false, 3); // curName == 결국 부모
+                    break;
+                }
                 else if (type == BUY_TOPAZ_TRY)
                 {
                     // 토파즈 구입하기. (미결제 버전)
@@ -351,17 +368,22 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (type == BUY_STARCANDY_TRY)
                 {
-                    std::string url = "http://14.63.225.203/cogma/game/purchase_starcandy.php?";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
-                    sprintf(temp, "starcandy_id=%d&", priceStarCandy[d[0]]->GetId());
-                    url += temp;
-                    sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
-                    url += temp;
-                    CCLog("url : %s", url.c_str());
-                    
-                    HttpRequest(url);
+                    if (myInfo->GetTopaz() < priceStarCandy[d[0]]->GetPrice()) // 토파즈 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                    else
+                    {
+                        std::string url = "http://14.63.225.203/cogma/game/purchase_starcandy.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        sprintf(temp, "starcandy_id=%d&", priceStarCandy[d[0]]->GetId());
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
+                        url += temp;
+                        CCLog("url : %s", url.c_str());
+                        HttpRequest(url);
+                    }
                 }
+                /*
                 else if (type == BUY_STARCANDY_FAIL)
                 {
                     // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
@@ -371,20 +393,22 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     Common::ShowNextScene(parent, "BuyStarCandy", "BuyTopaz", false, 3);
                     break;
                 }
+                */
                 else if (type == BUYPOTION_1)
                 {
-                    if (myInfo->GetTopaz() < 5) // 토파즈 개수 < 5 라면 네트워크 시도 X.
-                        ReplaceScene("NoImage", BUYPOTION_FAIL, BTN_2);
+                    if (myInfo->GetTopaz() < 5) // 토파즈 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
                     else
                     {
                         // 포션 구매 프로토콜을 요청한다.
                         std::string url = "http://14.63.225.203/cogma/game/purchase_potion.php?";
                         sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
                         url += temp;
-                        
+                        CCLog("url : %s", url.c_str());
                         HttpRequest(url);
                     }
                 }
+                /*
                 else if (type == BUYPOTION_FAIL)
                 {
                     // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
@@ -394,15 +418,16 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     Common::ShowNextScene(parent, "BuyPotion", "BuyTopaz", false, 2);
                     break;
                 }
+                */
                 else if (type == POTION_SEND_TRY)
                 {
-                    // 포션 구매 프로토콜을 요청한다.
+                    // 포션 보내기 (랭킹 화면에서)
                     std::string url = "http://14.63.225.203/cogma/game/send_potion.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     url += temp;
                     sprintf(temp, "friend_kakao_id=%d", friendList[d[0]]->GetKakaoId());
                     url += temp;
-                    
+                    CCLog("url : %s", url.c_str());
                     HttpRequest(url);
                 }
                 else if (type == MESSAGE_ALL_TRY)
@@ -411,7 +436,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::string url = "http://14.63.225.203/cogma/game/receive_message_all_potion.php?";
                     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
                     url += temp;
-                    
+                    CCLog("url : %s", url.c_str());
                     HttpRequest(url);
                 }
                 else if (type == SEND_TOPAZ_TRY)
@@ -424,7 +449,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     url += temp;
                     sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
                     url += temp;
-                    
+                    CCLog("url : %s", url.c_str());
                     HttpRequest(url);
                 }
                 else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
@@ -436,10 +461,12 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
                     
                     // 잔액 부족
-                    if (costType == 2 && myInfo->GetTopaz() < cost)
-                        ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
-                    else if (costType == 1 && myInfo->GetStarCandy() < cost)
-                        ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
+                    if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                        //ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
+                    else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+                        //ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
                         // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
@@ -450,7 +477,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         url += temp;
                         sprintf(temp, "cost_value=%d", cost);
                         url += temp;
-                        CCLog("upgradestaff url = %s", url.c_str());
+                        CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
                 }
@@ -464,9 +491,11 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                  
                     // 잔액 부족
                     if (costType == 2 && myInfo->GetTopaz() < cost)
-                        ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                        //ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
                     else if (costType == 1 && myInfo->GetStarCandy() < cost)
-                        ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
+                        ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+                        //ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
                         // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
@@ -479,47 +508,55 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         url += temp;
                         sprintf(temp, "cost_value=%d", cost);
                         url += temp;
-                        CCLog("buy fairy url = %s", url.c_str());
+                        CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
                 }
                 else if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
                 {
-                    CCLog("슬롯 구매");
-                    // 스킬 슬롯 구매
-                    //http://14.63.225.203/cogma/game/upgrade_skill_slot.php?kakao_id=1000&slot_id=1&cost_value=1000
-                    char temp[255];
-                    std::string url = "http://14.63.225.203/cogma/game/upgrade_skill_slot.php?";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
-                    sprintf(temp, "slot_id=%d&", d[0]);
-                    url += temp;
-                    sprintf(temp, "cost_value=%d", d[1]);
-                    url += temp;
-                    CCLog("url = %s", url.c_str());
-                    
-                    HttpRequest(url);
+                    if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY && myInfo->GetStarCandy() < d[1]) // 별사탕 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+                    else if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                    else
+                    {
+                        // 스킬 슬롯 구매
+                        //http://14.63.225.203/cogma/game/upgrade_skill_slot.php?kakao_id=1000&slot_id=1&cost_value=1000
+                        char temp[255];
+                        std::string url = "http://14.63.225.203/cogma/game/upgrade_skill_slot.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        sprintf(temp, "slot_id=%d&", d[0]);
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", d[1]);
+                        url += temp;
+                        CCLog("url = %s", url.c_str());
+                        HttpRequest(url);
+                    }
                 }
                 else if (type == BUY_PROPERTY_TRY)
                 {
-                    CCLog("스킬 열기");
-                    // 스킬 새 속성 열기
-                    //http://14.63.225.203/cogma/game/purchase_skill_type.php?kakao_id=1000&skill_type=2&cost_value=0
-                    char temp[255];
-                    std::string url = "http://14.63.225.203/cogma/game/purchase_skill_type.php?";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
-                    // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
-                    if (d[0] == 1) newSkillType = 2;
-                    else if (d[0] == 2) newSkillType = 1;
-                    else newSkillType = d[0];
-                    sprintf(temp, "skill_type=%d&", newSkillType);
-                    url += temp;
-                    sprintf(temp, "cost_value=%d", d[1]);
-                    url += temp;
-                    CCLog("url = %s", url.c_str());
-                    
-                    HttpRequest(url);
+                    if (myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
+                        ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                    else
+                    {
+                        // 스킬 새 속성 열기
+                        //http://14.63.225.203/cogma/game/purchase_skill_type.php?kakao_id=1000&skill_type=2&cost_value=0
+                        char temp[255];
+                        std::string url = "http://14.63.225.203/cogma/game/purchase_skill_type.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
+                        if (d[0] == 1) newSkillType = 2;
+                        else if (d[0] == 2) newSkillType = 1;
+                        else newSkillType = d[0];
+                        sprintf(temp, "skill_type=%d&", newSkillType);
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", d[1]);
+                        url += temp;
+                        CCLog("url = %s", url.c_str());
+                        HttpRequest(url);
+                    }
                 }
             }
         }
@@ -728,14 +765,10 @@ void NoImage::XmlParseBuyStarCandy(char* data, int size)
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUY_STARCANDY_OK, BTN_1);
     }
-    else if (code == 3)
+    else
     {
-        // 토파즈가 부족해 실패한 경우.
-        ReplaceScene("NoImage", BUY_STARCANDY_FAIL, BTN_2);
-    }
-    else if (code == 10)
-    {
-        // 잘못된 별사탕 id
+        if (code == 3) ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        if (code == 10) ; // 잘못된 별사탕 id
     }
 }
 
@@ -768,10 +801,9 @@ void NoImage::XmlParseBuyPotion(char* data, int size)
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUYPOTION_OK, BTN_1);
     }
-    else if (code == 3)
+    else
     {
-        // 토파즈가 부족해 실패한 경우.
-        ReplaceScene("NoImage", BUYPOTION_FAIL, BTN_2);
+        if (code == 3) ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
     }
 }
 
@@ -836,12 +868,10 @@ void NoImage::XmlParseMsg(char* data, int size)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        CCLog("모두받기 xml");
         // 포션 정보 갱신
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
         int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
         myInfo->SetPotion(potion, remainTime);
-        
         
         // 메시지 리스트 갱신
         for (int i = 0 ; i < msgData.size() ; i++)
@@ -960,9 +990,9 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
     {
         // 잔액 부족
         if (type == UPGRADE_STAFF_BY_TOPAZ_TRY)
-            ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
         else
-            ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
     }
     else if (code == 11)
     {
@@ -1027,9 +1057,9 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
     {
         // 잔액 부족
         if (type == BUY_FAIRY_BY_TOPAZ_TRY)
-            ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
         else
-            ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
     }
     else
     {
@@ -1089,13 +1119,19 @@ void NoImage::XmlParseBuySkillSlot(char* data, int size)
     }
     else
     {
-        if (code == 3) CCLog("슬롯구매 : 금액 부족");
+        if (code == 3) {
+            CCLog("슬롯구매 : 금액 부족");
+            if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
+                ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+            else
+                ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        }
         else if (code == 4) CCLog("슬롯구매 : 금액이 맞지 않음. 재부팅.");
         else if (code == 10) CCLog("슬롯구매 : 이미 구매한 슬롯 or 이전 단계 구매하지 않음");
         else if (code == 11) CCLog("슬롯구매 : 슬롯 개수 MAX");
         else CCLog("슬롯구매 : (code = %d) 기타 에러", code);
         
-        ReplaceScene("NoImage", BUY_SKILLSLOT_FAIL, BTN_1);
+        //ReplaceScene("NoImage", BUY_SKILLSLOT_FAIL, BTN_1);
     }
 }
 
@@ -1138,28 +1174,6 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
         param = CCString::create("3");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
-        /*
-        //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
-        // 1번 스킬 배우기
-        char temp[255];
-        std::string url = "http://14.63.225.203/cogma/game/purchase_skill.php?";
-        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-        url += temp;
-        sprintf(temp, "skill_id=%d&", newSkillType*10+1); // 1이면 11번 스킬을 배우는 식
-        url += temp;
-        sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(newSkillType*10+1, 1)); // 새로 배우니 당연히 레벨 1
-        url += temp;
-        CCLog("url = %s", url.c_str());
-        
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
-        req->setTag("99999");
-        CCHttpClient::getInstance()->send(req);
-        req->release();
-         */
-        
         // 나의 스킬 리스트 갱신
         myInfo->ClearSkillList();
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
@@ -1183,60 +1197,15 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
     }
     else
     {
-        if (code == 3) CCLog("스킬속성구매 : 금액 부족");
+        if (code == 3) {
+            CCLog("스킬속성구매 : 금액 부족");
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        }
         else if (code == 4) CCLog("스킬속성구매 : 금액이 맞지 않음. 재부팅.");
         else if (code == 10) CCLog("스킬속성구매 : 해당 속성 이미 보유");
         else if (code == 11) CCLog("스킬속성구매 : 마스터 타입은 구매불가");
         else CCLog("스킬속성구매 : (code = %d) 기타 에러", code);
         
-        ReplaceScene("NoImage", BUY_PROPERTY_FAIL, BTN_1);
+        //ReplaceScene("NoImage", BUY_PROPERTY_FAIL, BTN_1);
     }
 }
-
-/*
-void NoImage::XmlParseGetFirstSkill(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        // 돈 갱신
-        int topaz = nodeResult.child("money").attribute("topaz").as_int();
-        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-        myInfo->SetMoney(topaz, starcandy);
-        
-        // 나의 스킬 리스트 갱신
-        myInfo->ClearSkillList();
-        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
-        int csi, usi, level, exp;
-        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                std::string name = ait->name();
-                if (name == "common-skill-id") csi = ait->as_int();
-                else if (name == "user-skill-id") usi = ait->as_int();
-                else if (name == "level") level = ait->as_int();
-                else if (name == "exp") exp = ait->as_int();
-            }
-            myInfo->AddSkill(csi, usi, level, exp);
-        }
-        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
-        
-        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
-    }
-}
- */
-

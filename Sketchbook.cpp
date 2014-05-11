@@ -640,17 +640,14 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
                     Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data);
-                    //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data, -1, priority-1);
                 else
                 {
                     data.push_back((int)myInfo->GetSlot().size()+1);
                     data.push_back(SkillSlotInfo::GetCost((int)myInfo->GetSlot().size()+1));
                     if (SkillSlotInfo::GetCostType((int)myInfo->GetSlot().size()+1) == 1)
                         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1);
-                        //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 1, priority-1);
                     else
                         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1);
-                        //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1, priority-1);
                 }
                 break;
             }

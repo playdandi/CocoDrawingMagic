@@ -9,7 +9,7 @@ static int priority;
 
 SketchDetail::~SketchDetail(void)
 {
-    CCLog("SketchDetail destructor");
+    //CCLog("SketchDetail destructor");
 }
 
 CCScene* SketchDetail::scene(int id, int prio)
@@ -337,26 +337,34 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 if (btnStatus == 1) // 레벨업 해야하는 경우 (강화)
                 {
-                    // upgrade skill
                     MySkill* ms = MySkill::GetObj(skill_common_id);
                     
-                    char temp[255];
-                    std::string url = "http://14.63.225.203/cogma/game/upgrade_skill.php?";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
-                    sprintf(temp, "user_skill_id=%d&", ms->GetUserId());
-                    url += temp;
-                    sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1)); // 레벨+1
-                    url += temp;
-                    CCLog("url = %s", url.c_str());
-                    
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
-                    req->setTag("0");
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    if (myInfo->GetStarCandy() < SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1))
+                    {
+                        std::vector<int> nullData;
+                        Common::ShowPopup(this, "SketchDetail", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
+                    }
+                    else
+                    {
+                        // upgrade skill
+                        char temp[255];
+                        std::string url = "http://14.63.225.203/cogma/game/upgrade_skill.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        sprintf(temp, "user_skill_id=%d&", ms->GetUserId());
+                        url += temp;
+                        sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1)); // 레벨+1
+                        url += temp;
+                        CCLog("url = %s", url.c_str());
+                        
+                        CCHttpRequest* req = new CCHttpRequest();
+                        req->setUrl(url.c_str());
+                        req->setRequestType(CCHttpRequest::kHttpPost);
+                        req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
+                        req->setTag("0");
+                        CCHttpClient::getInstance()->send(req);
+                        req->release();
+                    }
                 }
                 else if (btnStatus == 2) // 일반적인 경우
                 {
@@ -517,7 +525,11 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
         std::vector<int> nullData;
         if (tag == 0) // UPGRADE SKILL 실패한 경우
         {
-            if (code == 10) CCLog("SketchDetail : 가지고 있는 스킬 아님");
+            if (code == 3) {
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "SketchDetail", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
+            }
+            else if (code == 10) CCLog("SketchDetail : 가지고 있는 스킬 아님");
             else if (code == 11) CCLog("SketchDetail : 스킬이 만렙임");
             else if (code == 12) CCLog("SketchDetail : 연습량 미달");
             else if (code == 4) CCLog("SketchDetail : 가격 잘못되었음. 재부팅.");
@@ -525,7 +537,11 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
         }
         else if (tag == 1) // PURCHASE SKILL 실패한 경우
         {
-            if (code == 10) CCLog("SketchDetail : 존재하지 않는 스킬 ID");
+            if (code == 3) {
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "SketchDetail", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
+            }
+            else if (code == 10) CCLog("SketchDetail : 존재하지 않는 스킬 ID");
             else if (code == 11) CCLog("SketchDetail : 해당 스킬 속성을 지닌 마법사가 아님");
             else if (code == 12) CCLog("SketchDetail : 요구 MP 미달");
             else if (code == 13) CCLog("SketchDetail : 요구 지팡이 Lv 미달");
