@@ -8,14 +8,15 @@
 #define HTTP_VERSION 0
 #define HTTP_LOGIN 1
 #define HTTP_MYINFO 2
-//#define HTTP_PRICE 3
 #define HTTP_FRIENDS 3
 #define HTTP_PROFILE_IMAGE 4
 
 using namespace cocos2d::extension;
 
-class Splash : public CCLayer
-                //public CCIMEDelegate
+USING_NS_CC_EXT;
+
+class Splash : public CCLayer,
+                public CCIMEDelegate
                 //public cocos2d::extension::CCEditBoxDelegate
 {
 public:
@@ -37,10 +38,10 @@ public:
     
     //virtual void editBoxEditingDidBegin(CCEditBox* editBox);
     //virtual void editBoxEditingDidEnd(CCEditBox* editBox);
-    //virtual void editBoxEditing(CCEditBox* editBox);
+    //virtual void editBoxTextChanged(CCEditBox* editBox, const std::string& text);
     //virtual void editBoxReturn(CCEditBox* editBox);
-//    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
-//    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
+    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
+    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
     void XMLParseGameData();
     void WriteResFile(char* data, int size);
@@ -64,7 +65,7 @@ protected:
     int gameVersion; // 새로 받은 게임버전
     
     //CCSprite* m_pEditNameSprite;
-    //CCTextFieldTTF* m_pEditName;
+    CCTextFieldTTF* m_pEditName;
     //CCEditBox* m_pEditName;
     //CCLabelTTF* m_pLoadLabel;
     

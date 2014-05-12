@@ -258,7 +258,7 @@ void PuzzleSkill::A1(int num, int queue_pos)
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // 사이클이 발동된 상태면, 사이클 이펙트도 같이 보여준다. (태양열, 파도, 클로버 그림 띄우는 것)
-    if (m_pGameLayer->IsCycle(queue_pos))
+    if (IsApplied(num+1, queue_pos) && m_pGameLayer->IsCycle(queue_pos))
         m_pGameLayer->PlayEffect(-(num+1), queue_pos);
 }
 
@@ -467,7 +467,8 @@ void PuzzleSkill::F5(int num)
     // 위험한 불장난 - 모서리에 나타나는 불의 정령을 선택하면 모든 붉은 피스를 정중앙으로 모아준다.
     
     result_pos.clear();
-    result_pos_end.clear();
+    int type;
+    int cnt = 0;
     
     // 모든 붉은 피스 위치를 구한다.
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
@@ -478,104 +479,89 @@ void PuzzleSkill::F5(int num)
             if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
                 (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
                 continue;
-            
-            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
+            type = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+            if (type == PIECE_RED)
                 result_pos.push_back(ccp(x, y));
+            if (type == PIECE_RED || type == PIECE_BLUE)
+                cnt++;
         }
     }
     
-    // 만약 보드판에 red piece가 하나도 없다면 아예 실행하지 않는다.
-    if ((int)result_pos.size() == 0)
-    {
-        this->m_pGameLayer->SetSpiritTouch(false);
-        return;
-    }
-    
-    // 바꿔치기할 위치를 구한다. (정중앙부터 달팽이 모양으로)
-    int dx = 1, dy = 0;
-    int curX = 3, curY = 3;
-    int cnt = 0, dcnt = 1;
+    // 불/물 피스만 존재하는 경우, 정령을 발동시키지 않는다. (즉, 모든 불 피스 주변을 모두 물 피스가 감싸고 있을 때)
+    bool flag = false;
+    int x, y;
     for (int i = 0 ; i < result_pos.size() ; i++)
     {
-        if (!((curX == 0 && curY == 0) || (curX == 0 && curY == ROW_COUNT-1) || (curX == COLUMN_COUNT-1 && curY == 0) ||
-            (curX == COLUMN_COUNT-1 && curY == ROW_COUNT-1)))
-            result_pos_end.push_back(ccp(curX, curY));
-        
-        if (cnt++ >= std::abs(dcnt))
+        x = (int)result_pos[i].x;
+        y = (int)result_pos[i].y;
+        for (int xx = x-1; xx <= x+1; xx++)
         {
-            cnt = 1;
-            if (dcnt > 0)
-                dcnt *= -1;
-            else
-                dcnt = (-dcnt)+1;
-            
-            if (dx == 1 && dy == 0) { dx = 0; dy = 1; }
-            else if (dx == 0 && dy == 1) { dx = -1; dy = 0; }
-            else if (dx == -1 && dy == 0) { dx = 0; dy = -1; }
-            else { dx = 1; dy = 0; }
-        }
-        
-        curX += dx;
-        curY += dy;
-    }
-    
-    // 위치가 바뀌지 않는 피스를 찾는다. (-1로 값 대체)
-    CCPoint temp;
-    for (int i = 0 ; i < result_pos_end.size() ; i++)
-    {
-        for (int j = 0; j < result_pos.size() ; j++)
-        {
-            if (result_pos_end[i].x == result_pos[j].x && result_pos_end[i].y == result_pos[j].y)
+            for (int yy = y-1; yy <= y+1; yy++)
             {
-                result_pos_end[i] = ccp(-1, -1);
-                result_pos[j] = ccp(-1, -1);
+                // 예외처리
+                if (xx < 0 || xx > COLUMN_COUNT-1 || yy < 0 || yy > ROW_COUNT-1)
+                    continue;
+                if ((xx == 0 && yy == 0) || (xx == 0 && yy == ROW_COUNT-1) ||
+                    (xx == COLUMN_COUNT-1 && yy == 0) || (xx == COLUMN_COUNT-1 && yy == ROW_COUNT-1))
+                    continue;
+                type = m_pGameLayer->GetPuzzleP8Set()->GetType(xx, yy);
+                if (type == PIECE_RED || type == PIECE_BLUE)
+                    continue;
+                
+                flag = true;
             }
         }
-    }
-    
-    assert(result_pos.size() == result_pos_end.size());
-    F5_i.clear();
-    F5_j.clear();
-    F5_ij_cnt = 0;
-    F5_callbackCnt = 0;
-    
-    // 남은 것들을 서로 매칭시킨다.
-    for (int i = 0 ; i < result_pos.size() ; i++)
-    {
-        if (result_pos[i].x == -1 && result_pos[i].y == -1)
-            continue;
-        for (int j = 0 ; j < result_pos_end.size() ; j++)
-        {
-            if (result_pos_end[j].x == -1 && result_pos_end[j].y == -1)
-                continue;
-            
-            int x = (int)result_pos[i].x;
-            int y = (int)result_pos[i].y;
-            int x_end = (int)result_pos_end[j].x;
-            int y_end = (int)result_pos_end[j].y;
-            F5_i.push_back(result_pos[i]);
-            F5_j.push_back(result_pos_end[j]);
-            
-            F5_callbackCnt++;
-            
-            result_pos_end[j] = ccp(-1, -1);
-            
-            CCActionInterval* action = CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x_end, y_end));
-            m_pGameLayer->GetSpriteP8(x, y)->runAction( CCEaseOut::create(action, 0.35f) );
-            CCActionInterval* action2 = CCSequence::create(CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x, y)),
-                        CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F5_Callback), this), NULL);
-            m_pGameLayer->GetSpriteP8(x_end, y_end)->runAction( CCEaseOut::create(action2, 0.35f) );
-            
+        if (flag)
             break;
-        }
     }
-    
-    // red 피스는 있으나 모두 움직이지 않는다면 이 또한 실행하지 않도록 한다.
-    if (F5_callbackCnt == 0)
+    if (!flag)
     {
-        //CCLog("F5 : no need to move");
         this->m_pGameLayer->SetSpiritTouch(false);
         return;
+    }
+    
+    // 랜덤하게 선택된 붉은 피스 하나의 주변 8개를 불로 바꾼다. (단, 이미 불이거나 물인 경우는 제외한다)
+    int p;
+    std::vector<CCPoint> pos;
+    while (1)
+    {
+        pos.clear();
+        p = rand() % (int)result_pos.size();
+        x = (int)result_pos[p].x;
+        y = (int)result_pos[p].y;
+        
+        for (int xx = x-1; xx <= x+1; xx++)
+        {
+            for (int yy = y-1; yy <= y+1; yy++)
+            {
+                // 예외처리
+                if (xx < 0 || xx > COLUMN_COUNT-1 || yy < 0 || yy > ROW_COUNT-1)
+                    continue;
+                if ((xx == 0 && yy == 0) || (xx == 0 && yy == ROW_COUNT-1) ||
+                    (xx == COLUMN_COUNT-1 && yy == 0) || (xx == COLUMN_COUNT-1 && yy == ROW_COUNT-1))
+                    continue;
+                type = m_pGameLayer->GetPuzzleP8Set()->GetType(xx, yy);
+                if (type == PIECE_RED || type == PIECE_BLUE)
+                    continue;
+                
+                pos.push_back(ccp(xx, yy));
+            }
+        }
+        if ((int)pos.size() > 0)
+            break;
+    }
+    
+    F5_callbackCnt = 0;
+    result_pos = pos;
+    pos.clear();
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        x = (int)result_pos[i].x;
+        y = (int)result_pos[i].y;
+        
+        CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, 0.0f),
+            CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F5_Callback), this), NULL);
+        m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
     }
     
     // sound
@@ -590,19 +576,41 @@ void PuzzleSkill::F5(int num)
 void PuzzleSkill::F5_Callback(CCNode* sender, void* data)
 {
     PuzzleSkill* ps = (PuzzleSkill*)data;
-    int x = (int)ps->F5_i[ps->F5_ij_cnt].x;
-    int y = (int)ps->F5_i[ps->F5_ij_cnt].y;
-    int x_end = (int)ps->F5_j[ps->F5_ij_cnt].x;
-    int y_end = (int)ps->F5_j[ps->F5_ij_cnt].y;
-    //CCLog ("(%d, %d) , (%d, %d)", x, y, x_end, y_end);
     
-    // 8각형 피스 swap (data)
-    ps->m_pGameLayer->GetPuzzleP8Set()->SwapObject(x, y, x_end, y_end);
+    ps->F5_callbackCnt++;
+    //CCLog("F5 callback : %d", ps->F5_callbackCnt);
     
-    ps->F5_ij_cnt++;
-    if (ps->F5_callbackCnt == (int)ps->F5_ij_cnt)
+    if (ps->F5_callbackCnt == (int)ps->result_pos.size())
     {
-        //CCLog("F5 callback");
+        //CCLog("F5 callback : start to create");
+        int x, y;
+        for (int i = 0 ; i < ps->result_pos.size() ; i++)
+        {
+            x = (int)ps->result_pos[i].x;
+            y = (int)ps->result_pos[i].y;
+            
+            // 기존 피스를 없앤다.
+            ps->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+            ps->m_pGameLayer->SetSpriteP8Null(x, y);
+            
+            // 그 위치에 새로운 blue 피스를 만든다.
+            ps->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, PIECE_RED);
+            ps->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
+            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition(ps->m_pGameLayer->SetPiece8Position(x, y));
+            
+            // scale 조정해서 action 준비한다.
+            float scale = ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->getScale();
+            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setScale(0.0f);
+            
+            // action !
+            CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, scale),
+                    CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::F5_Callback), ps), NULL);
+            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
+        }
+    }
+    else if (ps->F5_callbackCnt == 2*(int)ps->result_pos.size())
+    {
+        //CCLog("F5 callback : dia delete");
         // 4각형 피스들 갱신
         for (int x = 1; x < COLUMN_COUNT ; x++)
         {
@@ -627,12 +635,11 @@ void PuzzleSkill::A6(int num, int queue_pos)
     // 사운드
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     
+    // 폭파
+    m_pGameLayer->Bomb(queue_pos, result_pos);
+    
     // 이펙트 실행
     m_pGameLayer->PlayEffect(num, queue_pos);
-    
-    // 폭파
-    //CCLog("A6 : %d", (int)result_pos.size());
-    m_pGameLayer->Bomb(queue_pos, result_pos);
 }
 
 
@@ -1141,8 +1148,8 @@ bool PuzzleSkill::W7GetVar()
 void PuzzleSkill::E3(int num)
 {
     // 떡갈나무지팡이 - 지팡이 레벨에 비례한 추가 별사탕
-    E2B_addedCandy = 0;
-    //E2B_addedCandy = pow((m_pGameLayer->GetStaffLevel())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
+    E3_addedCandy = 0;
+    //E3_addedCandy = pow((m_pGameLayer->GetStaffLevel())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
 }
 
 void PuzzleSkill::E4(int num, int queue_pos)
@@ -1162,34 +1169,159 @@ void PuzzleSkill::E4(int num, int queue_pos)
 
 void PuzzleSkill::E5(int num)
 {
-    // 자연의 힘 - 땅의 정령을 터치한 뒤 어떤 피스들이 터지면, 그만큼 더 터진다.
-    /*
+    // 자연의 힘 - 땅의 정령을 선택하면 모든 붉은 피스를 정중앙으로 모아준다.
+    
     result_pos.clear();
-    for (int x = 0; x < 3; x++) {
-        for (int y = ROW_COUNT-3; y < ROW_COUNT; y++) {
-            if (x == 0 && y == ROW_COUNT-1)
+    result_pos_end.clear();
+    
+    // 모든 green 피스 위치를 구한다.
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+    {
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+        {
+            // 네 모서리에 위치한 존재하지 않는 부분
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
                 continue;
-            result_pos.push_back(ccp(x, y));
+            
+            if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_GREEN)
+                result_pos.push_back(ccp(x, y));
         }
     }
-    for (int x = COLUMN_COUNT-3; x < COLUMN_COUNT; x++) {
-        for (int y = 0; y < 3; y++) {
-            if (x == COLUMN_COUNT-1 && y == 0)
-                continue;
-            result_pos.push_back(ccp(x, y));
+    
+    // 만약 보드판에 green piece가 하나도 없다면 아예 실행하지 않는다.
+    if ((int)result_pos.size() == 0)
+    {
+        this->m_pGameLayer->SetSpiritTouch(false);
+        return;
+    }
+    
+    // 바꿔치기할 위치를 구한다. (정중앙부터 달팽이 모양으로)
+    int dx = 1, dy = 0;
+    int curX = 3, curY = 3;
+    int cnt = 0, dcnt = 1;
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        if (!((curX == 0 && curY == 0) || (curX == 0 && curY == ROW_COUNT-1) || (curX == COLUMN_COUNT-1 && curY == 0) ||
+              (curX == COLUMN_COUNT-1 && curY == ROW_COUNT-1)))
+            result_pos_end.push_back(ccp(curX, curY));
+        
+        if (cnt++ >= std::abs(dcnt))
+        {
+            cnt = 1;
+            if (dcnt > 0)
+                dcnt *= -1;
+            else
+                dcnt = (-dcnt)+1;
+            
+            if (dx == 1 && dy == 0) { dx = 0; dy = 1; }
+            else if (dx == 0 && dy == 1) { dx = -1; dy = 0; }
+            else if (dx == -1 && dy == 0) { dx = 0; dy = -1; }
+            else { dx = 1; dy = 0; }
+        }
+        
+        curX += dx;
+        curY += dy;
+    }
+    
+    // 위치가 바뀌지 않는 피스를 찾는다. (-1로 값 대체)
+    CCPoint temp;
+    for (int i = 0 ; i < result_pos_end.size() ; i++)
+    {
+        for (int j = 0; j < result_pos.size() ; j++)
+        {
+            if (result_pos_end[i].x == result_pos[j].x && result_pos_end[i].y == result_pos[j].y)
+            {
+                result_pos_end[i] = ccp(-1, -1);
+                result_pos[j] = ccp(-1, -1);
+            }
         }
     }
-     */
+    
+    assert(result_pos.size() == result_pos_end.size());
+    E5_i.clear();
+    E5_j.clear();
+    E5_ij_cnt = 0;
+    E5_callbackCnt = 0;
+    
+    // 남은 것들을 서로 매칭시킨다.
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        if (result_pos[i].x == -1 && result_pos[i].y == -1)
+            continue;
+        for (int j = 0 ; j < result_pos_end.size() ; j++)
+        {
+            if (result_pos_end[j].x == -1 && result_pos_end[j].y == -1)
+                continue;
+            
+            int x = (int)result_pos[i].x;
+            int y = (int)result_pos[i].y;
+            int x_end = (int)result_pos_end[j].x;
+            int y_end = (int)result_pos_end[j].y;
+            E5_i.push_back(result_pos[i]);
+            E5_j.push_back(result_pos_end[j]);
+            
+            E5_callbackCnt++;
+            
+            result_pos_end[j] = ccp(-1, -1);
+            
+            CCActionInterval* action = CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x_end, y_end));
+            m_pGameLayer->GetSpriteP8(x, y)->runAction( CCEaseOut::create(action, 0.35f) );
+            CCActionInterval* action2 = CCSequence::create(CCMoveTo::create(0.35f, m_pGameLayer->SetPiece8Position(x, y)),
+                                                           CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::E5_Callback), this), NULL);
+            m_pGameLayer->GetSpriteP8(x_end, y_end)->runAction( CCEaseOut::create(action2, 0.35f) );
+            
+            break;
+        }
+    }
+    
+    // green 피스는 있으나 모두 움직이지 않는다면 이 또한 실행하지 않도록 한다.
+    if (E5_callbackCnt == 0)
+    {
+        this->m_pGameLayer->SetSpiritTouch(false);
+        return;
+    }
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
+    
+    // 정령을 화면에서 없애기
+    GetEffect()->GetSpirit(2)->setDuration(0.3f);
+    GetEffect()->GetSpirit(2)->setAutoRemoveOnFinish(true);
+    GetEffect()->ReleaseSpirit(2);
+    isSpiritAlive[2] = false;
+}
+void PuzzleSkill::E5_Callback(CCNode* sender, void* data)
+{
+    PuzzleSkill* ps = (PuzzleSkill*)data;
+    int x = (int)ps->E5_i[ps->E5_ij_cnt].x;
+    int y = (int)ps->E5_i[ps->E5_ij_cnt].y;
+    int x_end = (int)ps->E5_j[ps->E5_ij_cnt].x;
+    int y_end = (int)ps->E5_j[ps->E5_ij_cnt].y;
+    //CCLog ("(%d, %d) , (%d, %d)", x, y, x_end, y_end);
+    
+    // 8각형 피스 swap (data)
+    ps->m_pGameLayer->GetPuzzleP8Set()->SwapObject(x, y, x_end, y_end);
+    
+    ps->E5_ij_cnt++;
+    if (ps->E5_callbackCnt == (int)ps->E5_ij_cnt)
+    {
+        // 4각형 피스들 갱신
+        for (int x = 1; x < COLUMN_COUNT ; x++)
+        {
+            for (int y = 1 ; y < ROW_COUNT ; y++)
+            {
+                if (ps->m_pGameLayer->GetPuzzleP4Set()->GetObject(x, y) != NULL)
+                    ps->m_pGameLayer->GetPuzzleP4Set()->RemoveChild(x, y);
+                ps->m_pGameLayer->GetPuzzleP4Set()->CreatePiece(x, y, ps->m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
+                ps->m_pGameLayer->GetPuzzleP4Set()->AddChild(x, y);
+            }
+        }
+        
+        ps->m_pGameLayer->SetSpiritTouch(false);
+    }
 }
 
-/*std::vector<CCPoint> PuzzleSkill::A4AGetPos()
-{
-    return A4A_pos;
-}
-void PuzzleSkill::A4AClear()
-{
-    A4A_pos.clear();
-}*/
 
 void PuzzleSkill::E7()
 {

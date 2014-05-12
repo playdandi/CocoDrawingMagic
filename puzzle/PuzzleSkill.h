@@ -65,6 +65,7 @@ public:
     void E3(int num);
     void E4(int num, int queue_pos);
     void E5(int num);
+    void E5_Callback(CCNode* sender, void* data);
     void E7();
     
     void M1(int num);
@@ -103,12 +104,15 @@ private:
     int spiritShownCnt[3];
     bool isSpiritAlive[3];
     
+    int F5_callbackCnt;
+    /*
     std::vector<CCPoint> F5_pos;
     std::vector<CCPoint> F5_pos_end;
     bool F5_check[COLUMN_COUNT][ROW_COUNT];
     int F5_callbackCnt;
     std::vector<CCPoint> F5_i, F5_j;
     int F5_ij_cnt;
+    */
     
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
@@ -122,8 +126,6 @@ private:
     
     //////////////////////////////////////////
     
-    int E2B_addedCandy;
-    
     int W3_addedScore;
     int W4_addedCandy;
     int W5_callbackCnt;
@@ -133,8 +135,17 @@ private:
     
     //////////////////////////////////////////
 
+    int E3_addedCandy;
     int E4_addedCandy;
 
+    std::vector<CCPoint> E5_pos;
+    std::vector<CCPoint> E5_pos_end;
+    bool E5_check[COLUMN_COUNT][ROW_COUNT];
+    int E5_callbackCnt;
+    std::vector<CCPoint> E5_i, E5_j;
+    int E5_ij_cnt;
+    
+    //////////////////////////////////////////
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;

@@ -30,6 +30,10 @@ public:
     
     void Notification(CCObject* obj);
     
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseList(char* data, int size);
+    void XmlParseInviteFriend(char* data, int size);
+    
     void InitSprites();
     void MakeScroll();
     
@@ -37,20 +41,18 @@ public:
     
 protected:
     CCSize winSize;
+    int httpStatus;
     bool isTouched;
-    
     bool isScrolling;
     bool isScrollViewTouched;
     
 private:
     CCSprite* pBlack;
-    
+    CCLayer* scrollContainer;
     CCScrollView* scrollView;
     
     SpriteClass* spriteClass;
-    
-    std::vector<std::string> name;
-    std::vector<int> state;
+    SpriteClass* spriteClassScroll;
 };
 
 #endif /* defined(__CocoMagic__InviteFriend__) */

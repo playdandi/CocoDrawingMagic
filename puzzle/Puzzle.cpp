@@ -186,48 +186,50 @@ void Puzzle::InitSkills()
     }
     
     skill->Init(skillNum, skillProb, skillLv);
-    */
+  */
     
     // test //
-     skillNum.push_back(0);
-     skillNum.push_back(8);
-     skillNum.push_back(16);
-     
-     skillNum.push_back(1);
-     skillNum.push_back(9);
-     skillNum.push_back(17);
-     
-     skillNum.push_back(5);
-     skillNum.push_back(13);
-     skillNum.push_back(21);
-     
-     skillNum.push_back(4); // 정령
-     skillNum.push_back(12); // 정령
-     
-     skillNum.push_back(10); // 콤보비례 추가점수
-     skillNum.push_back(11); // 콤보비례 추가사탕
-     
-     skillNum.push_back(14); // 시간을 얼리다.
-     
-     skillNum.push_back(2); // 10개이상 추가점수
-     skillNum.push_back(19); // 10개이상 추가별사탕
-     
-     skillNum.push_back(6); // coco time
-     
-     skillNum.push_back(7); // 막타
-     skillNum.push_back(15);
-     skillNum.push_back(23);
-     
-     for (int i = 0 ; i < skillNum.size() ; i++) {
-         if (skillNum[i] == 14 || skillNum[i] == 6)
-             skillProb.push_back(10);
-         else if (skillNum[i] == 23)
-             skillProb.push_back(20);
-         else
-             skillProb.push_back(100);
-         skillLv.push_back(4);
-     }
-     skill->Init(skillNum, skillProb, skillLv);
+    skillNum.push_back(0);
+    skillNum.push_back(8);
+    skillNum.push_back(16);
+    
+    skillNum.push_back(1);
+    skillNum.push_back(9);
+    skillNum.push_back(17);
+    
+    skillNum.push_back(5);
+    skillNum.push_back(13);
+    skillNum.push_back(21);
+    
+    skillNum.push_back(4); //  불 정령
+    skillNum.push_back(12); // 물 정령
+    skillNum.push_back(20); // 땅 정령
+    
+    skillNum.push_back(10); // 콤보비례 추가점수
+    skillNum.push_back(11); // 콤보비례 추가사탕
+    
+    skillNum.push_back(14); // 시간을 얼리다.
+    
+    skillNum.push_back(2); // 10개이상 추가점수
+    skillNum.push_back(19); // 10개이상 추가별사탕
+    
+    skillNum.push_back(6); // coco time
+    
+    skillNum.push_back(7); // 막타
+    skillNum.push_back(15);
+    skillNum.push_back(23);
+    
+    for (int i = 0 ; i < skillNum.size() ; i++)
+    {
+        if (skillNum[i] == 14 || skillNum[i] == 6)
+            skillProb.push_back(10);
+        else if (skillNum[i] == 23)
+            skillProb.push_back(20);
+        else
+            skillProb.push_back(100);
+        skillLv.push_back(4);
+    }
+    skill->Init(skillNum, skillProb, skillLv);
 }
 
 void Puzzle::InitInfoBar()
@@ -787,7 +789,9 @@ void Puzzle::ComboTimer(float f)
 void Puzzle::SetTimer()
 {
     iTimer = 1000 * PUZZLE_TIME;
-    pTimerLabel = CCLabelTTF::create("60", fontList[2].c_str(), 50);
+    char n[5];
+    sprintf(n, "%d", PUZZLE_TIME);
+    pTimerLabel = CCLabelTTF::create(n, fontList[2].c_str(), 50);
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
     pTimerLabel->setPosition(ccp(40, 300));
     this->addChild(pTimerLabel, 100);
@@ -2162,7 +2166,7 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
             if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             {
                 friendList[i]->SetScore(highScore, weeklyHighScore, certificateType);
-                if (i > 0 && highScore > friendList[i-1]->GetHighScore())
+                if (i > 0 && weeklyHighScore > friendList[i-1]->GetWeeklyHighScore())
                 {
                     flag = false;
                     char temp[50];
@@ -2330,6 +2334,8 @@ void Puzzle::EndScene()
     
     this->removeAllChildren();
     this->removeFromParentAndCleanup(true);
+    
+    CCLog("퍼즐 EndScene에서 depth size = %d", (int)depth.size());
     
     //if (isNewRecord)
     //    Common::ShowNextScene(this, "Puzzle", "NewRecord", true, 1);

@@ -399,18 +399,13 @@ void GameReady::InitFairy()
     
     int fid = myInfo->GetActiveFairyId();
     int flv = myInfo->GetActiveFairyLevel();
-    //CCLog("fid flv : %d %d", fid, flv);
+    CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
     CCLayer* picture = Fairy::GetFairy(fid);
     picture->setAnchorPoint(ccp(0, 0));
-    if (fid == 0)
-    {
-        picture->setPosition(ccp(309/2, 236/2+23));
-        picture->setScale(0.9f);
-    }
-    else if (fid == 1)
+    if (fid == 1)
     {
         picture->setPosition(ccp(309/2+10, 236/2+23));
         picture->setScale(0.63f);
@@ -419,6 +414,11 @@ void GameReady::InitFairy()
     {
         picture->setPosition(ccp(309/2, 236/2+15));
         picture->setScale(0.7f);
+    }
+    else
+    {
+        picture->setPosition(ccp(309/2, 236/2+23));
+        picture->setScale(0.9f);
     }
     picture->setTag(99999);
     fairyLayer->addChild(picture, 5);
@@ -434,10 +434,13 @@ void GameReady::InitFairy()
         spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(11, 165), CCSize(0, 0), "", "Layer", fairyLayer, 5) );
     }
     
-    // 요정 레벨 (+그 배경)
-    spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "", "Layer", fairyLayer, 6) );
-    sprintf(fname, "%d Lv", flv);
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 24, ccp(0.5, 0.5), ccp(97, 202), ccc3(255,255,255), "", "Layer", fairyLayer, 6) );
+    if (fid > 0)
+    {
+        // 요정 레벨 (+그 배경)
+        spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(55, 187), CCSize(0, 0), "", "Layer", fairyLayer, 6) );
+        sprintf(fname, "%d Lv", flv);
+        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 24, ccp(0.5, 0.5), ccp(97, 202), ccc3(255,255,255), "", "Layer", fairyLayer, 6) );
+    }
     
     if (fid > 0)
     {
@@ -450,8 +453,10 @@ void GameReady::InitFairy()
     // 요정 특수능력 (+그 배경)
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 6) );
     
-    if (fid == 0) sprintf(fname, "요정 없음");
-    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+    if (fid > 0)
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+    else
+        sprintf(fname, "요정 없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 6) );
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 6) );
     

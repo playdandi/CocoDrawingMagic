@@ -94,7 +94,7 @@ void PuzzleResult::InitSprites()
 
 bool PuzzleResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCPoint point = pTouch->getLocation();
+    //CCPoint point = pTouch->getLocation();
     return true;
 }
 
@@ -105,7 +105,7 @@ void PuzzleResult::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCPoint point = pTouch->getLocation();
+    //CCPoint point = pTouch->getLocation();
     
     // 화면 어둡게 하고, PuzzleResult 팝업창 끄고, Puzzle->Ranking으로 돌아가자.
     pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));

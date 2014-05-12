@@ -61,7 +61,6 @@ bool Splash::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
     
     // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
@@ -115,8 +114,13 @@ void Splash::LogoLoadingCompleted()
     if (mKakaoId == -1)
     {
         // 처음이면 kakao platform에 동의하는 창으로 넘어가야 한다.
-        mKakaoId = 1000;
-        CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+        //mKakaoId = 1000;
+        //CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+        m_pEditName = CCTextFieldTTF::textFieldWithPlaceHolder("ID", CCSize(300, 100), kCCTextAlignmentCenter, fontList[0].c_str(), 72);
+        m_pEditName->setColor(ccc3(0,0,0));
+        m_pEditName->setPosition(ccp(319+446/2, 191+160/2+5+200));
+        m_pEditName->setAnchorPoint(ccp(0.5,0.5));
+        this->addChild(m_pEditName);
     }
     
     // 버전 세팅
@@ -140,34 +144,37 @@ void Splash::LogoLoadingCompleted()
 	this->setTouchEnabled(true);
 }
 
-/*
 void Splash::keyboardWillShow(CCIMEKeyboardNotificationInfo &info)
 {
     CCLog("keyboard show");
-    m_pEditName->setString("");
+    //m_pEditName->setString("");
 }
 void Splash::keyboardWillHide(CCIMEKeyboardNotificationInfo &info)
 {
-    CCLog("keyboard hide - %s", m_pEditName->getString());
+    CCLog("keyboard hide");
+    //CCLog("keyboard hide - %s", m_pEditName->getString());
 }
 
+/*
+void Splash::editBoxTextChanged(CCEditBox* editBox, const std::string& text)
+{
+    CCLog("changing...");
+}
 void Splash::editBoxEditingDidBegin(CCEditBox* editBox)
 {
-    //CCLog("%p did begin", editBox);
+    CCLog("%p did begin", editBox);
 }
 void Splash::editBoxEditingDidEnd(CCEditBox* editBox)
 {
-    //CCLog("%p did end", editBox);
+    CCLog("%p did end", editBox);
 }
 
 void Splash::editBoxReturn(CCEditBox* editBox)
 {
-    std::string newUsername;
-    newUsername.assign(editBox->getText());
-    sUsername = newUsername;
+    int kakao_id = atoi(editBox->getText());
+    CCLog("editBoxReturn = %d", kakao_id);
 }
 */
-
 
 bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -183,13 +190,12 @@ bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         m_pStartLetter->setOpacity(120);
     }
     
-    return true;
-    /*
-    if (m_pEditName->boundingBox().containsPoint(point))
-    {
+    if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
         m_pEditName->attachWithIME();
-    }
-     */
+    //else
+    //    m_pEditName->detachWithIME();
+    
+    return true;
 }
 
 void Splash::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
@@ -207,6 +213,14 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (isStarting && m_pStartBtn->boundingBox().containsPoint(point))
     {
         isLoading = true;
+        
+        // kakao id save (처음 로그인 때만)
+        if (mKakaoId == -1)
+        {
+            mKakaoId = atoi(m_pEditName->getString());
+            CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+            m_pEditName->setOpacity(0);
+        }
         
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
@@ -295,11 +309,14 @@ void Splash::XmlParseVersion(char* data, int size)
             url += temp;
             sprintf(temp, "device_type=%d&", mDeviceType);
             url += temp;
-            sprintf(temp, "nick_name=ijpark&");
+            if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
+            else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
+            else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
             url += temp;
-            sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+            if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+            else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
+            else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
             url += temp;
-            //CCLog("url = %s", url.c_str());
             
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl(url.c_str());
@@ -558,9 +575,13 @@ void Splash::WriteResFile(char* data, int size)
     url += temp;
     sprintf(temp, "device_type=%d&", mDeviceType);
     url += temp;
-    sprintf(temp, "nick_name=ijpark&");
+    if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
+    else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
+    else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
     url += temp;
-    sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+    if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+    else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
+    else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
     url += temp;
     //CCLog("url = %s", url.c_str());
     

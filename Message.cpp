@@ -134,6 +134,11 @@ void Message::Notification(CCObject* obj)
         CCLog("Message : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    else if (param->intValue() == 2)
+    {
+        // scroll 갱신
+        RenewScroll();
+    }
 }
 
 void Message::InitSprites()
@@ -255,138 +260,12 @@ void Message::RenewScroll()
 {
     // delete & init all scroll-related variables.
     spriteClassScroll->RemoveAllObjects();
+    scrollContainer->removeAllChildren();
     scrollContainer->removeFromParentAndCleanup(true);
-    scrollView->removeFromParentAndCleanup(true);
+    scrollView->removeAllChildren();
     
     // 다시 스크롤 생성
     MakeScroll();
-}
-
-
-void Message::onHttpRequestCompleted(CCNode *sender, void *data)
-{
-    CCHttpResponse* res = (CCHttpResponse*) data;
-
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    
-    switch (httpStatus)
-    {
-        case 0:
-            XmlParseMsg(dumpData, buffer->size()); break;
-        case 1:
-            XmlParseMsgReceiveOne(dumpData, buffer->size()); break;
-    }
-}
-
-void Message::XmlParseMsg(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        int id, type;
-        int rewardCount;
-        std::string content, profileUrl, noticeUrl;
-        std::string name;
-        
-        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
-        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                name = ait->name();
-                if (name == "id") id = ait->as_int();
-                else if (name == "type") type = ait->as_int();
-                else if (name == "content") content = ait->as_string();
-                else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
-                else if (name == "reward-count") rewardCount = ait->as_int();
-                else if (name == "notice-url") noticeUrl = "";
-            }
-            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl) );
-        }
-        
-        // scroll을 생성 후 데이터 보여주기
-        MakeScroll();
-        
-        // Notification : Ranking 화면에 데이터 갱신
-        myInfo->SetMsgCnt((int)msgData.size());
-        CCString* param = CCString::create("2");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    }
-    else
-    {
-        CCLog("FAILED : code = %d", code);
-    }
-}
-
-void Message::XmlParseMsgReceiveOne(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        int topaz = nodeResult.child("money").attribute("topaz").as_int();
-        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
-        int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
-        myInfo->SetMoney(topaz, starcandy);
-        myInfo->SetPotion(potion, remainTime);
-        
-        std::vector<int> data;
-        data.push_back(msgData[httpMsgIdx]->GetRewardCount());
-        switch (msgData[httpMsgIdx]->GetType())
-        {
-            case 1: break;
-                //Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_NOTICE, BTN_1, data); break;
-            case 2:
-                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_STARCANDY, BTN_1, data); break;
-            case 3:
-                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_TOPAZ, BTN_1, data); break;
-            case 4:
-                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION, BTN_1, data); break;
-        }
-    }
-    else if (code == 10)
-    {
-        // 없는 메시지 (삭제하자)
-        std::vector<int> nullData;
-        Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_EMPTY, BTN_1, nullData);
-    }
 }
 
 
@@ -532,6 +411,132 @@ void Message::EndScene()
 
 void Message::EndSceneCallback()
 {
+}
+
+
+
+void Message::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    switch (httpStatus)
+    {
+        case 0: XmlParseMsg(dumpData, buffer->size()); break;
+        case 1: XmlParseMsgReceiveOne(dumpData, buffer->size()); break;
+    }
+}
+
+void Message::XmlParseMsg(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int id, type;
+        int rewardCount;
+        std::string content, profileUrl, noticeUrl;
+        std::string name;
+        
+        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
+        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "type") type = ait->as_int();
+                else if (name == "content") content = ait->as_string();
+                else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
+                else if (name == "reward-count") rewardCount = ait->as_int();
+                else if (name == "notice-url") noticeUrl = "";
+            }
+            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl) );
+        }
+        
+        // scroll을 생성 후 데이터 보여주기
+        MakeScroll();
+        
+        // Notification : Ranking 화면에 데이터 갱신
+        myInfo->SetMsgCnt((int)msgData.size());
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    }
+    else
+    {
+        CCLog("FAILED : code = %d", code);
+    }
+}
+
+void Message::XmlParseMsgReceiveOne(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        myInfo->SetPotion(potion, remainTime);
+        
+        std::vector<int> data;
+        data.push_back(msgData[httpMsgIdx]->GetRewardCount());
+        switch (msgData[httpMsgIdx]->GetType())
+        {
+            case 1: break;
+                //Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_NOTICE, BTN_1, data); break;
+            case 2:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_STARCANDY, BTN_1, data); break;
+            case 3:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_TOPAZ, BTN_1, data); break;
+            case 4:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION, BTN_1, data); break;
+        }
+    }
+    else if (code == 10)
+    {
+        // 없는 메시지 (삭제하자)
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_EMPTY, BTN_1, nullData);
+    }
 }
 
 

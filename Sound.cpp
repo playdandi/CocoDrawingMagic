@@ -100,13 +100,13 @@ void Sound::PreLoadInGameSound()
 
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_2.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_3_land_4.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_5.mp3");
+    //SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_5.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_6.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_7.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_dragon.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_comet.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_2.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_5.mp3");
+    //SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_5.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_6.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_7.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_6.mp3");
@@ -143,12 +143,12 @@ void Sound::PlaySkillSound(int skillNum)
     {
         case 1: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_2.mp3"); break;
         case 2: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_5.mp3"); break;
+        //case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_5.mp3"); break;
         case 5: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3"); break;
         case 6: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_7.mp3"); break;
         case 7: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_8_dragon.mp3"); break;
         case 9: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_2.mp3"); break;
-        case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_5.mp3"); break;
+        //case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_5.mp3"); break;
         case 13: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_6.mp3"); break;
         case 14: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_7.mp3"); break;
         case 19: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;

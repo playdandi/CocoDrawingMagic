@@ -515,16 +515,15 @@ void CocoRoom::MakeSpritesFairy()
     
     int fid = myInfo->GetActiveFairyId();
     int flv = myInfo->GetActiveFairyLevel();
-    //CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
     CCLayer* picture = Fairy::GetFairy(fid);
     switch (fid)
     {
-        case 0: picture->setScale(1.2f); break;
         case 1: picture->setScale(1.2f); break;
         case 2: picture->setScale(1.2f); break;
+        default: picture->setScale(2.0f); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
     picture->setPosition(ccp(300, 1186+offset-50));
@@ -534,8 +533,10 @@ void CocoRoom::MakeSpritesFairy()
     char fname[30];
     
     // 요정 이름(레벨)
-    if (fid == 0) sprintf(fname, "요정 없음");
-    else sprintf(fname, "%s (%dLv)", f->GetName().c_str(), flv);
+    if (fid > 0)
+        sprintf(fname, "%s (%dLv)", f->GetName().c_str(), flv);
+    else
+        sprintf(fname, "요정 없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 52, ccp(0.5, 0.5), spriteClassFairy->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5, 1) );
     
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(570, 1193+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
@@ -549,13 +550,17 @@ void CocoRoom::MakeSpritesFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5) );
     
     // 추가속성 값
-    if (fid == 0) sprintf(fname, "없음");
-    else sprintf(fname, "%s", FairyInfo::GetAbilityName(f, flv).c_str());
+    if (fid > 0)
+        sprintf(fname, "%s", FairyInfo::GetAbilityName(f, flv).c_str());
+    else
+        sprintf(fname, "없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1134+offset), ccc3(0,167,222), "", "Layer", fairy, 5) );
     
     // 특수능력 값
-    if (fid == 0) sprintf(fname, "없음");
-    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+    if (fid > 0)
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+    else
+        sprintf(fname, "없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1036+offset), ccc3(255,255,255), "", "Layer", fairy, 5) );
     
     // buttons
@@ -838,7 +843,6 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
             }
         }
-        
         else if (spriteClassCoco->spriteObj[i]->name == "button/btn_green.png2")
         {
             if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -862,6 +866,9 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassFairy->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                if (myInfo->GetActiveFairyId() <= 0)
+                    continue;
+                
                 sound->playClick();
                 std::vector<int> data;
                 data.push_back(0);
@@ -874,6 +881,9 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassFairy->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                if (myInfo->GetActiveFairyId() <= 0)
+                    continue;
+                
                 sound->playClick();
                 std::vector<int> data;
                 data.push_back(0);

@@ -166,7 +166,7 @@ void NoImage::InitSprites()
         case MESSAGE_EMPTY:
             sprintf(text, "삭제된 메시지입니다."); break;
         case MESSAGE_ALL_TRY:
-            sprintf(text, "포션을 모두 받으시겠사와요~?"); break;
+            sprintf(text, "포션을 모두 받으시겠습니까?"); break;
         case MESSAGE_ALL_OK:
             sprintf(text, "모든 포션을 받았습니다."); break;
         case SEND_TOPAZ_TRY:
@@ -900,11 +900,9 @@ void NoImage::XmlParseMsg(char* data, int size)
         
         myInfo->SetMsgCnt((int)msgData.size());
         
-        // Notification : Ranking 화면에 데이터 갱신
+        // Notification : Ranking / Message 화면에 데이터 갱신
         CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-        // Notification : Message 화면에 데이터 갱신
-        //param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
         ReplaceScene("NoImage", MESSAGE_ALL_OK, BTN_1);
     }

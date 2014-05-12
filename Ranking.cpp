@@ -186,7 +186,6 @@ void Ranking::Notification(CCObject* obj)
         // 포션 보내기에 대한 정보 업데이트
         //for (int i = 0 ; i < friendList.size() ; i++)
         //    friendList[i]->SetPotionSprite();
-        CCLog("Ranking 터치 활성 끝");
     }
     else if (param->intValue() == 1)
     {
@@ -712,7 +711,6 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
     isTouched = false;
-    CCLog("Ranking : touch ended");
     
     //scrollView->setBounceable(false);
     //scrollView->setBounceable(true);
@@ -734,14 +732,16 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void Ranking::EndScene()
 {
-    CCLog("Ranking : EndScene()");
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
     this->unschedule(schedule_selector(Ranking::PotionTimer));
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Ranking");
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
@@ -753,21 +753,15 @@ void Ranking::EndScene()
     for (int i = 0 ; i < profileLayers.size() ; i++)
     {
         profileLayers[i]->removeAllChildren();
-        //CCLog("ii : %d", profileLayers[i]->retainCount());
     }
     profileLayers.clear();
     
     // background layer
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    //CCLog("pBlack %d", pBlack->retainCount());
-    //CCLog("pBackground %d", pBackground->retainCount());
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParent();
-    //CCLog("%d", scrollView->retainCount());
-    
-    //this->removeFromParentAndCleanup(true);
     
     sound->StopBackgroundSound();
     

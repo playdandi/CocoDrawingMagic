@@ -137,7 +137,8 @@ void Effect::SetSpirit(int type)
     else // 땅의 정령
     {
         land = CCParticleSystemQuad::create("particles/land.plist");
-        land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
+        CCPoint p =gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0);
+        land->setPosition(ccp(p.x, p.y-20));
         land->retain();
         land->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(land, 100);
@@ -559,6 +560,7 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
 void Effect::PlayEffect_5(std::vector<CCPoint> pos)
 {
     // 6개이상한번더
+    //usleep(200 * 1000);
     int x, y;
     for (int i = 0; i < pos.size(); i++)
     {

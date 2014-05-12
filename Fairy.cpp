@@ -167,9 +167,9 @@ CCLayer* Fairy::GetFairy(int id)
     CCLayer* picture = CCLayer::create();
     switch (id)
     {
-        case 0: picture = MakeEmpty(); break;
         case 1: picture = MakeFlower(); picture->setScale(1.0f); break;
         case 2: picture = MakeSun(); picture->setScale(1.0f); break;
+        default: picture = MakeEmpty(); break;
     }
     return picture;
 }
