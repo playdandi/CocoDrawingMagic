@@ -32,10 +32,12 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseList(char* data, int size);
-    void XmlParseInviteFriend(char* data, int size);
+    void XmlParseInviteFriend(char* data, int size, int idx);
     
     void InitSprites();
     void MakeScroll();
+    
+    void RenewData();
     
     void EndScene();
     
@@ -47,6 +49,7 @@ protected:
     bool isScrollViewTouched;
     
 private:
+    CCSprite* bar;
     CCSprite* pBlack;
     CCLayer* scrollContainer;
     CCScrollView* scrollView;

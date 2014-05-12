@@ -413,6 +413,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
+    else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(popup, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(popup, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {

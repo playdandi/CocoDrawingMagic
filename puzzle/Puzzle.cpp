@@ -1935,13 +1935,13 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         }
         
         /************ LOCK print ****************/
-        
+        /*
         for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
         {
             CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
                   m_bLockP8[3][y], m_bLockP8[4][y], m_bLockP8[5][y], m_bLockP8[6][y]);
         }
-        
+        */
         /*****************************************/
 
         // 마지막으로 current priority를 올려, 다음 대기 중인 drop queue가 실행될 수 있도록 한다.
@@ -2131,8 +2131,8 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         isNewRecord = nodeResult.child("new-record").text().as_int();
         
         // 돈 갱신
-        int topaz = nodeResult.child("topaz").attribute("topaz").as_int();
-        int starcandy = nodeResult.child("starcandy").attribute("starcandy").as_int();
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
         myInfo->SetMoney(topaz, starcandy);
         
         // 스킬 리스트 갱신

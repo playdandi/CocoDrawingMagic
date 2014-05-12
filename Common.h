@@ -26,7 +26,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 70
+#define PUZZLE_TIME 60
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
@@ -108,6 +108,14 @@ USING_NS_CC;
 #define BUY_SKILLSLOT_OK 53
 #define BUY_SKILLSLOT_FAIL 54
 #define BUY_SKILLSLOT_FULL 55
+#define INVITE_FRIEND_OK 56
+#define INVITE_FRIEND_MONTH_OVER_30 57
+#define INVITE_FRIEND_DAY_OVER_20 58
+#define INVITE_FRIEND_ALREADY_DID 59
+#define INVITE_FRIEND_10 60
+#define INVITE_FRIEND_20 61
+#define INVITE_FRIEND_30 62
+
 
 using namespace cocos2d;
 using namespace cocos2d::extension;

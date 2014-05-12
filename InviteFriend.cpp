@@ -73,6 +73,9 @@ bool InviteFriend::init()
     scrollView->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollView, 3);
     
+    spriteClass = new SpriteClass();
+    spriteClassScroll = new SpriteClass();
+    
     // 네트워크로 초대할 친구 리스트를 받아온다.
     httpStatus = 0;
     char temp[50];
@@ -86,9 +89,6 @@ bool InviteFriend::init()
     CCHttpClient::getInstance()->send(req);
     req->release();
     CCLog("url = %s", url.c_str());
-    
-    spriteClass = new SpriteClass();
-    spriteClassScroll = new SpriteClass();
     
     isTouched = false;
     isScrolling = false;
@@ -155,17 +155,17 @@ void InviteFriend::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96, 192), CCSize(700, 48), "", "InviteFriend", this, 2) );
     // bar
     float size = (float)totalCnt / (float)MAX_NUM_OF_INVITE_FRIEND;
-    CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 48-12));
+    if (size > 1.0f) size = 1.0f;
+    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 48-12));
     bar->setPosition(ccp(96+5, 192+6));
     bar->setAnchorPoint(ccp(0, 0));
     bar->setColor(ccc3(255,255,255));
-    bar->setOpacity(255);
     this->addChild(bar, 3);
     
     // 초대 인원 수 text
-    char name[12];
+    char name[20];
     sprintf(name, "%d명 초대", totalCnt);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(812, 200), ccc3(255,255,255), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(812, 200), ccc3(255,255,255), "", "InviteFriend", this, 2, 0, 255, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -198,12 +198,20 @@ void InviteFriend::MakeScroll()
         sprintf(name, "%d번 친구", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(196, 118-10), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
-        // starcandy bg + starcandy + text(*1000)
-        sprintf(name, "background/bg_degree_desc.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269, 25), CCSize(223, 76), "", "Layer", itemLayer, 3) );
+        // starcandy bg + starcandy + text(x 1000)
+        sprintf(name, "background/bg_degree_desc.png1%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60, 25), CCSize(223, 76), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_starcandy_mini.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(13, 6), CCSize(0, 0), name, "1", NULL, 3, 1) );
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1000", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
+        
+        // potion bg + potion + text(x 1)
+        sprintf(name, "background/bg_degree_desc.png2%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60+230, 25), CCSize(223-70, 76), "", "Layer", itemLayer, 3) );
+        sprintf(name2, "icon/icon_potion.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17, 7), CCSize(0, 0), name, "1", NULL, 3, 1) );
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setScale(0.8f);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // button
         if (remainTimes[i] == 0) // 초대 가능한 경우
@@ -290,7 +298,7 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 httpStatus = 1;
                 char temp[50];
                 std::string url = "http://14.63.225.203/cogma/game/friend_invite.php?";
-                sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                 url += temp;
                 sprintf(temp, "friend_kakao_id=%d", kakaoIds[idx]);
                 url += temp;
@@ -300,6 +308,8 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 req->setResponseCallback(this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
                 CCHttpClient::getInstance()->send(req);
                 req->release();
+                sprintf(temp, "%d", idx);
+                req->setTag(temp);
                 CCLog("url = %s", url.c_str());
             }
         }
@@ -347,6 +357,27 @@ void InviteFriend::EndScene()
     this->removeFromParentAndCleanup(true);
 }
 
+void InviteFriend::RenewData()
+{
+    // bar
+    float size = (float)totalCnt / (float)MAX_NUM_OF_INVITE_FRIEND;
+    if (size > 1.0f) size = 1.0f;
+    bar->removeFromParentAndCleanup(true);
+    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 48-12));
+    bar->setPosition(ccp(96+5, 192+6));
+    bar->setAnchorPoint(ccp(0, 0));
+    bar->setColor(ccc3(255,255,255));
+    this->addChild(bar, 3);
+    
+    char name[20];
+    sprintf(name, "%d명 초대", totalCnt);
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(name);
+    
+    spriteClassScroll->RemoveAllObjects();
+    scrollView->getContainer()->removeAllChildren();
+    scrollView->removeAllChildren();
+    MakeScroll();
+}
 
 
 void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
@@ -369,7 +400,7 @@ void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
     switch (httpStatus)
     {
         case 0: XmlParseList(dumpData, buffer->size()); break;
-        case 1: XmlParseInviteFriend(dumpData, buffer->size()); break;
+        case 1: XmlParseInviteFriend(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 
@@ -414,10 +445,10 @@ void InviteFriend::XmlParseList(char* data, int size)
         monthCnt = nodeResult.child("count").attribute("month").as_int();
         totalCnt = nodeResult.child("count").attribute("total-invite").as_int();
         
-        // scroll을 생성 후 데이터 보여주기
-        MakeScroll();
         // init sprite
         InitSprites();
+        // scroll을 생성 후 데이터 보여주기
+        MakeScroll();
     }
     else
     {
@@ -425,7 +456,7 @@ void InviteFriend::XmlParseList(char* data, int size)
     }
 }
 
-void InviteFriend::XmlParseInviteFriend(char* data, int size)
+void InviteFriend::XmlParseInviteFriend(char* data, int size, int idx)
 {
     // xml parsing
     xml_document xmlDoc;
@@ -447,37 +478,37 @@ void InviteFriend::XmlParseInviteFriend(char* data, int size)
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
         myInfo->SetMoney(topaz, starcandy);
+        // 포션 갱신
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetPotion(potion, potionRemainTime);
+        // 정보 갱신
+        todayCnt = nodeResult.child("friend-invite").attribute("today-count").as_int();
+        monthCnt = nodeResult.child("friend-invite").attribute("month-count").as_int();
+        totalCnt = nodeResult.child("friend-invite").attribute("total-count").as_int();
+        int reward = nodeResult.child("friend-invite").attribute("special-reward").as_int();
         
-        kakaoIds.clear();
-        remainTimes.clear();
-        int kakaoId, remainTime;
-        std::string name;
-        
-        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("invite-friend-list").children("friend");
-        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
-        {
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                name = ait->name();
-                if (name == "kakao-id") kakaoId = ait->as_int();
-                else if (name == "remain-time") remainTime = ait->as_int();
-            }
-            kakaoIds.push_back(kakaoId);
-            remainTimes.push_back(remainTime);
-        }
-        
-        // today, month, total count
-        todayCnt = nodeResult.child("count").attribute("today").as_int();
-        monthCnt = nodeResult.child("count").attribute("month").as_int();
-        totalCnt = nodeResult.child("count").attribute("total-invite").as_int();
+        // 리스트 데이터 갱신
+        remainTimes[idx] = 9999999;
         
         // scroll을 생성 후 데이터 보여주기
-        MakeScroll();
-        // init sprite
-        InitSprites();
+        RenewData();
+        
+        // Ranking scene에 데이터 갱신
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+        
+        // 결과 내용 popup 띄우기
+        std::vector<int> data;
+        data.push_back(reward);
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_OK, BTN_1, data);
     }
     else
     {
-        CCLog("FAILED : code = %d", code);
+        std::vector<int> nullData;
+        if (code == 10) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_MONTH_OVER_30, BTN_1, nullData);
+        else if (code == 11) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_DAY_OVER_20, BTN_1, nullData);
+        else if (code == 12) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_ALREADY_DID, BTN_1, nullData);
+        else Common::ShowPopup(this, "InviteFriend", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
 }

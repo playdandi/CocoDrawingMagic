@@ -145,8 +145,6 @@ void NoImage::InitSprites()
             sprintf(text, "토파즈 5개를 사용하여 포션 5개를 구매하시겠습니까?"); break;
         case BUYPOTION_OK:
             sprintf(text, "포션 5개를 구매하였습니다."); break;
-        //case BUYPOTION_FAIL:
-        //    sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case POTION_SEND_TRY:
             sprintf(text, "%s님에게 포션을 1개 보내시겠습니까?", friendList[d[0]]->GetNickname().c_str()); break;
         case POTION_SEND_OK:
@@ -184,12 +182,6 @@ void NoImage::InitSprites()
             deltaX = 150;
             deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
-        //case UPGRADE_STAFF_BY_TOPAZ_NOMONEY:
-        //case BUY_FAIRY_BY_TOPAZ_NOMONEY:
-        //    sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
-        //case UPGRADE_STAFF_BY_STARCANDY_NOMONEY:
-        //case BUY_FAIRY_BY_STARCANDY_NOMONEY:
-        //    sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
             deltaX = 150;
@@ -238,6 +230,20 @@ void NoImage::InitSprites()
             sprintf(text, "속성 습득을 실패하였습니다. 다시 시도해 주세요."); break;
         case BUY_PROPERTY_OK:
             sprintf(text, "새로운 속성을 습득하였습니다. 더욱 풍부해진 마법들을 새로 익혀 보세요!"); break;
+        case INVITE_FRIEND_OK:
+            sprintf(text, "친구를 초대하였습니다. 별사탕 1,000개와 포션 1개를 지급해 드렸습니다."); break;
+        case INVITE_FRIEND_MONTH_OVER_30:
+            sprintf(text, "한달 최대 30명까지만 초대 가능합니다. 다음 달에 새로운 친구를 불러 보아요!"); break;
+        case INVITE_FRIEND_DAY_OVER_20:
+            sprintf(text, "하루 최대 20명까지만 초대 가능합니다. 내일 새로운 친구를 불러 보아요!"); break;
+        case INVITE_FRIEND_ALREADY_DID:
+            sprintf(text, "이미 초대장을 보낸 친구입니다."); break;
+        case INVITE_FRIEND_10:
+            sprintf(text, "친구를 10명 초대하여 별사탕 15,000개가 추가로 지급되었습니다."); break;
+        case INVITE_FRIEND_20:
+            sprintf(text, "친구를 20명 초대하여 토파즈 10개가 추가로 지급되었습니다."); break;
+        case INVITE_FRIEND_30:
+            sprintf(text, "친구를 30명 초대하여 토파즈 25개가 추가로 지급되었습니다."); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
@@ -323,9 +329,20 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 if (btn == BTN_1) // 팝업창에서 '확인' 버튼 하나만 있는 경우.
                 {
+                    if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
+                    {
+                        if (d[0] == 1) ReplaceScene("NoImage", INVITE_FRIEND_10, BTN_1);
+                        else if (d[0] == 2) ReplaceScene("NoImage", INVITE_FRIEND_20, BTN_1);
+                        else if (d[0] == 3) ReplaceScene("NoImage", INVITE_FRIEND_30, BTN_1);
+                    }
+                    else
+                    {
+                        EndScene();
+                    }
+                    /*
                     //CCNode* parent = this->getParent();
                     EndScene();
-                    /*
+                    
                      // 특정 scene은 그 부모의 scene까지 end 시킨다.
                      if (type == BUY_STARCANDY_OK || type == BUYPOTION_OK)
                      {

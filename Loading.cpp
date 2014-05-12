@@ -179,20 +179,6 @@ void Loading::XmlParseGameStart(char* data, int size)
         if (code == 10) CCLog("Loading : 포션 부족함. 재부팅.");
         CCLog("failed code = %d", code);
     }
-    
-    /*
-     <game-info>
-        <using-item item1="0" item2="0" item3="0" item4="0" item5="0" />
-        <mission type="1" value="26" reference-value="2" />
-        <using-skill>
-           <slot id="1" common-skill-id="21" user-skill-id="1" />
-        </using-skill>
-     </game-info>
-     <money topaz="523" star-candy="1682200" />
-     <potion potion-count="4" remain-time="720" />
-     <item count-1="10" count-2="0" count-3="451" count-4="8" count-5="0" />
-     <coco magic-point="0" magic-staff-level="30" magic-staff-bonus-mp="29" fairy-bonus-mp="0" practice-user-skill-id="4" />
-     */
 }
 
 void Loading::EndScene()
