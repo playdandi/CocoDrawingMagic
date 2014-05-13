@@ -672,6 +672,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     isStarting = true;
                     
                     // 포션 1개 없애기
+                    /*
                     if (myInfo->GetPotion() <= 5) // 5개보다 많을 때는 액션 없어도 될 듯.
                     {
                         CCPoint p = spriteClass->FindParentCenterPos("icon/icon_potion_empty.png0");
@@ -684,7 +685,36 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                                             CCMoveBy::create(1.0f, ccp(318+bluePos.x-realPos.x, 193+bluePos.y-realPos.y)), CCFadeOut::create(0.3f), NULL);
                         ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
                     }
-                    myInfo->SetPotion(myInfo->GetPotion()-1, myInfo->GetRemainPotionTimeNumber());
+                    */
+                    
+                    sound->playGameStart();
+                    
+                    CCPoint p = ccp(530+50, 1508+15);
+                    if (myInfo->GetPotion() <= 5)
+                        p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
+                    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
+                    //m_emitter->retain();
+                    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+                    m_emitter->setPosition(p);
+                    this->addChild(m_emitter, 2000);
+                    m_emitter->setAutoRemoveOnFinish(true);
+                    
+                    if (myInfo->GetPotion() > 5)
+                        myInfo->SetPotion(myInfo->GetPotion()-1, 0);
+                    else
+                        myInfo->SetPotion(myInfo->GetPotion()-1, 720);
+                    
+                    CCString* param = CCString::create("2");
+                    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+                    
+                    if (myInfo->GetPotion() < 5)
+                    {
+                        char name[25];
+                        sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion());
+                        CCActionInterval* action = CCFadeOut::create(0.2f);
+                        ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
+                    }
+
                     
                     pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
                     pBlackClose->setPosition(ccp(0, 0));
@@ -694,7 +724,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     this->addChild(pBlackClose, 1000);
                     
                     callbackType = 1;
-                    CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.5f),
+                    CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.8f),
                             CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
                     pBlackClose->runAction(action);
                     
@@ -702,8 +732,10 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else
                 {
-                    // potion 부족!
-                    // 포션 구매창 이동
+                    // 포션 부족 - 구매창 유도 팝업
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "GameReady", "NoImage", false, NEED_TO_BUY_POTION, BTN_2, nullData);
+                    break;
                 }
             }
         }

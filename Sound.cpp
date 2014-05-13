@@ -26,6 +26,7 @@ void Sound::PreLoadSound()
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/lvup_fail.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/magiclist.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/warning.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/gamestart.mp3");
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.7f);
@@ -80,6 +81,10 @@ void Sound::playLvUpSuccess()
 void Sound::playLvUpFail()
 {
     SimpleAudioEngine::sharedEngine()->playEffect("sounds/lvup_fail.mp3");
+}
+void Sound::playGameStart()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/gamestart.mp3");
 }
 
 

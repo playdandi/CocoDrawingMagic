@@ -42,13 +42,6 @@ int Depth::GetCurPriority()
 }
 void Depth::AddCurDepth(std::string name)
 {
-    /*
-    int parentPriority;
-    if ((int)depth.size() == 0)
-        parentPriority = 0;
-    else
-        parentPriority = depth[depth.size()-1]->priority;
-     */
     int priority = (int)depth.size() * -1;
     depth.push_back( new Depth(name, priority) );
 }
@@ -56,6 +49,12 @@ void Depth::RemoveCurDepth()
 {
     delete depth[depth.size()-1];
     depth.pop_back();
+}
+void Depth::ClearDepth()
+{
+    for (int i = 0 ; i < depth.size() ; i++)
+        delete depth[i];
+    depth.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -745,6 +744,14 @@ int Msg::GetRewardCount()
 std::string Msg::GetContent()
 {
     return content;
+}
+std::string Msg::GetProfileUrl()
+{
+    return profileUrl;
+}
+std::string Msg::GetNoticeUrl()
+{
+    return noticeUrl;
 }
 
 

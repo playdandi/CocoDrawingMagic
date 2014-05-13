@@ -69,7 +69,8 @@ bool Ranking::init()
 		return false;
 	}
     
-    // make depth tree
+    // make depth tree (처음 시작이니까 clear하고 진행)
+    Depth::ClearDepth();
     Depth::AddCurDepth("Ranking");
     
     this->setKeypadEnabled(true);
@@ -365,15 +366,6 @@ void Ranking::InitSprites()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 4, 1, 0) );
     }
 
-    /*
-    // topaz
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()), fontList[0], 36, ccp(0, 0), ccp(110, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 1) );
-    // starcandy
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()), fontList[0], 36, ccp(0, 0), ccp(420, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 2) );
-    // magic-point
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetMPTotal()), fontList[0], 36, ccp(0, 0), ccp(800, 1686), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 3) );
-     */
-    
     // potion-remain-time
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 4) );
     

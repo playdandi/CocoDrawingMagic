@@ -57,6 +57,9 @@ bool Splash::init()
 		return false;
 	}
     
+    // add depth
+    Depth::AddCurDepth("Splash");
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
@@ -639,6 +642,12 @@ void Splash::XmlParseLogin(char* data, int size)
     }
     else
     {
+        if (code == 11) // 블록당한 유저
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "Splash", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+        }
+            
         // failed msg
         CCLog("failed code = %d", code);
     }

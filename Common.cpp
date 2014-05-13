@@ -372,7 +372,12 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     }
     else if (from == "Loading")
     {
-        if (isReplaced) CCDirector::sharedDirector()->replaceScene(nextScene);
+        if (isReplaced)
+        {
+            CCDirector::sharedDirector()->replaceScene(nextScene);
+            //((Loading*)obj)->removeFromParentAndCleanup(true);
+            //CCDirector::sharedDirector()->pushScene(nextScene);
+        }
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
@@ -405,7 +410,8 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     CCScene* popup;
     if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc, priority);
     
-    if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
+    if (from == "Splash") ((Splash*)obj)->addChild(popup, 200, 200);
+    else if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
@@ -627,6 +633,13 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((CCLayer*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((CCLayer*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((CCLayer*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "Splash") // 부모가 어떤 scene
+    {
+        CCLog("splash");
+        if (obj->type == 0)      ((Splash*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((Splash*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((Splash*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
     else if (obj->parentType == "Ranking") // 부모가 어떤 scene
     {

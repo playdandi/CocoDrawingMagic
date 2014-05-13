@@ -188,6 +188,7 @@ void Message::MakeScroll()
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
 
     char spriteName[35];
+    int j;
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
@@ -206,8 +207,23 @@ void Message::MakeScroll()
         */
         
         // profile 영역 bg
+        for (j = 0 ; j < friendList.size() ; j++)
+        {
+            if (friendList[j]->GetImageUrl() == msgData[i]->GetProfileUrl())
+            {
+                spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[j]->GetProfile(), ccp(0, 0), ccp(44+7, 35+13), CCSize(0, 0), "", "Layer", itemLayer, 2, 1, 255, 0.85f) );
+                break;
+            }
+        }
+        if (j == friendList.size()) // 친구 리스트에 없는 프로필일 경우 새로 다운받아야 한다.
+        {
+            // 지금은 임시로 no image로 하고, 나중에 고치자.
+            sprintf(spriteName, "background/bg_profile_noimage.png%d", i);
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        }
         sprintf(spriteName, "background/bg_profile.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 4) );
+        
         
         // content (fontList[2] = 나눔고딕볼드)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabelArea(msgData[i]->GetContent(), fontList[0], 36, ccp(0, 0), ccp(194, 45), ccc3(78,47,8), CCSize(400, 105), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", itemLayer, 3, 0) );

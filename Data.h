@@ -39,6 +39,7 @@ public:
     static int GetCurPriority();
     static void AddCurDepth(std::string name);
     static void RemoveCurDepth();
+    static void ClearDepth();
     
     int priority;
     std::string name;
@@ -280,6 +281,8 @@ public:
     int GetType();
     int GetRewardCount();
     std::string GetContent();
+    std::string GetProfileUrl();
+    std::string GetNoticeUrl();
 
 private:
     int id;

@@ -22,6 +22,7 @@ public:
     void ReplaceScene(std::string to, int type, int btnType);
     void EndScene();
     void EndSceneCallback();
+    void Exit();
     
     void HttpRequest(std::string url);
     void onHttpRequestCompleted(CCNode *sender, void *data);

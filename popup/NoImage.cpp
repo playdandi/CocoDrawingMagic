@@ -60,7 +60,7 @@ bool NoImage::init()
     
     // make depth tree
     Depth::AddCurDepth("NoImage");
-
+    
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
@@ -124,7 +124,10 @@ void NoImage::InitSprites()
     char text[150], cost[10];
     switch (type)
     {
-        //case BUY_STARCANDY_FAIL:
+        case YOU_WERE_BLOCKED:
+            sprintf(text, "블록된 계정입니다. 문의사항은 help@playdandi.com 으로 이메일을 보내주세요."); break;
+        case NEED_TO_BUY_POTION:
+            sprintf(text, "포션이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NEED_TO_BUY_TOPAZ:
             sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NEED_TO_BUY_STARCANDY:
@@ -301,7 +304,14 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                EndScene();
+                if (type == YOU_WERE_BLOCKED)
+                {
+                    Exit();
+                }
+                else
+                {
+                    EndScene();
+                }
                 return true;
             }
         }
@@ -329,7 +339,11 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 if (btn == BTN_1) // 팝업창에서 '확인' 버튼 하나만 있는 경우.
                 {
-                    if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
+                    if (type == YOU_WERE_BLOCKED)
+                    {
+                        Exit();
+                    }
+                    else if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
                     {
                         if (d[0] == 1) ReplaceScene("NoImage", INVITE_FRIEND_10, BTN_1);
                         else if (d[0] == 2) ReplaceScene("NoImage", INVITE_FRIEND_20, BTN_1);
@@ -353,10 +367,14 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (type == POPUP_EXIT)
                 {
-                    CCDirector::sharedDirector()->end();
-                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                    exit(0);
-                    #endif
+                    Exit();
+                }
+                else if (type == NEED_TO_BUY_POTION)
+                {
+                    CCNode* parent = this->getParent();
+                    EndScene();
+                    Common::ShowNextScene(parent, Depth::GetCurName(), "BuyPotion", false, 3); // curName == 결국 부모
+                    break;
                 }
                 else if (type == NEED_TO_BUY_TOPAZ)
                 {
@@ -662,6 +680,13 @@ void NoImage::EndSceneCallback()
 {
 }
 
+void NoImage::Exit()
+{
+    CCDirector::sharedDirector()->end();
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    exit(0);
+    #endif
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////

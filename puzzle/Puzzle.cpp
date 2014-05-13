@@ -35,8 +35,9 @@ void Puzzle::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
     
-    // Fade Out (서서히 밝아진다)
-    pBlackOpen->runAction(CCFadeOut::create(0.5f));
+    // Fade Out (서서히 밝아진다) + 3/2/1/시작 액션으로 이동
+    CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyAndStart), this), NULL);
+    pBlackOpen->runAction(action);
 }
 void Puzzle::onExit()
 {
@@ -66,8 +67,6 @@ bool Puzzle::init()
     
     sound = new Sound();
     sound->PreLoadInGameSound();
-    if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
-        sound->PlayBackgroundInGameSound();
     
     effect = new Effect();
     effect->Init(effect, this);
@@ -655,7 +654,7 @@ void Puzzle::InitBoard()
     drop_order = 0;
     touch_cnt = 0;
     
-    m_bTouchStarted = false;
+    m_bTouchStarted = true;
     m_iSkillSP = 0;
     m_bIsSpiritExecuted = false;
     m_iSpiritSP = 0;
@@ -664,7 +663,6 @@ void Puzzle::InitBoard()
 void Puzzle::SetScoreAndStarCandy()
 {
     iScore = 0;
-    //pScoreLabel = (CCLabelTTF*)spriteClass->FindLabelByTag(2);
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2, vs.height+vo.y-65));
@@ -786,6 +784,49 @@ void Puzzle::ComboTimer(float f)
     }
 }
 
+void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
+{
+    readyTimeLabel = CCLabelTTF::create("셋", fontList[0].c_str(), 82);
+    readyTimeLabel->setAnchorPoint(ccp(0.5,0.5));
+    readyTimeLabel->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+    readyTimeLabel->setOpacity(0);
+    this->addChild(readyTimeLabel, 5000);
+    
+    iReadyTime = 3000;
+    ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::Ready), 0.1f);
+}
+void Puzzle::Ready(float f)
+{
+    if (iReadyTime % 1000 == 0)
+    {
+        if (iReadyTime == 3000) readyTimeLabel->setString("셋");
+        else if (iReadyTime == 2000) readyTimeLabel->setString("둘");
+        else if (iReadyTime == 1000) readyTimeLabel->setString("하나");
+        else readyTimeLabel->setString("수업 시작!");
+        readyTimeLabel->setOpacity(255);
+        
+        if (iReadyTime == 0) // 게임 시작!
+        {
+            this->unschedule(schedule_selector(Puzzle::Ready));
+            
+            CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCEaseBackIn::create(CCMoveBy::create(0.3f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
+            readyTimeLabel->runAction(action);
+        }
+    }
+    iReadyTime -= 250;
+}
+void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
+    
+    // 배경음 재생
+    if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
+        sound->PlayBackgroundInGameSound();
+    
+    m_bTouchStarted = false;
+    ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
+}
+
 void Puzzle::SetTimer()
 {
     iTimer = 1000 * PUZZLE_TIME;
@@ -795,8 +836,6 @@ void Puzzle::SetTimer()
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
     pTimerLabel->setPosition(ccp(40, 300));
     this->addChild(pTimerLabel, 100);
-    
-    this->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
 }
 
 void Puzzle::UpdateTimer(float f)
@@ -846,8 +885,37 @@ void Puzzle::UpdateTimer(float f)
             spriteClassInfo->RemoveAllObjects();
             delete spriteClassInfo;
             
-            // 게임결과화면 로딩 위해 game_end protocol 호출
-            GameEnd();
+            // 그리고 있던 것들 모두 취소
+            int x, y;
+            for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
+            {
+                x = (int)piece8xy[touch_cnt%QUEUE_CNT][i].x;
+                y = (int)piece8xy[touch_cnt%QUEUE_CNT][i].y;
+                spriteP8[x][y]->setScale(spriteP8[x][y]->getScale() / 0.9f);
+                spriteP8[x][y]->setOpacity(255);
+                // lock도 해제
+                m_bLockP8[x][y]--;
+            }
+            for (int i = 0 ; i < piece4xy[touch_cnt%QUEUE_CNT].size() ; i++)
+            {
+                x = (int)piece4xy[touch_cnt%QUEUE_CNT][i].x;
+                y = (int)piece4xy[touch_cnt%QUEUE_CNT][i].y;
+                puzzleP4set->SetOpacity(x, y, 255);
+            }
+            for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
+                strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
+            piece8xy[touch_cnt%QUEUE_CNT].clear();
+            piece4xy[touch_cnt%QUEUE_CNT].clear();
+            strap[touch_cnt%QUEUE_CNT].clear();
+            
+            // TIME UP 메시지 띄운 후, 게임결과화면 로딩 위해 game_end protocol 호출
+            CCLabelTTF* timeup = CCLabelTTF::create("수업 종료!", fontList[0].c_str(), 84);
+            //timeup->setColor(ccc3());
+            timeup->setAnchorPoint(ccp(0.5, 0.5));
+            timeup->setPosition(ccp(-300, m_winSize.height/2));
+            this->addChild(timeup, 5000);
+            CCActionInterval* action = CCSequence::create(CCMoveTo::create(0.25f, ccp(m_winSize.width/2, m_winSize.height/2)), CCDelayTime::create(1.3f), CCMoveTo::create(0.25f, ccp(m_winSize.width+300, m_winSize.height/2)), CCCallFuncND::create(this, callfuncND_selector(Puzzle::GameEnd), this), NULL);
+            timeup->runAction(action);
         }
         
         // 정령 준비 발동 ('시간을 얼리다' 발동 중에는 NO!)
@@ -1955,7 +2023,7 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
     }
 }
 
-void Puzzle::GameEnd()
+void Puzzle::GameEnd(CCNode* sender, void* pointer)
 {
     //http://14.63.225.203/cogma/game/game_end.php?kakao_id=1000&score=150&mission=0&starcandy=10
     char temp[255];

@@ -131,7 +131,11 @@ public:
     CCSize tbSize;
     CCSize boardSize;
     
-    void GameEnd();
+    void ReadyAndStart(CCNode* sender, void* pointer);
+    void Ready(float f);
+    void ReadyCallback(CCNode* sender, void* pointer);
+    
+    void GameEnd(CCNode* sender, void* pointer);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFriends(char* data, int size);
     void XmlParseGameEnd(char* data, int size);
@@ -195,6 +199,8 @@ private:
     PuzzleSkill* skill;
     
     CCSprite* pBlackOpen;
+    CCLabelTTF* readyTimeLabel;
+    int iReadyTime;
     
     int iScore;
     //CCLabelTTF* pScoreLabel;

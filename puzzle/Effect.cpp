@@ -608,14 +608,13 @@ void Effect::PlayEffect_13(std::vector<CCPoint> pos)
 }
 void Effect::PlayEffect_21(std::vector<CCPoint> pos)
 {
-    CCLog("이펙트 땅6 : 6개*2 ;; %d", (int)pos.size());
+    CCLog("이펙트 땅6 : 6개*2 :: %d", (int)pos.size());
     // E6 : 그린 피스 6개 이상 한 번 더
     int x, y;
     for (int i = 0; i < pos.size(); i++)
     {
         x = (int)pos[i].x;
         y = (int)pos[i].y;
-        //CCLog("%d %d", x, y);
         
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land6.plist");
         m_emitter->retain();
@@ -1426,8 +1425,8 @@ void Effect::PlayEffect_14()
         // iced-bar
         iced_bar = CCSprite::createWithSpriteFrameName("background/bar_ice.png");
         iced_bar->setAnchorPoint(ccp(0.5, 0));
-        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y-45));
-        gameLayer->addChild(iced_bar, 500);
+        iced_bar->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y-35));
+        gameLayer->addChild(iced_bar, 5000);
         /*
         // stencil (타이머의 얼음을 가려주는 것)
         timerLayer = CCLayer::create();

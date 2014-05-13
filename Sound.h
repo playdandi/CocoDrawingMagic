@@ -23,6 +23,7 @@ public:
     void playLvUpSuccess();
     void playLvUpFail();
     void playBoardMove();
+    void playGameStart();
     
     //////////////////////////////////////////////////////
     void PreLoadInGameSound();
