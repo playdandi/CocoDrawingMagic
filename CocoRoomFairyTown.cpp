@@ -1,16 +1,13 @@
 #include "CocoRoomFairyTown.h"
 
-//static int priority;
 
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
-    CCLog("CocoFairyTown 소멸자 실행");
+    //CCLog("CocoFairyTown 소멸자 실행");
 }
 
-CCScene* CocoRoomFairyTown::scene(int prio)
-{
-    //priority = prio;
-    
+CCScene* CocoRoomFairyTown::scene()
+{    
     CCScene* pScene = CCScene::create();
     CocoRoomFairyTown* pLayer = CocoRoomFairyTown::create();
     pScene->addChild(pLayer);
@@ -60,6 +57,7 @@ bool CocoRoomFairyTown::init()
     // notification
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+    
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -281,7 +279,6 @@ void CocoRoomFairyTown::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    //CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

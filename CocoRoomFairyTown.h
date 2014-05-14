@@ -14,7 +14,7 @@ class CocoRoomFairyTown : public CCLayer,
 {
 public:
     ~CocoRoomFairyTown();
-    static CCScene* scene(int prio);
+    static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

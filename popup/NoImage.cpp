@@ -164,6 +164,8 @@ void NoImage::InitSprites()
             sprintf(text, "토파즈 %d개를 받았습니다.", d[0]); break;
         case MESSAGE_OK_POTION:
             sprintf(text, "포션 %d개를 받았습니다.", d[0]); break;
+        case MESSAGE_OK_POTION_REQUEST:
+            sprintf(text, "요청한 포션을 보내고, 포션을 1개 받았습니다."); break;
         case MESSAGE_EMPTY:
             sprintf(text, "삭제된 메시지입니다."); break;
         case MESSAGE_ALL_TRY:
@@ -247,6 +249,12 @@ void NoImage::InitSprites()
             sprintf(text, "친구를 20명 초대하여 토파즈 10개가 추가로 지급되었습니다."); break;
         case INVITE_FRIEND_30:
             sprintf(text, "친구를 30명 초대하여 토파즈 25개가 추가로 지급되었습니다."); break;
+        case REQUEST_POTION_OK:
+            sprintf(text, "포션을 성공적으로 요청하였습니다."); break;
+        case REQUEST_POTION_REJECT:
+            sprintf(text, "수신거부 상태인 친구입니다."); break;
+        case REQUEST_POTION_EARLY:
+            sprintf(text, "요청한 친구에게는 24시간 후 다시 요청 가능합니다."); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
@@ -874,7 +882,7 @@ void NoImage::XmlParseSendPotion(char* data, int size)
             break;
         case 10: // 포션 수신 거부 상태
             friendList[d[0]]->SetPotionMsgStatus(0);
-            friendList[d[0]]->SetRemainPotionTime(0);
+            //friendList[d[0]]->SetRemainPotionTime(0);
             friendList[d[0]]->SetPotionSprite();
             ReplaceScene("NoImage", POTION_SEND_REJECT, BTN_1);
             break;
@@ -921,23 +929,29 @@ void NoImage::XmlParseMsg(char* data, int size)
         msgData.clear();
         
         int id, type;
-        int rewardCount;
+        int rewardCount, friendKakaoId;
         std::string content, profileUrl, noticeUrl;
         std::string name;
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {
+            friendKakaoId = -1;
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "type") type = ait->as_int();
+            }
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 name = ait->name();
                 if (name == "id") id = ait->as_int();
-                else if (name == "type") type = ait->as_int();
                 else if (name == "content") content = ait->as_string();
                 else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
                 else if (name == "reward-count") rewardCount = ait->as_int();
                 else if (name == "notice-url") noticeUrl = "";
+                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_int();
             }
-            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl) );
+            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
         
         myInfo->SetMsgCnt((int)msgData.size());

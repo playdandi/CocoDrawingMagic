@@ -51,10 +51,12 @@ public:
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
+    void GetTodayCandyFriend();
     void LastActionStart();
     void LastActionCallback(CCNode* sender, void *data);
     void LastActionCallback2(CCNode* sender, void *data);
     void EndScene();
+    
     
 protected:
     CCSize winSize;

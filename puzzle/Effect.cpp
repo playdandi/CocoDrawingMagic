@@ -120,11 +120,28 @@ void Effect::SetSpirit(int type)
 {
     if (type == 0) // 불의 정령
     {
-        fire = CCParticleSystemQuad::create("particles/fire2.plist");
+        //fire = CCParticleSystemQuad::create("particles/fire2.plist");
+        fire = CCParticleSystemQuad::create("particles/spirit_fire.plist");
         fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
+        fire->setScale(2.0f);
         fire->retain();
         fire->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(fire, 100);
+        
+        CCPoint p = gameLayer->SetTouch8Position(0, ROW_COUNT-1);
+        
+        CCParticleSystemQuad* e1 = CCParticleSystemQuad::create("particles/spirit_fire_lefteye.plist");
+        e1->setPosition(ccp(p.x-30, p.y+40));
+        e1->setScale(2.0f);
+        e1->retain();
+        e1->setAnchorPoint(ccp(0.5, 0.5));
+        gameLayer->addChild(e1, 100);
+        CCParticleSystemQuad* e2 = CCParticleSystemQuad::create("particles/spirit_fire_righteye.plist");
+        e2->setPosition(ccp(p.x+30, p.y+40));
+        e2->setScale(2.0f);
+        e2->retain();
+        e2->setAnchorPoint(ccp(0.5, 0.5));
+        gameLayer->addChild(e2, 100);
     }
     else if (type == 1) // 물의 정령
     {

@@ -18,9 +18,9 @@ std::vector<class SkillInfo*> skillInfo;
 std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
-std::vector<int> inGameSkill;
 std::vector<class Depth*> depth;
-
+std::vector<int> inGameSkill;
+std::vector<int> todayCandyKakaoId;
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority)
@@ -96,6 +96,24 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->propertyMaster = (master == 1) ? true : false;
 }
 
+CCSprite* MyInfo::GetProfile()
+{
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            return friendList[i]->GetProfile();
+    }
+    return NULL;
+}
+std::string MyInfo::GetName()
+{
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+            return friendList[i]->GetNickname();
+    }
+    return "";
+}
 int MyInfo::GetDeviceType()
 {
     return deviceType;
@@ -264,7 +282,8 @@ void MyInfo::SetMoney(int topaz, int starcandy)
 void MyInfo::SetPotion(int potion, int remainPotionTime)
 {
     this->potion = potion;
-    this->remainPotionTime = remainPotionTime;
+    if (remainPotionTime != -1)
+        this->remainPotionTime = remainPotionTime;
 }
 void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
 {
@@ -481,7 +500,7 @@ int MySkill::GetExp()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
+Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
 {
     // constructor
     this->kakaoId = kakaoId;
@@ -491,6 +510,7 @@ Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int poti
     this->imageUrl = imageUrl;
     this->potionMsgStatus = potionMsgStatus;
     this->remainPotionTime = remainPotionTime;
+    this->remainRequestPotionTime = remainRequestPotionTime;
     this->potionSprite = NULL;
     this->potionRemainTimeMin = new CCLabelTTF();
     this->potionRemainTimeMin->initWithString("", fontList[0].c_str(), 28);
@@ -508,6 +528,16 @@ Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int poti
     this->fairyLevel = fairyLevel;
     this->skillId = skillId;
     this->skillLevel = skillLevel;
+}
+
+Friend* Friend::GetObj(int kakaoId)
+{
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == kakaoId)
+            return friendList[i];
+    }
+    return NULL;
 }
 
 void Friend::SetSprite(CCTexture2D* texture)
@@ -628,13 +658,30 @@ int Friend::GetScoreUpdateTime()
 {
     return scoreUpdateTime;
 }
+int Friend::GetRemainPotionTime(int kakaoId)
+{
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == kakaoId)
+            return friendList[i]->GetRemainPotionTime();
+    }
+    return -1;
+}
 int Friend::GetRemainPotionTime()
 {
     return remainPotionTime;
 }
+int Friend::GetRemainRequestPotionTime()
+{
+    return remainRequestPotionTime;
+}
 void Friend::SetRemainPotionTime(int time)
 {
     remainPotionTime = time;
+}
+void Friend::SetRemainRequestPotionTime(int time)
+{
+    remainRequestPotionTime = time;
 }
 
 bool Friend::IsFire()
@@ -720,7 +767,7 @@ std::string DataProcess::FindSkillNameById(int skillId)
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-Msg::Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl)
+Msg::Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, int friendKakaoId)
 {
     this->id = id;
     this->type = type;
@@ -728,6 +775,7 @@ Msg::Msg(int id, int type, int rewardCount, std::string content, std::string pro
     this->content = content;
     this->profileUrl = profileUrl;
     this->noticeUrl = noticeUrl;
+    this->friendKakaoId = friendKakaoId;
 }
 int Msg::GetId()
 {
@@ -753,7 +801,10 @@ std::string Msg::GetNoticeUrl()
 {
     return noticeUrl;
 }
-
+int Msg::GetFriendKakaoId()
+{
+    return friendKakaoId;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 PriceTopaz::PriceTopaz(int id, int count, int KRW, int USD, int bonus)

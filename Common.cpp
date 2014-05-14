@@ -18,6 +18,8 @@
 #include "RequestPotion.h"
 #include "Setting.h"
 #include "Sketchbook.h"
+#include "popup/WeeklyRankResult.h"
+#include "popup/GetDegree.h"
 #include "popup/SketchDetail.h"
 #include "popup/DegreeInfo.h"
 #include "popup/Profile.h"
@@ -330,7 +332,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "MagicList") nextScene = MagicList::scene(etc, priority);
     else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc, priority);
     else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene(priority);
-    else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene(priority);
+    else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene();
     else if (to == "InviteFriend") nextScene = InviteFriend::scene();
     else if (to == "BuyTopaz") nextScene = BuyTopaz::scene(etc);
     else if (to == "BuyStarCandy") nextScene = BuyStarCandy::scene(etc);
@@ -348,6 +350,9 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
     else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc, priority);
     else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc, priority);
+    
+    else if (to == "WeeklyRankResult") nextScene = WeeklyRankResult::scene();
+    else if (to == "GetDegree") nextScene = GetDegree::scene();
     
     else if (to == "Loading") nextScene = Loading::scene();
     
@@ -373,11 +378,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Loading")
     {
         if (isReplaced)
-        {
             CCDirector::sharedDirector()->replaceScene(nextScene);
-            //((Loading*)obj)->removeFromParentAndCleanup(true);
-            //CCDirector::sharedDirector()->pushScene(nextScene);
-        }
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
@@ -388,7 +389,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
-    
+    else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Puzzle")
     {
         if (isReplaced)
@@ -416,6 +417,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
+    else if (from == "RequestPotion") ((RequestPotion*)obj)->addChild(popup, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
@@ -640,6 +642,18 @@ void SpriteClass::AddChild(int idx)
         if (obj->type == 0)      ((Splash*)obj->parent)->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) ((Splash*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
         else                     ((Splash*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "WeeklyRankResult") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((WeeklyRankResult*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((WeeklyRankResult*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((WeeklyRankResult*)obj->parent)->addChild(obj->label, obj->zOrder);
+    }
+    else if (obj->parentType == "GetDegree") // 부모가 어떤 scene
+    {
+        if (obj->type == 0)      ((GetDegree*)obj->parent)->addChild(obj->sprite, obj->zOrder);
+        else if (obj->type == 1) ((GetDegree*)obj->parent)->addChild(obj->sprite9, obj->zOrder);
+        else                     ((GetDegree*)obj->parent)->addChild(obj->label, obj->zOrder);
     }
     else if (obj->parentType == "Ranking") // 부모가 어떤 scene
     {

@@ -124,6 +124,7 @@ void Loading::XmlParseGameStart(char* data, int size)
         int missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
         
         // 사용할 active+passive 스킬 목록 (active의 경우, 슬롯 정보도 같이 갱신한다)
+        int slotSize = myInfo->GetSlot().size();
         inGameSkill.clear();
         myInfo->ClearSkillSlot();
         xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("skill");
@@ -138,10 +139,13 @@ void Loading::XmlParseGameStart(char* data, int size)
                 else if (name == "user-skill-id") usi = ait->as_int();
                 else if (name == "is-active") isActive = ait->as_int();
             }
-            if (isActive == 0)
+            if (isActive == 1)
                 myInfo->AddSkillSlot(id, csi, usi);
             inGameSkill.push_back(csi);
         }
+        // 빈 슬롯 처리
+        for (int i = myInfo->GetSlot().size()+1 ; i <= slotSize ; i++)
+            myInfo->AddSkillSlot(i, 0, 0);
         
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();

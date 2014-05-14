@@ -122,7 +122,7 @@ void BuyPotion::InitSprites()
     
     // 내용
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
-                    ccp(0, 0), ccp(106, 528), CCSize(857, 132), "", "BuyPotion", this, 2) );
+                    ccp(0, 0), ccp(110, 528), CCSize(857, 132), "", "BuyPotion", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png",
                     ccp(0, 0), ccp(50, 16), CCSize(0, 0), "background/bg_degree_desc.png", "1", NULL, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_big.png",

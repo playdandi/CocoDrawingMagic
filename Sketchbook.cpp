@@ -128,6 +128,7 @@ bool Sketchbook::init()
         else if (myInfo->IsWater()) tabNumber = 1;
         else if (myInfo->IsLand()) tabNumber = 2;
         else if (myInfo->IsMaster()) tabNumber = 3;
+        else tabNumber = 0;
     }
     curState = -1;
     MakeScroll(tabNumber);
@@ -296,14 +297,10 @@ void Sketchbook::MakeScroll(int state, bool isFromPopup)
     // menu change
     SetMenuChange(state);
 
-    if (state == 0)
-        MakeScrollBook(2);
-    else if (state == 1)
-        MakeScrollBook(1);
-    else if (state == 2)
-        MakeScrollBook(3);
-    //else
-    //    MakeScrollBook(4);
+    if (state == 0) MakeScrollBook(2);
+    else if (state == 1) MakeScrollBook(1);
+    else if (state == 2) MakeScrollBook(3);
+    //else MakeScrollBook(4);
     
     curState = state;
 }
@@ -352,7 +349,6 @@ SkillInfo* Sketchbook::GetNextSkillInfo(int state)
         if (!flag)
             continue;
         
-        //CCLog("next = %d", skillInfo[i]->GetId());
         for (int j = 0 ; j < myInfo->GetSkillList().size() ; j++)
         {
             ms = myInfo->GetSkillList()[j];
@@ -375,15 +371,11 @@ void Sketchbook::MakeScrollBook(int idx)
             ms.push_back(myInfo->GetSkillList()[i]);
     }
     numOfList = ms.size();
-    //if (numOfList < 8) // 항상 '?' 스킬이 하나 있기 때문에 (8개 다 배우지 않은 이상)
-        numOfList++;
+    numOfList++;
     
     containerBook = CCLayer::create();
-    if (numOfList > 8)
-        containerBook->setContentSize(CCSizeMake(929, (numOfList-1)*206));
-    else
-        containerBook->setContentSize(CCSizeMake(929, numOfList*206));
-    
+    containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, 8)*206));
+  
     SkillInfo* sInfo;
     int id;
     
@@ -393,14 +385,14 @@ void Sketchbook::MakeScrollBook(int idx)
         if (i == numOfList-1)
         {
             sInfo = GetNextSkillInfo(idx);
-            if (sInfo == NULL)
+            if (sInfo == NULL || numOfList == 9)
                 continue;
         }
         else
             sInfo = SkillInfo::GetSkillInfo(ms[i]->GetCommonId());
         
         CCLayer* itemLayer = CCLayer::create();
-        itemLayer->setPosition(ccp(27, (numOfList-i-1)*206));
+        itemLayer->setPosition(ccp(27, (std::min(numOfList, 8)-i-1)*206));
         containerBook->addChild(itemLayer, 5);
         spriteClassBook->layers.push_back(itemLayer);
         

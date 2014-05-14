@@ -71,6 +71,9 @@ bool CocoRoomTodayCandy::init()
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
+    spriteClassList = new SpriteClass();
+    RefreshProfileList();
+    
     isTouched = false;
     isScrollViewTouched = false;
     isScrolling = false;
@@ -100,27 +103,20 @@ void CocoRoomTodayCandy::InitSprites()
     
     // bottom background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2",
-                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "CocoRoom", this, 1) );
+                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "CocoRoomTodayCandy", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2",
-                    ccp(0, 0), ccp(77, 228), CCSize(929, 177), "", "CocoRoom", this, 1) );
+                    ccp(0, 0), ccp(77, 228), CCSize(929, 177), "", "CocoRoomTodayCandy", this, 1) );
     
-    // bottom 5 profiles
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1",
-                    ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "CocoRoom", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png2",
-                    ccp(0, 0), ccp(229, 254), CCSize(0, 0), "", "CocoRoom", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png3",
-                    ccp(0, 0), ccp(359, 254), CCSize(0, 0), "", "CocoRoom", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png4",
-                    ccp(0, 0), ccp(490, 254), CCSize(0, 0), "", "CocoRoom", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png5",
-                    ccp(0, 0), ccp(620, 254), CCSize(0, 0), "", "CocoRoom", this, 1) );
+    
+    // bottom 5 profile 중에 내 프로필
+    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+5), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
     
     // bottom button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png",
-                    ccp(0, 0), ccp(750, 262), CCSize(0, 0), "", "CocoRoom", this, 1) );
+                    ccp(0, 0), ccp(750, 262), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",
-            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 1) );
+            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 1, 1) );
 }
 
 void CocoRoomTodayCandy::MakeScroll()
@@ -152,48 +148,135 @@ void CocoRoomTodayCandy::MakeScroll()
         height++;
         
         // profile bg
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        //sprintf(fname, "background/bg_profile.png%d", i);
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
-        //                ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        
-        // name (text)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48,
-                        ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
-        
-        // button
-        if (selected[i] == 0)
+        if (friendList[i]->GetImageUrl() != "")
         {
-        sprintf(fname, "button/btn_blue_mini.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname,
-                        ccp(0, 0), ccp(635, 34), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        sprintf(fname2, "letter/letter_select.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2,
-                        ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(50, 46), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            sprintf(fname, "background/bg_profile.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
         else
         {
-            sprintf(fname, "button/btn_skill_master.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname,
-                        ccp(0, 0), ccp(635, 34), CCSize(0, 0), "", "Layer", itemLayer, 5) );
-            sprintf(fname2, "letter/letter_select_brown.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0),
-                        ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
-                        getContentSize().width/2, 30), CCSize(0, 0), fname, "0", NULL, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
+        
+        // name (text)
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
+        
+        // button
+        sprintf(fname, "button/btn_blue_mini.png%d", i);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34+3), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255) );
+        sprintf(fname2, "letter/letter_select.png%d", i);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3, 1, 255) );
+        
+        sprintf(fname, "button/btn_skill_master.png%d", i);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34+6), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0) );
+        sprintf(fname2, "letter/letter_select_brown.png%d", i);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), fname, "0", NULL, 3, 1, 0) );
+        
+        SetSelectMode(i);
+        
         // dotted line
-        if (i < numOfList-1)
-        {
+        //if (i < numOfList-1)
+        //{
             sprintf(fname, "background/bg_dotted_line.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname,
-                        ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        }
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        //}
     }
     
     // container 생성 + offset
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
+}
+
+void CocoRoomTodayCandy::SetSelectMode(int idx)
+{
+    char name[50];
+    // 오.별 리스트에 idx번째 친구가 들어있다면, '선택됨'으로 체크해 주어야 한다.
+    for (int i = 0 ; i < todayCandyKakaoId.size() ; i++)
+    {
+        if (todayCandyKakaoId[i] == friendList[idx]->GetKakaoId())
+        {
+            sprintf(name, "button/btn_blue_mini.png%d", idx);
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+            sprintf(name, "letter/letter_select.png%d", idx);
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+            sprintf(name, "button/btn_skill_master.png%d", idx);
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            sprintf(name, "letter/letter_select_brown.png%d", idx);
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            selected[idx] = true;
+            break;
+        }
+    }
+}
+
+void CocoRoomTodayCandy::RefreshTodayCandyList(int idx)
+{
+    char name[50];
+    
+    selected[idx] = !selected[idx];
+    
+    if (selected[idx])
+    {
+        sprintf(name, "button/btn_blue_mini.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        sprintf(name, "letter/letter_select.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        sprintf(name, "button/btn_skill_master.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+        sprintf(name, "letter/letter_select_brown.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+    }
+    else
+    {
+        sprintf(name, "button/btn_blue_mini.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+        sprintf(name, "letter/letter_select.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+        sprintf(name, "button/btn_skill_master.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        sprintf(name, "letter/letter_select_brown.png%d", idx);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+    }
+    
+    RefreshProfileList();
+}
+
+void CocoRoomTodayCandy::RefreshProfileList()
+{
+    spriteClassList->RemoveAllObjects();
+    
+    char name[50];
+    int cnt = 0;
+    // 화면 아래에 있는 list 갱신
+    for (int i = 0 ; i < selected.size() ; i++)
+    {
+        if (selected[i])
+        {
+            if (friendList[i]->GetImageUrl() != "")
+            {
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(229+cnt*130+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
+                sprintf(name, "background/bg_profile.png%d", cnt);
+                spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(229+cnt*130, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+            }
+            else
+            {
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(229+cnt*130, 254), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5) );
+            }
+            cnt++;
+        }
+    }
+    
+    for (int i = 0 ; i < spriteClassList->spriteObj.size() ; i++)
+        spriteClassList->AddChild(i);
+    
+    
+    /*
+    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(359, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png2", ccp(0, 0), ccp(490, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png3", ccp(0, 0), ccp(620, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+    */
 }
 
 
@@ -220,8 +303,32 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_question.png")
+        else if(spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
         {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                // todayCandyKakaoId 리스트 갱신
+                todayCandyKakaoId.clear();
+                for (int i = 0 ; i < selected.size() ; i++)
+                {
+                    if (selected[i])
+                        todayCandyKakaoId.push_back( friendList[i]->GetKakaoId() );
+                }
+                for (int i = todayCandyKakaoId.size(); i < 4; i++)
+                    todayCandyKakaoId.push_back(-1);
+                
+                // User Default 값 갱신
+                char name[15];
+                for (int i = 0 ; i < todayCandyKakaoId.size() ; i++)
+                {
+                    CCLog("%d", todayCandyKakaoId[i]);
+                    sprintf(name, "todayCandy_%d", i);
+                    CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[i]);
+                }
+                
+                EndScene();
+                break;
+            }
         }
     }
     
@@ -245,7 +352,7 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             continue;
         
-        sprintf(fname, "button/btn_blue_mini.png%d", i);
+        sprintf(fname, "button/btn_blue_mini.png%d", i); // 이름은 이걸로 하는데, 사실 선택됨/선택안됨 sprite 모두 같은 위치라 그냥 이거 하나로 쓰자.
         CCSprite* temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
         CCPoint p = temp->convertToNodeSpace(point);
         
@@ -254,8 +361,23 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
         {
             sound->playClick();
+            RefreshTodayCandyList(i);
+            break;
+        }
+        /*
+        // 이미 선택된 것을 클릭한 경우 -> false로 되돌리기
+        sprintf(fname, "button/btn_skill_master.png%d", i);
+        temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
+        p = temp->convertToNodeSpace(point);
+        
+        size = spriteClass->GetContentSizeByName(fname);
+        if (selected[i] && isScrollViewTouched && !isScrolling &&
+            (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
+        {
+            sound->playClick();
             selected[i] = !selected[i];
         }
+        */
     }
 }
 
@@ -286,6 +408,8 @@ void CocoRoomTodayCandy::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClassList->RemoveAllObjects();
+    delete spriteClassList;
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
     

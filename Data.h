@@ -27,6 +27,7 @@ extern std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
 extern std::vector<int> inGameSkill;
 extern std::vector<class Depth*> depth;
+extern std::vector<int> todayCandyKakaoId;
 
 using namespace cocos2d;
 
@@ -51,6 +52,8 @@ public:
     void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
     
+    static CCSprite* GetProfile();
+    static std::string GetName();
     int GetDeviceType();
     int GetKakaoId();
     int GetMsgCnt();
@@ -202,12 +205,15 @@ private:
 class Friend
 {
 public:
-    Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
+    Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
     
     void SetSprite(CCTexture2D* texture);
     void SetSprite();
     void SetPotionSprite();
     void SetScore(int highScore, int weeklyHighScore, int certificateType);
+    
+    static Friend* GetObj(int kakaoId);
+    static int GetRemainPotionTime(int kakaoId);
     
     int GetKakaoId();
     CCSprite* GetProfile();
@@ -226,7 +232,9 @@ public:
     int GetHighScore();
     int GetScoreUpdateTime();
     int GetRemainPotionTime();
+    int GetRemainRequestPotionTime();
     void SetRemainPotionTime(int time);
+    void SetRemainRequestPotionTime(int time);
     bool IsFire();
     bool IsWater();
     bool IsLand();
@@ -244,6 +252,7 @@ private:
     CCSprite* profile;
     int potionMsgStatus;
     int remainPotionTime;
+    int remainRequestPotionTime;
     CCSprite* potionSprite;
     CCLabelTTF* potionRemainTimeMin;
     CCLabelTTF* potionRemainTimeSec;
@@ -276,13 +285,14 @@ public:
 class Msg
 {
 public:
-    Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl);
+    Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, int friendKakaoId);
     int GetId();
     int GetType();
     int GetRewardCount();
     std::string GetContent();
     std::string GetProfileUrl();
     std::string GetNoticeUrl();
+    int GetFriendKakaoId();
 
 private:
     int id;
@@ -292,6 +302,7 @@ private:
     std::string profileUrl;
     CCSprite* profile;
     std::string noticeUrl;
+    int friendKakaoId;
 };
 
 

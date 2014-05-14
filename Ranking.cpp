@@ -35,6 +35,9 @@ void Ranking::onEnter()
     
     if (fromWhere != -1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
+    
+    
+    //Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onPause()
 {
@@ -529,6 +532,12 @@ void Ranking::PotionTimer(float f)
     
     for (int i = 0 ; i < friendList.size() ; i++)
     {
+        // remain request potion time
+        remainTime = friendList[i]->GetRemainRequestPotionTime();
+        if (remainTime > 0)
+            friendList[i]->SetRemainRequestPotionTime(remainTime-1);
+        
+        // remain potion time
         remainTime = friendList[i]->GetRemainPotionTime();
         if (remainTime > 0)
             friendList[i]->SetRemainPotionTime(remainTime-1);
@@ -637,7 +646,6 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                //Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0, priority-1);
                 Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
             }
         }

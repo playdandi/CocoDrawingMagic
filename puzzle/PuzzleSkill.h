@@ -61,6 +61,12 @@ public:
     bool W7GetVar();
     void W7SetTime(int time);
     int W7GetTime();
+    void W8(int num, int queue_pos);
+    void W8_Timer(float f);
+    void W8_AccelTimer(float f);
+    bool W8_IsActive();
+    void W8_Invoke(std::vector<CCPoint> pos, int queue_pos);
+    void W8_Callback(CCNode* sender, void* data);
     
     void E3(int num);
     void E4(int num, int queue_pos);
@@ -132,6 +138,12 @@ private:
 
     int W7_RemainTime;
     bool W7_isTimeSlowed;
+    
+    bool W8_isActive;
+    int W8_remainTime;
+    int W8_accelTime;
+    int W8_accel;
+    int W8_callbackCnt;
     
     //////////////////////////////////////////
 

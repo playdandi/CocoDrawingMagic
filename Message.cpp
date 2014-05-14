@@ -92,6 +92,8 @@ bool Message::init()
     isScrolling = false;
     isScrollViewTouched = false;
     
+    scrollContainer = NULL;
+    
     return true;
 }
 
@@ -199,7 +201,7 @@ void Message::MakeScroll()
         
         /*
           id : 메시지 인덱스
-          type : 버튼출력 타입 (1-공지, 2-별사탕, 3-토파즈, 4-포션)
+          type : 버튼출력 타입 (1-공지, 2-별사탕, 3-토파즈, 4-포션, 5-포션요청)
           content : 출력 메시지
           friend-profile-image-url : 선물한 친구의 프로필 사진 경로
           reward-count : 선물한 개수 (공지의 경우 내용 없음)
@@ -249,6 +251,7 @@ void Message::MakeScroll()
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
             case 4: // 포션 (포션아이콘 + 받기)
+            case 5: // 포션요청 (포션아이콘 + 받기)
                 sprintf(spriteName, "button/btn_receive_potion.png%d", i);
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 sprintf(spriteName, "letter/letter_receive.png%d", i);
@@ -258,8 +261,7 @@ void Message::MakeScroll()
         
         // dotted line
         sprintf(spriteName, "background/bg_dotted_line.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName,
-                        ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
     }
     
     // container 세팅
@@ -316,7 +318,6 @@ bool Message::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void Message::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -356,6 +357,24 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
                 CCHttpClient::getInstance()->send(req);
                 req->release();
+                
+                // 포션 요청에 대한 메시지이므로 send_potion protocol을 호출한다. 결과는 전혀 신경쓰지 않는다.
+                if (msgData[httpMsgIdx]->GetType() == 5 &&
+                    Friend::GetRemainPotionTime(msgData[httpMsgIdx]->GetFriendKakaoId()) <= 0)
+                {
+                    std::string url = "http://14.63.225.203/cogma/game/send_potion.php?";
+                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    url += temp;
+                    sprintf(temp, "friend_kakao_id=%d", msgData[httpMsgIdx]->GetFriendKakaoId());
+                    url += temp;
+                    CCLog("url : %s", url.c_str());
+                    CCHttpRequest* req = new CCHttpRequest();
+                    req->setUrl(url.c_str());
+                    req->setRequestType(CCHttpRequest::kHttpPost);
+                    CCHttpClient::getInstance()->send(req);
+                    req->release();
+                }
+                
                 break;
             }
         }
@@ -418,7 +437,8 @@ void Message::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     
-    scrollContainer->removeAllChildren();
+    if (scrollContainer != NULL)
+        scrollContainer->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
     
@@ -474,24 +494,30 @@ void Message::XmlParseMsg(char* data, int size)
     if (code == 0)
     {
         int id, type;
-        int rewardCount;
+        int rewardCount, friendKakaoId;
         std::string content, profileUrl, noticeUrl;
         std::string name;
         
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {
+            friendKakaoId = -1;
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "type") type = ait->as_int();
+            }
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 name = ait->name();
                 if (name == "id") id = ait->as_int();
-                else if (name == "type") type = ait->as_int();
                 else if (name == "content") content = ait->as_string();
                 else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
                 else if (name == "reward-count") rewardCount = ait->as_int();
                 else if (name == "notice-url") noticeUrl = "";
+                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_int();
             }
-            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl) );
+            msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
         
         // scroll을 생성 후 데이터 보여주기
@@ -545,6 +571,15 @@ void Message::XmlParseMsgReceiveOne(char* data, int size)
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_TOPAZ, BTN_1, data); break;
             case 4:
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION, BTN_1, data); break;
+            case 5:
+                Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION_REQUEST, BTN_1, data);
+                if (Friend::GetRemainPotionTime(msgData[httpMsgIdx]->GetFriendKakaoId()) <= 0)
+                {
+                    Friend* f = Friend::GetObj(msgData[httpMsgIdx]->GetFriendKakaoId());
+                    f->SetRemainPotionTime(3600);
+                    f->SetPotionSprite();
+                }
+                break;
         }
     }
     else if (code == 10)

@@ -156,7 +156,7 @@ void Puzzle::Notification(CCObject* obj)
 void Puzzle::InitSkills()
 {
     std::vector<int> skillNum, skillProb, skillLv;
- /*
+
     int id;
     for (int i = 0 ; i < inGameSkill.size() ; i++)
     {
@@ -185,8 +185,7 @@ void Puzzle::InitSkills()
     }
     
     skill->Init(skillNum, skillProb, skillLv);
-  */
-    
+    /*
     // test //
     skillNum.push_back(0);
     skillNum.push_back(8);
@@ -229,6 +228,7 @@ void Puzzle::InitSkills()
         skillLv.push_back(4);
     }
     skill->Init(skillNum, skillProb, skillLv);
+    */
 }
 
 void Puzzle::InitInfoBar()
@@ -328,7 +328,15 @@ void Puzzle::InitSprites()
     
     // 마법진
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 1) );
-    //vs.height+vo.y-440
+
+    CCParticleSystemQuad* fire = CCParticleSystemQuad::create("particles/magic_circle.plist");
+    fire->setAnchorPoint(ccp(0.5,0.5));
+    fire->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120));
+    fire->setScaleX(3.6f);
+    fire->setScaleY(1.2f);
+    fire->retain();
+    fire->setAnchorPoint(ccp(0.5, 0.5));
+    this->addChild(fire, 100);
     
     ((CCSprite*)spriteClass->FindSpriteByName("background/magic_circle.png"))->setScale(0.9f);
     
@@ -855,6 +863,10 @@ void Puzzle::UpdateTimer(float f)
         }
         return;
     }
+    
+    // "W8 : 여신의 은총" 스킬이 적용 중이면 정지한다.
+    if (skill->W8_IsActive())
+        return;
 
     iTimer -= 100;
     
@@ -884,7 +896,10 @@ void Puzzle::UpdateTimer(float f)
             
             spriteClassInfo->RemoveAllObjects();
             delete spriteClassInfo;
+            pScoreLayer->removeAllChildren();
+            pScoreLayer->removeFromParentAndCleanup(true);
             
+            /*
             // 그리고 있던 것들 모두 취소
             int x, y;
             for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
@@ -907,6 +922,7 @@ void Puzzle::UpdateTimer(float f)
             piece8xy[touch_cnt%QUEUE_CNT].clear();
             piece4xy[touch_cnt%QUEUE_CNT].clear();
             strap[touch_cnt%QUEUE_CNT].clear();
+            */
             
             // TIME UP 메시지 띄운 후, 게임결과화면 로딩 위해 game_end protocol 호출
             CCLabelTTF* timeup = CCLabelTTF::create("수업 종료!", fontList[0].c_str(), 84);
@@ -1217,7 +1233,7 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if ((x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == 0))
     {
         CCLog("정령 부분 터치함");
-        if (m_iSpiritSP == 0)
+        if (m_iSpiritSP == 0 && !skill->W8_IsActive()) // '여신의 은총' 실행 중이면 중지.
         {
             //CCLog("정령 되나요?");
             // 정령이 살아있지 않다면 터치 종료.
@@ -1431,16 +1447,8 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         if (piece8xy[touch_cnt%QUEUE_CNT].size() >= 3)
         {
             // 일단 정령 스킬부터 semaphore 증가.
-            m_iSpiritSP++;
-            
-            // data log 남기는 부분 (어느 색깔을 몇 번 한붓그리기했나)
-            //res_allCnt[piece8xy[touch_cnt%QUEUE_CNT].size()]++;
-            //CCLog("global = %d", globalType[touch_cnt%QUEUE_CNT]);
-            //CCLog("touch_cnt remain QUEUE_CNT = %d", touch_cnt%QUEUE_CNT);
-            //CCLog("hmm? : %d", (int)piece8xy[touch_cnt%QUEUE_CNT].size());
-            //res_colorCnt[piece8xy[touch_cnt%QUEUE_CNT].size()][globalType[touch_cnt%QUEUE_CNT]]++;
-            //if (m_bIsCycle)
-            //  res_cycleCnt++;
+            if (!skill->W8_IsActive())
+                m_iSpiritSP++;
             
             // 다시 한붓그린 부분 lock을 푼다
             for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
@@ -1453,6 +1461,15 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
                 strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
             strap[touch_cnt%QUEUE_CNT].clear();
+            
+            // '여신의 은총' 발동 중이면 다음을 행한다.
+            if (skill->W8_IsActive())
+            {
+                skill->W8_Invoke(piece8xy[touch_cnt%QUEUE_CNT], touch_cnt%QUEUE_CNT);
+                m_bTouchStarted = false;
+                m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
+                return;
+            }
             
             // 스킬 발동 try (발동되는 스킬들 조사)
             // 여기서 스킬에 따라 skill Lock이 걸릴 수 있다. (그러면 스킬발동 종료까지 터치 아예 못함)
@@ -1639,7 +1656,8 @@ void Puzzle::InvokeSkills(int queue_pos)
         
         skill->Invoke(7, queue_pos); skill->Invoke(15, queue_pos); skill->Invoke(23, queue_pos);
         
-        if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos) && !skill->IsApplied(23, queue_pos))
+        //if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos) && !skill->IsApplied(23, queue_pos))
+        if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(23, queue_pos))
         {
             // 스킬이 발동되지 않았으면 다음으로 넘긴다.
             m_iState[queue_pos] = m_iNextState[queue_pos];
@@ -1886,6 +1904,18 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
             }
             piece8xy[(int)queue_pos].clear();
         }
+        else // '여신의 은총'
+        {
+            CCLog("여신의 은총 : Bomb callback");
+            for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
+            {
+                int x = (int)piece8xy[(int)queue_pos][i].x;
+                int y = (int)piece8xy[(int)queue_pos][i].y;
+                puzzleP8set->RemoveChild(x, y);
+                spriteP8[x][y] = NULL;
+            }
+            piece8xy[(int)queue_pos].clear();
+        }
         
         // 새로운 8각형 piece들의 drop을 시작한다.
         Falling((int)queue_pos);
@@ -2003,23 +2033,26 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         }
         
         /************ LOCK print ****************/
-        /*
+        
         for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
         {
             CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
                   m_bLockP8[3][y], m_bLockP8[4][y], m_bLockP8[5][y], m_bLockP8[6][y]);
         }
-        */
+        
         /*****************************************/
 
         // 마지막으로 current priority를 올려, 다음 대기 중인 drop queue가 실행될 수 있도록 한다.
         //if (!m_bSkillLock)
         //    drop_order++;
         
-        // 다음 스킬로 넘어간다.
-        m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
-        CCLog("Falling callback (%d) - 다음 스킬 : %d", queue, m_iState[(int)queue_pos]);
-        InvokeSkills((int)queue_pos);
+        // 다음 스킬로 넘어간다. ('여신의 은총' 실행 중에는 할 필요 없다)
+        if (!skill->W8_IsActive())
+        {
+            m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
+            CCLog("Falling callback (%d) - 다음 스킬 : %d", queue, m_iState[(int)queue_pos]);
+            InvokeSkills((int)queue_pos);
+        }
     }
 }
 
@@ -2099,6 +2132,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
         int weeklyHighScore;
         int scoreUpdateTime;
         int remainPotionTime;
+        int remainRequestPotionTime;
         int highScore;
         int certificateType;
         int fire;
@@ -2121,6 +2155,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
                 else if (name == "profile-image-url") imageUrl = ait->as_string();
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
                 else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
+                else if (name == "remain-request-potion-send-time") remainRequestPotionTime = ait->as_int();
                 else if (name == "high-score") highScore = ait->as_int();
                 else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
                 else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
@@ -2135,7 +2170,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
             
@@ -2204,6 +2239,7 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         myInfo->SetMoney(topaz, starcandy);
         
         // 스킬 리스트 갱신
+        myInfo->ClearSkillList();
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
         int csi, usi, level, exp, isActive;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)

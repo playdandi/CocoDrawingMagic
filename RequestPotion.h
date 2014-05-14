@@ -27,8 +27,12 @@ public:
     
     void InitSprites();
     void MakeScroll();
+    void RenewScroll();
     
     void EndScene();
+    
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseResult(char* data, int size, int friendKakaoId);
     
     CREATE_FUNC(RequestPotion);
     
@@ -40,7 +44,9 @@ protected:
     
 private:
     CCSprite* pBlack;
+    CCLayer* scrollContainer;
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassScroll;
     CCScrollView* scrollView;
 };
 

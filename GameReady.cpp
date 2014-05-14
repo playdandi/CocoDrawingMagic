@@ -701,8 +701,10 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     
                     if (myInfo->GetPotion() > 5)
                         myInfo->SetPotion(myInfo->GetPotion()-1, 0);
-                    else
+                    else if (myInfo->GetPotion() == 5)
                         myInfo->SetPotion(myInfo->GetPotion()-1, 720);
+                    else
+                        myInfo->SetPotion(myInfo->GetPotion()-1, -1);
                     
                     CCString* param = CCString::create("2");
                     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);

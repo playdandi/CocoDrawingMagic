@@ -33,13 +33,17 @@ public:
     
     void InitSprites();
     void MakeSprites(int state);
+    
     void MakeSpritesCoco();
     void SetStaffBuildUp();
     void MakeScrollCoco();
+    
     void MakeSpritesFairy();
     void SetFairyBuildUp();
     void MakeScrollFairy();
+    
     void MakeSpritesCandy();
+    void SetTodayCandyList();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFairyList(char* data, int size);
@@ -60,10 +64,9 @@ private:
     
     SpriteClass* spriteClassFairySlot;
     SpriteClass* spriteClassCocoSlot;
+    SpriteClass* spriteClassCandyList;
     
     CCScrollView* scrollView;
-    //CCScrollView* scrollViewCoco;
-    //CCScrollView* scrollViewFairy;
     CCLayer* containerCoco;
     CCLayer* containerFairy;
     

@@ -432,6 +432,7 @@ void Splash::XMLParseGameData()
         skillSlotInfo.push_back( new SkillSlotInfo(id, costType, cost) );
     }
     
+    /*
     // prerequisite info
     its = nodeResult.child("prerequisite_define").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
@@ -447,6 +448,7 @@ void Splash::XMLParseGameData()
         }
         prerequisiteInfo.push_back( new PrerequisiteInfo(id, category, type, value1, value2) );
     }
+    */
     
     // fairy info
     its = nodeResult.child("fairy_define").children("Data");
@@ -483,7 +485,7 @@ void Splash::XMLParseGameData()
     }
     
     // skill info
-    its = nodeResult.child("skill_define_client").children("Data");
+    its = nodeResult.child("skill_define").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
     {
         for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -807,6 +809,7 @@ void Splash::XmlParseFriends(char* data, int size)
         int weeklyHighScore;
         int scoreUpdateTime;
         int remainPotionTime;
+        int remainRequestPotionTime;
         int highScore;
         int certificateType;
         int fire;
@@ -829,6 +832,7 @@ void Splash::XmlParseFriends(char* data, int size)
                 else if (name == "profile-image-url") imageUrl = ait->as_string();
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
                 else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
+                else if (name == "remain-request-potion-send-time") remainRequestPotionTime = ait->as_int();
                 else if (name == "high-score") highScore = ait->as_int();
                 else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
                 else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
@@ -843,7 +847,7 @@ void Splash::XmlParseFriends(char* data, int size)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
             
@@ -944,8 +948,39 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     }
 }
 
+void Splash::GetTodayCandyFriend()
+{
+    m_pMsgLabel->setString("오늘의 별사탕 그룹 구성 중...");
+    char name[15];
+    int kakaoId;
+    bool flag;
+    for (int i = 0 ; i < 4; i++)
+    {
+        sprintf(name, "todayCandy_%d", i);
+        kakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey(name, -1);
+        flag = false;
+        for (int j = 0 ; j < friendList.size() ; j++)
+        {
+            if (friendList[j]->GetKakaoId() == kakaoId)
+            {
+                todayCandyKakaoId.push_back(kakaoId);
+                flag = true;
+                break;
+            }
+        }
+        if (!flag)
+            todayCandyKakaoId.push_back(-1);
+        
+        CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[todayCandyKakaoId.size()-1]);
+    }
+}
+
 void Splash::LastActionStart()
 {
+    // 오늘의 별사탕 친구 목록 받아오기
+    GetTodayCandyFriend();
+    
+    // 이제 시작
     CCActionInterval* action = CCSequence::create(CCEaseBounceIn::create( CCMoveBy::create(0.5f, ccp(0, 900)) ),
                                                //   CCDelayTime::create(0.5f),
                         CCCallFuncND::create(this, callfuncND_selector(Splash::LastActionCallback), NULL), NULL);

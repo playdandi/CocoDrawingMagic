@@ -28,6 +28,10 @@ public:
     void InitSprites();
     void MakeScroll();
     
+    void SetSelectMode(int idx);
+    void RefreshTodayCandyList(int idx);
+    void RefreshProfileList();
+    
     void EndScene();
     void EndSceneCallback();
     
@@ -41,6 +45,7 @@ protected:
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassList;
     CCScrollView* scrollView;
     
     std::vector<bool> selected;
