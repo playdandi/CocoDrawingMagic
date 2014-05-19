@@ -28,8 +28,6 @@ protected:
     CCSize winSize;
     bool isTouched;
     
-    // on-off 버튼을 선택할 시 필요한 변수들
-    CCSprite* selectedSprite;
     int selectedBtn;
     CCPoint selectedPos;
     CCPoint selectedTouchPos;
@@ -42,6 +40,8 @@ protected:
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    
+    CCSprite* selectedSprite;
 };
 
 #endif /* defined(__CocoMagic__Setting__) */

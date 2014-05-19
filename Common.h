@@ -26,7 +26,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 60
+#define PUZZLE_TIME 1
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
@@ -155,7 +155,7 @@ class SpriteObject
 {
 public:
     static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
-    static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, float scale = 1.0f);
+    static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, float scale = 1.0f, int tag = -1);
     static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
     static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
 
@@ -183,6 +183,7 @@ public:
     CCPoint FindParentCenterPos(std::string parentName);
     CCSize GetContentSizeByName(std::string name);
     void* FindLabelByTag(int tag);
+    void* FindSpriteByTag(int tag);
     
     void RemoveAllObjects();
     

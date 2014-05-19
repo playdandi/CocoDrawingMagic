@@ -75,10 +75,15 @@ public:
     
     void InvokeSkills(int queue_pos);
     void Lock(int queue_pos);
+    void LockEach(int x, int y);
+    void UnLockEach(int x, int y);
     void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);
     void BombCallback(CCNode* sender, void *queue_pos);
-    void Falling(int queue_pos);
+    
+    void FallingProcess();
+    void Falling(int queue_pos, int xx = -1);
 	void FallingCallback(CCNode* sender, void* queue_pos);
+    void FallingQueuePushAndFalling(int queue_pos);
     
     //void WaitOrder(int queue_pos);
     
@@ -148,9 +153,6 @@ protected:
     float PIECE8_FRAME_WIDTH;
     float PIECE8_FRAME_HEIGHT;
     
-    CCSprite* background;
-    CCSprite* puzzleFrame;
-    
     int m_bLockP8[COLUMN_COUNT][ROW_COUNT];
     int m_bLockP4[COLUMN_COUNT][ROW_COUNT];
     
@@ -170,7 +172,14 @@ protected:
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
     
-    //int drop_order;
+    // falling queue
+    bool isFalling;
+    std::queue<int> fallingQueue;
+    
+    // E8 스킬에 대한 falling cnt
+    int m_iFallingCallbackCnt_E8[COLUMN_COUNT];
+    int m_numOfFallingObjects_E8[COLUMN_COUNT];
+    
     int touch_cnt;
     
     int W3_total;
@@ -193,17 +202,20 @@ protected:
     int isNewRecord;
     
     int XMLStatus;
+
+    int curMyRank;
+    bool isRankUp;
     
 private:
     Sound* sound;
     PuzzleSkill* skill;
+    Effect* effect;
     
     CCSprite* pBlackOpen;
     CCLabelTTF* readyTimeLabel;
     int iReadyTime;
     
     int iScore;
-    //CCLabelTTF* pScoreLabel;
     CCLayer* pScoreLayer;
     int iStarCandy;
     CCLabelTTF* pStarCandyLabel;
@@ -221,7 +233,7 @@ private:
     SpriteClass* spriteClass;
     
     CCLayer* fairyLayer;
-    CCSprite* fairyShadow;
+    std::vector<CCSprite*> fairy_sp;
     CCLayer* cocoLayer;
     int cocoFrameNumber;
     std::vector<CCSprite*> coco_sp;
@@ -230,7 +242,6 @@ private:
     PuzzleP8Set* puzzleP8set;
     CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
     PuzzleP4Set* puzzleP4set;
-    Effect* effect;
 
     CCSprite* magicTimeBg;
     int m_iStartMagicTimeStatus;
@@ -243,9 +254,6 @@ private:
     
     int m_iFallingCallbackCnt;
 	int m_numOfFallingObjects;
-    
-    // timer (ice bar)
-    CCSprite* iced_bar;
 };
 
 class PuzzleP8Set
@@ -261,8 +269,8 @@ public:
     PuzzleP8* GetObject(int x, int y);
     void MoveObject(int x, int y, int fromX, int fromY);
     void SwapObject(int x1, int y1, int x2, int y2);
-    void Falling(int x, int y, int targetX, int targetY, int queue_pos);
-    void FallingCompleted(CCNode* sender, void* queue_pos);
+    void Falling(int x, int y, int targetX, int targetY, int queue_pos, int vertical_idx);
+    void RemoveAllObjects();
     
 private:
     PuzzleP8* object[COLUMN_COUNT][ROW_COUNT];
@@ -282,6 +290,7 @@ public:
     void AddChild(int x, int y);
     void RemoveChild(int x, int y);
     PuzzleP4* GetObject(int x, int y);
+    void RemoveAllObjects();
     
 private:
     PuzzleP4* object[COLUMN_COUNT][ROW_COUNT];
@@ -290,3 +299,4 @@ private:
 };
 
 #endif
+

@@ -42,7 +42,9 @@ protected:
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    
     CCScrollView* scrollView;
+    CCLayer* scrollContainer;
 };
 
 #endif /* defined(__CocoMagic__SendTopaz__) */

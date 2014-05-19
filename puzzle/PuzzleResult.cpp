@@ -136,14 +136,15 @@ void PuzzleResult::EndScene()
 
 void PuzzleResult::EndSceneCallback()
 {
-    spriteClass->RemoveAllObjects();
-    delete spriteClass;
-    
-    this->removeAllChildren();
-    
     // 이걸 끝내면서, Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
+    
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
+    pBlackClose->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

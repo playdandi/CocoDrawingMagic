@@ -56,12 +56,7 @@ bool BuyStarCandy::init()
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    /*
-     if (parent_id == 0) // 부모가 'Ranking'
-     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-     else if (parent_id == 1) // 부모가 'GameReady'
-     CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-     */
+  
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -165,17 +160,14 @@ void BuyStarCandy::MakeScroll()
         else if (i == 4) bonus_pos = ccp(498, 130);
         sprintf(name, "+ %d%%", priceStarCandy[i]->GetBonus());
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), bonus_pos, ccc3(168,122,62), "", "Layer", itemLayer, 3) );
-        //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(225, 60+15), ccc3(168,122,62), "", "Layer", itemLayer, 3) );
         
         // 가격 (배경, 토파즈아이콘, 숫자)
         sprintf(name, "background/bg_degree_desc.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(226, 18), CCSize(201, 77), "", "Layer", itemLayer, 3) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(409, 75-10), CCSize(201, 77), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_topaz_mini.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(16, 5), CCSize(0, 0), name, "1", NULL, 3) );
         sprintf(name, "x %d", priceStarCandy[i]->GetPrice());
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(311, 37), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
-        //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(495, 95-10), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
         
         // button
         sprintf(name, "button/btn_green_mini.png%d", i);
@@ -187,8 +179,7 @@ void BuyStarCandy::MakeScroll()
         if (i < numOfList-1)
         {
             sprintf(name, "background/bg_dotted_line.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name,
-                        ccp(0, 0), ccp(0, 0), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(0, 0), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
     }
 }
@@ -257,12 +248,6 @@ void BuyStarCandy::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    /*
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -271,6 +256,7 @@ void BuyStarCandy::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     itemContainer->removeAllChildren();
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

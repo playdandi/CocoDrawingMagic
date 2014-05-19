@@ -311,6 +311,7 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 sprintf(temp, "%d", idx);
                 req->setTag(temp);
                 CCLog("url = %s", url.c_str());
+                break;
             }
         }
     }
@@ -351,8 +352,13 @@ void InviteFriend::EndScene()
     delete spriteClass;
     spriteClassScroll->RemoveAllObjects();
     delete spriteClassScroll;
+    
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
+    
+    bar->removeFromParentAndCleanup(true);
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

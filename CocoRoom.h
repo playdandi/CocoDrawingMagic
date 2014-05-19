@@ -44,6 +44,8 @@ public:
     
     void MakeSpritesCandy();
     void SetTodayCandyList();
+    void DecideUser();
+    void Callback(CCNode* sender, void* data);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFairyList(char* data, int size);
@@ -53,6 +55,7 @@ protected:
     bool isTouched;
     bool isScrolling;
     bool isSlotTouched;
+    int curState;
     
 private:
     CCParticleSystem* par;
@@ -70,7 +73,6 @@ private:
     CCLayer* containerCoco;
     CCLayer* containerFairy;
     
-    int curState;
     CCLayer* coco;
     CCLayer* fairy;
     CCLayer* candy;

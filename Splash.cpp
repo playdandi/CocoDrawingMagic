@@ -79,7 +79,11 @@ bool Splash::init()
     isStarting = false;
     isLoading = false;
     
+    isInGame = false;
+    
     httpStatus = 0;
+    
+    m_pEditName = NULL;
     
 	return true;
 }
@@ -149,13 +153,11 @@ void Splash::LogoLoadingCompleted()
 
 void Splash::keyboardWillShow(CCIMEKeyboardNotificationInfo &info)
 {
-    CCLog("keyboard show");
-    //m_pEditName->setString("");
+    //CCLog("keyboard show");
 }
 void Splash::keyboardWillHide(CCIMEKeyboardNotificationInfo &info)
 {
-    CCLog("keyboard hide");
-    //CCLog("keyboard hide - %s", m_pEditName->getString());
+    //CCLog("keyboard hide");
 }
 
 /*
@@ -687,6 +689,8 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
         int certificateType = nodeResult.child("score").attribute("certificate-type").as_int();
         int remainWeeklyRankTime = nodeResult.child("score").attribute("remain-weekly-rank-time").as_int();
+        int lastWeeklyHighScore = nodeResult.child("score").attribute("last-weekly-high-score").as_int();
+        int isWeeklyRankReward = nodeResult.child("score").attribute("is-weekly-rank-reward").as_int();
         
         int item1 = nodeResult.child("item").attribute("count-1").as_int();
         int item2 = nodeResult.child("item").attribute("count-2").as_int();
@@ -702,7 +706,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int land = nodeResult.child("properties").attribute("land").as_int();
         int master = nodeResult.child("properties").attribute("master").as_int();
         
-        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
+        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, lastWeeklyHighScore, isWeeklyRankReward, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
         
         int profileSkillId = nodeResult.child("profile-skill").attribute("id").as_int();
         int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
@@ -757,17 +761,31 @@ void Splash::XmlParseMyInfo(char *data, int size)
                 myInfo->SetPracticeSkill(csi, level);
             }
         }
-        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
         
         
-        // 친구 리스트 정보를 받는다.
-        m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
         char temp[50];
-        std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
-        sprintf(temp, "kakao_id=%d", mKakaoId);
-        url += temp;
-        CCLog("url = %s", url.c_str());
+        std::string url;
+        /*if (isWeeklyRankReward == 0 && lastWeeklyHighScore != -1)
+        {
+            // 저번주 주간랭킹 결과 불러온다.
+            m_pMsgLabel->setString("지난 주 상이 있는지 힐끔 바라보는 중...");
+            url = "http://14.63.225.203/cogma/game/reward_weekly_rank.php?";
+            sprintf(temp, "kakao_id=%d", mKakaoId);
+            url += temp;
+        }
+        else
+        {*/
+            // 친구 리스트 정보를 받는다.
+            m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
+            url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+            sprintf(temp, "kakao_id=%d", mKakaoId);
+            url += temp;
+            
+            httpStatus++;
+        //}
         
+        CCLog("url = %s", url.c_str());
         CCHttpRequest* req = new CCHttpRequest();
         req->setUrl(url.c_str());
         req->setRequestType(CCHttpRequest::kHttpPost);
@@ -780,6 +798,49 @@ void Splash::XmlParseMyInfo(char *data, int size)
         // failed msg
         CCLog("failed code = %d", code);
     }
+}
+
+void Splash::XmlParseRewardWeelyRank(char* data, int size)
+{
+    /*
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int nodeResult.child("my-rank").attribute("")
+        
+        weeklyRank
+     
+
+     <my-rank rank="2" last-week-high-score="35658" reward-type="2" />
+     <friend-rank-list>
+     <friend nick-name="jwmoon" profile-url="http://14.63.225.203/resource/profile_img_jwmoon.png" rank="1" last-week-high-score="142996" is-friend="1" />
+     <friend nick-name="ijpark" profile-url="http://14.63.225.203/resource/profile_img_ijpark.png" rank="2" last-week-high-score="35658" is-friend="0" />
+     <friend nick-name="yjjung" profile-url="http://14.63.225.203/resource/profile_img_yjjung.png" rank="3" last-week-high-score="5630" is-friend="1" />
+     <friend nick-name="user_6" profile-url="" rank="4" last-week-high-score="-1" is-friend="1" />
+     <friend nick-name="user_4" profile-url="" rank="5" last-week-high-score="-1" is-friend="1" />
+     <friend nick-name="user_5" profile-url="" rank="6" last-week-high-score="-1" is-friend="1" />
+     </friend-rank-list>
+    }
+    else
+    {
+        if (code == 10) CCLog("Splash : 지난 주 게임 전혀 하지 않음.");
+        else if (code == 11) CCLog("Splash : 지난 주 점수 업데이트가 되어있지 않음.");
+        // 재부팅합시다.
+    }
+    */
 }
 
 void Splash::XmlParseFriends(char* data, int size)
@@ -924,6 +985,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseLogin(dumpData, buffer->size()); break;
         case HTTP_MYINFO:
             XmlParseMyInfo(dumpData, buffer->size()); break;
+        case HTTP_REWARDWEELYRANK:
+            XmlParseRewardWeelyRank(dumpData, buffer->size()); break;
         case HTTP_FRIENDS:
             XmlParseFriends(dumpData, buffer->size()); break;
         default:
@@ -1009,5 +1072,8 @@ void Splash::EndScene()
     m_pMsgLabel->removeFromParentAndCleanup(true);
     m_pStartBtn->removeFromParentAndCleanup(true);
     m_pStartLetter->removeFromParentAndCleanup(true);
+    
+    if (m_pEditName != NULL)
+        m_pEditName->removeFromParentAndCleanup(true);
 }
 

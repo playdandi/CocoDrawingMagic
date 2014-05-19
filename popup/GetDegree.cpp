@@ -148,6 +148,7 @@ void GetDegree::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rank.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rank.png");

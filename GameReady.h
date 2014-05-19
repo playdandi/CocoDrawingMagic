@@ -53,17 +53,15 @@ protected:
 private:
     CCSprite* pBlack;
     CCSprite* pBlackClose;
-    std::vector<CCLayer*> itemNumLayer;
     
     CCLayer* fairyLayer;
     CCLayer* skillLayer;
-    
     CCLayer* containerSlot;
+    
     CCScrollView* scrollViewSlot;
     
     SpriteClass* spriteClass;
     SpriteClass* spriteClassProperty;
-    SpriteClass* spriteClassCoco;
     SpriteClass* spriteClassFairy;
     SpriteClass* spriteClassSkill;
     SpriteClass* spriteClassSlot;

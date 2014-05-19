@@ -59,7 +59,7 @@ bool RequestPotion::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100 + (487-630)));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -71,7 +71,6 @@ bool RequestPotion::init()
     InitSprites();
     spriteClassScroll = new SpriteClass();
     MakeScroll();
-    
     
     isTouched = false;
     isScrolling = false;
@@ -189,8 +188,6 @@ void RequestPotion::MakeScroll()
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
-    //scrollView->setContentOffset(ccp(0, 904+243+45-100-(numOfList*166)), false);
-    //scrollView->setContentOffset(ccp(0, 904+243+45-100-(height*166)), false);
 }
 
 void RequestPotion::RenewScroll()
@@ -269,7 +266,6 @@ void RequestPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 req->setTag(temp);
                 req->release();
                 break;
-
             }
         }
     }
@@ -309,8 +305,14 @@ void RequestPotion::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClassScroll->RemoveAllObjects();
+    delete spriteClassScroll;
+    
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
+    
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

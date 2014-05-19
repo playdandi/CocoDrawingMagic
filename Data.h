@@ -11,6 +11,7 @@
 extern int iGameVersion;
 extern int iBinaryVersion;
 extern class MyInfo* myInfo;
+extern std::vector<class ProfileSprite*> profiles;
 extern std::vector<class Friend*> friendList;
 extern std::vector<class Msg*> msgData;
 
@@ -25,9 +26,14 @@ extern std::vector<class SkillInfo*> skillInfo;
 extern std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 extern std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
+extern std::vector<class LastWeeklyRank*> lastWeeklyRank;
+
 extern std::vector<int> inGameSkill;
 extern std::vector<class Depth*> depth;
 extern std::vector<int> todayCandyKakaoId;
+
+extern bool isInGame;
+extern int savedTime;
 
 using namespace cocos2d;
 
@@ -46,11 +52,23 @@ public:
     std::string name;
 };
 
+class ProfileSprite
+{
+public:
+    ProfileSprite(std::string profileUrl);
+    static CCSprite* GetProfile(std::string profileUrl);
+    CCSprite* GetProfile();
+    std::string GetProfileUrl();
+private:
+    CCSprite* profile;
+    std::string profileUrl;
+};
+
 class MyInfo
 {
 public:
     void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt);
-    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
+    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
     
     static CCSprite* GetProfile();
     static std::string GetName();
@@ -73,6 +91,9 @@ public:
     int GetStaffLv();
     int GetHighScore();
     int GetWeeklyHighScore();
+    int GetLastWeeklyHighScore();
+    bool IsWeeklyRankReward();
+    
     int GetCertificateType();
     int GetRemainWeeklyRankTimeInt();
     std::string GetRemainWeeklyRankTime();
@@ -93,6 +114,7 @@ public:
     void SetItem(std::vector<int> items);
     void SetProperties(int fire, int water, int land, int master);
     void SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime);
+    void SetRemainWeeklyRankTime(int time);
     
     void SetProfileSkill(int id, int level);
     int GetProfileSkillId();
@@ -104,6 +126,7 @@ public:
     void AddSkillSlot(int id, int csi, int usi);
     void AddFairy(int cfi, int ufi, int level, int isUse);
     void AddSkill(int csi, int usi, int level, int exp);
+    void SortMySkillByCommonId();
     
     int GetActiveFairyId();
     int GetActiveFairyUserId();
@@ -137,6 +160,9 @@ private:
     
     int highScore;
     int weeklyHighScore;
+    int lastWeeklyHighScore;
+    bool isWeeklyRankReward;
+    
     int certificateType;
     int remainWeeklyRankTime;
     int item[5];
@@ -200,6 +226,22 @@ private:
     int exp;
 };
 
+/////////////////////////////////////////////////////////////////////////////////
+class LastWeeklyRank
+{
+public:
+    LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score);
+    std::string GetNickname();
+    std::string GetProfileUrl();
+    int GetRank();
+    int GetScore();
+    static void SortByRank();
+private:
+    std::string nickname;
+    std::string profileUrl;
+    int rank;
+    int score;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 class Friend
@@ -276,7 +318,8 @@ class DataProcess
 public:
     static void SortFriendListByScore();
     static void SortMagicStaffBuildUpInfo();
-    static void SortMySkillByCommonId(std::vector<MySkill*> mySkill);
+    //static void SortMySkillByCommonId(std::vector<MySkill*> mySkill);
+   // static void SortMySkillByCommonId();
     static std::string FindSkillNameById(int skillId);
 };
 

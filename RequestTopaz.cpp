@@ -56,7 +56,7 @@ bool RequestTopaz::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -128,8 +128,7 @@ void RequestTopaz::MakeScroll()
 {
     int numOfList = friendList.size();
     
-    CCLayer* scrollContainer = CCLayer::create();
-    scrollContainer->setPosition(ccp(77, 492+904+243));
+    scrollContainer = CCLayer::create();
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     
     int height = 0;
@@ -225,6 +224,8 @@ void RequestTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 // protocol 요청
+                
+                break;
             }
         }
     }
@@ -264,8 +265,12 @@ void RequestTopaz::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
+    
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

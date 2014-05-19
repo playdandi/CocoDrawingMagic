@@ -137,16 +137,6 @@ CCLayer* Fairy::MakeSun()
         tails->addChild(temp, 50);
     }
     
-    //fairyLayer->setScale(0.8f);
-    //fairyLayer->setPosition(ccp(800, vs.height+vo.y-530));
-    //fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60));
-    //this->addChild(fairyLayer, 1000);
-    
-    // action
-    //CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
-    //CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
-    //fairyLayer->runAction(rep);
-    
     return fairyLayer;
 }
 

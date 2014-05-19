@@ -51,7 +51,6 @@ private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
     SpriteClass* spriteClassScroll;
-    //std::vector<CCLayer*> layer;
     
     CCScrollView* scrollView;
     CCLayer* scrollContainer;

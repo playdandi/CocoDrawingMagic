@@ -21,8 +21,6 @@ public:
     CCSprite* GetRightUp();
     CCSprite* GetLeftDown();
     CCSprite* GetRightDown();
-    //CCSprite* GetPiece();
-    //void SetPosition(CCPoint pos);
     
 private:
     CCSprite* leftup;

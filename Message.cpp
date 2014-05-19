@@ -442,6 +442,8 @@ void Message::EndScene()
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
     
+    pBlack->removeFromParentAndCleanup(true);
+    
     this->removeFromParentAndCleanup(true);
 }
 

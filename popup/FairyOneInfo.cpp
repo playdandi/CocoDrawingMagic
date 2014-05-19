@@ -236,6 +236,7 @@ bool FairyOneInfo::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     data.push_back(fairyInfo[fairy_idx]->GetCostStarCandy());
                     Common::ShowPopup(this, "FairyOneInfo", "NoImage", false, BUY_FAIRY_BY_STARCANDY_TRY, BTN_2, data);
                 }
+                break;
             }
         }
     }
@@ -270,7 +271,8 @@ void FairyOneInfo::EndScene()
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
-    delete spriteClass;    
+    delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

@@ -108,7 +108,10 @@ bool DegreeInfo::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
                 EndScene();
+                break;
+            }
         }
     }
     
@@ -142,6 +145,7 @@ void DegreeInfo::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

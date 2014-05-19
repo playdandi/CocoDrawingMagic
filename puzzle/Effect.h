@@ -40,19 +40,23 @@ public:
     void Effect19Callback(CCNode* sender, void* pointer);
     void Effect19CallbackNewSprite(CCNode* sender, void* pointer);
     
-    //void PlayEffect_7(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (불)
     void PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos);
     void Effect7_Comet(float f);
     void Effect7_Callback_1(CCNode* sender, void* pointer);
     void Effect7_Callback_2(CCNode* sender, void* pointer);
     void Effect7_Callback_3(CCNode* sender, void* pointer);
-    //bool Effect7_Check(int x, int y, Effect* ef);
-    //void Effect7_Callback_Chain(int x, int y, Effect* ef);
     void Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer);
     
-    void PlayEffect_15_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (물, 땅)
-    void Effect15_23_Callback(CCNode* sender, void* pointer);
-    void Effect15_23_Icon_Callback(CCNode* sender, void* pointer);
+    void PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (여신)
+    void Effect15_Callback(CCNode* sender, void* pointer);
+    void Effect15_Bomb(std::vector<CCPoint> pos, void* pointer);
+    void AddOrbMaxParticle(int v);
+    void Effect15_Clear();
+    
+    void PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (땅)
+    void Effect23_Callback(CCNode* sender, void* pointer);
+    void Effect23_Bomb(int x);
+    void Effect23_Clear();
     
     void PlayEffect_6(int num); // F7 : 코코 변신 + 코코 주위 링
     void PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt); // F7 : 불 이펙트
@@ -64,10 +68,10 @@ public:
     void PlayEffect_14();
     void Effect14Callback(CCNode* sender, void* data);
     
-    void PlayEffect_Spirit();
+    //void PlayEffect_Spirit();
     
     void ShowStarCandy(std::vector<CCPoint> pos);
-    void ShowStarCandy_Callback(CCNode* sender, void* data);
+    //void ShowStarCandy_Callback(CCNode* sender, void* data);
     void ShowStarCandy_Callback_Done(CCNode* sender, void* pointer);
     
     void RemoveAllObjects();
@@ -88,8 +92,8 @@ private:
     CCSprite* W7_bg;
     CCSprite* iced_bar;
     CCLayer* timerLayer;
-    CCDrawNode* stencil;
-    CCClippingNode* clip;
+    //CCDrawNode* stencil;
+    //CCClippingNode* clip;
     
     std::vector<int> cbCnt;
     CCSprite* F8_bg;
@@ -101,6 +105,9 @@ private:
     
     CCSprite* A8_icon;
     
+    CCParticleSystemQuad* m_orb;
+    CCParticleSystemQuad* m_W8_bg;
+    
     // 정령
     CCParticleSystemQuad* fire;
     CCParticleSystemQuad* water;
@@ -111,6 +118,8 @@ private:
     std::vector<CCPoint> starCandyPos;
     
     int queuePos;
+    
+    CCSprite* sp_fire;
 };
 
 #endif /* defined(__CocoMagic__Effect__) */

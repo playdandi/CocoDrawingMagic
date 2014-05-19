@@ -92,25 +92,6 @@ void SketchDetail::Notification(CCObject* obj)
         CCLog("SketchDetail : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
-    /*
-    if (param->intValue() == 0)
-    {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, priority+1, true);
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
-        this->setTouchPriority(priority);
-        isTouched = false;
-        CCLog("스케치디테일 : 터치 활성 (Priority = %d)", this->getTouchPriority());
-    }
-    else if (param->intValue() == 1)
-    {
-        // 터치 비활성
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
-        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-    }
-    */
 }
 
 
@@ -255,7 +236,7 @@ void SketchDetail::InitSprites()
         ((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_brown.png5"))->setScale(0.6f);
         pos = spriteClass->FindParentCenterPos("background/bg_skill_brown.png5");
         sprintf(name, "skill/skill_%d.png", sInfoReq->GetId());
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5, 1) );
         
         // 각 조건마다의 문구
         sprintf(name, "%d 이상", sInfo->GetRequiredMP());
@@ -326,7 +307,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 EndScene(true);
-                return false;
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
@@ -365,6 +346,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCHttpClient::getInstance()->send(req);
                         req->release();
                     }
+                    break;
                 }
                 else if (btnStatus == 2) // 일반적인 경우
                 {
@@ -393,6 +375,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     req->setTag("1");
                     CCHttpClient::getInstance()->send(req);
                     req->release();
+                    break;
                 }
             }
         }
@@ -433,6 +416,7 @@ void SketchDetail::EndScene(bool isNoti)
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }
@@ -498,7 +482,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
             }
             myInfo->AddSkill(csi, usi, level, exp);
         }
-        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
         
         // 돈 정보 화면 갱신
         CCString* param = CCString::create("2");

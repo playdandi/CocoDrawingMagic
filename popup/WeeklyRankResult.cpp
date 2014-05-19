@@ -198,6 +198,7 @@ void WeeklyRankResult::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     Common::ShowNextScene(this->getParent(), "Ranking", "GetDegree", false);
     

@@ -25,9 +25,9 @@ void Loading::onEnter()
 }
 void Loading::onPause()
 {
-    CCLog("Loading :: onPause");
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    //CCLog("Loading :: onPause");
+    //CCDirector* pDirector = CCDirector::sharedDirector();
+    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
 }
 void Loading::onExit()
 {

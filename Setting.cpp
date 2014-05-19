@@ -233,14 +233,13 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     req->setResponseCallback(this, httpresponse_selector(Setting::onHttpRequestCompleted));
                     CCHttpClient::getInstance()->send(req);
                     req->release();
-                    break;
                 }
                 else
                 {
                     // 바뀐 게 없으면 그냥 끈다.
                     EndScene();
-                    break;
                 }
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 21) == "button/btn_option.png") // on-off's
@@ -402,7 +401,6 @@ void Setting::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -410,6 +408,7 @@ void Setting::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

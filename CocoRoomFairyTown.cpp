@@ -63,7 +63,7 @@ bool CocoRoomFairyTown::init()
     
     // scrollView 생성
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904-40));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -249,7 +249,7 @@ void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClickboard();
                 int idx = spriteClass->spriteObj[i]->sprite9->getTag();
                 Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx);
-                //Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx, priority-1);
+                break;
             }
         }
     }
@@ -288,8 +288,8 @@ void CocoRoomFairyTown::EndScene()
     delete spriteClass;
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
-    scrollView->release();
     scrollView->removeFromParentAndCleanup(true);
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

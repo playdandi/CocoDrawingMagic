@@ -46,9 +46,6 @@ public:
 
     void F8(int num, int queue_pos);
     void F8Check(int x, int y, int idx);
-    void A8(int num, int queue_pos);
-    std::vector<CCPoint> A8GetPos();
-    void A8Clear();
     
     void W3(int num);
     int W3GetScore();
@@ -73,6 +70,17 @@ public:
     void E5(int num);
     void E5_Callback(CCNode* sender, void* data);
     void E7();
+    void E8(int num, int queue_pos);
+    void E8_Timer(float f);
+    void E8_Bomb(CCNode* sender, void* data);
+    void E8_BombCallback(CCNode* sender, void* data);
+    void E8_DecideRestart(int x);
+    void E8_FindLine(int xx);
+    bool E8_IsFinished();
+    void E8_Start();
+
+    std::vector<CCPoint> A8GetPos();
+    void A8Clear();
     
     void M1(int num);
     void M2(int num);
@@ -100,6 +108,8 @@ private:
 	// result variables
     bool skillApplied[QUEUE_CNT][NUMOFSKILL];
     
+    ////////////////////////////////////////////////////////////////////////////////////
+    
     int A1_addedScore;
     
     std::vector<CCPoint> A2_pos;
@@ -111,14 +121,6 @@ private:
     bool isSpiritAlive[3];
     
     int F5_callbackCnt;
-    /*
-    std::vector<CCPoint> F5_pos;
-    std::vector<CCPoint> F5_pos_end;
-    bool F5_check[COLUMN_COUNT][ROW_COUNT];
-    int F5_callbackCnt;
-    std::vector<CCPoint> F5_i, F5_j;
-    int F5_ij_cnt;
-    */
     
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
@@ -130,7 +132,7 @@ private:
     int A8_callbackCnt;
     std::vector<CCPoint> A8_pos;
     
-    //////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
     
     int W3_addedScore;
     int W4_addedCandy;
@@ -145,7 +147,7 @@ private:
     int W8_accel;
     int W8_callbackCnt;
     
-    //////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
 
     int E3_addedCandy;
     int E4_addedCandy;
@@ -157,14 +159,24 @@ private:
     std::vector<CCPoint> E5_i, E5_j;
     int E5_ij_cnt;
     
-    //////////////////////////////////////////
+    bool E7_getPotion;
+    
+    bool E8_isActive;
+    std::queue<int> E8_lineIdx;
+    int E8_activeCnt;
+    int E8_cnt;
+    bool E8_check[COLUMN_COUNT];
+    int E8_bottomY[COLUMN_COUNT];
+    int E8_bombCallbackCnt[COLUMN_COUNT];
+    int E8_curY[COLUMN_COUNT];
+    int E8_maxScheduleCnt;
+    
+    ////////////////////////////////////////////////////////////////////////////////////
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;
     std::vector<CCPoint> result_pos_end;
     std::vector<CCPoint> result_pos_temp;
-    
-    bool getPotion;
 };
 
 #endif /* defined(__magician__PuzzleSkill__) */

@@ -36,7 +36,6 @@ void Ranking::onEnter()
     if (fromWhere != -1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     
-    
     //Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onPause()
@@ -114,6 +113,13 @@ bool Ranking::init()
     */
     
     
+    // 인게임에서 돌아온 경우 potion timer 시간 갱신한다.
+    if (fromWhere != -1)
+        RenewAllTime();
+    // 모든 시간에 대한 타이머 작동
+    this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
+    
+    
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -136,9 +142,44 @@ bool Ranking::init()
     isTouched = false;
     isKeyBackClicked = false;
     
-    this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
-    
 	return true;
+}
+
+void Ranking::RenewAllTime()
+{
+    int deltaTime = time(0) - savedTime;
+
+    isInGame = false;
+    
+    // 인게임에서 pause상태로 아주 오래동안 있다가 끝난 경우도 있을 수 있다. (deltaTime 값이 크겠지)
+    // 따라서 갱신된 '포션남은시간'이 음수가 될 수 있는데, 12분씩 추가하면서 포션 값도 바꾸며 제자리를 찾아준다.
+    int potion = myInfo->GetPotion();
+    int remainPotionTime = myInfo->GetRemainPotionTimeNumber() - deltaTime;
+    while (remainPotionTime < 0)
+    {
+        remainPotionTime += 720;
+        potion++;
+        if (potion >= 5)
+        {
+            remainPotionTime = 0;
+            break;
+        }
+    }
+    myInfo->SetPotion(potion, remainPotionTime);
+    
+    // 주간랭킹 남은시간 갱신
+    int remainWeeklyRankTime = myInfo->GetRemainWeeklyRankTimeInt() - deltaTime;
+    myInfo->SetRemainWeeklyRankTime(std::max(remainWeeklyRankTime, 0));
+    
+    // 각 친구마다 포션 전송 남은시간 갱신
+    int remainRequestPotionTime;
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        remainPotionTime = friendList[i]->GetRemainPotionTime() - deltaTime;
+        remainRequestPotionTime = friendList[i]->GetRemainRequestPotionTime() - deltaTime;
+        friendList[i]->SetRemainPotionTime(std::max(remainPotionTime, 0));
+        friendList[i]->SetRemainRequestPotionTime(std::max(remainRequestPotionTime, 0));
+    }
 }
 
 
@@ -242,6 +283,11 @@ void Ranking::Notification(CCObject* obj)
     else if (param->intValue() == 4)
     {
         EndScene();
+    }
+    else if (param->intValue() == 5)
+    {
+        // 인게임 중이 아닐 때, 모든 시간 타이머를 갱신하기 위함
+        RenewAllTime();
     }
     else if (param->intValue() == 8)
     {
@@ -394,17 +440,15 @@ void Ranking::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     
     int numOfList = friendList.size();
-    //CCLog("number of friends = %d", numOfList);
     
     char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
-        //CCLog("friend # %d", i);
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
         scrollContainer->addChild(profileLayer, 5);
-        profileLayers.push_back(profileLayer);
+        spriteClass->layers.push_back(profileLayer);
         
         // my profile bg
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
@@ -487,7 +531,7 @@ void Ranking::MakeScroll()
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     // scrollView 생성
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
     scrollView->setContentSize(scrollContainer->getContentSize());
@@ -509,7 +553,7 @@ void Ranking::MakeScroll()
 
 void Ranking::PotionTimer(float f)
 {
-    char time[5];
+    char time_c[5];
     int remainTime, potion;
     
     potion = myInfo->GetPotion();
@@ -548,16 +592,16 @@ void Ranking::PotionTimer(float f)
             friendList[i]->GetPotionLabelSec()->setOpacity(255);
             
             if ((remainTime-1)/60 < 10)
-                sprintf(time, "0%d:", (remainTime-1)/60);
+                sprintf(time_c, "0%d:", (remainTime-1)/60);
             else
-                sprintf(time, "%d:", (remainTime-1)/60);
-            friendList[i]->GetPotionLabelMin()->setString(time);
+                sprintf(time_c, "%d:", (remainTime-1)/60);
+            friendList[i]->GetPotionLabelMin()->setString(time_c);
             
             if ((remainTime-1)%60 < 10)
-                sprintf(time, "0%d", (remainTime-1)%60);
+                sprintf(time_c, "0%d", (remainTime-1)%60);
             else
-                sprintf(time, "%d", (remainTime-1)%60);
-            friendList[i]->GetPotionLabelSec()->setString(time);
+                sprintf(time_c, "%d", (remainTime-1)%60);
+            friendList[i]->GetPotionLabelSec()->setString(time_c);
         }
         
         // 이제 막 00:00가 되었다면 potion sprite를 바꾼다.
@@ -581,7 +625,6 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("Ranking : (%d , %d)", (int)point.x, (int)point.y);
     
     // scrollview touch check
     if (scrollView->boundingBox().containsPoint(point))
@@ -594,7 +637,6 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1, priority-1);
                 Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
                 break;
             }
@@ -605,6 +647,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png2")
@@ -613,6 +656,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png3")
@@ -621,6 +665,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyPotion", false, 0);
+                break;
             }
         }
         
@@ -630,6 +675,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "Message", false);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_setting.png")
@@ -638,15 +684,16 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "Setting", false);
+                break;
             }
         }
-        
         else if (spriteClass->spriteObj[i]->name == "button/btn_sketchbook.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_addfriend.png")
@@ -655,6 +702,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "InviteFriend", false);
+                break;
             }
         }
     }
@@ -732,6 +780,8 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void Ranking::EndScene()
 {
+    sound->StopBackgroundSound();
+    
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
@@ -742,33 +792,30 @@ void Ranking::EndScene()
     
     this->unschedule(schedule_selector(Ranking::PotionTimer));
     
-    
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     spriteClassProperty->RemoveAllObjects();
     delete spriteClassProperty;
     
-    // itemLayer
-    for (int i = 0 ; i < profileLayers.size() ; i++)
-    {
-        profileLayers[i]->removeAllChildren();
-    }
-    profileLayers.clear();
-    
-    // background layer
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParent();
     
-    sound->StopBackgroundSound();
+    pBlack->removeFromParentAndCleanup(true);
+    pBackground->removeFromParentAndCleanup(true);
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
+    
+    // PotionTimer scheduler가 딱 정지된 시점에서 현재 시간을 저장해 둔다.
+    // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.
+    savedTime = time(0);
+    isInGame = true;
     
     Common::ShowNextScene(this, "Ranking", "Loading", true);
 }

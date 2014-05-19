@@ -38,7 +38,6 @@ public:
 protected:
     CCSize winSize;
     bool isTouched;
-    
     bool isScrolling;
     bool scrollViewTouch;
     

@@ -8,7 +8,6 @@ static int type;
 static int btn;
 static std::vector<int> d;
 static int fromWhere;
-//static int priority;
 
 static int newSkillType;
 
@@ -70,25 +69,6 @@ bool NoImage::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    /*
-    // notification post
-    CCString* param = CCString::create("1");
-    if (type == BUY_STARCANDY_TRY)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
-    else if (type == POPUP_EXIT)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (type == BUYPOTION_1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
-    else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
-    //else if (type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK)
-    else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_FULL_LEVEL || fromWhere == 3)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL || type == BUY_PROPERTY_TRY || fromWhere == 1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-    else if (fromWhere == 2)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    */
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -323,21 +303,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
-        // 팝업창에서 '확인' 버튼 하나만 있는 경우.
-        /*
-        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" &&
-                 (type == BUY_STARCANDY_OK || type == BUYPOTION_OK || type == POTION_SEND_OK || type == POTION_SEND_REJECT || type == POTION_SEND_NO_FRIEND || type == POTION_SEND_EARLY || type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_OK || type == SEND_TOPAZ_OK || type == SEND_TOPAZ_FAIL || type == BUY_TOPAZ_OK || type == NETWORK_FAIL || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == BUY_FAIRY_OK || type == BUY_FAIRY_FAIL || type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL ||
-                  type == PURCHASE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == BUY_SKILLSLOT_FAIL || type == BUY_SKILLSLOT_FULL || type == BUY_SKILLSLOT_OK || type == BUY_PROPERTY_OK || type == BUY_PROPERTY_FAIL) )
-        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png" && btn == BTN_1)
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                sound->playClick();
-                EndScene();
-                return true;
-            }
-        }
-        */
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -426,17 +391,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         HttpRequest(url);
                     }
                 }
-                /*
-                else if (type == BUY_STARCANDY_FAIL)
-                {
-                    // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
-                    // (코드 상에서는 BuyStarCandy에서 BuyTopaz로 이동한 것처럼 구현한다)
-                    CCNode* parent = this->getParent();
-                    EndScene();
-                    Common::ShowNextScene(parent, "BuyStarCandy", "BuyTopaz", false, 3);
-                    break;
-                }
-                */
                 else if (type == BUYPOTION_1)
                 {
                     if (myInfo->GetTopaz() < 5) // 토파즈 구매 창으로 이동
@@ -451,17 +405,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         HttpRequest(url);
                     }
                 }
-                /*
-                else if (type == BUYPOTION_FAIL)
-                {
-                    // 토파즈를 구매하시곘습니까 : 예 -> 토파즈 구매 창으로 이동.
-                    // (코드 상에서는 BuyPotion에서 BuyTopaz로 이동한 것처럼 구현한다)
-                    CCNode* parent = this->getParent();
-                    EndScene();
-                    Common::ShowNextScene(parent, "BuyPotion", "BuyTopaz", false, 2);
-                    break;
-                }
-                */
                 else if (type == POTION_SEND_TRY)
                 {
                     // 포션 보내기 (랭킹 화면에서)
@@ -506,10 +449,8 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     // 잔액 부족
                     if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
                         ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                        //ReplaceScene("NoImage", UPGRADE_STAFF_BY_TOPAZ_NOMONEY, BTN_2);
                     else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
                         ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                        //ReplaceScene("NoImage", UPGRADE_STAFF_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
                         // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
@@ -535,10 +476,8 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     // 잔액 부족
                     if (costType == 2 && myInfo->GetTopaz() < cost)
                         ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                        //ReplaceScene("NoImage", BUY_FAIRY_BY_TOPAZ_NOMONEY, BTN_2);
                     else if (costType == 1 && myInfo->GetStarCandy() < cost)
                         ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                        //ReplaceScene("NoImage", BUY_FAIRY_BY_STARCANDY_NOMONEY, BTN_2);
                     else
                     {
                         // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
@@ -601,6 +540,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         HttpRequest(url);
                     }
                 }
+                break;
             }
         }
     }
@@ -611,7 +551,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void NoImage::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -635,11 +574,10 @@ void NoImage::ReplaceScene(std::string to, int type, int btnType)
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-
-    Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere);
-    //Common::ShowPopup(this, "NoImage", to, true, type, btnType, d, fromWhere, priority);
     
+    CCNode* parent = this->getParent();
     this->removeFromParentAndCleanup(true);
+    Common::ShowPopup(parent, "NoImage", to, true, type, btnType, d, fromWhere);
 }
 
 void NoImage::EndScene()
@@ -657,31 +595,9 @@ void NoImage::EndScene()
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
-    
-    /*
-    CCString* param = CCString::create("0");
-    if (type == POPUP_EXIT)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (type == BUY_STARCANDY_TRY || type == BUY_STARCANDY_OK || type == BUY_STARCANDY_FAIL)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
-    else if (type == BUYPOTION_1 || type == BUYPOTION_OK || type == BUYPOTION_FAIL)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
-    else if (type == MESSAGE_OK_STARCANDY || type == MESSAGE_OK_TOPAZ || type == MESSAGE_OK_POTION || type == MESSAGE_EMPTY || type == MESSAGE_ALL_TRY || type == MESSAGE_ALL_OK)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
-    else if (type == UPGRADE_STAFF_OK || type == UPGRADE_STAFF_FAIL || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_FULL_LEVEL || type == UPGRADE_STAFF_BY_STARCANDY_NOMONEY || type == UPGRADE_STAFF_BY_TOPAZ_NOMONEY || fromWhere == 3)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-    else if (type == UPGRADE_SKILL_OK || type == UPGRADE_SKILL_FAIL || type == PURCHASE_SKILL_OK || type == PURCHASE_SKILL_FAIL || type == BUY_PROPERTY_TRY || type == BUY_PROPERTY_FAIL || type == BUY_PROPERTY_OK || fromWhere == 1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-    else if (fromWhere == 2)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
-    
-    this->removeFromParentAndCleanup(true);
-    */
 }
 
 void NoImage::EndSceneCallback()
@@ -1244,7 +1160,7 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
             }
             myInfo->AddSkill(csi, usi, level, exp);
         }
-        DataProcess::SortMySkillByCommonId(myInfo->GetSkillList()); // common-skill-id 오름차순 정렬
+        myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
 
         // OK 창으로 넘어가자. 
         ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);

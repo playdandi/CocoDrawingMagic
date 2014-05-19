@@ -350,6 +350,7 @@ bool Profile::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Profile", "DegreeInfo", false);
+                break;
             }
         }
     }
@@ -386,6 +387,7 @@ void Profile::EndScene()
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
 
     this->removeFromParentAndCleanup(true);
 }

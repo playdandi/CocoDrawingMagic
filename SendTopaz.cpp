@@ -56,10 +56,11 @@ bool SendTopaz::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
 
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -128,9 +129,8 @@ void SendTopaz::MakeScroll()
 {
     int numOfList = friendList.size();
     
-    CCLayer* scrollContainer = CCLayer::create();
+    scrollContainer = CCLayer::create();
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
-    scrollContainer->setPosition(ccp(77, 492+904+243));
     
     int height = 0;
     char fname[50], fname2[50];
@@ -144,6 +144,7 @@ void SendTopaz::MakeScroll()
         itemLayer->setContentSize(CCSizeMake(862, 166));
         itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
         scrollContainer->addChild(itemLayer, 2);
+        spriteClass->layers.push_back(itemLayer);
         height++;
         
         // profile bg
@@ -161,7 +162,7 @@ void SendTopaz::MakeScroll()
                         ccp(0, 0), ccp(635, 34), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         sprintf(fname2, "button/btn_present.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2,
-                        ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3) );
+                        ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3, 1) );
         // dotted line
         if (i < numOfList-1)
         {
@@ -227,6 +228,7 @@ void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 data.push_back(number);
                 data.push_back(priceTopazIdx);
                 Common::ShowPopup(this, "SendTopaz", "NoImage", false, SEND_TOPAZ_TRY, BTN_2, data);
+                break;
             }
         }
     }
@@ -265,8 +267,12 @@ void SendTopaz::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
+    
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

@@ -25,6 +25,8 @@ public:
     void playBoardMove();
     void playGameStart();
     
+    void UnLoadSound();
+    
     //////////////////////////////////////////////////////
     void PreLoadInGameSound();
     
@@ -34,6 +36,7 @@ public:
     void PlayBomb();
     void PlaySkillSound(int skillNum);
     void PlayDesginatedSound(int idx);
+    void UnLoadInGameSound();
     
 private:
     std::string ext;

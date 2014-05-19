@@ -53,11 +53,12 @@ bool CocoRoomTodayCandy::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // scrollView 생성
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904-80));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -129,7 +130,7 @@ void CocoRoomTodayCandy::MakeScroll()
         selected.push_back(false);
     
     // make scroll
-    CCLayer* scrollContainer = CCLayer::create();
+    scrollContainer = CCLayer::create();
     scrollContainer->setPosition(ccp(77, 492+904+243));
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     
@@ -270,13 +271,6 @@ void CocoRoomTodayCandy::RefreshProfileList()
     
     for (int i = 0 ; i < spriteClassList->spriteObj.size() ; i++)
         spriteClassList->AddChild(i);
-    
-    
-    /*
-    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(359, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
-    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png2", ccp(0, 0), ccp(490, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
-    spriteClassList->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png3", ccp(0, 0), ccp(620, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
-    */
 }
 
 
@@ -364,20 +358,6 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             RefreshTodayCandyList(i);
             break;
         }
-        /*
-        // 이미 선택된 것을 클릭한 경우 -> false로 되돌리기
-        sprintf(fname, "button/btn_skill_master.png%d", i);
-        temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
-        p = temp->convertToNodeSpace(point);
-        
-        size = spriteClass->GetContentSizeByName(fname);
-        if (selected[i] && isScrollViewTouched && !isScrolling &&
-            (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
-        {
-            sound->playClick();
-            selected[i] = !selected[i];
-        }
-        */
     }
 }
 
@@ -410,8 +390,13 @@ void CocoRoomTodayCandy::EndScene()
     delete spriteClass;
     spriteClassList->RemoveAllObjects();
     delete spriteClassList;
+    
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
+    
+    pBlack->removeFromParentAndCleanup(true);
+    selected.clear();
     
     this->removeFromParentAndCleanup(true);
 }

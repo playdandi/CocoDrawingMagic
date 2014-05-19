@@ -71,25 +71,19 @@ bool Sketchbook::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("스케치북 : touch prio = %d", this->getTouchPriority());
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
-    
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Sketchbook::Notification), Depth::GetCurName(), NULL);
     
     // notification
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    /*
-    // notification post
-    CCString* param = CCString::create("1");
-    if (from == 0)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (from == 1)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    */
+
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+
     // scrollview init.
     scrollView = CCScrollView::create();
-    scrollView->retain();
+    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 914-40+offsets));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -100,7 +94,7 @@ bool Sketchbook::init()
     
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
-    scrollViewSlot->retain();
+    //scrollViewSlot->retain();
     scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
     scrollViewSlot->setViewSize(CCSizeMake(782-40, 177-20));
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
@@ -259,15 +253,15 @@ void Sketchbook::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2",
                     ccp(0, 0), ccp(77, 228), CCSize(782, 177), "", "Sketchbook", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", // slot plus
-                    ccp(0, 0), ccp(896, 317), CCSize(0, 0), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(896, 312), CCSize(0, 0), "", "Sketchbook", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png0",
-                    ccp(0, 0), ccp(867, 242), CCSize(136, 63), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(867, 237), CCSize(136, 63), "", "Sketchbook", this, 1) );
     // 슬롯 개수 숫자
     char name[7];
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 248), ccc3(255,219,53), "", "Sketchbook", this, 5, 0, 255, 100) ); // 현재 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 245), ccc3(255,219,53), "", "Sketchbook", this, 5, 0, 255, 100) ); // 현재 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 248), ccc3(182,142,142), "", "Sketchbook", this, 5) ); // 젼체 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 245), ccc3(182,142,142), "", "Sketchbook", this, 5) ); // 젼체 개수
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -610,7 +604,6 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::vector<int> data;
                     data.push_back(number); // 불(1), 물(2), 땅(3), 마스터(4)
                     data.push_back(SkillPropertyInfo::GetCost(number)); // 가격
-                    //Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data, -1, priority-1);
                     Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data);
                 }
                 break;
@@ -620,6 +613,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                sound->playClick();
                 EndScene();
                 break;
             }
@@ -628,6 +622,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                sound->playClickboard();
                 // 슬롯 구매
                 std::vector<int> data;
                 if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
@@ -658,15 +653,14 @@ void Sketchbook::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCLog("sketchbook touch ended (isTouched = %d)", isTouched);
     if (!isTouched)
         return;
     
     CCPoint point = pTouch->getLocation();
     
-    if (!isScrolling && isSlotTouched)
+    if (!isScrolling && isSlotTouched && scrollViewSlot->boundingBox().containsPoint(point))
     {
-        //Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1, priority-1);
+        sound->playBoardMove(); // 이 scene만 사운드가 다르다.
         Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1);
     }
     
@@ -684,7 +678,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 int id = spriteClassBook->spriteObj[i]->sprite9->getTag();
                 Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
-                //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                break;
             }
         }
         else if (spriteClassBook->spriteObj[i]->name.substr(0, 23) == "button/btn_red_mini.png")
@@ -718,9 +712,9 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 연습량이 다 차서 레벨업을 해야 하는 경우 (강화)
                 else // 이때 id는 common_id
                 {
-                    //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
                     Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
                 }
+                break;
             }
         }
         else if (spriteClassBook->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
@@ -735,7 +729,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 요구조건을 만족한 경우, 만족하지 않은 경우 둘 다 팝업창을 띄운다.
                 int id = spriteClassBook->spriteObj[i]->sprite->getTag();
                 Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id);
-                //Common::ShowNextScene(this, "Sketchbook", "SketchDetail", false, id, priority-1);
+                break;
             }
         }
     }
@@ -765,11 +759,8 @@ void Sketchbook::EndScene()
     
     // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
-    //if (from == 0)
-        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    //else if (from == 1)
-    //{
-        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+
     if (strcmp(Depth::GetCurName(), "GameReady") == 0)
     {
         param = CCString::create("9"); // slot 갱신
@@ -787,10 +778,14 @@ void Sketchbook::EndScene()
     spriteClassSlot->RemoveAllObjects();
     delete spriteClassSlot;
 
+    scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParent();
+    scrollViewSlot->getContainer()->removeAllChildren();
     scrollViewSlot->removeAllChildren();
     scrollViewSlot->removeFromParent();
+    
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }
@@ -850,7 +845,6 @@ void Sketchbook::XmlParsePracticeSkill(char* data, int size)
         {
             CCNode* parent = this->getParent();
             EndScene();
-            //Common::ShowNextScene(parent, "Ranking", "GameReady", false, priority);
             Common::ShowNextScene(parent, "Ranking", "GameReady", false);
         }
         else if (from == 1) // Sketchbook 없앤다.

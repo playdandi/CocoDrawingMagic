@@ -56,12 +56,7 @@ bool BuyPotion::init()
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    /*
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    */
+
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -217,12 +212,6 @@ void BuyPotion::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    /*
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -230,6 +219,8 @@ void BuyPotion::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    pBlack->removeFromParentAndCleanup(true);
+    
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/buyPotion_bg.png");
     
     this->removeFromParentAndCleanup(true);

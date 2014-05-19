@@ -44,7 +44,7 @@ void GameReady::registerWithTouchDispatcher(void)
 
 void GameReady::keyBackClicked()
 {
-    EndSceneCallback(this, this);
+    EndSceneCallback(NULL, this);
 }
 
 
@@ -63,8 +63,6 @@ bool GameReady::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("GameReady : touch prio = %d", Depth::GetCurPriority());
     
-    winSize = CCDirector::sharedDirector()->getWinSize();
-    
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(GameReady::Notification), Depth::GetCurName(), NULL);
     
@@ -72,9 +70,14 @@ bool GameReady::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
+    
+    winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    this->schedule(schedule_selector(GameReady::PotionTimer), 0.2f);
+    
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
-    scrollViewSlot->retain();
+    //scrollViewSlot->retain();
     scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
     scrollViewSlot->setViewSize(CCSizeMake(782-40, 177-20));
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
@@ -86,7 +89,6 @@ bool GameReady::init()
     // spriteclass init.
     spriteClass = new SpriteClass();
     spriteClassProperty = new SpriteClass();
-    spriteClassCoco = new SpriteClass();
     spriteClassFairy = new SpriteClass();
     spriteClassSkill = new SpriteClass();
     spriteClassSlot = new SpriteClass();
@@ -100,7 +102,7 @@ bool GameReady::init()
     for (int i = 0 ; i < 5 ; i++)
     {
         itemSelected[i] = false;
-        itemNumLayer.push_back(new CCLayer());
+        //itemNumLayer.push_back(new CCLayer());
     }
     
     InitSprites();
@@ -116,8 +118,6 @@ bool GameReady::init()
     isScrollViewTouched = false;
     isScrolling = false;
     isStarting = false;
-
-    this->schedule(schedule_selector(GameReady::PotionTimer), 1.0f);
     
     return true;
 }
@@ -308,9 +308,15 @@ void GameReady::InitSprites()
         
         if (myInfo->GetItem(i) > 0)
         {
+            /*
             itemNumLayer[i] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)));
             itemNumLayer[i]->setPosition(ccp(84+193*i+130, 965));
             this->addChild(itemNumLayer[i], 10);
+            */
+            CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)));
+            layer->setPosition(ccp(84+193*i+130, 965));
+            this->addChild(layer, 10);
+            spriteClass->layers.push_back(layer);
         }
         else
         {
@@ -326,9 +332,9 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png4", ccp(0, 0), ccp(867, 497), CCSize(136, 63), "", "GameReady", this, 1) );
     
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 505), ccc3(255,219,53), "", "Sketchbook", this, 5, 0, 255, 100) ); // 현재 슬롯 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 505), ccc3(255,219,53), "", "GameReady", this, 5, 0, 255, 100) ); // 현재 슬롯 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 505), ccc3(182,142,142), "", "Sketchbook", this, 5) ); // 젼체 슬롯 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 505), ccc3(182,142,142), "", "GameReady", this, 5) ); // 젼체 슬롯 개수
     
 
     // 게임시작 버튼
@@ -572,12 +578,12 @@ void GameReady::PotionTimer(float f)
     potion = myInfo->GetPotion();
     remainTime = myInfo->GetRemainPotionTimeNumber();
     
-    if (potion < 5)
+    if (potion <= 5)
     {
-        if (remainTime == 0)
+        if (remainTime >= 719) // 719초나 720초 일 때
         {
             char name[25];
-            sprintf(name, "icon/icon_potion.png%d", potion);
+            sprintf(name, "icon/icon_potion.png%d", potion-1);
             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
         }
         ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
@@ -607,7 +613,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 
                 callbackType = 0;
-                EndSceneCallback(this, this);
+                EndSceneCallback(NULL, this);
                 return true;
             }
         }
@@ -617,6 +623,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "GameReady", "BuyTopaz", false, 1);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png2")
@@ -625,6 +632,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "GameReady", "BuyStarCandy", false, 1);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png3")
@@ -633,6 +641,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "GameReady", "BuyPotion", false, 1);
+                break;
             }
         }
 
@@ -746,8 +755,8 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1, priority-1);
                 Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
@@ -755,14 +764,15 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3, priority-1);
                 Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                sound->playClickboard();
                 // 슬롯 구매
                 std::vector<int> data;
                 if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
@@ -785,13 +795,11 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (fairyLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        //Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2, priority-1);
         Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2);
     }
     else if (skillLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        //Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0, priority-1);
         Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
     }
  
@@ -801,7 +809,6 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void GameReady::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -814,7 +821,6 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isScrolling && isScrollViewTouched && scrollViewSlot->boundingBox().containsPoint(point))
     {
         sound->playBoardMove(); // 이 scene만 사운드가 다르다.
-        //Common::ShowNextScene(this, "GameReady", "MagicList", false, 0, priority-1);
         Common::ShowNextScene(this, "GameReady", "MagicList", false, 0);
     }
     
@@ -830,6 +836,8 @@ void GameReady::EndScene()
 void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
 {
     GameReady* pThis = (GameReady*)pointer;
+    if (sender != NULL)
+        sender->removeFromParentAndCleanup(true);
     
     pThis->unschedule(schedule_selector(GameReady::PotionTimer));
     
@@ -853,24 +861,32 @@ void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->setTouchEnabled(false);
     
     // remove all CCNodes
-    spriteClass->RemoveAllObjects();
-    delete spriteClass;
-    spriteClassProperty->RemoveAllObjects();
-    delete spriteClassProperty;
-    
-    // itemLayer
-    for (int i = 0 ; i < itemNumLayer.size() ; i++)
-    {
-        itemNumLayer[i]->removeAllChildren();
-    }
-    itemNumLayer.clear();
-    
-    // background layer
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
+    pThis->spriteClass->RemoveAllObjects();
+    delete pThis->spriteClass;
+    pThis->spriteClassProperty->RemoveAllObjects();
+    delete pThis->spriteClassProperty;
+    pThis->spriteClassFairy->RemoveAllObjects();
+    delete pThis->spriteClassFairy;
+    pThis->spriteClassSkill->RemoveAllObjects();
+    delete pThis->spriteClassSkill;
+    pThis->spriteClassSlot->RemoveAllObjects();
+    delete pThis->spriteClassSlot;
     
     scrollViewSlot->getContainer()->removeAllChildren();
     scrollViewSlot->removeAllChildren();
     scrollViewSlot->removeFromParent();
+    
+    pThis->pBlack->removeFromParentAndCleanup(true);
+    CCNode* pic = pThis->fairyLayer->getChildByTag(99999);
+    if (pic != NULL)
+        pic->removeAllChildren();
+    pThis->fairyLayer->removeAllChildren();
+    pThis->fairyLayer->removeFromParentAndCleanup(true);
+    pThis->skillLayer->removeAllChildren();
+    pThis->skillLayer->removeFromParentAndCleanup(true);
+    
+    
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     
     pThis->removeFromParentAndCleanup(true);
     

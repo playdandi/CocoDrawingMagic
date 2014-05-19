@@ -4,6 +4,7 @@
 int iGameVersion;
 int iBinaryVersion;
 class MyInfo* myInfo;
+std::vector<class ProfileSprite*> profiles;
 std::vector<class Friend*> friendList;
 std::vector<class Msg*> msgData;
 
@@ -18,9 +19,16 @@ std::vector<class SkillInfo*> skillInfo;
 std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
+std::vector<class LastWeeklyRank*> lastWeeklyRank;
+
+
 std::vector<class Depth*> depth;
 std::vector<int> inGameSkill;
 std::vector<int> todayCandyKakaoId;
+
+bool isInGame;
+int savedTime;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority)
@@ -58,6 +66,30 @@ void Depth::ClearDepth()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+ProfileSprite::ProfileSprite(std::string profileUrl)
+{
+    this->profileUrl = profileUrl;
+    this->profile = NULL;
+}
+CCSprite* ProfileSprite::GetProfile(std::string profileUrl)
+{
+    for (int i = 0 ; i < profiles.size(); i++)
+    {
+        if (profiles[i]->GetProfileUrl() == profileUrl)
+            return profiles[i]->GetProfile();
+    }
+    return NULL;
+}
+CCSprite* ProfileSprite::GetProfile()
+{
+    return profile;
+}
+std::string ProfileSprite::GetProfileUrl()
+{
+    return profileUrl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)
 {
     this->kakaoId = kakaoId;
@@ -69,7 +101,7 @@ void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool p
     this->msgCnt = msgCnt;
 }
 
-void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
+void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
 {
     this->topaz = topaz;
     this->starcandy = starcandy;
@@ -80,7 +112,9 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->staffLv = staffLv;
     this->highScore = highScore;
     this->weeklyHighScore = weeklyHighScore;
-    //this->scoreUpdateTime = scoreUpdateTime;
+    this->lastWeeklyHighScore = lastWeeklyHighScore;
+    this->isWeeklyRankReward = (isWeeklyRankReward == 1);
+
     this->certificateType = certificateType;
     this->remainWeeklyRankTime = remainWeeklyRankTime;
     this->item[0] = item1;
@@ -90,10 +124,10 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->item[4] = item5;
     this->potion = potion;
     this->remainPotionTime = remainPotionTime;
-    this->propertyFire = (fire == 1) ? true : false;
-    this->propertyWater = (water == 1) ? true : false;
-    this->propertyLand = (land == 1) ? true : false;
-    this->propertyMaster = (master == 1) ? true : false;
+    this->propertyFire = (fire == 1);
+    this->propertyWater = (water == 1);
+    this->propertyLand = (land == 1);
+    this->propertyMaster = (master == 1);
 }
 
 CCSprite* MyInfo::GetProfile()
@@ -183,6 +217,14 @@ int MyInfo::GetHighScore()
 int MyInfo::GetWeeklyHighScore()
 {
     return weeklyHighScore;
+}
+int MyInfo::GetLastWeeklyHighScore()
+{
+    return lastWeeklyHighScore;
+}
+bool MyInfo::IsWeeklyRankReward()
+{
+    return isWeeklyRankReward;
 }
 int MyInfo::GetCertificateType()
 {
@@ -312,6 +354,10 @@ void MyInfo::SetScore(int highScore, int weeklyHighScore, int certificateType, i
     this->certificateType = certificateType;
     this->remainWeeklyRankTime = remainWeeklyRankTime;
 }
+void MyInfo::SetRemainWeeklyRankTime(int time)
+{
+    this->remainWeeklyRankTime = time;
+}
 
 void MyInfo::SetProfileSkill(int id, int level)
 {
@@ -388,6 +434,15 @@ std::vector<class MySkill*> MyInfo::GetSkillList() // 내가 산 스킬 모두 g
 {
     return mySkill;
 }
+bool compare3(MySkill* ms1, MySkill* ms2)
+{
+    return ms1->GetCommonId() < ms2->GetCommonId();
+}
+void MyInfo::SortMySkillByCommonId() // 내가 산 스킬 common-id로 오름차순 정렬
+{
+    std::sort(mySkill.begin(), mySkill.end(), compare3);
+}
+
 std::vector<class MySkillSlot*> MyInfo::GetSlot() // 내가 산 슬롯 get
 {
     return mySkillSlot;
@@ -496,10 +551,43 @@ int MySkill::GetExp()
     return exp;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
+LastWeeklyRank::LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score)
+{
+    this->nickname = nickname;
+    this->profileUrl = profileUrl;
+    this->rank = rank;
+    this->score = score;
+}
+std::string LastWeeklyRank::GetNickname()
+{
+    return nickname;
+}
+std::string LastWeeklyRank::GetProfileUrl()
+{
+    return profileUrl;
+}
+int LastWeeklyRank::GetRank()
+{
+    return rank;
+}
+int LastWeeklyRank::GetScore()
+{
+    return score;
+}
+int compare4(LastWeeklyRank* l1, LastWeeklyRank* l2)
+{
+    return l1->GetRank() < l2->GetRank();
+}
+void LastWeeklyRank::SortByRank()
+{
+    std::sort(lastWeeklyRank.begin(), lastWeeklyRank.end(), compare4);
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
 {
     // constructor
@@ -738,10 +826,6 @@ bool compare2(MagicStaffBuildUpInfo* m1, MagicStaffBuildUpInfo* m2)
 {
     return m1->GetLevel() < m2->GetLevel();
 }
-bool compare3(MySkill* ms1, MySkill* ms2)
-{
-    return ms1->GetCommonId() < ms2->GetCommonId();
-}
 
 void DataProcess::SortFriendListByScore()
 {
@@ -751,10 +835,12 @@ void DataProcess::SortMagicStaffBuildUpInfo()
 {
     std::sort(magicStaffBuildupInfo.begin(), magicStaffBuildupInfo.end(), compare2);
 }
-void DataProcess::SortMySkillByCommonId(std::vector<MySkill*> mySkill)
+//void DataProcess::SortMySkillByCommonId(std::vector<MySkill*> mySkill)
+/*void DataProcess::SortMySkillByCommonId()
 {
+    std::vector<MySkill*> ms = (myInfo->GetSkillList());
     std::sort(mySkill.begin(), mySkill.end(), compare3);
-}
+}*/
 std::string DataProcess::FindSkillNameById(int skillId)
 {
     for (int i = 0 ; i < skillInfo.size() ; i++)

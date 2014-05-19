@@ -55,16 +55,7 @@ bool BuyTopaz::init()
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    /*
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    else if (parent_id == 2) // 부모가 'BuyPotion'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
-    else if (parent_id == 3) // 부모가 'BuyStarCandy'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
-    */
+
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -85,8 +76,6 @@ void BuyTopaz::Notification(CCObject* obj)
     if (param->intValue() == 0)
     {
         // 터치 활성
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
@@ -97,8 +86,6 @@ void BuyTopaz::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("BuyTopaz : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
-        //this->setKeypadEnabled(false);
-        //this->setTouchEnabled(false);
     }
 }
 
@@ -238,6 +225,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(27).c_str());
                 Common::ShowNextScene(this, "BuyTopaz", "SendTopaz", false, number);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
@@ -252,6 +240,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(number);
                 Common::ShowPopup(this, "BuyTopaz", "NoImage", false, BUY_TOPAZ_TRY, BTN_2, data);
+                break;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
@@ -260,6 +249,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "BuyTopaz", "RequestTopaz", false);
+                break;
             }
         }
     }
@@ -270,7 +260,6 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyTopaz::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
 }
 
 void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -291,16 +280,6 @@ void BuyTopaz::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    /*
-    if (parent_id == 0) // 부모가 'Ranking'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    else if (parent_id == 1) // 부모가 'GameReady'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-    else if (parent_id == 2) // 부모가 'BuyPotion'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyPotion", param);
-    else if (parent_id == 3) // 부모가 'BuyStarCandy'
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("BuyStarCandy", param);
-    */
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -309,6 +288,7 @@ void BuyTopaz::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     itemContainer->removeAllChildren();
+    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

@@ -26,8 +26,7 @@ public:
     virtual void scrollViewDidZoom(CCScrollView* view);
     //virtual void registerWithTouchDispatcher();
     
-    void EndScene();
-    
+    void RenewAllTime();
     void Notification(CCObject* obj);
     
     void InitSprites();
@@ -35,6 +34,8 @@ public:
     void MakeScroll();
     
     void PotionTimer(float f);
+    
+    void EndScene();
     
     CREATE_FUNC(Ranking);
     
@@ -55,10 +56,7 @@ private:
     SpriteClass* spriteClass;
     SpriteClass* spriteClassProperty;
     
-    std::vector<CCLayer*> profileLayers;
     CCScrollView* scrollView;
-    //CCPoint scrollViewLastPoint;
-    //std::vector<CCSprite*> profiles;
 };
 
 #endif /* defined(__CocoMagic__Ranking__) */

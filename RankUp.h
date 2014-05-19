@@ -1,15 +1,14 @@
-#ifndef __CocoMagic__Profile__
-#define __CocoMagic__Profile__
+#ifndef __CocoMagic__RankUp__
+#define __CocoMagic__RankUp__
 
 #include "Common.h"
-#include "../Fairy.h"
 
-class Profile : public CCLayer
+class RankUp : public CCLayer
 {
 public:
-    ~Profile(void);
-    static CCScene* scene(int idx);
-    virtual bool init();
+    static CCScene* scene();
+	bool init();
+	
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
@@ -17,23 +16,21 @@ public:
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
-    void Notification(CCObject* obj);
-    
     void InitSprites();
-    void InitFairy();
-    void InitSkill();
     
     void EndScene();
+    void EndSceneCallback(CCNode* sender, void* pointer);
     
-    CREATE_FUNC(Profile);
+    CREATE_FUNC(RankUp);
     
 protected:
     CCSize winSize;
     bool isTouched;
     
 private:
-    CCSprite* pBlack;
+    CCSprite* pBackground;
+    CCSprite* pBlackClose;
     SpriteClass* spriteClass;
 };
 
-#endif /* defined(__CocoMagic__Profile__) */
+#endif /* defined(__CocoMagic__RankUp__) */

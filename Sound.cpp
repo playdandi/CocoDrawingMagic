@@ -5,16 +5,16 @@ using namespace cocos2d;
 using namespace CocosDenshion;
 
 /*void Sound::SetFileExtension()
-{
-    int platform = CC_TARGET_PLATFORM;
-    switch (platform)
-    {
-        case CC_PLATFORM_IOS:
-            ext = "wav"; break;
-        case CC_PLATFORM_ANDROID:
-            ext = "ogg"; break;
-    }
-}*/
+ {
+ int platform = CC_TARGET_PLATFORM;
+ switch (platform)
+ {
+ case CC_PLATFORM_IOS:
+ ext = "wav"; break;
+ case CC_PLATFORM_ANDROID:
+ ext = "ogg"; break;
+ }
+ }*/
 
 
 void Sound::PreLoadSound()
@@ -86,6 +86,10 @@ void Sound::playGameStart()
 {
     SimpleAudioEngine::sharedEngine()->playEffect("sounds/gamestart.mp3");
 }
+void Sound::UnLoadSound()
+{
+    
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,21 +103,23 @@ void Sound::PreLoadInGameSound()
         sprintf(name, "sounds/pieces/%d.mp3", i);
         SimpleAudioEngine::sharedEngine()->preloadEffect(name);
     }
-   
+    
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombA.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombB.mp3");
-
+    
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_2.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_3_land_4.mp3");
-    //SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_5.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_5.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_6.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_7.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_dragon.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_comet.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_2.mp3");
-    //SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_5.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_5.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_6.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_7.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_5.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_6.mp3");
     
     
@@ -148,15 +154,19 @@ void Sound::PlaySkillSound(int skillNum)
     {
         case 1: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_2.mp3"); break;
         case 2: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        //case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_5.mp3"); break;
+        case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_5.mp3"); break;
         case 5: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3"); break;
         case 6: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_7.mp3"); break;
         case 7: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_8_dragon.mp3"); break;
+            
         case 9: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_2.mp3"); break;
-        //case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_5.mp3"); break;
+        case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_5.mp3"); break;
         case 13: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_6.mp3"); break;
         case 14: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_7.mp3"); break;
+            
+        case 17: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_2.mp3"); break;
         case 19: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
+        case 20: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_5.mp3"); break;
         case 21: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_6.mp3"); break;
     }
 }
@@ -168,5 +178,34 @@ void Sound::PlayDesginatedSound(int idx)
     }
 }
 
+void Sound::UnLoadInGameSound()
+{
+    SimpleAudioEngine::sharedEngine()->stopBackgroundMusic("sounds/game_bgm.mp3");
+    
+    char name[22];
+    for (int i = 1 ; i <= 18 ; i++)
+    {
+        sprintf(name, "sounds/pieces/%d.mp3", i);
+        SimpleAudioEngine::sharedEngine()->unloadEffect(name);
+    }
+    
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/bombA.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/bombB.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_3_land_4.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_7.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_8_dragon.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_8_comet.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_7.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_6.mp3");
+}
 
 

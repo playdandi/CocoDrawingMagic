@@ -46,6 +46,7 @@ private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
     SpriteClass* spriteClassList;
+    CCLayer* scrollContainer;
     CCScrollView* scrollView;
     
     std::vector<bool> selected;

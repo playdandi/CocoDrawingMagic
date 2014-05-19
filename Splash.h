@@ -8,8 +8,9 @@
 #define HTTP_VERSION 0
 #define HTTP_LOGIN 1
 #define HTTP_MYINFO 2
-#define HTTP_FRIENDS 3
-#define HTTP_PROFILE_IMAGE 4
+#define HTTP_REWARDWEELYRANK 3
+#define HTTP_FRIENDS 4
+#define HTTP_PROFILE_IMAGE 5
 
 using namespace cocos2d::extension;
 
@@ -48,6 +49,7 @@ public:
     void XmlParseVersion(char* data, int size);
     void XmlParseLogin(char* data, int size);
     void XmlParseMyInfo(char* data, int size);
+    void XmlParseRewardWeelyRank(char* data, int size);
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
@@ -66,11 +68,6 @@ protected:
     
     int gameVersion; // 새로 받은 게임버전
     
-    //CCSprite* m_pEditNameSprite;
-    CCTextFieldTTF* m_pEditName;
-    //CCEditBox* m_pEditName;
-    //CCLabelTTF* m_pLoadLabel;
-    
     int mKakaoId;
     int mDeviceType;
     int httpStatus;
@@ -83,6 +80,8 @@ private:
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
+    
+    CCTextFieldTTF* m_pEditName;
 };
 
 
