@@ -49,7 +49,7 @@ public:
     void XmlParseVersion(char* data, int size);
     void XmlParseLogin(char* data, int size);
     void XmlParseMyInfo(char* data, int size);
-    void XmlParseRewardWeelyRank(char* data, int size);
+    void XmlParseRewardWeeklyRank(char* data, int size);
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     

@@ -35,6 +35,11 @@ extern std::vector<int> todayCandyKakaoId;
 extern bool isInGame;
 extern int savedTime;
 
+// 주간랭킹 보상 관련 변수
+extern int myRank;
+extern int myLastWeekHighScore;
+extern int rewardType;
+
 using namespace cocos2d;
 
 class Depth
@@ -59,6 +64,8 @@ public:
     static CCSprite* GetProfile(std::string profileUrl);
     CCSprite* GetProfile();
     std::string GetProfileUrl();
+    void SetSpriteNoImage();
+    void SetSprite(CCTexture2D* texture);
 private:
     CCSprite* profile;
     std::string profileUrl;
@@ -230,17 +237,19 @@ private:
 class LastWeeklyRank
 {
 public:
-    LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score);
+    LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score, int isFriend);
     std::string GetNickname();
     std::string GetProfileUrl();
     int GetRank();
     int GetScore();
+    bool IsFriend();
     static void SortByRank();
 private:
     std::string nickname;
     std::string profileUrl;
     int rank;
     int score;
+    bool isFriend;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

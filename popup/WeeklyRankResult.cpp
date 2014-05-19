@@ -80,70 +80,97 @@ void WeeklyRankResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png", ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
     
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-    CCPoint p = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
+    CCPoint p = spriteClass->FindParentCenterPos("button/btn_red.png");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red.png", "0", NULL, 5, 1) );
  
     // 트로피
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon_weekly_rank_trophy.png", ccp(0.5, 0), ccp(winSize.width/2, 750), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-    
-    char name[40], name2[40];
-    
-    // 1등 (프로필사진)
-    sprintf(name, "background/bg_profile_noimage.png1");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5,0.5), ccp(winSize.width/2+5, 1270), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-    p = spriteClass->FindParentCenterPos(name);
-    sprintf(name2, "background/bg_profile.png1");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), p, CCSize(0, 0), name, "0", NULL, 5, 1) );
-    
-    // 2등 (프로필사진)
-    sprintf(name, "background/bg_profile_noimage.png2");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5,0.5), ccp(243, 1145), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-    p = spriteClass->FindParentCenterPos(name);
-    sprintf(name2, "background/bg_profile.png2");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), p, CCSize(0, 0), name, "0", NULL, 5, 1) );
-    
-    // 3등 (프로필사진)
-    sprintf(name, "background/bg_profile_noimage.png3");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5,0.5), ccp(832, 1080), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-    p = spriteClass->FindParentCenterPos(name);
-    sprintf(name2, "background/bg_profile.png3");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), p, CCSize(0, 0), name, "0", NULL, 5, 1) );
     
     // 1,2,3등 등수 icon
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_rank_number_1.png", ccp(0.5,0.5), ccp(winSize.width/2+5, 1030), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_rank_number_2.png", ccp(0.5,0.5), ccp(243, 945), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_rank_number_3.png", ccp(0.5,0.5), ccp(832, 870), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
     
-    // 1등 이름 + 점수배경 + 점수
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("1등한 사람의 이름", fontList[0], 32, ccp(0.5,0.5), ccp(winSize.width/2+5, 1175), ccc3(78,47,8), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png1", ccp(0.5,0.5), ccp(winSize.width/2+5, 1130), CCSize(210, 45), "", "WeeklyRankResult", this, 5, 0, 210) );
-    p = spriteClass->FindParentCenterPos("background/bg_dontknow_1.png1");
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("52,987,090", fontList[0], 30, ccp(0.5,0.5), p, ccc3(255,255,255), "background/bg_dontknow_1.png1", "1", NULL, 5, 1) );
+    char name[40];
     
-    // 2등 이름 + 점수배경 + 점수
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("2등한 사람의 이름", fontList[0], 28, ccp(0.5,0.5), ccp(243, 1052), ccc3(78,47,8), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png2", ccp(0.5,0.5), ccp(243, 1015), CCSize(165, 40), "", "WeeklyRankResult", this, 5, 0, 210) );
-    p = spriteClass->FindParentCenterPos("background/bg_dontknow_1.png2");
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("33,333,333", fontList[0], 27, ccp(0.5,0.5), p, ccc3(255,255,255), "background/bg_dontknow_1.png2", "1", NULL, 5, 1) );
-    
-    // 3등 이름 + 점수배경 + 점수
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("3등한 사람의 이름", fontList[0], 28, ccp(0.5,0.5), ccp(832, 990), ccc3(78,47,8), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png3", ccp(0.5,0.5), ccp(832, 955), CCSize(165, 40), "", "WeeklyRankResult", this, 5, 0, 210) );
-    p = spriteClass->FindParentCenterPos("background/bg_dontknow_1.png3");
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("1,598,006", fontList[0], 27, ccp(0.5,0.5), p, ccc3(255,255,255), "background/bg_dontknow_1.png3", "1", NULL, 5, 1) );
-    
+    std::vector<CCPoint> p1, p2, p3;
+    p1.push_back(ccp(winSize.width/2+5, 1270));
+    p1.push_back(ccp(243, 1145));
+    p1.push_back(ccp(832, 1080));
+    p2.push_back(ccp(winSize.width/2+5, 1175));
+    p2.push_back(ccp(243, 1052));
+    p2.push_back(ccp(832, 990));
+    p3.push_back(ccp(winSize.width/2+5, 1130));
+    p3.push_back(ccp(243, 1015));
+    p3.push_back(ccp(832, 955));
+    std::vector<CCSize> s;
+    s.push_back(CCSize(210, 45));
+    s.push_back(CCSize(165, 40));
+    s.push_back(CCSize(165, 40));
+    for (int i = 0 ; i < 3 && i < lastWeeklyRank.size() ; i++)
+    {
+        if (lastWeeklyRank[i]->GetScore() != -1)
+        {
+            // 프로필 사진
+            if (lastWeeklyRank[i]->GetProfileUrl() != "")
+            {
+                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, ProfileSprite::GetProfile(lastWeeklyRank[i]->GetProfileUrl()), ccp(0.5, 0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 5, 0, 255, 0.85f) );
+                sprintf(name, "background/bg_profile.png%d", i);
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), p1[i], CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
+            }
+            else
+            {
+                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, ProfileSprite::GetProfile(lastWeeklyRank[i]->GetProfileUrl()), ccp(0.5, 0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 5) );
+            }
+            
+            // 이름
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(lastWeeklyRank[i]->GetNickname(), fontList[0], 32, ccp(0.5,0.5), p2[i], ccc3(78,47,8), "", "WeeklyRankResult", this, 5) );
+            sprintf(name, "background/bg_dontknow_1.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0.5,0.5), p3[i], s[i], "", "WeeklyRankResult", this, 5, 0, 210) );
+            p = spriteClass->FindParentCenterPos(name);
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(lastWeeklyRank[i]->GetScore()), fontList[0], 30, ccp(0.5,0.5), p, ccc3(255,255,255), name, "1", NULL, 5, 1) );
+            
+            if (myRank == i+1) // 내 등수가 3등 이내일 경우, 프로필 위치에 이펙트 빔을 쏜다.
+            {
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "effect_beam.png", ccp(0.5,0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 4) );
+                CCFiniteTimeAction* action = CCRotateBy::create(1.0f, 180);
+                CCActionInterval* rep = CCRepeatForever::create((CCActionInterval*)action);
+                ((CCSprite*)spriteClass->FindSpriteByName("effect_beam.png"))->runAction(rep);
+            }
+        }
+    }
     
     // 본인 등수 : 배경 + x위 + 점수
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png1", ccp(0.5, 1), ccp(winSize.width/2, 750), CCSize(750, 105), "", "WeeklyRankResult", this, 5) );
+
+    sprintf(name, "%d위", myRank);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
     
-    // 보상 (opt.) : 배경 + 보상그림 + 보상 숫자
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 1), ccp(winSize.width/2, 750-105-10), CCSize(750, 105), "", "WeeklyRankResult", this, 5) );
+    if (rewardType > 0)
+    {
+        // 보상 (opt.) : 배경 + 보상그림 + 보상 숫자
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 1), ccp(winSize.width/2, 635), CCSize(750, 105), "", "WeeklyRankResult", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0.5, 0.5), ccp(420, 635-52.5f), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
+        int numOfStarCandy;
+        if (rewardType == 1) numOfStarCandy = 10000;
+        else if (rewardType == 2) numOfStarCandy = 7000;
+        else if (rewardType == 3) numOfStarCandy = 5000;
+        else if (rewardType == 4) numOfStarCandy = 3000;
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 635-52.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 635-52.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
+    }
     
-    // 1~3등 중에 내가 있다면, 축하 이펙트 rotation 하기
+    // 1~3등 중에 내가 있다면, 축하 이펙트 rotation 하기 + 색종이 떨어뜨리기
 
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        CCLog("%s", spriteClass->spriteObj[i]->name.c_str());
         spriteClass->AddChild(i);
+    }
 }
 
 
@@ -158,7 +185,7 @@ bool WeeklyRankResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png" ||
-            spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
+            spriteClass->spriteObj[i]->name == "button/btn_red.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {

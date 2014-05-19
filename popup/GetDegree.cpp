@@ -88,9 +88,9 @@ void GetDegree::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("이 시대 최고의 지성, 마법박사!", fontList[0], 64, ccp(0.5,0.5), ccp(winSize.width/2, 900), ccc3(78,47,8), "", "GetDegree", this, 5) );
     
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "GetDegree", this, 5) );
-    CCPoint p = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "GetDegree", this, 5) );
+    CCPoint p = spriteClass->FindParentCenterPos("button/btn_red.png");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red.png", "0", NULL, 5, 1) );
     
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -108,7 +108,7 @@ bool GetDegree::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
+        if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {

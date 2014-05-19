@@ -16,7 +16,6 @@ public:
     static CCScene* scene(int from = -1);
 	
     virtual void onEnter();
-    virtual void onPause();
     virtual void onExit();
     virtual void keyBackClicked();
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);

@@ -29,6 +29,10 @@ std::vector<int> todayCandyKakaoId;
 bool isInGame;
 int savedTime;
 
+int myRank;
+int myLastWeekHighScore;
+int rewardType;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority)
@@ -87,6 +91,16 @@ CCSprite* ProfileSprite::GetProfile()
 std::string ProfileSprite::GetProfileUrl()
 {
     return profileUrl;
+}
+void ProfileSprite::SetSpriteNoImage()
+{
+    this->profile = CCSprite::createWithSpriteFrameName("background/bg_profile_noimage.png");
+    this->profile->retain();
+}
+void ProfileSprite::SetSprite(CCTexture2D* texture)
+{
+    this->profile = new CCSprite();
+    this->profile->initWithTexture(texture);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -553,12 +567,13 @@ int MySkill::GetExp()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LastWeeklyRank::LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score)
+LastWeeklyRank::LastWeeklyRank(std::string nickname, std::string profileUrl, int rank, int score, int isFriend)
 {
     this->nickname = nickname;
     this->profileUrl = profileUrl;
     this->rank = rank;
     this->score = score;
+    this->isFriend = (isFriend == 1);
 }
 std::string LastWeeklyRank::GetNickname()
 {
@@ -567,6 +582,10 @@ std::string LastWeeklyRank::GetNickname()
 std::string LastWeeklyRank::GetProfileUrl()
 {
     return profileUrl;
+}
+bool LastWeeklyRank::IsFriend()
+{
+    return isFriend;
 }
 int LastWeeklyRank::GetRank()
 {

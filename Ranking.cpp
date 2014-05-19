@@ -36,13 +36,8 @@ void Ranking::onEnter()
     if (fromWhere != -1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     
-    //Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
-}
-void Ranking::onPause()
-{
-    //CCLog("Ranking :: onPause");
-    //CCDirector* pDirector = CCDirector::sharedDirector();
-    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    else if (!myInfo->IsWeeklyRankReward())
+        Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onExit()
 {
@@ -472,6 +467,7 @@ void Ranking::MakeScroll()
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(rankNum, fontList[0], 48, ccp(0, 0), ccp(32, 115), ccc3(78,47,8), "", "Layer", profileLayer, 5) );
         }
         
+        /*
         // profile image
         if (friendList[i]->GetImageUrl() != "")
         {
@@ -484,12 +480,25 @@ void Ranking::MakeScroll()
         }
         friendList[i]->GetProfile()->setAnchorPoint(ccp(0, 0));
         profileLayer->addChild(friendList[i]->GetProfile(), 5);
+        */
         
+        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
         if (friendList[i]->GetImageUrl() != "")
         {
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
             sprintf(name, "background/bg_profile.png%d", i);
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
         }
+        else
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
+        }
+        
+        /*if (friendList[i]->GetImageUrl() != "")
+        {
+            sprintf(name, "background/bg_profile.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+        }*/
         
         // user name
         friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));

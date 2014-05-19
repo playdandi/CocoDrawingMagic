@@ -766,7 +766,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
         
         char temp[50];
         std::string url;
-        /*if (isWeeklyRankReward == 0 && lastWeeklyHighScore != -1)
+        if (isWeeklyRankReward == 0 && lastWeeklyHighScore != -1)
         {
             // 저번주 주간랭킹 결과 불러온다.
             m_pMsgLabel->setString("지난 주 상이 있는지 힐끔 바라보는 중...");
@@ -775,7 +775,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
             url += temp;
         }
         else
-        {*/
+        {
             // 친구 리스트 정보를 받는다.
             m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
             url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
@@ -783,7 +783,7 @@ void Splash::XmlParseMyInfo(char *data, int size)
             url += temp;
             
             httpStatus++;
-        //}
+        }
         
         CCLog("url = %s", url.c_str());
         CCHttpRequest* req = new CCHttpRequest();
@@ -800,9 +800,8 @@ void Splash::XmlParseMyInfo(char *data, int size)
     }
 }
 
-void Splash::XmlParseRewardWeelyRank(char* data, int size)
+void Splash::XmlParseRewardWeeklyRank(char* data, int size)
 {
-    /*
     // xml parsing
     xml_document xmlDoc;
     xml_parse_result result = xmlDoc.load_buffer(data, size);
@@ -819,28 +818,51 @@ void Splash::XmlParseRewardWeelyRank(char* data, int size)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        int nodeResult.child("my-rank").attribute("")
+        myRank = nodeResult.child("my-rank").attribute("rank").as_int();
+        myLastWeekHighScore = nodeResult.child("my-rank").attribute("last-week-high-score").as_int();
+        rewardType = nodeResult.child("my-rank").attribute("reward-type").as_int();
         
-        weeklyRank
-     
-
-     <my-rank rank="2" last-week-high-score="35658" reward-type="2" />
-     <friend-rank-list>
-     <friend nick-name="jwmoon" profile-url="http://14.63.225.203/resource/profile_img_jwmoon.png" rank="1" last-week-high-score="142996" is-friend="1" />
-     <friend nick-name="ijpark" profile-url="http://14.63.225.203/resource/profile_img_ijpark.png" rank="2" last-week-high-score="35658" is-friend="0" />
-     <friend nick-name="yjjung" profile-url="http://14.63.225.203/resource/profile_img_yjjung.png" rank="3" last-week-high-score="5630" is-friend="1" />
-     <friend nick-name="user_6" profile-url="" rank="4" last-week-high-score="-1" is-friend="1" />
-     <friend nick-name="user_4" profile-url="" rank="5" last-week-high-score="-1" is-friend="1" />
-     <friend nick-name="user_5" profile-url="" rank="6" last-week-high-score="-1" is-friend="1" />
-     </friend-rank-list>
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("friend-rank-list").children("friend");
+        std::string nickname, profileUrl;
+        int rank, lastWeekHighScore, isFriend;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "nick-name") nickname = ait->as_string();
+                else if (name == "profile-url") profileUrl = ait->as_string();
+                else if (name == "rank") rank = ait->as_int();
+                else if (name == "last-week-high-score") lastWeekHighScore = ait->as_int();
+                else if (name == "is-friend") isFriend = ait->as_int();
+            }
+            lastWeeklyRank.push_back( new LastWeeklyRank(nickname, profileUrl, rank, lastWeekHighScore, isFriend) );
+            if (ProfileSprite::GetProfile(profileUrl) == NULL) // 프로필 sprite에 모은다.
+                profiles.push_back( new ProfileSprite(profileUrl) );
+        }
+        
+        char temp[50];
+        // 친구 리스트 정보를 받는다.
+        m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
+        std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+        sprintf(temp, "kakao_id=%d", mKakaoId);
+        url += temp;
+        CCLog("url = %s", url.c_str());
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
     }
     else
     {
         if (code == 10) CCLog("Splash : 지난 주 게임 전혀 하지 않음.");
         else if (code == 11) CCLog("Splash : 지난 주 점수 업데이트가 되어있지 않음.");
-        // 재부팅합시다.
+        // 10, 11은 재부팅합시다.
+        else if (code == 12) CCLog("Splash : 이미 보상을 받은 경우");
+        else CCLog("failed code = %d", code);
     }
-    */
 }
 
 void Splash::XmlParseFriends(char* data, int size)
@@ -861,7 +883,7 @@ void Splash::XmlParseFriends(char* data, int size)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        profileCnt = 0;
+        //profileCnt = 0;
         
         int kakaoId;
         std::string nickname;
@@ -912,28 +934,48 @@ void Splash::XmlParseFriends(char* data, int size)
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
             
+            if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
+                profiles.push_back( new ProfileSprite(imageUrl) );
+            /*
             // profile이 없으면 미리 NOIMAGE sprite를 만든다.
             if (imageUrl == "")
             {
-                profileCnt++;
+                //profileCnt++;
                 friendList[(int)friendList.size()-1]->SetSprite();
             }
+            else
+            {
+                if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
+                    profiles.push_back( new ProfileSprite(imageUrl) );
+            }
+            */
         }
-        
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
         
+        
         // get image by url (다 받으면 Ranking으로 넘어간다)
+        profileCnt = 0;
         m_pMsgLabel->setString("친구의 못생긴 얼굴 지적하는 중...");
         char tag[5];
-        for (int i = 0 ; i < friendList.size() ; i++)
+        //for (int i = 0 ; i < friendList.size() ; i++)
+        for (int i = 0 ; i < profiles.size() ; i++)
         {
-            CCLog("sorted : %d", friendList[i]->GetKakaoId());
-            if (friendList[i]->GetImageUrl() != "")
+            if (profiles[i]->GetProfileUrl() == "")
+            {
+                profiles[i]->SetSpriteNoImage();
+                profileCnt++;
+            }
+        }
+        for (int i = 0 ; i < profiles.size() ; i++)
+        {
+            //if (friendList[i]->GetImageUrl() != "")
+            if (profiles[i]->GetProfileUrl() != "")
             {
                 // get profile image sprite from URL
                 CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(friendList[i]->GetImageUrl().c_str());
+                //req->setUrl(friendList[i]->GetImageUrl().c_str());
+                req->setUrl(profiles[i]->GetProfileUrl().c_str());
                 req->setRequestType(CCHttpRequest::kHttpGet);
                 req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
                 sprintf(tag, "%d", i);
@@ -986,11 +1028,10 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
         case HTTP_MYINFO:
             XmlParseMyInfo(dumpData, buffer->size()); break;
         case HTTP_REWARDWEELYRANK:
-            XmlParseRewardWeelyRank(dumpData, buffer->size()); break;
+            XmlParseRewardWeeklyRank(dumpData, buffer->size()); break;
         case HTTP_FRIENDS:
             XmlParseFriends(dumpData, buffer->size()); break;
         default:
-            profileCnt++;
             // make texture2D
             CCImage* img = new CCImage;
             img->initWithImageData(dumpData, buffer->size());
@@ -999,9 +1040,12 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             
             // set CCSprite
             int index = atoi(res->getHttpRequest()->getTag());
-            friendList[index]->SetSprite(texture);
+            profiles[index]->SetSprite(texture);
+            //friendList[index]->SetSprite(texture);
             
-            if (profileCnt == (int)friendList.size())
+            //if (profileCnt == (int)friendList.size())
+            profileCnt++;
+            if (profileCnt == (int)profiles.size())
             {
                 // 1) 로고랑 글자를 없앤다.
                 // 2) 배경화면 축소하면서 Ranking 시작.
