@@ -524,7 +524,10 @@ void Message::XmlParseMsg(char* data, int size)
         bool flag = true;
         for (int i = 0 ; i < msgData.size() ; i++)
         {
-            if (ProfileSprite::GetProfile(msgData[i]->GetProfileUrl()) == NULL && msgData[i]->GetProfileUrl() != "coco_image")
+            if (ProfileSprite::GetProfile(msgData[i]->GetProfileUrl()) == NULL &&
+                msgData[i]->GetProfileUrl() != "COCO_IMG" &&
+                msgData[i]->GetProfileUrl() != "PET_IMG_MEDAL" &&
+                msgData[i]->GetProfileUrl() != "PET_IMG_NOMEDAL")
             {
                 flag = false;
                 profiles.push_back( new ProfileSprite(msgData[i]->GetProfileUrl()) );

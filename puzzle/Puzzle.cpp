@@ -1503,6 +1503,34 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     }
 }
 
+void Puzzle::CancelDrawing()
+{
+    int x, y;
+    for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
+    {
+        x = (int)piece8xy[touch_cnt%QUEUE_CNT][i].x;
+        y = (int)piece8xy[touch_cnt%QUEUE_CNT][i].y;
+        spriteP8[x][y]->setScale(spriteP8[x][y]->getScale() / 0.9f);
+        spriteP8[x][y]->setOpacity(255);
+        // lock도 해제
+        m_bLockP8[x][y]--;
+    }
+    for (int i = 0 ; i < piece4xy[touch_cnt%QUEUE_CNT].size() ; i++)
+    {
+        x = (int)piece4xy[touch_cnt%QUEUE_CNT][i].x;
+        y = (int)piece4xy[touch_cnt%QUEUE_CNT][i].y;
+        puzzleP4set->SetOpacity(x, y, 255);
+    }
+    for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
+        strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
+    
+    piece8xy[touch_cnt%QUEUE_CNT].clear();
+    piece4xy[touch_cnt%QUEUE_CNT].clear();
+    strap[touch_cnt%QUEUE_CNT].clear();
+    m_bTouchStarted = false;
+    m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
+}
+
 void Puzzle::InvokeSkills(int queue_pos)
 {
     // ------- 순서도 ------- //
@@ -1973,7 +2001,6 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
     m_iFallingCallbackCnt++;
     if (xx != -1) m_iFallingCallbackCnt_E8[xx]++;
     
-    //CCLog("%d  %d %d", xx, m_iFallingCallbackCnt, m_numOfFallingObjects);
 	if ((xx == -1 && m_numOfFallingObjects == m_iFallingCallbackCnt) ||
         (xx != -1 && m_numOfFallingObjects_E8[xx] == m_iFallingCallbackCnt_E8[xx]))
 	{
@@ -2025,7 +2052,7 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
             if (skill->E8_IsFinished())
             {
                 m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
-                CCLog("Falling callback (%d) - 다음 스킬 [고대나무] : %d", queue, m_iState[(int)queue_pos]);
+                CCLog("Falling callback (%d) - 다음 스킬 [고대나무 끝났음] : %d", queue, m_iState[(int)queue_pos]);
                 InvokeSkills((int)queue_pos);
             }
             return;

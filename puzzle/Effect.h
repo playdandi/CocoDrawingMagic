@@ -58,6 +58,7 @@ public:
     void Effect23_Callback(CCNode* sender, void* pointer);
     void Effect23_Bomb(int x);
     void Effect23_Clear();
+    void Effect23_Clear_Callback(CCNode* sender, void* pointer);
     
     void PlayEffect_6(int num); // F7 : 코코 변신 + 코코 주위 링
     void PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt); // F7 : 불 이펙트

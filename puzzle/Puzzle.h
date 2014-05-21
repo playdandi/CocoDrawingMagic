@@ -73,6 +73,7 @@ public:
     CCPoint SetPiece8Position(int x, int y);
     CCPoint SetPiece4Position(int x, int y);
     
+    void CancelDrawing();
     void InvokeSkills(int queue_pos);
     void Lock(int queue_pos);
     void LockEach(int x, int y);

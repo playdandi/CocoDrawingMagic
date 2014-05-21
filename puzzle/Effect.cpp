@@ -971,9 +971,16 @@ void Effect::Effect23_Bomb(int x)
 
 void Effect::Effect23_Clear()
 {
-    A8_icon->removeFromParentAndCleanup(true);
     m_W8_bg->setDuration(0.1f);
     m_W8_bg->setAutoRemoveOnFinish(true);
+    //A8_icon->removeFromParentAndCleanup(true);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.7f, ccp(0, -100)), CCFadeOut::create(0.7f), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect23_Clear_Callback), this), NULL);
+    A8_icon->runAction(action);
+}
+void Effect::Effect23_Clear_Callback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
 }
 
 

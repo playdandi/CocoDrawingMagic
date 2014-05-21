@@ -101,7 +101,7 @@ void NoImage::InitSprites()
     // text (각 팝업 상황에 맞는 문구를 만들어 출력한다)
     int deltaX = 0;
     CCPoint deltaSize = ccp(0, 0);
-    char text[150], cost[10];
+    char text[250], cost[10];
     switch (type)
     {
         case YOU_WERE_BLOCKED:
@@ -240,6 +240,27 @@ void NoImage::InitSprites()
             sprintf(text, "토파즈를 성공적으로 요청하였습니다."); break;
         case REQUEST_TOPAZ_NO_FRIEND:
             sprintf(text, "친구가 아닙니다."); break;
+        case TODAYCANDY_RESULT_WIN:
+            char present[15];
+            switch (myInfo->GetTodayCandyType())
+            {
+                case 1: sprintf(present, "별사탕"); break;
+                case 2: sprintf(present, "토파즈"); break;
+                case 3: sprintf(present, "포션"); break;
+            }
+            sprintf(text, "축하합니다! 오늘의 별사탕에 당첨되셨어요! %s %d개를 지급해 드렸습니다. 참가한 친구들에게는 %s %d개를 보냈습니다.", present, myInfo->GetTodayCandyValueChoice(), present, myInfo->GetTodayCandyValueMiss());
+            break;
+        case TODAYCANDY_RESULT_LOSE:
+            switch (myInfo->GetTodayCandyType())
+            {
+                case 1: sprintf(present, "별사탕"); break;
+                case 2: sprintf(present, "토파즈"); break;
+                case 3: sprintf(present, "포션"); break;
+            }
+            sprintf(text, "참가상으로 %s %d개를 지급해 드렸습니다! 오늘은 \"%s\"님이 당첨되어 %s %d개를 보냈습니다. 카카오톡 메시지를 전달하시겠습니까?", present, myInfo->GetTodayCandyValueMiss(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
+            break;
+        case TODAYCANDY_ALREADY_DONE:
+            sprintf(text, "오늘은 이미 완료한 상태입니다."); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     

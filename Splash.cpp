@@ -713,6 +713,9 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
         myInfo->SetProfileSkill(profileSkillId, profileSkillLv);
         
+        // LOGIN 프로토콜에서 받았던 session id 저장.
+        myInfo->SetSessionId(sessionId);
+        
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-slot").children("slot");
         int id, csi, usi;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
@@ -764,6 +767,12 @@ void Splash::XmlParseMyInfo(char *data, int size)
         }
         myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
         
+        // 오늘의 별사탕 관련 정보
+        int todayCandyType = nodeResult.child("today-starcandy-info").attribute("type").as_int();
+        int todayCandyValueChoice = nodeResult.child("today-starcandy-info").attribute("value-choice").as_int();
+        int todayCandyValueMiss = nodeResult.child("today-starcandy-info").attribute("value-miss").as_int();
+        int istodayCandyUsed = nodeResult.child("today-starcandy-info").attribute("today-use").as_int();
+        myInfo->SetTodayCandy(todayCandyType, todayCandyValueChoice, todayCandyValueMiss, istodayCandyUsed);
         
         char temp[50];
         std::string url;
@@ -1000,6 +1009,19 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     {
         WriteResFile(dumpData, (int)buffer->size());
         return;
+    }
+    
+    // LOGIN 프로토콜 응답의 경우, response header에 있는 set-cookie의 session 값을 들고온다.
+    if (httpStatus == HTTP_LOGIN)
+    {
+        std::string ss = "";
+        std::vector<char> *buffer2 = res->getResponseHeader();
+        for (unsigned int i = 0 ; i < buffer2->size() ; i++)
+            ss += (*buffer2)[i];
+        int pos = ss.find("Set-Cookie:");
+        ss = ss.substr(pos+12, ss.size()-1);
+        ss = ss.substr( ss.find("PS=")+3, ss.find("; path=")-3 );
+        sessionId = ss;
     }
     
     // parse xml data

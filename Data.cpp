@@ -154,6 +154,14 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->propertyMaster = (master == 1);
 }
 
+void MyInfo::SetSessionId(std::string sessionId)
+{
+    this->mySessionId = sessionId;
+}
+std::string MyInfo::GetSessionId()
+{
+    return mySessionId;
+}
 CCSprite* MyInfo::GetProfile()
 {
     for (int i = 0 ; i < friendList.size() ; i++)
@@ -408,6 +416,30 @@ int MyInfo::GetPracticeSkillId()
 int MyInfo::GetPracticeSkillLv()
 {
     return practiceSkillLv;
+}
+
+void MyInfo::SetTodayCandy(int todayCandyType, int todayCandyValueChoice, int todayCandyValueMiss, int istodayCandyUsed)
+{
+    this->todayCandyType = todayCandyType;
+    this->todayCandyValueChoice = todayCandyValueChoice;
+    this->todayCandyValueMiss = todayCandyValueMiss;
+    this->istodayCandyUsed = (istodayCandyUsed == 1);
+}
+int MyInfo::GetTodayCandyType()
+{
+    return todayCandyType;
+}
+int MyInfo::GetTodayCandyValueChoice()
+{
+    return todayCandyValueChoice;
+}
+int MyInfo::GetTodayCandyValueMiss()
+{
+    return todayCandyValueMiss;
+}
+bool MyInfo::IsTodayCandyUsed()
+{
+    return istodayCandyUsed;
 }
 
 void MyInfo::AddSkillSlot(int id, int csi, int usi)

@@ -74,6 +74,8 @@ protected:
     int profileCntTotal;
     int profileCnt;
     
+    std::string sessionId;
+    
 private:
     CCSprite* m_pBackground;
     CCSprite* m_pTitle;

@@ -49,6 +49,7 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFairyList(char* data, int size);
+    void XmlParseTodayCandy(char* data, int size);
     
 protected:
     CCSize winSize;

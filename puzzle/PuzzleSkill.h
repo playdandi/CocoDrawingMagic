@@ -64,6 +64,7 @@ public:
     bool W8_IsActive();
     void W8_Invoke(std::vector<CCPoint> pos, int queue_pos);
     void W8_Callback(CCNode* sender, void* data);
+    void W8_LastChange();
     
     void E3(int num);
     void E4(int num, int queue_pos);
@@ -146,6 +147,7 @@ private:
     int W8_accelTime;
     int W8_accel;
     int W8_callbackCnt;
+    bool W8_isLastChange;
     
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -161,15 +163,19 @@ private:
     
     bool E7_getPotion;
     
+    int E8_prob[5];
     bool E8_isActive;
-    std::queue<int> E8_lineIdx;
-    int E8_activeCnt;
+    //std::queue<int> E8_lineIdx;
+    std::vector<int> E8_lineIdx;
+    std::vector<int> E8_lineDepth;
+    //int E8_activeCnt;
+    int E8_endCnt;
     int E8_cnt;
-    bool E8_check[COLUMN_COUNT];
+    //bool E8_check[COLUMN_COUNT];
     int E8_bottomY[COLUMN_COUNT];
     int E8_bombCallbackCnt[COLUMN_COUNT];
     int E8_curY[COLUMN_COUNT];
-    int E8_maxScheduleCnt;
+    //int E8_maxScheduleCnt;
     
     ////////////////////////////////////////////////////////////////////////////////////
     

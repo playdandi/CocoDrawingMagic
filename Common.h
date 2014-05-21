@@ -124,6 +124,10 @@ USING_NS_CC;
 #define REQUEST_TOPAZ_OK 67
 #define REQUEST_TOPAZ_NO_FRIEND 68
 #define REQUEST_TOPAZ_EARLY 69
+#define TODAYCANDY_RESULT_WIN 70
+#define TODAYCANDY_RESULT_LOSE 71
+#define TODAYCANDY_ALREADY_DONE 72
+
 
 using namespace cocos2d;
 using namespace cocos2d::extension;

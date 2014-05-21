@@ -662,12 +662,6 @@ void CocoRoom::MakeSpritesCandy()
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_fairy_select.png",
                 ccp(0.5, 0), ccp(spriteClassCandy->spriteObj[spriteClassCandy->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     
-    // 보상 설명 부분
-    spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png",
-                        ccp(0, 0), ccp(350, 300), CCSize(0, 0), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("오늘의 보상 :", fontList[0], 36, ccp(0, 0), ccp(110, 330), ccc3(78,47,8), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("x 500", fontList[0], 36, ccp(0, 0), ccp(450, 320), ccc3(78,47,8), "", "Layer", candy, 5) );
-    spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("친구와 함께 보상을 받으세요!", fontList[0], 36, ccp(0, 0), ccp(240, 250), ccc3(255,255,255), "", "Layer", candy, 5) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("친구목록", fontList[0], 36, ccp(0, 0), ccp(870, 247), ccc3(255,255,255), "", "Layer", candy, 5) );
     
     for (int i = 0 ; i < spriteClassCandy->spriteObj.size() ; i++)
@@ -717,6 +711,31 @@ void CocoRoom::SetTodayCandyList()
         }
     }
     pos.clear();
+    
+    
+    // 보상 설명 부분
+    if (myInfo->IsTodayCandyUsed())
+    {
+        spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabelArea("오늘의 별사탕을 이미 실행하였습니다. 매일 오전 3시에 초기화됩니다.", fontList[0], 36, ccp(0.5, 0.5), ccp(77+782/2, 228+177/2), ccc3(78,47,8), CCSize(582, 147), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", candy, 5) );
+        //ccp(77, 228), CCSize(782, 177)
+    }
+    else
+    {
+        if (myInfo->GetTodayCandyType() == 1)
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0, 0), ccp(350, 300), CCSize(0, 0), "", "Layer", candy, 5) );
+        else if (myInfo->GetTodayCandyType() == 2)
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0, 0), ccp(350, 300), CCSize(0, 0), "", "Layer", candy, 5) );
+        else if (myInfo->GetTodayCandyType() == 3)
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion.png", ccp(0, 0), ccp(350, 300), CCSize(0, 0), "", "Layer", candy, 5) );
+        
+        spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabel("오늘의 보상 :", fontList[0], 36, ccp(0, 0), ccp(110, 330-15), ccc3(78,47,8), "", "Layer", candy, 5) );
+        
+        char name[40];
+        sprintf(name, "x %d  (참가상 = x %d)", myInfo->GetTodayCandyValueChoice(), myInfo->GetTodayCandyValueMiss());
+        spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(440, 320), ccc3(78,47,8), "", "Layer", candy, 5) );
+        
+        spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabel("친구와 함께 보상을 받으세요!", fontList[0], 36, ccp(0, 0), ccp(240, 250), ccc3(255,255,255), "", "Layer", candy, 5) );
+    }
     
     for (int i = 0 ; i < spriteClassCandyList->spriteObj.size() ; i++)
         spriteClassCandyList->AddChild(i);
@@ -787,6 +806,7 @@ void CocoRoom::MakeScrollFairy()
 
 void CocoRoom::DecideUser()
 {
+    /*
     CCSprite* pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
     pBlack->setPosition(ccp(0, 0));
     pBlack->setAnchorPoint(ccp(0, 0));
@@ -822,6 +842,7 @@ void CocoRoom::DecideUser()
     
     CCActionInterval* action2 = CCMoveBy::create(3.0f, ccp(0, 330));
     candyFairy->runAction(action2);
+    */
 }
 void CocoRoom::Callback(CCNode* sender, void* data)
 {
@@ -989,7 +1010,36 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 
                 if (flag)
-                    DecideUser(); // 요정 랜덤 고르기 시작
+                {
+                    if (myInfo->IsTodayCandyUsed())
+                    {
+                        std::vector<int> nullData;
+                        Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_ALREADY_DONE, BTN_1, nullData);
+                    }
+                    else
+                    {
+                        //DecideUser(); // 요정 랜덤 고르기 시작
+                        char temp[150];
+                        //http://14.63.225.203/cogma/game/today_starcandy.php?kakao_id=1000&friend_kakao_id_1=1001&friend_kakao_id_2=1002&friend_kakao_id_3=1003&friend_kakao_id_4=1004
+                        std::string url = "http://14.63.225.203/cogma/game/today_starcandy.php?";
+                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        url += temp;
+                        for (int i = 1 ; i < 5 ; i++)
+                        {
+                            sprintf(temp, "friend_kakao_id_%d=%d&", i, todayCandyKakaoId[i]);
+                            url += temp;
+                        }
+                        url = url.substr(0, url.size()-1);
+                        CCLog("url = %s", url.c_str());
+                        
+                        CCHttpRequest* req = new CCHttpRequest();
+                        req->setUrl(url.c_str());
+                        req->setRequestType(CCHttpRequest::kHttpPost);
+                        req->setResponseCallback(this, httpresponse_selector(CocoRoom::onHttpRequestCompleted));
+                        CCHttpClient::getInstance()->send(req);
+                        req->release();
+                    }
+                }
                 else
                     Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
                 
@@ -1148,6 +1198,8 @@ void CocoRoom::onHttpRequestCompleted(CCNode *sender, void *data)
     
     if (curState == 2)
         XmlParseFairyList(dumpData, (int)buffer->size());
+    else if (curState == 3)
+        XmlParseTodayCandy(dumpData, (int)buffer->size());
 }
 
 void CocoRoom::XmlParseFairyList(char* data, int size)
@@ -1195,5 +1247,43 @@ void CocoRoom::XmlParseFairyList(char* data, int size)
     else
     {
         CCLog("XmlParseFairyList : failed code = %d", code);
+    }
+}
+
+void CocoRoom::XmlParseTodayCandy(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_int();
+        
+        std::vector<int> data;
+        data.push_back(selectedKakaoId);
+        if (selectedKakaoId == myInfo->GetKakaoId())
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_WIN, BTN_1, data);
+        else
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_LOSE, BTN_2, data);
+        
+        myInfo->SetTodayCandy(0, 0, 0, 1);
+    }
+    else
+    {
+        CCLog("XmlParseTodayCandy : failed code = %d", code);
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_ALREADY_DONE, BTN_1, nullData);
+        // code = 10 : 오늘 이미 오.별 이용했음. (팝업창 띄우기)
     }
 }

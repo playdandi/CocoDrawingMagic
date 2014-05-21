@@ -81,6 +81,8 @@ public:
     void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
     
+    std::string GetSessionId();
+    void SetSessionId(std::string sessionId);
     static CCSprite* GetProfile();
     static std::string GetName();
     int GetDeviceType();
@@ -134,6 +136,12 @@ public:
     int GetPracticeSkillId();
     int GetPracticeSkillLv();
     
+    void SetTodayCandy(int todayCandyType, int todayCandyValueChoice, int todayCandyValueMiss, int istodayCandyUsed);
+    int GetTodayCandyType();
+    int GetTodayCandyValueChoice();
+    int GetTodayCandyValueMiss();
+    bool IsTodayCandyUsed();
+    
     void AddSkillSlot(int id, int csi, int usi);
     void AddFairy(int cfi, int ufi, int level, int isUse);
     void AddSkill(int csi, int usi, int level, int exp);
@@ -151,6 +159,8 @@ public:
     void ClearSkillSlot();
 
 private:
+    std::string mySessionId;
+    
     bool settingKakaoMsg;
     bool settingPushNoti;
     bool settingPotionMsg;
@@ -188,6 +198,11 @@ private:
     int profileSkillLv;
     int practiceSkillId;
     int practiceSkillLv;
+    
+    int todayCandyType;
+    int todayCandyValueChoice;
+    int todayCandyValueMiss;
+    bool istodayCandyUsed;
     
     std::vector<class MySkillSlot*> mySkillSlot;
     std::vector<class MyFairy*> myFairy;
