@@ -39,7 +39,7 @@ bool DegreeInfo::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("DegreeInfo");
+    Depth::AddCurDepth("DegreeInfo", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -145,7 +145,6 @@ void DegreeInfo::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

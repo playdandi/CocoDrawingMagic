@@ -64,7 +64,7 @@ bool Sketchbook::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("Sketchbook");
+    Depth::AddCurDepth("Sketchbook", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

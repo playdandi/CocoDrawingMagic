@@ -43,7 +43,7 @@ bool BuyPotion::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("BuyPotion");
+    Depth::AddCurDepth("BuyPotion", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

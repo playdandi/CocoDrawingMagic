@@ -109,20 +109,22 @@ void RankUp::InitSprites()
     pos.push_back(ccp(797, 870));
     pos.push_back(ccp(495, 747));
     pos.push_back(ccp(243, 650));
-    for (int i = myRank ; i <= myRank+2 ; i++)
+    for (int i = myRank ; i <= myRank+2 && i < friendList.size(); i++)
     {
-        if (i < friendList.size())
+        // 프로필 이미지
+        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
+        if (friendList[i]->GetImageUrl() != "")
         {
-            if (friendList[i]->GetImageUrl() != "")
-            {
-                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0.5,0.5), pos[i-myRank], CCSize(0,0), "", "RankUp", this, 5, 0, 255, 0.85f, i) );
-                sprintf(name, "bg_profile.png%d", i);
-                spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5,0.5), pos[i-myRank], CCSize(0, 0), "", "RankUp", this, 6, 1, 255, i*10) );
-            }
-            else
-                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0.5,0.5), pos[i-myRank], CCSize(0, 0), "", "RankUp", this, 5, 0, 255, 1.0f, i) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), pos[i-myRank], CCSize(0,0), "", "RankUp", this, 5, 0, 255, 0.85f, i) );
+            sprintf(name, "bg_profile.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos[i-myRank], CCSize(0, 0), "", "RankUp", this, 6, 1, 255, i+10000) );
+        }
+        else
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), pos[i-myRank], CCSize(0,0), "", "RankUp", this, 5, 0, 255, 1.0f, i) );
         }
         
+        // 이동 액션
         CCActionInterval* action;
         if (i == myRank)
             action = CCSequence::create(CCMoveTo::create(1.5f, pos[i-myRank+1]), NULL);
@@ -131,7 +133,7 @@ void RankUp::InitSprites()
         
         ((CCSprite*)spriteClass->FindSpriteByTag(i))->runAction(action);
         if (friendList[i]->GetImageUrl() != "")
-            ((CCSprite*)spriteClass->FindSpriteByTag(i*10))->runAction((CCActionInterval*)action->copy()->autorelease());
+            ((CCSprite*)spriteClass->FindSpriteByTag(i+10000))->runAction((CCActionInterval*)action->copy()->autorelease());
     }
     
     

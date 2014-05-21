@@ -68,7 +68,7 @@ bool Ranking::init()
     
     // make depth tree (처음 시작이니까 clear하고 진행)
     Depth::ClearDepth();
-    Depth::AddCurDepth("Ranking");
+    Depth::AddCurDepth("Ranking", this);
     
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
@@ -166,14 +166,16 @@ void Ranking::RenewAllTime()
     int remainWeeklyRankTime = myInfo->GetRemainWeeklyRankTimeInt() - deltaTime;
     myInfo->SetRemainWeeklyRankTime(std::max(remainWeeklyRankTime, 0));
     
-    // 각 친구마다 포션 전송 남은시간 갱신
-    int remainRequestPotionTime;
+    // 각 친구마다 포션 전송 남은시간 + 포션 요청 남은시간 + 토파즈 요청 남은시간 갱신
+    int remainRequestPotionTime, remainRequestTopazTime;
     for (int i = 0 ; i < friendList.size() ; i++)
     {
         remainPotionTime = friendList[i]->GetRemainPotionTime() - deltaTime;
         remainRequestPotionTime = friendList[i]->GetRemainRequestPotionTime() - deltaTime;
+        remainRequestTopazTime = friendList[i]->GetRemainRequestTopazTime() - deltaTime;
         friendList[i]->SetRemainPotionTime(std::max(remainPotionTime, 0));
         friendList[i]->SetRemainRequestPotionTime(std::max(remainRequestPotionTime, 0));
+        friendList[i]->SetRemainRequestTopazTime(std::max(remainRequestTopazTime, 0));
     }
 }
 
@@ -467,21 +469,7 @@ void Ranking::MakeScroll()
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(rankNum, fontList[0], 48, ccp(0, 0), ccp(32, 115), ccc3(78,47,8), "", "Layer", profileLayer, 5) );
         }
         
-        /*
-        // profile image
-        if (friendList[i]->GetImageUrl() != "")
-        {
-            friendList[i]->GetProfile()->setScale(0.85f);
-            friendList[i]->GetProfile()->setPosition(ccp(102+5, 36+10));
-        }
-        else
-        {
-            friendList[i]->GetProfile()->setPosition(ccp(102, 36));
-        }
-        friendList[i]->GetProfile()->setAnchorPoint(ccp(0, 0));
-        profileLayer->addChild(friendList[i]->GetProfile(), 5);
-        */
-        
+        // 프로필 이미지
         CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
         if (friendList[i]->GetImageUrl() != "")
         {
@@ -493,12 +481,9 @@ void Ranking::MakeScroll()
         {
             spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
         }
+        // 친구리스트에 포인터 저장.
+        friendList[i]->SetProfile( spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite );
         
-        /*if (friendList[i]->GetImageUrl() != "")
-        {
-            sprintf(name, "background/bg_profile.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
-        }*/
         
         // user name
         friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));
@@ -585,6 +570,11 @@ void Ranking::PotionTimer(float f)
     
     for (int i = 0 ; i < friendList.size() ; i++)
     {
+        // remain request topaz time
+        remainTime = friendList[i]->GetRemainRequestTopazTime();
+        if (remainTime > 0)
+            friendList[i]->SetRemainRequestTopazTime(remainTime-1);
+        
         // remain request potion time
         remainTime = friendList[i]->GetRemainRequestPotionTime();
         if (remainTime > 0)
@@ -811,7 +801,8 @@ void Ranking::EndScene()
     scrollView->removeAllChildren();
     scrollView->removeFromParent();
     
-    pBlack->removeFromParentAndCleanup(true);
+    if (!isRebooting)
+        pBlack->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
@@ -826,7 +817,8 @@ void Ranking::EndScene()
     savedTime = time(0);
     isInGame = true;
     
-    Common::ShowNextScene(this, "Ranking", "Loading", true);
+    if (!isRebooting)
+        Common::ShowNextScene(this, "Ranking", "Loading", true);
 }
 
 

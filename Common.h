@@ -26,7 +26,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 1
+#define PUZZLE_TIME 60
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
@@ -121,7 +121,9 @@ USING_NS_CC;
 #define REQUEST_POTION_REJECT 64
 #define REQUEST_POTION_EARLY 65
 #define MESSAGE_OK_POTION_REQUEST 66
-
+#define REQUEST_TOPAZ_OK 67
+#define REQUEST_TOPAZ_NO_FRIEND 68
+#define REQUEST_TOPAZ_EARLY 69
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -148,6 +150,7 @@ public:
     static CCLayer* MakeItemNumberLayer(std::string number);
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int priority = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
+    static void RebootSystem(void* p);
 };
 
 

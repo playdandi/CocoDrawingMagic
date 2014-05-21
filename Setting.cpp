@@ -41,7 +41,7 @@ bool Setting::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("Setting");
+    Depth::AddCurDepth("Setting", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -92,9 +92,9 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
                     ccp(0, 0), ccp(75, 492+270), CCSize(929, 904-270), "", "Setting", this, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", // ver
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png2", // ver
                     ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Setting", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", // id
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png3", // id
                     ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Setting", this, 1) );
 
     

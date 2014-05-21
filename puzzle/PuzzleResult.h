@@ -25,7 +25,7 @@ public:
     void InitSprites();
     
     void EndScene();
-    void EndSceneCallback();
+    void EndSceneCallback(CCNode* sender, void* pointer);
     
     CCSize m_winSize;
     

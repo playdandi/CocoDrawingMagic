@@ -42,7 +42,7 @@ bool CocoRoomTodayCandy::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("CocoRoomTodayCandy");
+    Depth::AddCurDepth("CocoRoomTodayCandy", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -110,7 +110,8 @@ void CocoRoomTodayCandy::InitSprites()
     
     
     // bottom 5 profile 중에 내 프로필
-    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+5), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
+    
+    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
     
     // bottom button
@@ -148,18 +149,19 @@ void CocoRoomTodayCandy::MakeScroll()
         spriteClass->layers.push_back(itemLayer);
         height++;
         
-        // profile bg
+        // 프로필 이미지
+        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
         if (friendList[i]->GetImageUrl() != "")
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(50, 46), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(50+5, 46+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
             sprintf(fname, "background/bg_profile.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(50, 46), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
         else
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(50, 46), CCSize(0,0), "", "Layer", itemLayer, 3) );
         }
-        
+    
         // name (text)
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
@@ -247,7 +249,7 @@ void CocoRoomTodayCandy::RefreshTodayCandyList(int idx)
 void CocoRoomTodayCandy::RefreshProfileList()
 {
     spriteClassList->RemoveAllObjects();
-    
+
     char name[50];
     int cnt = 0;
     // 화면 아래에 있는 list 갱신
@@ -255,16 +257,18 @@ void CocoRoomTodayCandy::RefreshProfileList()
     {
         if (selected[i])
         {
+            CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
             if (friendList[i]->GetImageUrl() != "")
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(229+cnt*130+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
                 sprintf(name, "background/bg_profile.png%d", cnt);
-                spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(229+cnt*130, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+                spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
             }
             else
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(229+cnt*130, 254), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5) );
             }
+
             cnt++;
         }
     }
@@ -303,17 +307,19 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 // todayCandyKakaoId 리스트 갱신
                 todayCandyKakaoId.clear();
+                todayCandyKakaoId.push_back(myInfo->GetKakaoId()); // 본인 kakao id부터 넣자.
+                
                 for (int i = 0 ; i < selected.size() ; i++)
                 {
                     if (selected[i])
                         todayCandyKakaoId.push_back( friendList[i]->GetKakaoId() );
                 }
-                for (int i = todayCandyKakaoId.size(); i < 4; i++)
+                for (int i = todayCandyKakaoId.size(); i < 5; i++)
                     todayCandyKakaoId.push_back(-1);
                 
                 // User Default 값 갱신
                 char name[15];
-                for (int i = 0 ; i < todayCandyKakaoId.size() ; i++)
+                for (int i = 1 ; i < todayCandyKakaoId.size() ; i++)
                 {
                     CCLog("%d", todayCandyKakaoId[i]);
                     sprintf(name, "todayCandy_%d", i);

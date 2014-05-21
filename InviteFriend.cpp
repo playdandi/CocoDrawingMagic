@@ -45,7 +45,7 @@ bool InviteFriend::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("InviteFriend");
+    Depth::AddCurDepth("InviteFriend", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

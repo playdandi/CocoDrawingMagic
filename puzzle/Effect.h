@@ -30,6 +30,7 @@ public:
     void PlayEffect_17(std::vector<CCPoint> pos);
     
     void PlayEffect_5(std::vector<CCPoint> pos); // 6개이상한번더
+    void PlayEffect_5_Callback(CCNode* sender, void* pointer);
     void PlayEffect_13(std::vector<CCPoint> pos); // 6개이상한번더
     void PlayEffect_21(std::vector<CCPoint> pos); // 6개이상한번더
     
@@ -88,6 +89,7 @@ private:
     int callbackAll;
     int queue_pos_now;
     int skillNum;
+    std::vector<int> multi_callbackCnt;
     
     CCSprite* W7_bg;
     CCSprite* iced_bar;

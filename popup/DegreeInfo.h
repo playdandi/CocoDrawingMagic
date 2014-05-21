@@ -26,7 +26,6 @@ protected:
     bool isTouched;
     
 private:
-    CCSprite* pBlack;
     SpriteClass* spriteClass;
 };
 

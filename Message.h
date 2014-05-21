@@ -36,6 +36,7 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseMsg(char* data, int size);
+    void ParseProfileImage(char* data, int size, int idx);
     void XmlParseMsgReceiveOne(char* data, int size);
     
 protected:
@@ -44,6 +45,7 @@ protected:
     bool isScrolling;
     bool isScrollViewTouched;
     
+    int newProfileCnt; 
     int httpStatus;
     int httpMsgIdx;
     

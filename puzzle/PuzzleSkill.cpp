@@ -137,7 +137,7 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
                     Try(i, queue_pos);
             }
             else if (i == 23) {
-                if (pieceColor == PIECE_GREEN)
+                if (pieceColor == PIECE_GREEN && m_pGameLayer->GetPiece8xy(false).size() >= 10)
                     Try(i, queue_pos);
             }
             
@@ -623,14 +623,14 @@ void PuzzleSkill::A6(int num, int queue_pos)
 {
     // 불꽃놀이, 얼음비, 땅의 신비 - 각자의 피스 제거 시 (6개 이상) 일정 확률로 그 위치를 한 번 더 터뜨리기
     
-    // 사운드
-    m_pGameLayer->GetSound()->PlaySkillSound(num);
-    
     // 폭파
     m_pGameLayer->Bomb(queue_pos, result_pos);
     
     // 이펙트 실행
     m_pGameLayer->PlayEffect(num, queue_pos);
+    
+    // 사운드
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
 }
 
 

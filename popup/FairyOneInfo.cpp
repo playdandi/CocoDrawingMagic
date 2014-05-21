@@ -44,7 +44,7 @@ bool FairyOneInfo::init()
 	}
 
     // make depth tree
-    Depth::AddCurDepth("FairyOneInfo");
+    Depth::AddCurDepth("FairyOneInfo", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

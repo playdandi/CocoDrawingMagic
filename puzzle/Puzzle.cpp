@@ -53,6 +53,9 @@ bool Puzzle::init()
 		return false;
 	}
     
+    // make depth tree
+    Depth::AddCurDepth("Puzzle", this);
+    
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     
@@ -171,7 +174,7 @@ void Puzzle::InitSkills()
             }
             else if (id >= 31 && id <= 38) {
                 skillNum.push_back(id-15);
-                if (id == 38) skillProb.push_back(20);
+                if (id == 38) skillProb.push_back(100);
                 else skillProb.push_back(100);
             }
             CCLog("적용 스킬 : %d", id);
@@ -847,8 +850,6 @@ void Puzzle::UpdateTimer(float f)
         if (iTimer == 0) // game over
         {
             isGameOver = true;
-            
-            //pthread_mutex_unlock(&lock);
             
             this->unschedule(schedule_selector(Puzzle::UpdateTimer));
             this->setTouchEnabled(false);
@@ -2100,7 +2101,7 @@ void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
     {
         case 0: XmlParseGameEnd(dumpData, buffer->size()); break;
         case 1: XmlParseFriends(dumpData, buffer->size()); break;
-        //case 2: XmlParseProfiles(dumpData, buffer->size()); break;
+        default: ParseProfileImage(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag())); break;
     }
     XMLStatus++;
 }
@@ -2123,8 +2124,6 @@ void Puzzle::XmlParseFriends(char* data, int size)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        //profileCnt = 0;
-        
         int kakaoId;
         std::string nickname;
         std::string imageUrl;
@@ -2133,6 +2132,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
         int scoreUpdateTime;
         int remainPotionTime;
         int remainRequestPotionTime;
+        int remainRequestTopazTime;
         int highScore;
         int certificateType;
         int fire;
@@ -2143,6 +2143,13 @@ void Puzzle::XmlParseFriends(char* data, int size)
         int fairyLevel;
         int skillId;
         int skillLevel;
+        
+        // clear friend-list
+        for (int i = 0 ; i < friendList.size() ; i++)
+            delete friendList[i];
+        friendList.clear();
+        
+        profileCnt = profiles.size();
         
         xml_object_range<xml_named_node_iterator> friends = nodeResult.child("friend-list").children("friend");
         for (xml_named_node_iterator it = friends.begin() ; it != friends.end() ; ++it)
@@ -2156,6 +2163,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
                 else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
                 else if (name == "remain-request-potion-send-time") remainRequestPotionTime = ait->as_int();
+                else if (name == "remain-request-topaz-send-time") remainRequestTopazTime = ait->as_int();
                 else if (name == "high-score") highScore = ait->as_int();
                 else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
                 else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
@@ -2170,21 +2178,36 @@ void Puzzle::XmlParseFriends(char* data, int size)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
             
-            // profile이 없으면 미리 NOIMAGE sprite를 만든다.
-            if (imageUrl == "")
-            {
-                //profileCnt++;
-                friendList[(int)friendList.size()-1]->SetSprite();
-            }
+            if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
+                profiles.push_back( new ProfileSprite(imageUrl) );
         }
-        
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
         
+        // get image by url
+        char tag[5];
+        bool flag = true;
+        for (int i = 0 ; i < profiles.size() ; i++)
+        {
+            if (profiles[i]->GetProfileUrl() != "" && profiles[i]->GetProfile() == NULL)
+            {
+                flag = false;
+                // get profile image sprite from URL
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(profiles[i]->GetProfileUrl().c_str());
+                req->setRequestType(CCHttpRequest::kHttpGet);
+                req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+                sprintf(tag, "%d", i);
+                req->setTag(tag);
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+        }
+    
         // 본인이 몇 등인지 검사해서, 기존 순위보다 높으면 랭킹변동 UI를 띄운다.
         isRankUp = false;
         for (int i = 0 ; i < friendList.size() ; i++)
@@ -2198,32 +2221,32 @@ void Puzzle::XmlParseFriends(char* data, int size)
         }
         CCLog ("IS RANK UP ? = %d", isRankUp);
         
-        /*
-        // get image by url (다 받으면 Ranking으로 넘어간다)
-        char tag[5];
-        for (int i = 0 ; i < friendList.size() ; i++)
-        {
-            CCLog("sorted : %d", friendList[i]->GetKakaoId());
-            if (friendList[i]->GetImageUrl() != "")
-            {
-                // get profile image sprite from URL
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(friendList[i]->GetImageUrl().c_str());
-                req->setRequestType(CCHttpRequest::kHttpGet);
-                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-                sprintf(tag, "%d", i);
-                req->setTag(tag);
-                CCHttpClient::getInstance()->send(req);
-                req->release();
-            }
-        }
-         */
+        // 새로 받을 프로필 이미지가 없다면, 바로 게임결과 화면으로 넘어가자.
+        if (flag)
+            Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
     }
     else
     {
         // failed msg
         CCLog("failed code = %d", code);
     }
+}
+
+void Puzzle::ParseProfileImage(char* data, int size, int idx)
+{
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(data, size);
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite
+    profiles[idx]->SetSprite(texture);
+    
+    // 새 프로필을 다 받으면, 게임결과 화면으로 넘어가자.
+    profileCnt++;
+    if (profileCnt == (int)profiles.size())
+        Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
 }
 
 void Puzzle::XmlParseGameEnd(char* data, int size)
@@ -2305,11 +2328,9 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
             }
         }
         
+        // 친구리스트 새로 호출하지 않는다면, 바로 게임결과 화면으로 넘어가자.
         if (flag)
-        {
-            // 게임결과화면 띄우기
             Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
-        }
     }
     else
     {
@@ -2366,6 +2387,9 @@ CCLayer* Puzzle::GetFairyLayer()
 
 void Puzzle::EndScene()
 {
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Puzzle");
     
     this->setKeypadEnabled(false);
@@ -2408,8 +2432,12 @@ void Puzzle::EndScene()
     strap.clear();
     
     for (int i = 0 ; i < strap.size() ; i++)
+    {
         for (int j = 0 ; j < strap[i].size() ; j++)
             strap[i][j]->removeFromParentAndCleanup(true);
+        strap[i].clear();
+    }
+    strap.clear();
 
     pComboLabel->removeFromParentAndCleanup(true);
     pTimerLabel->removeFromParentAndCleanup(true);
@@ -2437,13 +2465,16 @@ void Puzzle::EndScene()
     //CCSprite* fever;
     //std::vector<CCSprite*> feverSpr;
     
-    CCLog("Puzzle - EndScene Done");
+    //CCLog("Puzzle - EndScene Done");
     
-    isRankUp = true;
-    if (isRankUp)
-        Common::ShowNextScene(this, "Puzzle", "RankUp", true);
-    else
-        Common::ShowNextScene(this, "Puzzle", "Ranking", true, 1);
+    if (!isRebooting)
+    {
+        //isRankUp = true;
+        if (isRankUp)
+            Common::ShowNextScene(this, "Puzzle", "RankUp", true);
+        else
+            Common::ShowNextScene(this, "Puzzle", "Ranking", true, 1);
+    }
 }
 
 void Puzzle::EndSceneCallback()

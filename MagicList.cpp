@@ -51,7 +51,7 @@ bool MagicList::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("MagicList");
+    Depth::AddCurDepth("MagicList", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

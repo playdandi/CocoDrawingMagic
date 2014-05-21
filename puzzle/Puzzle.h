@@ -143,6 +143,7 @@ public:
     void GameEnd(CCNode* sender, void* pointer);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFriends(char* data, int size);
+    void ParseProfileImage(char* data, int size, int idx);
     void XmlParseGameEnd(char* data, int size);
     
 protected:
@@ -202,6 +203,7 @@ protected:
     int isNewRecord;
     
     int XMLStatus;
+    int profileCnt;
 
     int curMyRank;
     bool isRankUp;

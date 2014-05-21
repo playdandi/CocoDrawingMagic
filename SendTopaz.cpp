@@ -42,7 +42,7 @@ bool SendTopaz::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("SendTopaz");
+    Depth::AddCurDepth("SendTopaz", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -148,10 +148,21 @@ void SendTopaz::MakeScroll()
         height++;
         
         // profile bg
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        //sprintf(fname, "background/bg_profile.png%d", i);
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0),
-         //               ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        //spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        // 프로필 이미지
+        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
+        if (friendList[i]->GetImageUrl() != "")
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(45+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            sprintf(fname, "background/bg_profile.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        }
+        else
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 3) );
+        }
+        
+        
         
         // name (text)
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );

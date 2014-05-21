@@ -58,7 +58,7 @@ bool NoImage::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("NoImage");
+    Depth::AddCurDepth("NoImage", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -234,7 +234,12 @@ void NoImage::InitSprites()
         case REQUEST_POTION_REJECT:
             sprintf(text, "수신거부 상태인 친구입니다."); break;
         case REQUEST_POTION_EARLY:
+        case REQUEST_TOPAZ_EARLY:
             sprintf(text, "요청한 친구에게는 24시간 후 다시 요청 가능합니다."); break;
+        case REQUEST_TOPAZ_OK:
+            sprintf(text, "토파즈를 성공적으로 요청하였습니다."); break;
+        case REQUEST_TOPAZ_NO_FRIEND:
+            sprintf(text, "친구가 아닙니다."); break;
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
     
@@ -316,6 +321,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     {
                         Exit();
                     }
+                    /*else if (type == NETWORK_FAIL)
+                    {
+                        Common::RebootSystem(this); // 재부팅.
+                    }*/
                     else if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
                     {
                         if (d[0] == 1) ReplaceScene("NoImage", INVITE_FRIEND_10, BTN_1);
@@ -577,7 +586,7 @@ void NoImage::ReplaceScene(std::string to, int type, int btnType)
     
     CCNode* parent = this->getParent();
     this->removeFromParentAndCleanup(true);
-    Common::ShowPopup(parent, "NoImage", to, true, type, btnType, d, fromWhere);
+    Common::ShowPopup(parent, "NoImage", to, false, type, btnType, d, fromWhere);
 }
 
 void NoImage::EndScene()
@@ -633,6 +642,7 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1); // network fail로 간주
         return;
     }
     

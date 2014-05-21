@@ -250,6 +250,10 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
     char name[30];
     int totalWidth = 0;
     
+    if (type == 2)
+        for (int i = 0 ; i < 10 ; i++)
+            offset[i] = 0;
+    
     std::vector<CCSprite*> sprites;
     for (int i = 0 ; i < commaNumber.size() ; i++)
     {
@@ -260,6 +264,8 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
                 temp = CCSprite::createWithSpriteFrameName("number/rank_comma.png");
             else if (type == 1)
                 temp = CCSprite::createWithSpriteFrameName("number/count_comma.png");
+            else if (type == 2)
+                temp = CCSprite::createWithSpriteFrameName("number/result_comma.png");
         }
         else
         {
@@ -267,11 +273,17 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
                 sprintf(name, "number/rank_%c.png", commaNumber[i]);
             else if (type == 1)
                 sprintf(name, "number/count_%c.png", commaNumber[i]);
+            else if (type == 2)
+                sprintf(name, "number/result_%c.png", commaNumber[i]);
             temp = CCSprite::createWithSpriteFrameName(name);
         }
         
         temp->setTag(i);
         temp->setAnchorPoint(ccp(0, 0));
+        
+        // 퍼즐결과 화면에 쓰이면 2배 확대해 보자.
+        if (type == 2)
+            temp->setScale(0.8f);
         
         if (i == 0)
         {
@@ -279,7 +291,7 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
         }
         else
         {
-            CCSize size = sprites[sprites.size()-1]->getContentSize();
+            //CCSize size = sprites[sprites.size()-1]->getContentSize();
             if (commaNumber[i] == ',')
                 temp->setPosition(ccp(totalWidth, 0));
             else
@@ -288,7 +300,10 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
         
         layer->addChild(temp, 100);
         
-        totalWidth += (int)temp->getContentSize().width;
+        if (type == 2)
+            totalWidth += (int)(temp->getContentSize().width * 0.8f);
+        else
+            totalWidth += (int)temp->getContentSize().width;
         if (commaNumber[i]-'0' == 1)
             totalWidth += 3;
         
@@ -296,6 +311,7 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
     }
     sprites.clear();
     
+    layer->setContentSize(CCSize(totalWidth, totalWidth));
     return layer;
 }
 
@@ -372,6 +388,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "Message") ((Message*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
@@ -412,6 +429,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
     else if (from == "RequestPotion") ((RequestPotion*)obj)->addChild(popup, 200, 200);
+    else if (from == "RequestTopaz") ((RequestTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
@@ -794,6 +812,89 @@ void SpriteClass::RemoveAllObjects()
         layers[i]->removeAllChildren();
     layers.clear();
 }
+
+
+void Common::RebootSystem(void* p)
+{
+    isRebooting = true;
+    void* cur;
+    
+    while (depth.size() > 0)
+    {
+        cur = Depth::GetCurPointer();
+        
+        if (Depth::GetCurNameString() == "Splash") ((Splash*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Ranking") ((Ranking*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "GameReady") ((GameReady*)cur)->EndSceneCallback(NULL, cur);
+        else if (Depth::GetCurNameString() == "MagicList") ((MagicList*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "DegreeInfo") ((DegreeInfo*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Profile") ((Profile*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "InviteFriend") ((InviteFriend*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Message") ((Message*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "WeeklyRankResult") ((WeeklyRankResult*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "GetDegree") ((GetDegree*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "CocoRoom") ((CocoRoom*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "CocoRoomTodayCandy") ((CocoRoomTodayCandy*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "CocoRoomFairyTown") ((CocoRoomFairyTown*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "BuyTopaz") ((BuyTopaz*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "BuyStarCandy") ((BuyStarCandy*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "BuyPotion") ((BuyPotion*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "SendTopaz") ((SendTopaz*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "RequestTopaz") ((RequestTopaz*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "RequestPotion") ((RequestPotion*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Setting") ((Setting*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Sketchbook") ((Sketchbook*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "SketchDetail") ((SketchDetail*)cur)->EndScene(true);
+        else if (Depth::GetCurNameString() == "FairyOneInfo") ((FairyOneInfo*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "NoImage") ((NoImage*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Puzzle") ((Puzzle*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "PuzzleResult") ((PuzzleResult*)cur)->EndSceneCallback(NULL, cur);
+        else if (Depth::GetCurNameString() == "RankUp") ((RankUp*)cur)->EndScene();
+    }
+    
+    // 모든 전역변수 초기화 (profiles만 제외하고)
+    for (int i = 0 ; i < friendList.size() ; i++) delete friendList[i];
+    friendList.clear();
+    for (int i = 0 ; i < msgData.size() ; i++) delete msgData[i];
+    msgData.clear();
+    for (int i = 0 ; i < priceTopaz.size() ; i++) delete priceTopaz[i];
+    priceTopaz.clear();
+    for (int i = 0 ; i < priceStarCandy.size() ; i++) delete priceStarCandy[i];
+    priceStarCandy.clear();
+    for (int i = 0 ; i < magicStaffBuildupInfo.size() ; i++) delete magicStaffBuildupInfo[i];
+    magicStaffBuildupInfo.clear();
+    for (int i = 0 ; i < skillSlotInfo.size() ; i++) delete skillSlotInfo[i];
+    skillSlotInfo.clear();
+    for (int i = 0 ; i < prerequisiteInfo.size() ; i++) delete prerequisiteInfo[i];
+    prerequisiteInfo.clear();
+    for (int i = 0 ; i < fairyInfo.size() ; i++) delete fairyInfo[i];
+    fairyInfo.clear();
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++) delete fairyBuildUpInfo[i];
+    fairyBuildUpInfo.clear();
+    for (int i = 0 ; i < skillInfo.size() ; i++) delete skillInfo[i];
+    skillInfo.clear();
+    for (int i = 0 ; i < skillBuildUpInfo.size() ; i++) delete skillBuildUpInfo[i];
+    skillBuildUpInfo.clear();
+    for (int i = 0 ; i < skillPropertyInfo.size() ; i++) delete skillPropertyInfo[i];
+    skillPropertyInfo.clear();
+    for (int i = 0 ; i < lastWeeklyRank.size() ; i++) delete lastWeeklyRank[i];
+    lastWeeklyRank.clear();
+    
+    inGameSkill.clear();
+    todayCandyKakaoId.clear();
+    
+    Depth::ClearDepth();
+    
+    
+    // reload SPLASH scene
+    CCScene *pScene = Splash::scene();
+    CCDirector::sharedDirector()->replaceScene(pScene);
+}
+
+
+
+
+
 
 
 

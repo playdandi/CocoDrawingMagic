@@ -41,7 +41,7 @@ bool RequestPotion::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("RequestPotion");
+    Depth::AddCurDepth("RequestPotion", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -67,9 +67,10 @@ bool RequestPotion::init()
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollView, 3);
-    
-    InitSprites();
+
+    spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
+    InitSprites();
     MakeScroll();
     
     isTouched = false;
@@ -111,8 +112,6 @@ void RequestPotion::InitSprites()
     pBlack->setOpacity(150);
     this->addChild(pBlack, 0);
     
-    spriteClass = new SpriteClass();
-    
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
                     ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "RequestPotion", this, 2) );
@@ -143,7 +142,7 @@ void RequestPotion::MakeScroll()
     int numOfList = friendList.size();
     int height = 0;
     char fname[50], fname2[50];
-    //for (int i = 0 ; i < numOfList ; i++)
+
     for (int i = numOfList-1 ; i >= 0 ; i--)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
@@ -159,10 +158,18 @@ void RequestPotion::MakeScroll()
         spriteClassScroll->layers.push_back(itemLayer);
         height++;
         
-        // profile bg
-        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45-10, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        //sprintf(fname, "background/bg_profile.png%d", i);
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        // 프로필 이미지
+        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
+        if (friendList[i]->GetImageUrl() != "")
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            sprintf(fname, "background/bg_profile.png%d", i);
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        }
+        else
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3) );
+        }
         
         // name (text)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196-10, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );

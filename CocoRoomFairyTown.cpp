@@ -44,7 +44,7 @@ bool CocoRoomFairyTown::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("CocoRoomFairyTown");
+    Depth::AddCurDepth("CocoRoomFairyTown", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

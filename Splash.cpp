@@ -58,7 +58,7 @@ bool Splash::init()
 	}
     
     // add depth
-    Depth::AddCurDepth("Splash");
+    Depth::AddCurDepth("Splash", this);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -80,6 +80,7 @@ bool Splash::init()
     isLoading = false;
     
     isInGame = false;
+    isRebooting = false;
     
     httpStatus = 0;
     
@@ -883,8 +884,6 @@ void Splash::XmlParseFriends(char* data, int size)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        //profileCnt = 0;
-        
         int kakaoId;
         std::string nickname;
         std::string imageUrl;
@@ -893,6 +892,7 @@ void Splash::XmlParseFriends(char* data, int size)
         int scoreUpdateTime;
         int remainPotionTime;
         int remainRequestPotionTime;
+        int remainRequestTopazTime;
         int highScore;
         int certificateType;
         int fire;
@@ -916,6 +916,7 @@ void Splash::XmlParseFriends(char* data, int size)
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
                 else if (name == "remain-potion-send-time") remainPotionTime = ait->as_int();
                 else if (name == "remain-request-potion-send-time") remainRequestPotionTime = ait->as_int();
+                else if (name == "remain-request-topaz-send-time") remainRequestTopazTime = ait->as_int();
                 else if (name == "high-score") highScore = ait->as_int();
                 else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
                 else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
@@ -930,25 +931,12 @@ void Splash::XmlParseFriends(char* data, int size)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
             
             if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
                 profiles.push_back( new ProfileSprite(imageUrl) );
-            /*
-            // profile이 없으면 미리 NOIMAGE sprite를 만든다.
-            if (imageUrl == "")
-            {
-                //profileCnt++;
-                friendList[(int)friendList.size()-1]->SetSprite();
-            }
-            else
-            {
-                if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
-                    profiles.push_back( new ProfileSprite(imageUrl) );
-            }
-            */
         }
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
@@ -958,7 +946,6 @@ void Splash::XmlParseFriends(char* data, int size)
         profileCnt = 0;
         m_pMsgLabel->setString("친구의 못생긴 얼굴 지적하는 중...");
         char tag[5];
-        //for (int i = 0 ; i < friendList.size() ; i++)
         for (int i = 0 ; i < profiles.size() ; i++)
         {
             if (profiles[i]->GetProfileUrl() == "")
@@ -969,12 +956,10 @@ void Splash::XmlParseFriends(char* data, int size)
         }
         for (int i = 0 ; i < profiles.size() ; i++)
         {
-            //if (friendList[i]->GetImageUrl() != "")
             if (profiles[i]->GetProfileUrl() != "")
             {
                 // get profile image sprite from URL
                 CCHttpRequest* req = new CCHttpRequest();
-                //req->setUrl(friendList[i]->GetImageUrl().c_str());
                 req->setUrl(profiles[i]->GetProfileUrl().c_str());
                 req->setRequestType(CCHttpRequest::kHttpGet);
                 req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
@@ -1041,9 +1026,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             // set CCSprite
             int index = atoi(res->getHttpRequest()->getTag());
             profiles[index]->SetSprite(texture);
-            //friendList[index]->SetSprite(texture);
             
-            //if (profileCnt == (int)friendList.size())
             profileCnt++;
             if (profileCnt == (int)profiles.size())
             {
@@ -1061,7 +1044,12 @@ void Splash::GetTodayCandyFriend()
     char name[15];
     int kakaoId;
     bool flag;
-    for (int i = 0 ; i < 4; i++)
+    
+    // 내 kakao id부터 넣자.
+    todayCandyKakaoId.clear();
+    todayCandyKakaoId.push_back(myInfo->GetKakaoId());
+    
+    for (int i = 1 ; i < 5; i++)
     {
         sprintf(name, "todayCandy_%d", i);
         kakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey(name, -1);

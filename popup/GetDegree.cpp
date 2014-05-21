@@ -38,7 +38,7 @@ bool GetDegree::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("GetDegree");
+    Depth::AddCurDepth("GetDegree", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

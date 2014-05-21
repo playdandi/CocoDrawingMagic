@@ -42,7 +42,7 @@ bool BuyTopaz::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("BuyTopaz");
+    Depth::AddCurDepth("BuyTopaz", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -195,6 +195,7 @@ void BuyTopaz::MakeScroll()
                         ccp(0, 0), ccp(0, 0), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
     }
+    spriteClass->layers.push_back(itemContainer);
 }
 
 
@@ -287,7 +288,7 @@ void BuyTopaz::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    itemContainer->removeAllChildren();
+    //itemContainer->removeAllChildren();
     pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);

@@ -26,8 +26,9 @@ std::vector<class Depth*> depth;
 std::vector<int> inGameSkill;
 std::vector<int> todayCandyKakaoId;
 
-bool isInGame;
-int savedTime;
+bool isRebooting; // 시스템 재부팅 중일 시 true
+bool isInGame; // 인게임 중이면 true
+int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
 
 int myRank;
 int myLastWeekHighScore;
@@ -35,10 +36,11 @@ int rewardType;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Depth::Depth(std::string name, int priority)
+Depth::Depth(std::string name, int priority, void* pointer)
 {
     this->name = name;
     this->priority = priority;
+    this->pointer = pointer;
 }
 const char* Depth::GetParentName()
 {
@@ -48,14 +50,22 @@ const char* Depth::GetCurName()
 {
     return depth[depth.size()-1]->name.c_str();
 }
+std::string Depth::GetCurNameString()
+{
+    return depth[depth.size()-1]->name;
+}
 int Depth::GetCurPriority()
 {
     return depth[depth.size()-1]->priority;
 }
-void Depth::AddCurDepth(std::string name)
+void* Depth::GetCurPointer()
+{
+    return depth[depth.size()-1]->pointer;
+}
+void Depth::AddCurDepth(std::string name, void* pointer)
 {
     int priority = (int)depth.size() * -1;
-    depth.push_back( new Depth(name, priority) );
+    depth.push_back( new Depth(name, priority, pointer) );
 }
 void Depth::RemoveCurDepth()
 {
@@ -149,7 +159,7 @@ CCSprite* MyInfo::GetProfile()
     for (int i = 0 ; i < friendList.size() ; i++)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
-            return friendList[i]->GetProfile();
+            return ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
     }
     return NULL;
 }
@@ -607,7 +617,7 @@ void LastWeeklyRank::SortByRank()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
+Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
 {
     // constructor
     this->kakaoId = kakaoId;
@@ -618,6 +628,7 @@ Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int poti
     this->potionMsgStatus = potionMsgStatus;
     this->remainPotionTime = remainPotionTime;
     this->remainRequestPotionTime = remainRequestPotionTime;
+    this->remainRequestTopazTime = remainRequestTopazTime;
     this->potionSprite = NULL;
     this->potionRemainTimeMin = new CCLabelTTF();
     this->potionRemainTimeMin->initWithString("", fontList[0].c_str(), 28);
@@ -646,7 +657,11 @@ Friend* Friend::GetObj(int kakaoId)
     }
     return NULL;
 }
-
+void Friend::SetProfile(CCSprite* sp)
+{
+    this->profile = sp;
+}
+/*
 void Friend::SetSprite(CCTexture2D* texture)
 {
     this->profile = new CCSprite();
@@ -658,6 +673,7 @@ void Friend::SetSprite()
     this->profile = CCSprite::createWithSpriteFrameName("background/bg_profile_noimage.png");
     this->profile->retain();
 }
+*/
 
 void Friend::SetPotionSprite()
 {
@@ -678,8 +694,6 @@ void Friend::SetPotionSprite()
         potion->setAnchorPoint(ccp(0, 0));
         potion->setPosition(ccp(724, 24));
         potion->retain();
-        //potion->setTag(i);
-        //profileLayer->addChild(potion, 5);
         
         if (potionSprite != NULL)
         {
@@ -782,6 +796,10 @@ int Friend::GetRemainRequestPotionTime()
 {
     return remainRequestPotionTime;
 }
+int Friend::GetRemainRequestTopazTime()
+{
+    return remainRequestTopazTime;
+}
 void Friend::SetRemainPotionTime(int time)
 {
     remainPotionTime = time;
@@ -789,6 +807,10 @@ void Friend::SetRemainPotionTime(int time)
 void Friend::SetRemainRequestPotionTime(int time)
 {
     remainRequestPotionTime = time;
+}
+void Friend::SetRemainRequestTopazTime(int time)
+{
+    remainRequestTopazTime = time;
 }
 
 bool Friend::IsFire()

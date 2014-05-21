@@ -56,7 +56,7 @@ bool GameReady::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("GameReady");
+    Depth::AddCurDepth("GameReady", this);
     
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);

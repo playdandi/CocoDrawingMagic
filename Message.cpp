@@ -41,7 +41,7 @@ bool Message::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("Message");
+    Depth::AddCurDepth("Message", this);
     
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
@@ -178,10 +178,6 @@ void Message::InitSprites()
 void Message::MakeScroll()
 {
     int numOfList = msgData.size();
-    
-    // 메시지가 0개면 스크롤뷰를 아예 생성하지 말 것.
-    //if (numOfList == 0)
-    //    return;
 
     // make scroll
     scrollContainer = CCLayer::create();
@@ -190,7 +186,6 @@ void Message::MakeScroll()
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
 
     char spriteName[35];
-    int j;
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
@@ -208,25 +203,24 @@ void Message::MakeScroll()
           notice-url : 공지의 경우 출력해야할 공지 이미지 주소 (공지 외 메시지의 경우 내용 없음)
         */
         
-        // profile 영역 bg
-        for (j = 0 ; j < friendList.size() ; j++)
+        // 프로필 이미지
+        for (int j = 0 ; j < profiles.size() ; j++)
         {
-            if (friendList[j]->GetImageUrl() == msgData[i]->GetProfileUrl())
+            if (msgData[i]->GetProfileUrl() == profiles[j]->GetProfileUrl())
             {
-                spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[j]->GetProfile(), ccp(0, 0), ccp(44+7, 35+13), CCSize(0, 0), "", "Layer", itemLayer, 2, 1, 255, 0.85f) );
-                break;
+                if (msgData[i]->GetProfileUrl() != "")
+                {
+                    spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profiles[j]->GetProfile(), ccp(0, 0), ccp(44+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 2, 0, 255, 0.85f) );
+                    sprintf(spriteName, "background/bg_profile.png%d", i);
+                    spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 2) );
+                }
+                else
+                {
+                    spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profiles[j]->GetProfile(), ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
+                }
             }
         }
-        if (j == friendList.size()) // 친구 리스트에 없는 프로필일 경우 새로 다운받아야 한다.
-        {
-            // 지금은 임시로 no image로 하고, 나중에 고치자.
-            sprintf(spriteName, "background/bg_profile_noimage.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        }
-        sprintf(spriteName, "background/bg_profile.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 4) );
-        
-        
+    
         // content (fontList[2] = 나눔고딕볼드)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabelArea(msgData[i]->GetContent(), fontList[0], 36, ccp(0, 0), ccp(194, 45), ccc3(78,47,8), CCSize(400, 105), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", itemLayer, 3, 0) );
         
@@ -474,6 +468,7 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
     {
         case 0: XmlParseMsg(dumpData, buffer->size()); break;
         case 1: XmlParseMsgReceiveOne(dumpData, buffer->size()); break;
+        case 2: ParseProfileImage(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 
@@ -522,8 +517,33 @@ void Message::XmlParseMsg(char* data, int size)
             msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
         
-        // scroll을 생성 후 데이터 보여주기
-        MakeScroll();
+        httpStatus = 2;
+        // 새로 받아야 할 프로필 이미지가 있는지 검사.
+        newProfileCnt = profiles.size();
+        char tag[5];
+        bool flag = true;
+        for (int i = 0 ; i < msgData.size() ; i++)
+        {
+            if (ProfileSprite::GetProfile(msgData[i]->GetProfileUrl()) == NULL && msgData[i]->GetProfileUrl() != "coco_image")
+            {
+                flag = false;
+                profiles.push_back( new ProfileSprite(msgData[i]->GetProfileUrl()) );
+                
+                // get profile image sprite from URL
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(msgData[i]->GetProfileUrl().c_str());
+                req->setRequestType(CCHttpRequest::kHttpGet);
+                req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
+                sprintf(tag, "%d", (int)profiles.size()-1);
+                req->setTag(tag);
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+        }
+
+        // 새로 받을 프로필 이미지가 없다면, 바로 화면에 나타낸다.
+        if (flag)
+            MakeScroll();
         
         // Notification : Ranking 화면에 데이터 갱신
         myInfo->SetMsgCnt((int)msgData.size());
@@ -534,6 +554,23 @@ void Message::XmlParseMsg(char* data, int size)
     {
         CCLog("FAILED : code = %d", code);
     }
+}
+
+void Message::ParseProfileImage(char* data, int size, int idx)
+{
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(data, size);
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite
+    profiles[idx]->SetSprite(texture);
+    
+    // 새 프로필까지 다 받으면 화면에 나타낸다.
+    newProfileCnt++;
+    if (newProfileCnt == (int)profiles.size())
+        MakeScroll();
 }
 
 void Message::XmlParseMsgReceiveOne(char* data, int size)
@@ -565,15 +602,15 @@ void Message::XmlParseMsgReceiveOne(char* data, int size)
         data.push_back(msgData[httpMsgIdx]->GetRewardCount());
         switch (msgData[httpMsgIdx]->GetType())
         {
-            case 1: break;
+            case 1: break; // 공지
                 //Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_NOTICE, BTN_1, data); break;
-            case 2:
+            case 2: // 별사탕 받기
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_STARCANDY, BTN_1, data); break;
-            case 3:
+            case 3: // 토파즈 받기
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_TOPAZ, BTN_1, data); break;
-            case 4:
+            case 4: // 포션 받기
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION, BTN_1, data); break;
-            case 5:
+            case 5: // 포션 요청에 응하기
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_POTION_REQUEST, BTN_1, data);
                 if (Friend::GetRemainPotionTime(msgData[httpMsgIdx]->GetFriendKakaoId()) <= 0)
                 {
@@ -582,6 +619,8 @@ void Message::XmlParseMsgReceiveOne(char* data, int size)
                     f->SetPotionSprite();
                 }
                 break;
+            case 6: // 토파즈 요청에 응하기
+                Common::ShowNextScene(this, "Message", "BuyTopaz", false); break;
         }
     }
     else if (code == 10)

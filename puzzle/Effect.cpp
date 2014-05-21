@@ -127,16 +127,15 @@ void Effect::SetSpirit(int type)
 {
     if (type == 0) // 불의 정령
     {
-        //fire = CCParticleSystemQuad::create("particles/fire2.plist");
-        fire = CCParticleSystemQuad::create("particles/spirit_fire.plist");
+        fire = CCParticleSystemQuad::create("particles/fire2.plist");
+        //fire = CCParticleSystemQuad::create("particles/spirit_fire.plist");
         fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
-        fire->setScale(2.0f);
-        //fire->retain();
+        //fire->setScale(2.0f);
         fire->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(fire, 100);
         
+        /*
         CCPoint p = gameLayer->SetTouch8Position(0, ROW_COUNT-1);
-        
         CCParticleSystemQuad* e1 = CCParticleSystemQuad::create("particles/spirit_fire_lefteye.plist");
         e1->setPosition(ccp(p.x-30, p.y+40));
         e1->setScale(2.0f);
@@ -149,6 +148,7 @@ void Effect::SetSpirit(int type)
         //e2->retain();
         e2->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(e2, 100);
+        */
     }
     else if (type == 1) // 물의 정령
     {
@@ -178,12 +178,21 @@ CCParticleSystemQuad* Effect::GetSpirit(int type)
 }
 void Effect::ReleaseSpirit(int type)
 {
-    if (type == 0)
-        fire->removeFromParentAndCleanup(true);
-    else if (type == 1)
-        water->removeFromParentAndCleanup(true);
-    else
-        land->removeFromParentAndCleanup(true);
+    switch (type)
+    {
+        case 0:
+            fire->removeFromParentAndCleanup(true);
+            fire = NULL;
+            break;
+        case 1:
+            water->removeFromParentAndCleanup(true);
+            water = NULL;
+            break;
+        case 2:
+            land->removeFromParentAndCleanup(true);
+            land = NULL;
+            break;
+    }
 }
 
 void Effect::PlayEffect_0(std::vector<CCPoint> pos)
@@ -541,22 +550,85 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
 
 void Effect::PlayEffect_5(std::vector<CCPoint> pos)
 {
-    // 6개 이상 한번 더
+    // 6개 이상 한번 더 (F6 : 불꽃놀이)
     int x, y;
+    CCPoint p;
+    
+    multi_callbackCnt.clear();
+    for (int i = 0; i < pos.size(); i++)
+        multi_callbackCnt.push_back(0);
+    
     for (int i = 0; i < pos.size(); i++)
     {
         x = (int)pos[i].x;
         y = (int)pos[i].y;
         
-        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/LavaFlow.plist");
-        //m_emitter->retain();
+        /*CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/LavaFlow.plist");
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
         gameLayer->addChild(m_emitter, 2000);
+        m_emitter->setAutoRemoveOnFinish(true);*/
+        
+        p = gameLayer->SetTouch8Position(x, y);
+        
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(ccp(p.x+50, p.y+50));
+        //m_emitter->setPosition(ccp(p.x, p.y));
+        m_emitter->setScale(4.0f);
+        m_emitter->setTag(i);
+        gameLayer->addChild(m_emitter, 2000);
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_5_Callback), this), NULL);
+        m_emitter->runAction(action);
         m_emitter->setAutoRemoveOnFinish(true);
-        //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
-        //batch->addChild(m_emitter);
-        //gameLayer->addChild(batch, 2000);
+        
+        /*
+        CCParticleSystemQuad* m_emitter2 = CCParticleSystemQuad::create("particles/fire6.plist");
+        m_emitter2->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter2->setPosition(ccp(p.x-40, p.y+10));
+        m_emitter2->setScale(2.0f);
+        gameLayer->addChild(m_emitter2, 2000);
+        m_emitter2->setAutoRemoveOnFinish(true);
+        
+        CCParticleSystemQuad* m_emitter3 = CCParticleSystemQuad::create("particles/fire6.plist");
+        m_emitter3->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter3->setPosition(ccp(p.x+40, p.y-10));
+        m_emitter3->setScale(2.0f);
+        gameLayer->addChild(m_emitter3, 2000);
+        m_emitter3->setAutoRemoveOnFinish(true);
+        
+        CCParticleSystemQuad* m_emitter4 = CCParticleSystemQuad::create("particles/fire6.plist");
+        m_emitter4->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter4->setPosition(ccp(p.x-20, p.y-40));
+        m_emitter4->setScale(2.0f);
+        gameLayer->addChild(m_emitter4, 2000);
+        m_emitter4->setAutoRemoveOnFinish(true);
+        */
+    }
+}
+void Effect::PlayEffect_5_Callback(CCNode* sender, void* pointer)
+{
+    Effect* ef = (Effect*)pointer;
+    
+    int idx = ((CCParticleSystemQuad*)sender)->getTag();
+    ef->multi_callbackCnt[idx]++;
+    if (ef->multi_callbackCnt[idx] < 3)
+    {
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        CCPoint p = ((CCParticleSystemQuad*)sender)->getPosition();
+        if (ef->multi_callbackCnt[idx] == 1)
+            m_emitter->setPosition(ccp(p.x-110, p.y-50));
+        else if (ef->multi_callbackCnt[idx] == 2)
+            m_emitter->setPosition(ccp(p.x+60, p.y-50));
+        //else
+        //    m_emitter->setPosition(ccp(p.x-60, p.y-40));
+        m_emitter->setScale(4.0f);
+        m_emitter->setTag(idx);
+        ef->gameLayer->addChild(m_emitter, 2000);
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::PlayEffect_5_Callback), ef), NULL);
+        m_emitter->runAction(action);
+        m_emitter->setAutoRemoveOnFinish(true);
     }
 }
 void Effect::PlayEffect_13(std::vector<CCPoint> pos)
@@ -1225,54 +1297,6 @@ void Effect::Effect14Callback(CCNode* sender, void* data)
 }
 
 
-/*
-void Effect::PlayEffect_Spirit()
-{
-    return;
-    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("images/BoilingFoam.plist");
-    //m_emitter->retain();
-    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    m_emitter->setPosition(ccp(70, 300));
-    m_emitter->setStartColor(ccc4f(0.1, 0.1, 0.95, 1));
-    m_emitter->setEndColor(ccc4f(0.1, 0.1, 0.95, 0));
-    m_emitter->setScale(1.2f);
-    gameLayer->addChild(m_emitter, 1000);
-    
-    CCParticleSystemQuad* eye1 = CCParticleSystemQuad::create("images/BoilingFoam.plist");
-    eye1->retain();
-    eye1->setAnchorPoint(ccp(0.5, 0.5));
-    eye1->setPosition(ccp(50, 350));
-    eye1->setStartColor(ccc4f(0.99, 0.01, 0.01, 1));
-    eye1->setEndColor(ccc4f(0.99, 0.01, 0.01, 1));
-    eye1->setScale(0.4f);
-    gameLayer->addChild(eye1, 1050);
-    
-    CCParticleSystemQuad* eye2 = CCParticleSystemQuad::create("images/BoilingFoam.plist");
-    eye2->retain();
-    eye2->setAnchorPoint(ccp(0.5, 0.5));
-    eye2->setPosition(ccp(95, 350));
-    eye2->setStartColor(ccc4f(0.99, 0.01, 0.01, 1));
-    eye2->setEndColor(ccc4f(0.99, 0.01, 0.01, 1));
-    eye2->setScale(0.4f);
-    gameLayer->addChild(eye2, 1050);
-    
-    
-    //CCParticleBatchNode *batch = CCParticleBatchNode::createWithTexture(m_emitter->getTexture());
-    //batch->addChild(m_emitter);
-    //
-    
-    //CCParticleBatchNode *batch2 = CCParticleBatchNode::createWithTexture(eye2->getTexture());
-    //batch2->addChild(eye2);
-    
-    //gameLayer->addChild(batch, 2000);
-    //gameLayer->addChild(batch1, 2001);
-    //gameLayer->addChild(batch2, 2001);
-    //gameLayer->addChild(m_emitter, z1+1);
-}
-*/
-
-
-
 
 void Effect::ShowStarCandy(std::vector<CCPoint> pos)
 {
@@ -1344,9 +1368,11 @@ void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
 
 
 
-
 void Effect::RemoveAllObjects()
 {
+    if (fire != NULL) fire->removeFromParentAndCleanup(true);
+    if (water != NULL) water->removeFromParentAndCleanup(true);
+    if (land != NULL) land->removeFromParentAndCleanup(true);
 }
 
 

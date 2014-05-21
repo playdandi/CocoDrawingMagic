@@ -38,7 +38,7 @@ bool WeeklyRankResult::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("WeeklyRankResult");
+    Depth::AddCurDepth("WeeklyRankResult", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

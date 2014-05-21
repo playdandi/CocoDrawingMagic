@@ -32,6 +32,7 @@ extern std::vector<int> inGameSkill;
 extern std::vector<class Depth*> depth;
 extern std::vector<int> todayCandyKakaoId;
 
+extern bool isRebooting;
 extern bool isInGame;
 extern int savedTime;
 
@@ -45,16 +46,19 @@ using namespace cocos2d;
 class Depth
 {
 public:
-    Depth(std::string name, int priority);
+    Depth(std::string name, int priority, void* pointer = NULL);
+    static void* GetCurPointer();
     static const char* GetCurName();
     static const char* GetParentName();
+    static std::string GetCurNameString();
     static int GetCurPriority();
-    static void AddCurDepth(std::string name);
+    static void AddCurDepth(std::string name, void* pointer = NULL);
     static void RemoveCurDepth();
     static void ClearDepth();
     
     int priority;
     std::string name;
+    void* pointer;
 };
 
 class ProfileSprite
@@ -256,10 +260,11 @@ private:
 class Friend
 {
 public:
-    Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
+    Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
     
-    void SetSprite(CCTexture2D* texture);
-    void SetSprite();
+    //void SetSprite(CCTexture2D* texture);
+    //void SetSprite();
+    void SetProfile(CCSprite* sp);
     void SetPotionSprite();
     void SetScore(int highScore, int weeklyHighScore, int certificateType);
     
@@ -284,8 +289,10 @@ public:
     int GetScoreUpdateTime();
     int GetRemainPotionTime();
     int GetRemainRequestPotionTime();
+    int GetRemainRequestTopazTime();
     void SetRemainPotionTime(int time);
     void SetRemainRequestPotionTime(int time);
+    void SetRemainRequestTopazTime(int time);
     bool IsFire();
     bool IsWater();
     bool IsLand();
@@ -304,6 +311,7 @@ private:
     int potionMsgStatus;
     int remainPotionTime;
     int remainRequestPotionTime;
+    int remainRequestTopazTime;
     CCSprite* potionSprite;
     CCLabelTTF* potionRemainTimeMin;
     CCLabelTTF* potionRemainTimeSec;

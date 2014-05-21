@@ -43,7 +43,7 @@ bool BuyStarCandy::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("BuyStarCandy");
+    Depth::AddCurDepth("BuyStarCandy", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);

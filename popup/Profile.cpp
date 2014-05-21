@@ -46,7 +46,7 @@ bool Profile::init()
 	}
     
     // make depth tree
-    Depth::AddCurDepth("Profile");
+    Depth::AddCurDepth("Profile", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
@@ -138,6 +138,7 @@ void Profile::InitSprites()
     int idx = profile_index;
     
     // profile
+    /*
     if (friendList[idx]->GetImageUrl() != "")
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[idx]->GetProfile(), ccp(0    , 0), ccp(102+5, 36+10), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
@@ -146,6 +147,17 @@ void Profile::InitSprites()
     else
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[idx]->GetProfile(), ccp(0    , 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255, 1.0f) );
+    }
+    */
+    CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
+    if (friendList[idx]->GetImageUrl() != "")
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png", ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+    }
+    else
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
     }
 
     // nickname

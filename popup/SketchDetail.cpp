@@ -52,7 +52,7 @@ bool SketchDetail::init()
 	}
 
     // make depth tree
-    Depth::AddCurDepth("SketchDetail");
+    Depth::AddCurDepth("SketchDetail", this);
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
