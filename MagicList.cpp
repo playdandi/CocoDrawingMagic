@@ -187,7 +187,7 @@ void MagicList::InitSprites()
                     ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(255);
                 }
                 
-                sprintf(name2, "skill/skill_%d.png", si->GetId());
+                sprintf(name2, "skill_%d.png", si->GetId());
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229+12, 1451-i*160+offset+12), CCSize(0, 0), "", "Layer", layer, 20, 0, 255, si->GetId()) );
             }
             
@@ -231,9 +231,12 @@ void MagicList::InitBtn()
 {
     spriteClassBtn = new SpriteClass();
     
-    // 게임시작 버튼
-    spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(318, 193), CCSize(0, 0), "", "MagicList", this, 5) );
-    spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gamestart.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "MagicList", this, 5) );
+    if (from == 0) // 게임준비 화면에서 올 때만 나타낸다.
+    {
+        // 게임시작 버튼
+        spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(318, 193), CCSize(0, 0), "", "MagicList", this, 5) );
+        spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gamestart.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "MagicList", this, 5) );
+    }
     
     for (int i = 0 ; i < spriteClassBtn->spriteObj.size() ; i++)
         spriteClassBtn->AddChild(i);
@@ -259,7 +262,7 @@ void MagicList::MakeScrollSlot()
         scid = myInfo->GetSlot()[i]->GetCommonId();
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
-            sprintf(fname2, "skill/skill_%d.png", scid);
+            sprintf(fname2, "skill_%d.png", scid);
             spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }
     }
@@ -286,11 +289,17 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
-    // 버튼 터치
-    if (((CCSprite*)spriteClassBtn->FindSpriteByName("button/btn_blue.png"))->boundingBox().containsPoint(point))
+    // '게임시작' 버튼 터치 (게임준비 화면에서 왔을 때만 존재함)
+    for (int i = 0 ; i < spriteClassBtn->spriteObj.size() ; i++)
     {
-        TryEnd();
-        return true;
+        if (spriteClassBtn->spriteObj[i]->name == "button/btn_blue.png")
+        {
+            if (spriteClassBtn->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                TryEnd();
+                return true;
+            }
+        }
     }
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -303,7 +312,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
-        else if (spriteClass->spriteObj[i]->name.substr(0, 11) == "skill/skill")
+        else if (spriteClass->spriteObj[i]->name.substr(0, 5) == "skill")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {

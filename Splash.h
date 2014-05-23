@@ -24,7 +24,6 @@ public:
     ~Splash(void);
 	virtual bool init();
     virtual void onEnter();
-    virtual void onPause();
     virtual void onExit();
     virtual void keyBackClicked();
     
@@ -79,6 +78,7 @@ protected:
 private:
     CCSprite* m_pBackground;
     CCSprite* m_pTitle;
+    CCSprite* m_pForKakao;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;

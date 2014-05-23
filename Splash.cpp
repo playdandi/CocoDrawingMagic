@@ -23,12 +23,6 @@ void Splash::onEnter()
     CCLog("Splash :: onEnter");
     CCLayer::onEnter();
 }
-void Splash::onPause()
-{
-    CCLog("Splash :: onPause");
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
-}
 void Splash::onExit()
 {
     CCLog("Splash :: onExit");
@@ -64,6 +58,7 @@ bool Splash::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/skill.plist");
     
     // 배경 액션
     m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
@@ -95,6 +90,12 @@ void Splash::LogoLoadingCompleted()
     m_pTitle = CCSprite::createWithSpriteFrameName("background/Title.png");
     m_pTitle->setPosition(ccp(winSize.width/2, 1350+1000));
     this->addChild(m_pTitle, 5);
+    m_pForKakao = CCSprite::createWithSpriteFrameName("letter/letter_forkakao.png");
+    m_pForKakao->setAnchorPoint(ccp(0, 1));
+    m_pForKakao->setScale(0.8f);
+    m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
+    m_pTitle->addChild(m_pForKakao, 6);
+    
     CCActionInterval* action = CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350));
     m_pTitle->runAction(CCEaseBounceOut::create(action));
     

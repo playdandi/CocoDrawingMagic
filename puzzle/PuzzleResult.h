@@ -25,24 +25,40 @@ public:
     void InitSprites();
     void InitSkills();
     void SkillTimer(float f);
+    void ScoreTimer(float f);
+    void TopazTimer(float f);
+    void StarCandyTimer(float f);
+    void MPTimer(float f);
     void Callback(CCNode* sender, void* p);
+    void Callback_ProgressBar(CCNode* sender, void* p);
     
     void EndScene();
     void EndSceneCallback(CCNode* sender, void* pointer);
     
 protected:
     CCSize m_winSize;
+    int varScore;
+    int score;
+    
+    float topaz;
+    float starcandy;
+    float mp;
     
 private:
     CCSprite* pBlack;
     CCSprite* pBlackClose;
+    CCLayer* pScoreLayer;
     
     SpriteClass* spriteClass;
     SpriteClass* spriteClassSkill;
+    
     CCLayer* l;
+    CCLayer* barLayer;
     
     CCDrawNode* timerStencil;
     CCClippingNode* timerClip;
+    CCDrawNode* timerStencil2;
+    CCClippingNode* timerClip2;
 };
 
 #endif /* defined(__magician__PuzzleResult__) */

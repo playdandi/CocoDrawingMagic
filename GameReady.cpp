@@ -518,7 +518,7 @@ void GameReady::InitSkill()
                 break;
         }
         // 스킬 문양
-        sprintf(skillName, "skill/skill_%d.png", sid);
+        sprintf(skillName, "skill_%d.png", sid);
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClassSkill->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
         // 스킬 이름
         spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 1) );
@@ -557,7 +557,7 @@ void GameReady::MakeScrollSlot()
         //CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
-            sprintf(fname2, "skill/skill_%d.png", scid);
+            sprintf(fname2, "skill_%d.png", scid);
             spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }
     }
@@ -582,6 +582,7 @@ void GameReady::PotionTimer(float f)
     {
         if (remainTime >= 719) // 719초나 720초 일 때
         {
+            CCLog("GameReady: PotionTimer -> potion = %d", potion);
             char name[25];
             sprintf(name, "icon/icon_potion.png%d", potion-1);
             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);

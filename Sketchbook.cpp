@@ -410,7 +410,7 @@ void Sketchbook::MakeScrollBook(int idx)
         }
         else // 그 외
         {
-            sprintf(name2, "skill/skill_%d.png", ms[i]->GetCommonId());
+            sprintf(name2, "skill_%d.png", ms[i]->GetCommonId());
             spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(25+8, 51+8), CCSize(0, 0), "", "Layer", itemLayer, 5) );
         }
         
@@ -548,7 +548,7 @@ void Sketchbook::MakeScrollSlot()
         //CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
-            sprintf(fname2, "skill/skill_%d.png", scid);
+            sprintf(fname2, "skill_%d.png", scid);
             spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }
     }

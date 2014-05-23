@@ -30,9 +30,15 @@ bool isInGamePause; // 인게임 중에 pause되었는지 여부
 bool isInGame; // 인게임 중이면 true
 int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
 
+// 주간랭킹 보상 관련 변수
 int myRank;
 int myLastWeekHighScore;
 int rewardType;
+
+// 게임결과에 필요한 값들
+int prevTopaz;
+int prevStarCandy;
+int prevMP;
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -42,6 +42,11 @@ extern int myRank;
 extern int myLastWeekHighScore;
 extern int rewardType;
 
+// 게임결과에 필요한 값들
+extern int prevTopaz;
+extern int prevStarCandy;
+extern int prevMP;
+
 using namespace cocos2d;
 
 class Depth

@@ -72,7 +72,6 @@ bool Puzzle::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/skill.plist");
     
     spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
@@ -805,7 +804,10 @@ void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
     
     // 배경음 재생
     if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
-        sound->PlayBackgroundInGameSound();
+    {
+        if (!isInGamePause)
+            sound->PlayBackgroundInGameSound();
+    }
     
     m_bTouchStarted = false;
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
@@ -2298,6 +2300,11 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         // new record 인가?
         isNewRecord = nodeResult.child("new-record").text().as_int();
         
+        // 이전 값 저장 (MP는 프로토콜 바뀌면 제대로 받도록 하자)
+        prevTopaz = myInfo->GetTopaz();
+        prevStarCandy = myInfo->GetStarCandy();
+        prevMP = myInfo->GetMPTotal();
+        
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
@@ -2435,10 +2442,8 @@ void Puzzle::EndScene()
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/skill.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/skill.png");
     
     // delete all objects
     effect->RemoveAllObjects();

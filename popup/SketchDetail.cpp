@@ -124,7 +124,7 @@ void SketchDetail::InitSprites()
     // 스킬그림 (+ 스킬속성표시, 스킬레벨)
     if (isOpened)
     {
-        sprintf(name, "skill/skill_%d.png", scid);
+        sprintf(name, "skill_%d.png", scid);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(120+8, 1090+8), CCSize(0, 0), "", "SketchDetail", this, 5) );
         // 스킬속성표시
         if (scid / 10 == 2) sprintf(name, "icon/icon_skill_division_red.png");
@@ -235,7 +235,7 @@ void SketchDetail::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png5", ccp(0.5, 0.5), ccp(100, -105), CCSize(0, 0), "", "Layer", descLayer, 5) );
         ((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_brown.png5"))->setScale(0.6f);
         pos = spriteClass->FindParentCenterPos("background/bg_skill_brown.png5");
-        sprintf(name, "skill/skill_%d.png", sInfoReq->GetId());
+        sprintf(name, "skill_%d.png", sInfoReq->GetId());
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5, 1) );
         
         // 각 조건마다의 문구

@@ -58,6 +58,8 @@ protected:
     bool isSlotTouched;
     int curState;
     
+    bool isTodayCandyWorking;
+    
 private:
     CCParticleSystem* par;
     

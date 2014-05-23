@@ -322,7 +322,7 @@ void Profile::InitSkill()
         else // master
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_skill_division_purple.png", ccp(0, 0), ccp(60, 160), CCSize(0, 0), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
 
-        sprintf(skillName, "skill/skill_%d.png", friendList[idx]->GetSkillId());
+        sprintf(skillName, "skill_%d.png", friendList[idx]->GetSkillId());
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
         
         CCLog("스킬이름 : %s", DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()).c_str());
