@@ -15,7 +15,7 @@ void PuzzleResult::onEnter()
 {
     CCLog("PuzzleResult :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, -1, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void PuzzleResult::onExit()
@@ -43,7 +43,7 @@ bool PuzzleResult::init()
     
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
-    this->setTouchPriority(-1);
+    this->setTouchPriority(Depth::GetCurPriority());
     
     // notification
     CCString* param = CCString::create("1");
@@ -55,8 +55,10 @@ bool PuzzleResult::init()
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     
     spriteClass = new SpriteClass();
+    spriteClassSkill = new SpriteClass();
     
     InitSprites();
+    InitSkills();
     
     return true;
 }
@@ -109,7 +111,7 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, 1150), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
     
     // 기본점수 + 추가점수 + 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png", ccp(0.5, 0), ccp(m_winSize.width/2, 975), CCSize(700, 155), "", "PuzzleResult", this, 1002) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png", ccp(0.5, 0), ccp(m_winSize.width/2, 975), CCSize(800, 155), "", "PuzzleResult", this, 1002) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("기본점수       :", fontList[2], 40, ccp(0, 0.5), ccp(210, 1080), ccc3(121,71,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("기본점수       :", fontList[2], 40, ccp(0, 0.5), ccp(210, 1080+3), ccc3(255,219,53), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("MP 추가점수 :", fontList[2], 40, ccp(0, 0.5), ccp(210, 1010), ccc3(121,71,0), "", "PuzzleResult", this, 1005) );
@@ -158,7 +160,6 @@ void PuzzleResult::InitSprites()
     
     // 스킬 문양들 쏟아져 나오는 부분
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(140+430+20, 800), CCSize(350, 150), "", "PuzzleResult", this, 1005) );
-    
     
     
     // 말풍선
@@ -227,6 +228,52 @@ void PuzzleResult::InitSprites()
         spriteClass->AddChild(i);
 }
 
+int test[10] = {11,21,31,15,25,35,23,33,27,28};
+int ppp;
+void PuzzleResult::InitSkills()
+{
+    char number[50];
+    l = CCLayer::create();
+    ppp = 0;
+    int k;
+    for (int i = 0 ; i < 10 ; i++)
+    {
+        sprintf(number, "skill/skill_%d.png", test[i]);
+        k = (i % 2 == 0) ? 0 : 50;
+        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, number, ccp(0, 0), ccp(140+430+20+350+50+50*i, 810+k), CCSize(350, 150), "", "Layer", l, 1006) );
+        ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->setScale(0.4f);
+    }
+    for (int i = 0 ; i < spriteClassSkill->spriteObj.size() ; i++)
+        spriteClassSkill->AddChild(i);
+    
+    // ccp(140+430+20, 800), CCSize(350, 150)
+    timerStencil = CCDrawNode::create();
+    CCPoint ver[] = { ccp(590, 800), ccp(590, 800+150), ccp(590+350, 800+150), ccp(590+350, 800) };
+    timerStencil->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
+    timerClip = CCClippingNode::create(timerStencil);
+    timerClip->addChild(l);
+    this->addChild(timerClip, 1010);
+    
+    this->schedule(schedule_selector(PuzzleResult::SkillTimer), 0.2f, 9, 0);
+}
+void PuzzleResult::SkillTimer(float f)
+{
+    char number[30];
+    sprintf(number, "skill/skill_%d.png", test[ppp]);
+    
+    CCActionInterval* action = CCSequence::create(CCJumpBy::create(1.5f, ccp(-(350+50), 0), 80, 3), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::Callback), NULL), NULL);
+    ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->runAction(action);
+    
+    ppp++;
+}
+void PuzzleResult::Callback(CCNode* sender, void* p)
+{
+    CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, 50)), CCMoveBy::create(0.5f, ccp(0, -50)), NULL);
+    CCActionInterval* rep = CCRepeatForever::create(action);
+    sender->runAction(rep);
+}
+
+
 
 bool PuzzleResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -281,12 +328,14 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     Depth::RemoveCurDepth();
     
     // 이걸 끝내면서, Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
-    CCString* param = CCString::create("0");
+    CCString* param = CCString::create("2");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
     
     // remove all objects
     pThis->spriteClass->RemoveAllObjects();
     delete pThis->spriteClass;
+    pThis->spriteClassSkill->RemoveAllObjects();
+    delete pThis->spriteClassSkill;
     pThis->pBlack->removeFromParentAndCleanup(true);
     pThis->pBlackClose->removeFromParentAndCleanup(true);
     

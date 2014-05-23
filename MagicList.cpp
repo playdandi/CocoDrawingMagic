@@ -85,6 +85,7 @@ bool MagicList::init()
     this->addChild(scrollViewSlot, 5);
     
     InitSprites();
+    InitBtn();
     MakeScrollSlot();
     
     isTouched = false;
@@ -226,6 +227,17 @@ void MagicList::InitSprites()
     layer->runAction(action);
 }
 
+void MagicList::InitBtn()
+{
+    spriteClassBtn = new SpriteClass();
+    
+    // 게임시작 버튼
+    spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(318, 193), CCSize(0, 0), "", "MagicList", this, 5) );
+    spriteClassBtn->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gamestart.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "MagicList", this, 5) );
+    
+    for (int i = 0 ; i < spriteClassBtn->spriteObj.size() ; i++)
+        spriteClassBtn->AddChild(i);
+}
 
 void MagicList::MakeScrollSlot()
 {
@@ -274,6 +286,13 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
+    // 버튼 터치
+    if (((CCSprite*)spriteClassBtn->FindSpriteByName("button/btn_blue.png"))->boundingBox().containsPoint(point))
+    {
+        TryEnd();
+        return true;
+    }
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
@@ -281,7 +300,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 TryEnd();
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 11) == "skill/skill")
@@ -334,7 +353,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         }
                     }
                 }
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
@@ -355,7 +374,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                         Common::ShowPopup(this, "MagicList", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 2);
                 }
-                break;
+                return true;
             }
         }
     }
@@ -517,6 +536,11 @@ void MagicList::EndSceneCallback()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClassSlot->RemoveAllObjects();
+    delete spriteClassSlot;
+    spriteClassBtn->RemoveAllObjects();
+    delete spriteClassBtn;
+    
     layer->removeAllChildren();
     layer->removeFromParentAndCleanup(true);
     

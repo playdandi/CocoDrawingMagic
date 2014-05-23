@@ -43,12 +43,13 @@ void Puzzle::onExit()
 
 void Puzzle::keyBackClicked()
 {
-    CCDirector::sharedDirector()->end();
+    //CCDirector::sharedDirector()->end();
+    PauseGame();
 }
 
 bool Puzzle::init()
 {
-	if (CCLayer::init() == false)
+	if (!CCLayerColor::initWithColor(ccc4(43, 93, 151, 255))) // 파란 배경
 	{
 		return false;
 	}
@@ -58,6 +59,7 @@ bool Puzzle::init()
     
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
+    this->setTouchPriority(0);
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Puzzle::Notification), "Puzzle", NULL);
@@ -70,6 +72,7 @@ bool Puzzle::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/skill.plist");
     
     spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
@@ -124,6 +127,7 @@ bool Puzzle::init()
     
     isFalling = false;
     isGameOver = false;
+    isInGamePause = false;
     
     iTouchRound = 0;
     isMissionSuccess = false;
@@ -139,15 +143,35 @@ void Puzzle::Notification(CCObject* obj)
     
     if (param->intValue() == 0)
     {
-        // 종료하고 Ranking으로 돌아가자.
-        CCLog("Puzzle -> Ranking");
-        this->EndScene();
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        m_bTouchStarted = false;
+        CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        
+        sound->ResumeBackgroundInGameSound();
+        
+        // 정령 다시 움직이기
+        if (skill->IsSpiritAlive(0))
+            effect->GetSpirit(0)->resumeSchedulerAndActions();
+        if (skill->IsSpiritAlive(1))
+            effect->GetSpirit(1)->resumeSchedulerAndActions();
+        if (skill->IsSpiritAlive(2))
+            effect->GetSpirit(2)->resumeSchedulerAndActions();
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("Puzzle 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 2)
+    {
+        sound->StopBackgroundInGameSound();
+        
+        // 종료하고 Ranking으로 돌아가자.
+        CCLog("Puzzle 종료. Ranking으로 돌아감.");
+        this->EndScene();
     }
 }
 
@@ -187,7 +211,7 @@ void Puzzle::InitSkills()
 
 void Puzzle::InitInfoBar()
 {
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50), CCSize(1075,75+25), "", "Puzzle", this, 5) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50), CCSize(1075,75+25), "", "Puzzle", this, 6) );
     
     // 별사탕 숫자배경
     spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png1", ccp(0, 0.5), ccp(100, vo.y+vs.height-47), CCSize(160, 50+10), "", "Puzzle", this, 6) );
@@ -226,13 +250,13 @@ void Puzzle::InitSprites()
     InitInfoBar();
     
     // timer bar 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png2", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f), CCSize(1044, 63), "", "Puzzle", this, 4) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png3", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f+5), CCSize(1010, 35), "", "Puzzle", this, 4) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png2", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f), CCSize(1044, 63), "", "Puzzle", this, 6) ); // 4
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png3", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f+5), CCSize(1010, 35), "", "Puzzle", this, 6) ); // 4
     // 실제 timer bar
     timerLayer = CCLayer::create();
     timerLayer->setAnchorPoint(ccp(0,0));
     timerLayer->setPosition(ccp(0,0));
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_timer.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f+5), CCSize(1000, 22), "", "Layer", timerLayer, 4) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_timer.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+31.5f+5), CCSize(1000, 22), "", "Layer", timerLayer, 6) ); // 4
     
     tbSize = CCSize(1044, 63+20);
     //tbSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
@@ -253,26 +277,31 @@ void Puzzle::InitSprites()
     puzzleLayer->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height/2));
     
     // puzzle board
-//        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0, 0), ccp(57, vo.y+130), CCSize(0, 0), "", "Layer", puzzleLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0.5, 0.5), ccp(0, 0), CCSize(0, 0), "", "Layer", puzzleLayer, 20) );
     ((CCSprite*)spriteClass->FindSpriteByName("background/board.png"))->setScale((float)boardSize.height/(float)1076);
-    //else
-    //    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0, 0), ccp(1, vo.y+130), CCSize(0, 0), "", "Layer", puzzleLayer, 1) );
         
-    
+    // 화면 비율에 맞춰 piece 1개의 size 지정하기
     PIECE8_WIDTH = (float)152 * (float)boardSize.height/(float)1076;
     PIECE8_HEIGHT = (float)152 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_WIDTH = (float)154 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_HEIGHT = (float)154 * (float)boardSize.height/(float)1076;
     
     // 구름
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_cloud_near.png", ccp(1, 0), ccp(m_winSize.width, vo.y+vs.height*1.920f/2.920f+350), CCSize(0, 0), "", "Puzzle", this, 1) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_cloud_near.png", ccp(1, 0), ccp(m_winSize.width, vo.y+vs.height*1.920f/2.920f+350), CCSize(0, 0), "", "Puzzle", this, 1) );
     // 배경 그림
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_upper.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height-30), CCSize(0, 0), "", "Puzzle", this, 0) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_grass.png", ccp(0, 1), ccp(0, vo.y+tbSize.height+boardSize.height+80), CCSize(0, 0), "", "Puzzle", this, 2) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_upper.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height-30), CCSize(0, 0), "", "Puzzle", this, 0) );
     
-    // mission
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/mission.png", ccp(0, 0), ccp(46, 1290), CCSize(0, 0), "", "Puzzle", this, 1) );
+    // 퍼즐판 뒤 잔디
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_grass.png", ccp(0, 1), ccp(0, vo.y+tbSize.height+boardSize.height+80), CCSize(0, 0), "", "Puzzle", this, 5) ); // 2
+    // 길바닥
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_floor.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height+15), CCSize(0, 0), "", "Puzzle", this, 4) );
+    floorSize = ((CCSprite*)spriteClass->FindSpriteByName("bg_floor.png"))->getContentSize();
+    // 길바닥 위 작은 잔디
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_grass_mini.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height-5), CCSize(0, 0), "", "Puzzle", this, 3) );
+    // 산
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_mountain.png", ccp(1, 0), ccp(m_winSize.width, vo.y+tbSize.height+boardSize.height+floorSize.height), CCSize(0, 0), "", "Puzzle", this, 2) );
+    // 성
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_castle.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height+floorSize.height-35), CCSize(0, 0), "", "Puzzle", this, 2) );
     
     // 코코 그림자, 요정 그림자
     //vs.height+vo.y-480
@@ -281,19 +310,7 @@ void Puzzle::InitSprites()
     ((CCSprite*)spriteClass->FindSpriteByName("sun/sun_shadow.png"))->setScale(1.25f);
     
     // 마법진
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 1) );
-
-    /*
-    CCParticleSystemQuad* fire = CCParticleSystemQuad::create("particles/magic_circle.plist");
-    fire->setAnchorPoint(ccp(0.5,0.5));
-    fire->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120));
-    fire->setScaleX(3.6f);
-    fire->setScaleY(1.2f);
-    fire->retain();
-    fire->setAnchorPoint(ccp(0.5, 0.5));
-    this->addChild(fire, 100);
-    */
-    
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 4) );
     ((CCSprite*)spriteClass->FindSpriteByName("background/magic_circle.png"))->setScale(0.9f);
     
     
@@ -559,11 +576,8 @@ void Puzzle::ChangeAnimFairy(float f)
     
 }
 
-
 void Puzzle::InitBoard()
 {
-    CCLog("Init board");
-    
     // 8각형
 	for (int x = 0 ; x < COLUMN_COUNT ; x++)
 	{
@@ -636,7 +650,7 @@ void Puzzle::SetScoreAndStarCandy()
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2, vs.height+vo.y-65));
-    this->addChild(pScoreLayer, 5);
+    this->addChild(pScoreLayer, 6);
     
     iStarCandy = 0;
     pStarCandyLabel = (CCLabelTTF*)spriteClassInfo->FindLabelByTag(1);
@@ -666,7 +680,7 @@ void Puzzle::UpdateScore(int type, int data)
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2, vs.height+vo.y-65));
-    this->addChild(pScoreLayer, 5);
+    this->addChild(pScoreLayer, 6);
 }
 
 void Puzzle::UpdateStarCandy(int type, int data)
@@ -683,7 +697,6 @@ void Puzzle::UpdateStarCandy(int type, int data)
     }
     char s[5];
     sprintf(s, "%d", iStarCandy);
-    CCLog("%d", iStarCandy);
     pStarCandyLabel->setString(s);
 }
 
@@ -695,7 +708,6 @@ void Puzzle::SetCombo()
     pComboLabel->setColor(ccc3(0,0,0));
 
     CCPoint pos = cocoLayer->getPosition();
-    //CCLog("pos : %d %d", (int)pos.x, (int)pos.y+330);
     pComboLabel->setPosition(ccp(pos.x, pos.y+330));
     pComboLabel->setOpacity(0);
     this->addChild(pComboLabel, 3000);
@@ -812,6 +824,10 @@ void Puzzle::SetTimer()
 
 void Puzzle::UpdateTimer(float f)
 {
+    //////////////////////////////////////// 시간을 정지해야 하는 상황들 ////////////////////////////////////
+    // Pause 상태에는 시간을 정지시킨다.
+    if (isInGamePause)
+        return;
     // Magic Time 발동 중에는 시간이 정지된다.
     if (isMagicTime)
         return;
@@ -831,7 +847,13 @@ void Puzzle::UpdateTimer(float f)
     // "W8 : 여신의 은총" 스킬이 적용 중이면 정지한다.
     if (skill->W8_IsActive())
         return;
-
+    
+    // 한붓그리기 직후 발동된 active한 스킬이 하나라도 있으면 정지.
+    if (m_iSkillSP > 0)
+        return;
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
     iTimer -= 100;
     
     // timer 이동
@@ -861,31 +883,8 @@ void Puzzle::UpdateTimer(float f)
             pScoreLayer->removeAllChildren();
             pScoreLayer->removeFromParentAndCleanup(true);
             
-            
             // 그리고 있던 것들 모두 취소
-            CCLog("touch cnt = %d", touch_cnt%QUEUE_CNT);
-            int x, y;
-            for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
-            {
-                x = (int)piece8xy[touch_cnt%QUEUE_CNT][i].x;
-                y = (int)piece8xy[touch_cnt%QUEUE_CNT][i].y;
-                spriteP8[x][y]->setScale(spriteP8[x][y]->getScale() / 0.9f);
-                spriteP8[x][y]->setOpacity(255);
-                // lock도 해제
-                m_bLockP8[x][y]--;
-            }
-            /*for (int i = 0 ; i < piece4xy[touch_cnt%QUEUE_CNT].size() ; i++)
-            {
-                x = (int)piece4xy[touch_cnt%QUEUE_CNT][i].x;
-                y = (int)piece4xy[touch_cnt%QUEUE_CNT][i].y;
-                puzzleP4set->SetOpacity(x, y, 255);
-            }*/
-            for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
-                strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
-            piece8xy[touch_cnt%QUEUE_CNT].clear();
-            piece4xy[touch_cnt%QUEUE_CNT].clear();
-            strap[touch_cnt%QUEUE_CNT].clear();
-            
+            CancelDrawing();
             
             // TIME UP 메시지 띄운 후, 게임결과화면 로딩 위해 game_end protocol 호출
             CCLabelTTF* timeup = CCLabelTTF::create("수업 종료!", fontList[0].c_str(), 84);
@@ -1105,6 +1104,21 @@ void Puzzle::StartMagicTime(float f)
     }
 }
 
+void Puzzle::PauseGame()
+{
+    isInGamePause = true;
+    sound->PauseBackgroundInGameSound();
+    
+    // 정령 멈추기
+    if (skill->IsSpiritAlive(0))
+        effect->GetSpirit(0)->pauseSchedulerAndActions();
+    if (skill->IsSpiritAlive(1))
+        effect->GetSpirit(1)->pauseSchedulerAndActions();
+    if (skill->IsSpiritAlive(2))
+        effect->GetSpirit(2)->pauseSchedulerAndActions();
+    
+    Common::ShowNextScene(this, "Puzzle", "PuzzlePause", false, vo.y+tbSize.height+boardSize.height+60);
+}
 
 bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -1113,12 +1127,12 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     CCPoint point = pTouch->getLocation();
     //CCLog("Puzzle :: %d , %d", (int)point.x, (int)point.y);
     
-    /*
+
     // 보드판과 상관없는 것들 (lock에 제한받지 않는 것들)
     // 1) pause button
-    // pause button
-    if (((CCSprite*)spriteClass->FindSpriteByName("icon/icon_pause.png"))->boundingBox().containsPoint(point))
+    if (((CCSprite*)spriteClassInfo->FindSpriteByName("icon/icon_pause.png"))->boundingBox().containsPoint(point))
     {
+        /*
         m_bTouchStarted = true;
         isMagicTime = true;
         
@@ -1131,10 +1145,11 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         
         m_iStartMagicTimeStatus = 1;
         this->schedule(schedule_selector(Puzzle::StartMagicTime), 0.1f);
+        */
         
+        PauseGame();
         return true;
     }
-    */
     
     cocoFrameNumber = 0;
     
@@ -1414,12 +1429,23 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 m_iSpiritSP++;
             
             // 다시 한붓그린 부분 lock을 푼다
+            int x, y;
             for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
             {
-                int x = piece8xy[touch_cnt%QUEUE_CNT][i].x;
-                int y = piece8xy[touch_cnt%QUEUE_CNT][i].y;
+                x = piece8xy[touch_cnt%QUEUE_CNT][i].x;
+                y = piece8xy[touch_cnt%QUEUE_CNT][i].y;
                 m_bLockP8[x][y]--;
             }
+            
+            // 4각형 음영처리 원상복구
+            for (int i = 0 ; i < piece4xy[touch_cnt%QUEUE_CNT].size() ; i++)
+            {
+                x = (int)piece4xy[touch_cnt%QUEUE_CNT][i].x;
+                y = (int)piece4xy[touch_cnt%QUEUE_CNT][i].y;
+                puzzleP4set->SetOpacity(x, y, 255);
+            }
+            piece4xy[touch_cnt%QUEUE_CNT].clear();
+            
             // 스트랩 그림들 제거한다.
             for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
                 strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
@@ -1471,34 +1497,7 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         // 3개 미만으로 한붓그리기가 되었다면, 원상태로 복구시킨다.
         else
         {
-            int x, y;
-            //CCLog("정령 클릭 후 손 떼지 않고 정령스킬발동완료 후 떼어서 여기로 왔다.");
-            //CCLog("%d %d %d", (int)piece8xy[touch_cnt%QUEUE_CNT].size(), (int)piece4xy[touch_cnt%QUEUE_CNT].size(), (int)strap[touch_cnt%QUEUE_CNT].size());
-            for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
-            {
-                x = (int)piece8xy[touch_cnt%QUEUE_CNT][i].x;
-                y = (int)piece8xy[touch_cnt%QUEUE_CNT][i].y;
-                spriteP8[x][y]->setScale(spriteP8[x][y]->getScale() / 0.9f);
-                spriteP8[x][y]->setOpacity(255);
-                // lock도 해제
-                m_bLockP8[x][y]--;
-            }
-            
-            for (int i = 0 ; i < piece4xy[touch_cnt%QUEUE_CNT].size() ; i++)
-            {
-                x = (int)piece4xy[touch_cnt%QUEUE_CNT][i].x;
-                y = (int)piece4xy[touch_cnt%QUEUE_CNT][i].y;
-                puzzleP4set->SetOpacity(x, y, 255);
-            }
-            
-            for (int i = 0 ; i < strap[touch_cnt%QUEUE_CNT].size() ; i++)
-                strap[touch_cnt%QUEUE_CNT][i]->removeFromParentAndCleanup(true);
-            
-            piece8xy[touch_cnt%QUEUE_CNT].clear();
-            piece4xy[touch_cnt%QUEUE_CNT].clear();
-            strap[touch_cnt%QUEUE_CNT].clear();
-            m_bTouchStarted = false;
-            m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
+            CancelDrawing();
         }
     }
 }
@@ -1506,6 +1505,9 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void Puzzle::CancelDrawing()
 {
     int x, y;
+    CCLog("CancelDrawing = %d", touch_cnt%QUEUE_CNT);
+    //CCLog("정령 클릭 후 손 떼지 않고 정령스킬발동완료 후 떼어서 여기로 왔다.");
+    //CCLog("%d %d %d", (int)piece8xy[touch_cnt%QUEUE_CNT].size(), (int)piece4xy[touch_cnt%QUEUE_CNT].size(), (int)strap[touch_cnt%QUEUE_CNT].size());
     for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
     {
         x = (int)piece8xy[touch_cnt%QUEUE_CNT][i].x;
@@ -2419,14 +2421,24 @@ void Puzzle::EndScene()
     
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Puzzle");
     
+    // layer 배경색을 검은색으로 바꾼다.
+    this->setColor(ccc3(0,0,0));
+    
+    // 일시정지 화면에서 바로 종료하는 상황일 경우
+    if (isInGamePause)
+        this->unschedule(schedule_selector(Puzzle::UpdateTimer));
+    isInGamePause = false;
+    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/skill.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/skill.png");
     
     // delete all objects
     effect->RemoveAllObjects();

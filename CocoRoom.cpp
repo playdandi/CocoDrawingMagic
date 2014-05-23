@@ -241,6 +241,10 @@ void CocoRoom::MakeSprites(int state)
     scrollView->removeAllChildren();
     
     // layer init.
+    spriteClassFairySlot->RemoveAllObjects();
+    spriteClassCocoSlot->RemoveAllObjects();
+    spriteClassCandyList->RemoveAllObjects();
+    
     spriteClassCoco->RemoveAllObjects();
     coco->removeAllChildren();
     spriteClassFairy->RemoveAllObjects();

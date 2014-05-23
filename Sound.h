@@ -27,10 +27,13 @@ public:
     
     void UnLoadSound();
     
-    //////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
     void PreLoadInGameSound();
     
     void PlayBackgroundInGameSound();
+    void PauseBackgroundInGameSound();
+    void ResumeBackgroundInGameSound();
+    void StopBackgroundInGameSound();
     
     void PlayPieceClick(int idx);
     void PlayBomb();

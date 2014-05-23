@@ -251,6 +251,8 @@ void PuzzleSkill::A1(int num, int queue_pos)
     m_pGameLayer->UpdateScore(1, A1_addedScore);
     
     // 이펙트
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // 사이클이 발동된 상태면, 사이클 이펙트도 같이 보여준다. (태양열, 파도, 클로버 그림 띄우는 것)
@@ -380,6 +382,8 @@ void PuzzleSkill::A2(int num, int queue_pos)
     }
     
     // 이펙트 실행 (태양/달/파도 그림)
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // 폭파 실행
@@ -403,6 +407,8 @@ void PuzzleSkill::F3(int num, int queue_pos)
     m_pGameLayer->UpdateScore(1, F3_addedScore);
     
     // 이펙트 ('+' 그림)
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // sound
@@ -627,6 +633,8 @@ void PuzzleSkill::A6(int num, int queue_pos)
     m_pGameLayer->Bomb(queue_pos, result_pos);
     
     // 이펙트 실행
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // 사운드
@@ -687,6 +695,8 @@ void PuzzleSkill::F7(int num, int queue_pos)
     // 코코 사운드
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     // 코코 이펙트
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, NULL); // 양수 : 코코 주위에 링 생김
     
     F7_callbackCnt = 0;
@@ -826,6 +836,8 @@ void PuzzleSkill::W3(int num)
     W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
 
     // 이펙트 실행
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, NULL);
 }
 int PuzzleSkill::W3GetScore()
@@ -839,6 +851,8 @@ void PuzzleSkill::W4(int num)
     W4_addedCandy = pow(m_pGameLayer->GetCombo(), 0.8f) * (skillLevel[num]*0.3f + 0.7f);
     
     // 이펙트 실행
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, NULL);
 }
 int PuzzleSkill::W4GetCandy()
@@ -979,6 +993,7 @@ void PuzzleSkill::W7(int num)
         W7_RemainTime = 5000;
         
         // 이펙트 실행
+        m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
         m_pGameLayer->PlayEffect(num, NULL);
     }
 }
@@ -1011,6 +1026,7 @@ void PuzzleSkill::W8(int num, int queue_pos)
     W8_remainTime = 10 * 1000;
     W8_accelTime = 0;
     W8_accel = 1;
+    W8_isChanging = false;
     W8_isLastChange = false;
     ps = this;
     SetQueuePos(queue_pos);
@@ -1034,22 +1050,26 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
     }
     else
     {
-        W8_callbackCnt = 0;
-        int x, y;
-
-        // 파란색 piece로 바꾸는 액션 실행한다.
-        result_pos = pos;
-        for (int i = 0 ; i < result_pos.size() ; i++)
+        if (!W8_isChanging)
         {
-            x = (int)result_pos[i].x;
-            y = (int)result_pos[i].y;
-            
-            // lock을 건다.
-            m_pGameLayer->LockEach(x, y);
-            
-            // 없애기
-            CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, 0.0f), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), this), NULL);
-            m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
+            W8_isChanging = true;
+            W8_callbackCnt = 0;
+            int x, y;
+
+            // 파란색 piece로 바꾸는 액션 실행한다.
+            result_pos = pos;
+            for (int i = 0 ; i < result_pos.size() ; i++)
+            {
+                x = (int)result_pos[i].x;
+                y = (int)result_pos[i].y;
+                
+                // lock을 건다.
+                m_pGameLayer->LockEach(x, y);
+                
+                // 없애기
+                CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, 0.0f), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), this), NULL);
+                m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
+            }
         }
     }
 }
@@ -1083,7 +1103,6 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
                     if ((type = rand()%5) != PIECE_BLUE)
                         break;
                 }
-                CCLog("(%d,%d) = %d", x, y, type);
                 ps->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, type);
             }
             ps->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
@@ -1119,14 +1138,21 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
             y = (int)ps->result_pos[i].y;
             ps->m_pGameLayer->UnLockEach(x, y);
         }
+        
+        ps->W8_isChanging = false;
+        if (ps->W8_isLastChangeWaiting)
+            ps->W8_LastChange();
     }
 }
 void PuzzleSkill::W8_LastChange()
 {
+    ps->W8_isLastChangeWaiting = false;
     ps->W8_isLastChange = true;
     
     // 한붓그리던 그림 모두 취소하고 없애기
     ps->m_pGameLayer->CancelDrawing();
+    
+    ps->W8_callbackCnt = 0;
     
     // 파란색 piece 찾기
     ps->result_pos.clear();
@@ -1169,7 +1195,11 @@ void PuzzleSkill::W8_Timer(float f) // 여신 지속시간 timer
         ps->m_pGameLayer->GetEffect()->Effect15_Clear();
         
         // 마지막 변화 (모든 blue piece를 다른 색으로 바꾼다)
-        ps->W8_LastChange();
+        ps->W8_isLastChangeWaiting = false;
+        if (!ps->W8_isChanging)
+            ps->W8_LastChange();
+        else
+            ps->W8_isLastChangeWaiting = true;
     }
     ps->W8_remainTime -= ps->W8_accel*100;
     
@@ -1203,6 +1233,8 @@ void PuzzleSkill::E4(int num, int queue_pos)
     E4_addedCandy = skillLevel[num]*30; // 나중에 보고 밸런스 조정
     
     // 이펙트 실행
+    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
     // sound
@@ -1374,7 +1406,7 @@ void PuzzleSkill::E7()
     {
         E7_getPotion = true;
         
-        // 화면에 보여주는 애니메이션 구현
+        //m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
     }
 }
 
@@ -1409,7 +1441,11 @@ void PuzzleSkill::E8_Timer(float f) // 라인 흔들기를 시작한다.
         ps->E8_bottomY[x] = ROW_COUNT-1-ps->E8_lineDepth[ps->E8_cnt]+1;
         ps->E8_curY[x] = ROW_COUNT-1;
         if (x == 0 || x == COLUMN_COUNT-1)
+        {
             ps->E8_curY[x]--;
+            if (ps->E8_bottomY[x] == 0)
+                ps->E8_bottomY[x]++;
+        }
         
         // 흔들기+폭파 시작
         ps->E8_Bomb(NULL, (void*)x);
@@ -1437,6 +1473,7 @@ void PuzzleSkill::E8_Bomb(CCNode* sender, void* data)
     }
     else // 다음 피스를 흔든다.
     {
+        //CCLog("E8_Bomb : (x, curY, bottomY) = (%d, %d, %d)", x, ps->E8_curY[x], ps->E8_bottomY[x]);
         CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.02f, ccp(-30, 0)), CCMoveBy::create(0.04f, ccp(60, 0)), CCMoveBy::create(0.04f, ccp(-60, 0)), CCMoveBy::create(0.04f, ccp(60, 0)), CCMoveBy::create(0.02f, ccp(-30, 0)), CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::E8_Bomb), (void*)x), NULL);
         ps->m_pGameLayer->GetSpriteP8(x, ps->E8_curY[x])->runAction(action);
         ps->E8_curY[x]--;

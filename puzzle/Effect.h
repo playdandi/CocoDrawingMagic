@@ -13,6 +13,10 @@ public:
     void PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos);
     void PlayEffectCallback(CCNode* sender, void* data);
     
+    void PlayEffect_SkillIcon_Callback(CCNode* sender, void* p);
+    void PlayEffect_SkillIcon(int skillNum);
+    void PlayEffect_MagicCircle(int skillNum);
+    void PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer);
     void PlayEffect_Default(std::vector<CCPoint> pos);
     void PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos);
     void SetSpirit(int type);
@@ -79,6 +83,11 @@ public:
     void RemoveAllObjects();
     
 private:
+    CCParticleSystemQuad* circle;
+    CCParticleSystemQuad* circle_fire;
+    CCParticleSystemQuad* circle_water;
+    CCParticleSystemQuad* circle_land;
+    
     Effect* pThis;
     Puzzle* gameLayer;
     bool isDone[NUMOFSKILL];

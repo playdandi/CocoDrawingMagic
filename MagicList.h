@@ -19,6 +19,7 @@ public:
     virtual void scrollViewDidZoom(CCScrollView* view);
     
     void InitSprites();
+    void InitBtn();
     void MakeScrollSlot();
     
     void Notification(CCObject* obj);
@@ -44,6 +45,7 @@ protected:
     
 private:
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassBtn;
     SpriteClass* spriteClassSlot;
     CCLayer* layer;
     

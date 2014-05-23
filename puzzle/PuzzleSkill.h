@@ -147,6 +147,8 @@ private:
     int W8_accelTime;
     int W8_accel;
     int W8_callbackCnt;
+    bool W8_isLastChangeWaiting;
+    bool W8_isChanging;
     bool W8_isLastChange;
     
     ////////////////////////////////////////////////////////////////////////////////////

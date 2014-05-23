@@ -21,7 +21,7 @@ class PuzzleSkill;
 class PuzzleP8Set;
 class PuzzleP4Set;
 
-class Puzzle : public CCLayer
+class Puzzle : public CCLayerColor
 {
 public:
     static CCScene* scene();
@@ -63,6 +63,8 @@ public:
     CCPoint SetCorrectPosition(CCPoint point);
     
     void StartMagicTime(float f);
+    
+    void PauseGame();
     
 	virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
@@ -136,6 +138,7 @@ public:
     CCPoint vo;
     CCSize tbSize;
     CCSize boardSize;
+    CCSize floorSize;
     
     void ReadyAndStart(CCNode* sender, void* pointer);
     void Ready(float f);

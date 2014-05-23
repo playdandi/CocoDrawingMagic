@@ -27,6 +27,7 @@
 #include "popup/NoImage.h"
 #include "puzzle/Puzzle.h"
 #include "puzzle/PuzzleResult.h"
+#include "puzzle/PuzzlePause.h"
 #include "Splash.h"
 #include "RankUp.h"
 
@@ -360,6 +361,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();
     else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
+    else if (to == "PuzzlePause") nextScene = PuzzlePause::scene(etc);
     
     // go
     if (from == "Splash")
@@ -684,6 +686,7 @@ void SpriteClass::AddChild(int idx)
         else if (obj->parentType == "NoImage") p = ((NoImage*)obj->parent);
         else if (obj->parentType == "Puzzle") p = ((Puzzle*)obj->parent);
         else if (obj->parentType == "PuzzleResult") p = ((PuzzleResult*)obj->parent);
+        else if (obj->parentType == "PuzzlePause") p = ((PuzzlePause*)obj->parent);
         else if (obj->parentType == "RankUp") p = ((RankUp*)obj->parent);
         
         if (obj->type == 0)      p->addChild(obj->sprite, obj->zOrder);
@@ -770,7 +773,12 @@ void SpriteClass::RemoveAllObjects()
         {
             if (spriteObj[i]->priority == curPriority)
             {
-                //CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->name.c_str());
+                /*
+                if (spriteObj[i]->type == 2)
+                    CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->label->getString());
+                else
+                    CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->name.c_str());
+                */
                 spriteObj[i]->name.clear();
                 spriteObj[i]->parentName.clear();
                 spriteObj[i]->parentType.clear();
@@ -849,6 +857,7 @@ void Common::RebootSystem(void* p)
         else if (Depth::GetCurNameString() == "NoImage") ((NoImage*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Puzzle") ((Puzzle*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "PuzzleResult") ((PuzzleResult*)cur)->EndSceneCallback(NULL, cur);
+        else if (Depth::GetCurNameString() == "PuzzlePause") ((PuzzlePause*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "RankUp") ((RankUp*)cur)->EndScene();
     }
     

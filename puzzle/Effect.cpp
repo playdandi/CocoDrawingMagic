@@ -10,6 +10,11 @@ void Effect::Init(Effect* effect, Puzzle* layer)
     pThis = effect;
     gameLayer = layer;
     
+    circle = NULL;
+    circle_fire = NULL;
+    circle_water = NULL;
+    circle_land = NULL;
+    
     sp_fire = NULL;
     A8_icon = NULL;
     fire = NULL;
@@ -100,6 +105,85 @@ void Effect::PlayEffect_Default(std::vector<CCPoint> pos)
         
         gameLayer->addChild(par, z1);
     }
+}
+
+void Effect::PlayEffect_MagicCircle(int skillNum)
+{
+    if (circle == NULL)
+    {
+        circle = CCParticleSystemQuad::create("particles/magic_circle.plist");
+        circle->setAnchorPoint(ccp(0.5, 0.5));
+        circle->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120));
+        circle->setScaleX(3.6f);
+        circle->setScaleY(1.2f);
+        circle->setDuration(0.5f); // 1초 고정
+        gameLayer->addChild(circle, z1);
+        
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.5f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_MagicCircle_Callback), this), NULL);
+        circle->setTag(0);
+        circle->runAction(action);
+    }
+    
+    if (skillNum < 8 && circle_fire == NULL)
+    {
+        circle_fire = CCParticleSystemQuad::create("particles/circle_fire.plist");
+        circle_fire->setAnchorPoint(ccp(0.5, 0.5));
+        circle_fire->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120));
+        gameLayer->addChild(circle_fire, 5);
+        
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(3.0f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_MagicCircle_Callback), this), NULL);
+        circle_fire->setTag(1);
+        circle_fire->runAction(action);
+        
+    }
+    if (skillNum >= 8 && skillNum < 16 && circle_water == NULL)
+    {
+        circle_water = CCParticleSystemQuad::create("particles/circle_water.plist");
+        circle_water->setAnchorPoint(ccp(0.5, 0.5));
+        circle_water->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120));
+        circle_water->setScale(2.0f);
+        gameLayer->addChild(circle_water, 5);
+        
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_MagicCircle_Callback), this), NULL);
+        circle_water->setTag(2);
+        circle_water->runAction(action);
+    }
+    if (skillNum >= 16 && skillNum < 24 && circle_land == NULL)
+    {
+        // 아직 없음
+    }
+}
+void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
+{
+    Effect* ef = (Effect*)pointer;
+    int tag = sender->getTag();
+    ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
+    
+    if (tag == 0) ef->circle = NULL;
+    else if (tag == 1) ef->circle_fire = NULL;
+    else if (tag == 2) ef->circle_water = NULL;
+}
+
+void Effect::PlayEffect_SkillIcon(int skillNum)
+{
+    int num;
+    if (skillNum < 8) num = skillNum+21;
+    else if (skillNum < 16) num = skillNum+3;
+    else if (skillNum < 24) num = skillNum+15;
+    char name[40];
+    sprintf(name, "skill_%d.png", num);
+    CCSprite* skill = CCSprite::createWithSpriteFrameName(name);
+    skill->setScale(1.0f);
+    skill->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+30));
+    skill->setOpacity(0);
+    gameLayer->addChild(skill, z1);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCSpawn::create(CCFadeOut::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_SkillIcon_Callback), this), NULL);
+    skill->runAction(action);
+}
+void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
+{
+    sender->removeFromParentAndCleanup(true);
 }
 
 void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
@@ -700,10 +784,13 @@ void Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector
     
     // 마법진 위에 용 출현
     A8_icon = CCSprite::createWithSpriteFrameName("icon/dragon.png");
-    A8_icon->setScale(1.2f);
-    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+130));
+    A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
+    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
+    
     CCActionInterval* action2 = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.8f, ccp(0, 100)), CCSequence::create(CCFadeIn::create(0.4f), CCFadeOut::create(0.4f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect7_Callback_1), this), NULL);
     A8_icon->runAction(action2);
 }
@@ -862,14 +949,12 @@ void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
 void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // '여신의 은총'
 {
     // 어두운 배경
-    F8_bg = NULL;
     F8_bg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, gameLayer->m_winSize.width, 500));
-    F8_bg->setPosition(ccp(0, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+190));
+    F8_bg->setPosition(ccp(0, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+15+gameLayer->floorSize.height));
     F8_bg->setAnchorPoint(ccp(0, 0));
     F8_bg->setColor(ccc3(0,0,0));
-    gameLayer->addChild(F8_bg, 0);
-    CCActionInterval* action = CCFadeTo::create(0.5f, 127);
-    F8_bg->runAction(action);
+    gameLayer->addChild(F8_bg, 5);
+    F8_bg->runAction(CCFadeTo::create(0.5f, 255));
     
     // 전체 배경 효과
     m_W8_bg = CCParticleSystemQuad::create("particles/water8_bg.plist");
@@ -877,24 +962,24 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     m_W8_bg->setAnchorPoint(ccp(0.5, 0));
     m_W8_bg->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+190+100));
     m_W8_bg->setScale(1.0f);
-    gameLayer->addChild(m_W8_bg, 0);
+    gameLayer->addChild(m_W8_bg, 6);
     
     // 마법진 위에 여신 출현
     A8_icon = CCSprite::createWithSpriteFrameName("icon/goddess.png");
-    A8_icon->setScale(0.75f);
-    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+30));
+    A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
+    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
 
     CCActionInterval* action2 = CCSpawn::create(CCMoveBy::create(0.7f, ccp(0, 100)), CCFadeIn::create(0.7f), NULL);
-    //CCActionInterval* action2 = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.7f, ccp(0, 100)), CCFadeIn::create(0.7f), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect15_Callback), this), NULL);
     A8_icon->runAction(action2);
     
     // orb 출현
     m_orb = CCParticleSystemQuad::create("particles/water8_orb.plist");
-    //m_orb->retain();
-    m_orb->setAnchorPoint(ccp(0.5, 0.5));
-    m_orb->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+130+100));
+    m_orb->setAnchorPoint(ccp(0.5, 0));
+    m_orb->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+A8_icon_height));
     m_orb->setScale(1.0f);
     m_orb->setStartSize(100);
     gameLayer->addChild(m_orb, 1000);
@@ -937,10 +1022,13 @@ void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // 
 {
     // 나무
     A8_icon = CCSprite::createWithSpriteFrameName("icon/tree.png");
-    A8_icon->setScale(0.9f);
-    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+130));
+    A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
+    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+    A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
+    
     // 나무 액션
     CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.7f, ccp(0, 100)), CCFadeIn::create(0.7f), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect23_Callback), this), NULL);
     A8_icon->runAction(action);
@@ -950,7 +1038,7 @@ void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // 
     m_W8_bg->setAnchorPoint(ccp(0.5, 0));
     m_W8_bg->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+190+100));
     m_W8_bg->setScale(1.0f);
-    gameLayer->addChild(m_W8_bg, 0);
+    gameLayer->addChild(m_W8_bg, 6);
 }
 void Effect::Effect23_Callback(CCNode* sender, void* pointer)
 {

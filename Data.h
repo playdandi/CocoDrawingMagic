@@ -34,6 +34,7 @@ extern std::vector<int> todayCandyKakaoId;
 
 extern bool isRebooting;
 extern bool isInGame;
+extern bool isInGamePause;
 extern int savedTime;
 
 // 주간랭킹 보상 관련 변수

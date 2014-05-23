@@ -132,6 +132,18 @@ void Sound::PlayBackgroundInGameSound()
 {
     SimpleAudioEngine::sharedEngine()->playBackgroundMusic("sounds/game_bgm.mp3", true);
 }
+void Sound::PauseBackgroundInGameSound()
+{
+    SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
+}
+void Sound::ResumeBackgroundInGameSound()
+{
+    SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+}
+void Sound::StopBackgroundInGameSound()
+{
+    SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
+}
 
 void Sound::PlayPieceClick(int idx)
 {

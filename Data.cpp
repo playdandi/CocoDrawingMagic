@@ -21,12 +21,12 @@ std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
 std::vector<class LastWeeklyRank*> lastWeeklyRank;
 
-
 std::vector<class Depth*> depth;
 std::vector<int> inGameSkill;
 std::vector<int> todayCandyKakaoId;
 
 bool isRebooting; // 시스템 재부팅 중일 시 true
+bool isInGamePause; // 인게임 중에 pause되었는지 여부
 bool isInGame; // 인게임 중이면 true
 int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
 

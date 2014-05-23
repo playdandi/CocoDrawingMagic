@@ -1,5 +1,5 @@
-#ifndef __magician__PuzzleResult__
-#define __magician__PuzzleResult__
+#ifndef __CocoMagic__PuzzlePause__
+#define __CocoMagic__PuzzlePause__
 
 #include "Common.h"
 #include "cocos2d.h"
@@ -8,10 +8,10 @@
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
-class PuzzleResult : public CCLayer
+class PuzzlePause : public CCLayer
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int h);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -20,29 +20,21 @@ public:
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
-    CREATE_FUNC(PuzzleResult);
+    CREATE_FUNC(PuzzlePause);
     
     void InitSprites();
-    void InitSkills();
-    void SkillTimer(float f);
-    void Callback(CCNode* sender, void* p);
+    void InitSprites2();
     
+    void ResumeGame();
+    void EndGame();
     void EndScene();
-    void EndSceneCallback(CCNode* sender, void* pointer);
     
 protected:
     CCSize m_winSize;
     
 private:
-    CCSprite* pBlack;
-    CCSprite* pBlackClose;
-    
+    CCSprite* pBlack;    
     SpriteClass* spriteClass;
-    SpriteClass* spriteClassSkill;
-    CCLayer* l;
-    
-    CCDrawNode* timerStencil;
-    CCClippingNode* timerClip;
 };
 
-#endif /* defined(__magician__PuzzleResult__) */
+#endif /* defined(__CocoMagic__PuzzlePause__) */

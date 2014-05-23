@@ -1,5 +1,6 @@
 #include "AppDelegate.h"
 #include "Splash.h"
+#include "puzzle/Puzzle.h"
 #include "SimpleAudioEngine.h"
 USING_NS_CC;
 
@@ -51,14 +52,19 @@ void AppDelegate::applicationDidEnterBackground()
     // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.
     if (!isInGame)
         savedTime = time(0);
+    // 인게임 중에는 '일시정지' flag를 세운다.
+    else
+    {
+        isInGamePause = true;
+    }
 
     // if you use SimpleAudioEngine, it must be pause
     SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
-    //SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
 }
 
 // this function will be called when the app is active again
-void AppDelegate::applicationWillEnterForeground() {
+void AppDelegate::applicationWillEnterForeground()
+{
     CCLog("enter foreground");
     CCDirector::sharedDirector()->stopAnimation(); //
     CCDirector::sharedDirector()->resume(); //
@@ -67,11 +73,26 @@ void AppDelegate::applicationWillEnterForeground() {
     // 시간 갱신 (인게임 중일 때는 할 필요 없다)
     if (!isInGame)
     {
+        //CCLog("not in game");
         CCString* param = CCString::create("5");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        
+        // if you use SimpleAudioEngine, it must resume here
+        SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
     }
-
-    // if you use SimpleAudioEngine, it must resume here
-    SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
-    //SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+    else
+    {
+        // 인게임 중이면, Puzzle 화면으로 돌아갈 경우에 한해 Pause 화면을 띄워준다. (게임결과 화면에서는 필요없다)
+        if (Depth::GetCurNameString() == "Puzzle")
+        {
+            CCLog("foreground : 일시정지 화면 띄우자");
+            void* p = Depth::GetCurPointer();
+            ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
+            ((Puzzle*)p)->PauseGame();
+            //if(SimpleAudioEngine::sharedEngine()->isBackgroundMusicPlaying())
+            //    CCLog("YES");
+            //else
+            //    CCLog("No");
+        }
+    }
 }
