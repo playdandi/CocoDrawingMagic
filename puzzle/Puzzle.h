@@ -142,8 +142,10 @@ public:
     
     void ReadyAndStart(CCNode* sender, void* pointer);
     void Ready(float f);
+    void Ready_C(CCNode* sender, void* p);
     void ReadyCallback(CCNode* sender, void* pointer);
     
+    void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFriends(char* data, int size);
@@ -237,6 +239,9 @@ private:
     
     SpriteClass* spriteClassInfo;
     SpriteClass* spriteClass;
+    
+    CCSprite* overBg;
+    CCSprite* timelimit;
     
     CCLayer* fairyLayer;
     std::vector<CCSprite*> fairy_sp;

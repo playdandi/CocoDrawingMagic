@@ -216,21 +216,24 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp((125+38)+43+3+offset, 525-8), CCSize(0,0), "", "PuzzleResult", this, 1005) );
     
     // 스킬 이름
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName(), fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30+31+5), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName(), fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30-36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+    
+    // 미션 내용
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸른 피스 200개 터뜨리기", fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     
     // 연습량 프로그레스바
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_progress_bar.png", ccp(0, 0), ccp(125+146+10, 525+30), CCSize(412-20, 31), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_progress_bar.png", ccp(0, 0), ccp(125+146+10, 525+30), CCSize(412+10, 31), "", "PuzzleResult", this, 1005) );
     
     
     barLayer = CCLayer::create();
-    CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, 412-20-6, 31-6));
+    CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, 412+10-6, 31-6));
     bar->setAnchorPoint(ccp(1, 0));
     bar->setPosition(ccp(125+146+10 +3, 525+30 +3));
     bar->setColor(ccc3(255,219,53));
     barLayer->addChild(bar, 10);
     
     timerStencil2 = CCDrawNode::create();
-    CCPoint ver[] = { ccp(125+146+10+3, 525+30), ccp(125+146+10+3+412-20-6, 525+30), ccp(125+146+10+3+412-20-6, 525+30+31), ccp(125+146+10+3, 525+30+31) };
+    CCPoint ver[] = { ccp(125+146+10+3, 525+30), ccp(125+146+10+3+412+10-6, 525+30), ccp(125+146+10+3+412+10-6, 525+30+31), ccp(125+146+10+3, 525+30+31) };
     timerStencil2->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
     timerClip2 = CCClippingNode::create(timerStencil2);
     timerClip2->addChild(barLayer);
@@ -239,27 +242,25 @@ void PuzzleResult::InitSprites()
     // 현재 경험치 (연습량) + 레벨업을 위한 max경험치 (연습량)
     MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
     sprintf(name, "/%d", SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(1, 1), ccp(673, 525+30-11), ccc3(182,142,142), "", "PuzzleResult", this, 1005, 0, 255, 100) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(1, 1), ccp(673+30, 525+30-11), ccc3(182,142,142), "", "PuzzleResult", this, 1005, 0, 255, 100) );
     CCSize s = ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->getContentSize();
     
     sprintf(name, "%d", ms->GetExp());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(1, 1), ccp(673-s.width-5, 525+30-5), ccc3(121,71,0), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(1, 1), ccp(673+30-s.width-5, 525+30-5), ccc3(121,71,0), "", "PuzzleResult", this, 1005) );
     
-    float d = (float)(412-20-6) * ((float)(ms->GetExp()+7) / (float)SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
+    float d = (float)(412+10-6) * ((float)(ms->GetExp()+7) / (float)SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
     int isFullExp = (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
     
     CCActionInterval* action2 = CCSequence::create(CCMoveBy::create(1.5f, ccp(d, 0)), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::Callback_ProgressBar), (void*)isFullExp), NULL);
     bar->runAction(action2);
     
     // levelup icon
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_levelup.png", ccp(1, 0), ccp(125+146+10+412-20+30+30, 525+30+31-15), CCSize(0,0), "", "PuzzleResult", this, 1006, 0, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_levelup.png", ccp(1, 0), ccp(125+146+10+412-20+30+30+5, 525+30+31-15), CCSize(0,0), "", "PuzzleResult", this, 1006, 0, 0) );
     
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
     // 673
     // 549, 31 --> 582, 25
-    
-    
     
     // 코코
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco.png", ccp(0.5, 0.5), ccp(850, 645), CCSize(0,0), "", "PuzzleResult", this, 1005) );

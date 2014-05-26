@@ -35,6 +35,8 @@ public:
 	CREATE_FUNC(Splash);
     
     void LogoLoadingCompleted();
+    void SoundCallback(CCNode* sender, void* p);
+    void Button_Callback();
     
     //virtual void editBoxEditingDidBegin(CCEditBox* editBox);
     //virtual void editBoxEditingDidEnd(CCEditBox* editBox);

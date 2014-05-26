@@ -136,9 +136,9 @@ void InviteFriend::InitSprites()
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 147), CCSize(982, 1265), "", "InviteFriend", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1", ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", ccp(0, 0), ccp(98, 256), CCSize(244, 176), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", ccp(0, 0), ccp(390, 256), CCSize(244, 176), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png4", ccp(0, 0), ccp(686, 256), CCSize(244, 176), "", "InviteFriend", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", ccp(0, 0), ccp(98, 256-30), CCSize(244, 176+30), "", "InviteFriend", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", ccp(0, 0), ccp(390, 256-30), CCSize(244, 176+30), "", "InviteFriend", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png4", ccp(0, 0), ccp(686, 256-30), CCSize(293, 176+30), "", "InviteFriend", this, 1) );
     
     // 친구초대 보상이벤트
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_friendevent.png", ccp(0, 0), ccp(98, 438), CCSize(0, 0), "", "InviteFriend", this, 2) );
@@ -146,18 +146,24 @@ void InviteFriend::InitSprites()
     // invite 10,20,30
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png1", ccp(0, 0), ccp(228, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png2", ccp(0, 0), ccp(519, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png3", ccp(0, 0), ccp(817, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png3", ccp(0, 0), ccp(817+49, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_10.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png1"), CCSize(0, 0), "background/bg_dontknow_1.png1", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_20.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png2"), CCSize(0, 0), "background/bg_dontknow_1.png2", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_30.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png3"), CCSize(0, 0), "background/bg_dontknow_1.png3", "0", NULL, 2, 1) );
     
+    // 그림들
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_10.png", ccp(0.5, 0), ccp(98+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_20.png", ccp(0.5, 0), ccp(390+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_30.png", ccp(0.5, 0), ccp(686+293/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
+    
+    
     // progress bar 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96, 192), CCSize(700, 48), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96+10, 192-15), CCSize(700, 30), "", "InviteFriend", this, 2) );
     // bar
     float size = (float)totalCnt / (float)MAX_NUM_OF_INVITE_FRIEND;
     if (size > 1.0f) size = 1.0f;
-    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 48-12));
-    bar->setPosition(ccp(96+5, 192+6));
+    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 30-12));
+    bar->setPosition(ccp(96+10+5, 192+6-15));
     bar->setAnchorPoint(ccp(0, 0));
     bar->setColor(ccc3(255,255,255));
     this->addChild(bar, 3);
@@ -165,7 +171,7 @@ void InviteFriend::InitSprites()
     // 초대 인원 수 text
     char name[20];
     sprintf(name, "%d명 초대", totalCnt);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(812, 200), ccc3(255,255,255), "", "InviteFriend", this, 2, 0, 255, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0, 0), ccp(812+10, 200-20), ccc3(255,255,255), "", "InviteFriend", this, 2, 0, 255, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -200,18 +206,20 @@ void InviteFriend::MakeScroll()
         
         // starcandy bg + starcandy + text(x 1000)
         sprintf(name, "background/bg_degree_desc.png1%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60, 25), CCSize(223, 76), "", "Layer", itemLayer, 3) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60, 25), CCSize(223+160-5, 76), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_starcandy_mini.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(13, 6), CCSize(0, 0), name, "1", NULL, 3, 1) );
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1000", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // potion bg + potion + text(x 1)
-        sprintf(name, "background/bg_degree_desc.png2%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60+230, 25), CCSize(223-70, 76), "", "Layer", itemLayer, 3) );
+        //sprintf(name, "background/bg_degree_desc.png2%d", i);
+        //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60+230, 25), CCSize(223-70, 76), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_potion.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17, 7), CCSize(0, 0), name, "1", NULL, 3, 1) );
+        //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17, 7), CCSize(0, 0), name, "1", NULL, 3, 1) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17+215, 10), CCSize(0, 0), name, "1", NULL, 3, 1) );
         ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setScale(0.8f);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
+        //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // button
         if (remainTimes[i] == 0) // 초대 가능한 경우

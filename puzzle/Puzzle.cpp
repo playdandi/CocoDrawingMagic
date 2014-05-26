@@ -72,6 +72,7 @@ bool Puzzle::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
     
     spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
@@ -768,7 +769,8 @@ void Puzzle::ComboTimer(float f)
 void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true); // pBlackOpen 제거
-    
+ 
+    /*
     readyTimeLabel = CCLabelTTF::create("셋", fontList[0].c_str(), 82);
     readyTimeLabel->setAnchorPoint(ccp(0.5,0.5));
     readyTimeLabel->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
@@ -777,9 +779,46 @@ void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
     
     iReadyTime = 3000;
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::Ready), 0.1f);
+    */
+    
+    sound->PlayVoice(VOICE_READY);
+    
+    CCSprite* sprite = CCSprite::createWithSpriteFrameName("letter_ready.png");
+    sprite->setAnchorPoint(ccp(0.5, 0.5));
+    sprite->setPosition(ccp(m_winSize.width/2+20, vo.y+tbSize.height+boardSize.height+120+180));
+    sprite->setScale(1.2f);
+    sprite->setOpacity(0);
+    this->addChild(sprite, 5000);
+
+    CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(0.8f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::Ready_C), NULL), NULL);
+    sprite->runAction(action);
+}
+void Puzzle::Ready_C(CCNode* sender, void* p)
+{
+    sound->PlayVoice(VOICE_GO);
+    
+    sender->removeFromParentAndCleanup(true);
+    
+    CCSprite* sprite = CCSprite::createWithSpriteFrameName("letter_go.png");
+    sprite->setAnchorPoint(ccp(0.5, 0.5));
+    sprite->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120+180));
+    sprite->setScale(1.2f);
+    //sprite->setOpacity(0);
+    this->addChild(sprite, 5000);
+    
+    CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
+    sprite->runAction(action);
+    /*
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCEaseBackIn::create(CCMoveBy::create(0.7f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
+    sprite->runAction(action);
+     */
 }
 void Puzzle::Ready(float f)
 {
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCEaseBackIn::create(CCMoveBy::create(0.3f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
+    readyTimeLabel->runAction(action);
+    
+    /*
     if (iReadyTime % 1000 == 0)
     {
         if (iReadyTime == 3000) readyTimeLabel->setString("셋");
@@ -797,6 +836,7 @@ void Puzzle::Ready(float f)
         }
     }
     iReadyTime -= 250;
+    */
 }
 void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
 {
@@ -815,13 +855,21 @@ void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
 
 void Puzzle::SetTimer()
 {
+    CCScale9Sprite* timerbar = ((CCScale9Sprite*)spriteClass->FindSpriteByName("background/bg_bar_timer.png"));
+    CCPoint p = timerbar->getPosition();
+    CCSize s = timerbar->getContentSize();
+    
     iTimer = 1000 * PUZZLE_TIME;
     char n[5];
     sprintf(n, "%d", PUZZLE_TIME);
-    pTimerLabel = CCLabelTTF::create(n, fontList[2].c_str(), 50);
+    pTimerLabel = CCLabelTTF::create(n, fontList[0].c_str(), 30);
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
-    pTimerLabel->setPosition(ccp(40, 300));
-    this->addChild(pTimerLabel, 100);
+    pTimerLabel->setColor(ccc3(0,0,0));
+    //pTimerLabel->setPosition(ccp(40, 300));
+    //ccp(m_winSize.width/2, vo.y+31.5f+5), CCSize(1000, 22)
+    //pTimerLabel->setPosition(ccp(p.x+s.width/2-30, p.y));
+    pTimerLabel->setPosition(ccp(m_winSize.width/2 + 1000/2 - 20, vo.y+31.5f+5));
+    this->addChild(pTimerLabel, 1000);
 }
 
 void Puzzle::UpdateTimer(float f)
@@ -864,6 +912,28 @@ void Puzzle::UpdateTimer(float f)
     CCPoint tp = timerClip->getPosition();
     timerClip->setPosition(ccp(tp.x-delta, tp.y));
     timerLayer->setPosition(ccp(tl.x+delta, tl.y));
+    pTimerLabel->setPosition(ccp(pTimerLabel->getPosition().x-delta, pTimerLabel->getPosition().y));
+    
+    // 5초 남았을 때 이펙트+목소리 표현
+    if (iTimer == 5000)
+    {
+        sound->PlayVoice(VOICE_TIMELIMIT);
+        
+        timelimit = CCSprite::createWithSpriteFrameName("letter_timelimit.png");
+        timelimit->setAnchorPoint(ccp(0.5, 0.5));
+        CCPoint p = SetTouch8Position(0, 0);
+        timelimit->setPosition(ccp(p.x+30, p.y+30));
+        timelimit->setScale(1.2f);
+        this->addChild(timelimit, 5000);
+        
+        CCActionInterval* action = CCSequence::create(CCRotateBy::create(0.05f, -10), CCRotateBy::create(0.1f, 20), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL);
+        timelimit->runAction(action);
+    }
+    else if (iTimer < 5000 && iTimer % 1000 == 0) // 4,3,2,1초에 '시간이없어' 문구 흔들거리기
+    {
+        CCActionInterval* action = CCSequence::create(CCRotateBy::create(0.05f, -10), CCRotateBy::create(0.1f, 20), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL);
+        timelimit->runAction(action);
+    }
     
     if (iTimer % 1000 == 0)
     {
@@ -887,7 +957,27 @@ void Puzzle::UpdateTimer(float f)
             
             // 그리고 있던 것들 모두 취소
             CancelDrawing();
+            timelimit->removeFromParentAndCleanup(true);
             
+            overBg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
+            overBg->setAnchorPoint(ccp(0, 0));
+            overBg->setPosition(ccp(0, 0));
+            overBg->setColor(ccc3(0,0,0));
+            overBg->setOpacity(190);
+            this->addChild(overBg, 5000);
+            
+            CCSprite* sprite = CCSprite::createWithSpriteFrameName("icon_gameover.png");
+            sprite->setAnchorPoint(ccp(0.5, 0.5));
+            sprite->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+            this->addChild(sprite, 5000);
+            
+            CCActionInterval* action = CCSequence::create(CCDelayTime::create(2.0f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::GameOver_Callback), this), NULL);
+            sprite->runAction(action);
+            
+            // sound
+            sound->PlayVoice(VOICE_GAMEOVER);
+            
+            /*
             // TIME UP 메시지 띄운 후, 게임결과화면 로딩 위해 game_end protocol 호출
             CCLabelTTF* timeup = CCLabelTTF::create("수업 종료!", fontList[0].c_str(), 84);
             //timeup->setColor(ccc3());
@@ -896,6 +986,7 @@ void Puzzle::UpdateTimer(float f)
             this->addChild(timeup, 5000);
             CCActionInterval* action = CCSequence::create(CCMoveTo::create(0.25f, ccp(m_winSize.width/2, m_winSize.height/2)), CCDelayTime::create(1.3f), CCMoveTo::create(0.25f, ccp(m_winSize.width+300, m_winSize.height/2)), CCCallFuncND::create(this, callfuncND_selector(Puzzle::GameEnd), this), NULL);
             timeup->runAction(action);
+            */
         }
         
         // 정령 준비 발동 ('시간을 얼리다' 발동 중에는 NO!)
@@ -938,6 +1029,22 @@ void Puzzle::UpdateTimer(float f)
             feverSpr.clear();
         }
     }
+}
+
+void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
+    
+    CCSprite* sprite = CCSprite::createWithSpriteFrameName("icon_bonustime.png");
+    sprite->setAnchorPoint(ccp(0.5, 0.5));
+    sprite->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+    this->addChild(sprite, 5000);
+    
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::GameEnd), this), NULL);
+    sprite->runAction(action);
+    
+    // sound
+    sound->PlayVoice(VOICE_BONUS);
 }
 
 /*
@@ -1484,9 +1591,6 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             // effect 체크 초기화
             effect->InitCheck();
             
-            // sound bomb
-            sound->PlayBomb();
-            
             // 스킬 실행 (오토마타 표 참조)
             iTouchRound++;
             skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
@@ -1746,7 +1850,16 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
         }
     }
   
+    
+    // sound bomb
+    if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(0, queue_pos) && globalType[queue_pos] == PIECE_RED)
+        sound->PlaySkillSound(0);
+    else
+        sound->PlayBomb();
+        
+    
     // 8각형들을 터뜨린다.
+    float delayTime = 0.0f;
     m_iBombCallbackCnt[queue_pos] = 0;
     m_iBombCallbackCntMax[queue_pos] = bomb_pos.size();
     for (int i = 0 ; i < bomb_pos.size() ; i++)
@@ -1759,6 +1872,10 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
             bombTime = 0.60f;
         else if (m_iState[queue_pos] == SKILL_FINAL && globalType[queue_pos] == PIECE_RED)
             bombTime = 0.05f;
+        
+        // 그 다음이 사이클 주변부 터지는 스킬이면 조금 딜레이준다.
+        if (m_iNextState[queue_pos] == SKILL_CYCLE)
+            delayTime = 0.1f;
         
         // 터지는 액션
         CCFiniteTimeAction* action;
@@ -1774,6 +1891,7 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
         {
             action = CCSequence::create(
                         CCSpawn::create(CCScaleTo::create(bombTime, 1.5f), CCFadeOut::create(bombTime), NULL),
+                        CCDelayTime::create(delayTime), // 그 다음이 사이클 주변부 터지는 스킬이면 조금 딜레이준다.
                         CCCallFuncND::create(this, callfuncND_selector(Puzzle::BombCallback), (void*)queue_pos),
                         NULL);
         }
@@ -2088,6 +2206,8 @@ void Puzzle::FallingQueuePushAndFalling(int queue_pos)
 
 void Puzzle::GameEnd(CCNode* sender, void* pointer)
 {
+    overBg->removeFromParentAndCleanup(true);
+    
     sender->removeFromParentAndCleanup(true);
     
     //http://14.63.225.203/cogma/game/game_end.php?kakao_id=1000&score=150&mission=0&starcandy=10
@@ -2442,8 +2562,10 @@ void Puzzle::EndScene()
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game3.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game3.png");
     
     // delete all objects
     effect->RemoveAllObjects();

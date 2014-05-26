@@ -834,6 +834,9 @@ void PuzzleSkill::W3(int num)
 {
     // 한방울 한방울 - 콤보에 비례한 추가 점수
     W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
 
     // 이펙트 실행
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -849,6 +852,9 @@ void PuzzleSkill::W4(int num)
 {
     // 바다 속 진주 - 콤보에 비례한 추가 별사탕
     W4_addedCandy = pow(m_pGameLayer->GetCombo(), 0.8f) * (skillLevel[num]*0.3f + 0.7f);
+    
+    // sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 이펙트 실행
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);

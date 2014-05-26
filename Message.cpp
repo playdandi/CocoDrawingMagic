@@ -73,8 +73,16 @@ bool Message::init()
     
     spriteClassScroll = new SpriteClass();
     
-    httpStatus = 0;
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
     
+    scrollContainer = NULL;
+    
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
+    
+    httpStatus = 0;
     msgData.clear();
     // 네트워크로 메시지들을 받아온다.
     char temp[50];
@@ -88,12 +96,6 @@ bool Message::init()
     CCHttpClient::getInstance()->send(req);
     req->release();
     
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
-    
-    scrollContainer = NULL;
-    
     return true;
 }
 
@@ -101,7 +103,15 @@ void Message::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -185,7 +195,7 @@ void Message::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
 
-    char spriteName[35];
+    char spriteName[35], spriteName2[35];
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
@@ -204,22 +214,47 @@ void Message::MakeScroll()
         */
         
         // 프로필 이미지
+        bool flag = false;
         for (int j = 0 ; j < profiles.size() ; j++)
         {
             if (msgData[i]->GetProfileUrl() == profiles[j]->GetProfileUrl())
             {
-                if (msgData[i]->GetProfileUrl() != "")
+                flag = true;
+                if (msgData[i]->GetProfileUrl() != "") // 프로필 사진이 있으면
                 {
                     spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profiles[j]->GetProfile(), ccp(0, 0), ccp(44+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 2, 0, 255, 0.85f) );
                     sprintf(spriteName, "background/bg_profile.png%d", i);
                     spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0, 0), "", "Layer", itemLayer, 2) );
                 }
-                else
+                else // 없으면
                 {
                     spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profiles[j]->GetProfile(), ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
                 }
             }
         }
+        if (!flag)
+        {
+            if (msgData[i]->GetProfileUrl() == "COCO_IMG") // 공지/시스템/이벤트
+            {
+                sprintf(spriteName, "background/bg_profile_coco.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
+            }
+            else if (msgData[i]->GetProfileUrl() == "PET_IMG_MEDAL") // 오.별 본인당첨
+            {
+                sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
+            }
+            else if (msgData[i]->GetProfileUrl() == "PET_IMG_NOMEDAL") // 오.별 참가상
+            {
+                sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
+                int w = ((CCSprite*)spriteClassScroll->FindSpriteByName(spriteName))->getContentSize().width;
+                
+                sprintf(spriteName2, "icon/icon_medal_mini.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName2, ccp(1, 0), ccp(w, 0), CCSize(0,0), spriteName, "0", NULL, 2, 1) );
+            }
+        }
+        
     
         // content (fontList[2] = 나눔고딕볼드)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabelArea(msgData[i]->GetContent(), fontList[0], 36, ccp(0, 0), ccp(194, 45), ccc3(78,47,8), CCSize(400, 105), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", itemLayer, 3, 0) );
@@ -457,6 +492,9 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
         return;
     }
     
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     // dump data
     std::vector<char> *buffer = res->getResponseData();
     char dumpData[BUFFER_SIZE];
@@ -524,10 +562,13 @@ void Message::XmlParseMsg(char* data, int size)
         bool flag = true;
         for (int i = 0 ; i < msgData.size() ; i++)
         {
-            if (ProfileSprite::GetProfile(msgData[i]->GetProfileUrl()) == NULL &&
-                msgData[i]->GetProfileUrl() != "COCO_IMG" &&
-                msgData[i]->GetProfileUrl() != "PET_IMG_MEDAL" &&
-                msgData[i]->GetProfileUrl() != "PET_IMG_NOMEDAL")
+            if (msgData[i]->GetProfileUrl() == "COCO_IMG" ||
+                msgData[i]->GetProfileUrl() == "PET_IMG_MEDAL" ||
+                msgData[i]->GetProfileUrl() == "PET_IMG_NOMEDAL")
+            {
+                continue;
+            }
+            else if (ProfileSprite::GetProfile(msgData[i]->GetProfileUrl()) == NULL)
             {
                 flag = false;
                 profiles.push_back( new ProfileSprite(msgData[i]->GetProfileUrl()) );

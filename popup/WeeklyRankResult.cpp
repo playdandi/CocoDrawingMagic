@@ -134,7 +134,7 @@ void WeeklyRankResult::InitSprites()
             if (myRank == i+1) // 내 등수가 3등 이내일 경우, 프로필 위치에 이펙트 빔을 쏜다.
             {
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "effect_beam.png", ccp(0.5,0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 4) );
-                CCFiniteTimeAction* action = CCRotateBy::create(1.0f, 180);
+                CCFiniteTimeAction* action = CCRotateBy::create(1.0f, 60);
                 CCActionInterval* rep = CCRepeatForever::create((CCActionInterval*)action);
                 ((CCSprite*)spriteClass->FindSpriteByName("effect_beam.png"))->runAction(rep);
             }
@@ -143,12 +143,30 @@ void WeeklyRankResult::InitSprites()
     
     // 본인 등수 : 배경 + x위 + 점수
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png1", ccp(0.5, 1), ccp(winSize.width/2, 750), CCSize(750, 105), "", "WeeklyRankResult", this, 5) );
+    
+    sprintf(name, "%d", myRank);
+    CCLayer* rank = Common::MakeImageNumberLayer(name, 0);
+    rank->setAnchorPoint(ccp(0, 0));
+    rank->setPosition(ccp(300, 698.5f-25));
+    this->addChild(rank, 6);
+    spriteClass->layers.push_back(rank);
+    int rankSize = rank->getContentSize().width;
 
-    sprintf(name, "%d위", myRank);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
+    // '위'
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter_wi.png", ccp(0, 0.5), ccp(300+rankSize, 698.5f), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
+    
+    // 지난주 최고점수
+    sprintf(name, "%d", myLastWeekHighScore);
+    CCLayer* lastWeekHighScore = Common::MakeImageNumberLayer(name, 0);
+    lastWeekHighScore->setAnchorPoint(ccp(0.5, 0.5));
+    lastWeekHighScore->setPosition(ccp(500, 698.5f-27));
+    this->addChild(lastWeekHighScore, 6);
+    spriteClass->layers.push_back(lastWeekHighScore);
+    
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
     
     if (rewardType > 0)
     {
@@ -160,17 +178,22 @@ void WeeklyRankResult::InitSprites()
         else if (rewardType == 2) numOfStarCandy = 7000;
         else if (rewardType == 3) numOfStarCandy = 5000;
         else if (rewardType == 4) numOfStarCandy = 3000;
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 635-52.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 635-52.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
+        
+        sprintf(name, "%d", numOfStarCandy);
+        CCLayer* starcandy = Common::MakeImageNumberLayer(name, 0);
+        starcandy->setAnchorPoint(ccp(0.5, 0.5));
+        starcandy->setPosition(ccp(500, 635-52.5f-27));
+        this->addChild(starcandy, 6);
+        spriteClass->layers.push_back(starcandy);
+        
+        //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 635-52.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
+        //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 635-52.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
     }
     
     // 1~3등 중에 내가 있다면, 축하 이펙트 rotation 하기 + 색종이 떨어뜨리기
 
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        CCLog("%s", spriteClass->spriteObj[i]->name.c_str());
         spriteClass->AddChild(i);
-    }
 }
 
 

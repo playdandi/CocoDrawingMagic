@@ -4,6 +4,14 @@
 #include "Common.h"
 #include "cocos2d.h"
 
+#define VOICE_TITLE 0
+#define VOICE_READY 1
+#define VOICE_GO 2
+#define VOICE_TIMELIMIT 3
+#define VOICE_GAMEOVER 4
+#define VOICE_BONUS 5
+
+
 using namespace cocos2d;
 
 class Sound
@@ -15,6 +23,7 @@ public:
     void SetBackgroundMusicVolume(float f);
     
     void PlayBackgroundSound();
+    void ResumeBackgroundSound();
     void StopBackgroundSound();
     
     void playWarning();
@@ -24,6 +33,8 @@ public:
     void playLvUpFail();
     void playBoardMove();
     void playGameStart();
+    
+    void PlayVoice(int type);
     
     void UnLoadSound();
     

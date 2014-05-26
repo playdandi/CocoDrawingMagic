@@ -356,7 +356,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "WeeklyRankResult") nextScene = WeeklyRankResult::scene();
     else if (to == "GetDegree") nextScene = GetDegree::scene();
     
-    else if (to == "Loading") nextScene = Loading::scene();
+    else if (to == "Loading") nextScene = Loading::scene(etc);
     else if (to == "RankUp") nextScene = RankUp::scene();
     
     else if (to == "Puzzle") nextScene = Puzzle::scene();

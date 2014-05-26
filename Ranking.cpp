@@ -35,7 +35,6 @@ void Ranking::onEnter()
     
     if (fromWhere != -1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
-    
     else if (!myInfo->IsWeeklyRankReward())
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
@@ -129,7 +128,11 @@ bool Ranking::init()
     sound = new Sound();
     sound->PreLoadSound();
     if (opt1)
+    {
+        sound->ResumeBackgroundSound(); // iphone bug? (사운드 강제로 잡기 위한 것)
+        sound->StopBackgroundSound();
         sound->PlayBackgroundSound();
+    }
     
     isOnceScrollViewTouched = false;
     isScrolling = false;

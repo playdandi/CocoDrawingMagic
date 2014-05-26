@@ -7,6 +7,7 @@
 #include "Sound.h"
 #include "Data.h"
 #include "Fairy.h"
+#include "Loading.h"
 
 USING_NS_CC;
 
@@ -26,7 +27,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 60
+#define PUZZLE_TIME 10
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
@@ -127,6 +128,9 @@ USING_NS_CC;
 #define TODAYCANDY_RESULT_WIN 70
 #define TODAYCANDY_RESULT_LOSE 71
 #define TODAYCANDY_ALREADY_DONE 72
+
+
+#define LOADING_MESSAGE 0
 
 
 using namespace cocos2d;

@@ -647,12 +647,15 @@ void Effect::PlayEffect_5(std::vector<CCPoint> pos)
         x = (int)pos[i].x;
         y = (int)pos[i].y;
         
-        /*CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/LavaFlow.plist");
+        //CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/LavaFlow.plist");
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6_3.plist");
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(4.0f);
         gameLayer->addChild(m_emitter, 2000);
-        m_emitter->setAutoRemoveOnFinish(true);*/
+        m_emitter->setAutoRemoveOnFinish(true);
         
+        /*
         p = gameLayer->SetTouch8Position(x, y);
         
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6.plist");
@@ -665,7 +668,7 @@ void Effect::PlayEffect_5(std::vector<CCPoint> pos)
         CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_5_Callback), this), NULL);
         m_emitter->runAction(action);
         m_emitter->setAutoRemoveOnFinish(true);
-        
+        */
         /*
         CCParticleSystemQuad* m_emitter2 = CCParticleSystemQuad::create("particles/fire6.plist");
         m_emitter2->setAnchorPoint(ccp(0.5, 0.5));
@@ -707,7 +710,7 @@ void Effect::PlayEffect_5_Callback(CCNode* sender, void* pointer)
             m_emitter->setPosition(ccp(p.x+60, p.y-50));
         //else
         //    m_emitter->setPosition(ccp(p.x-60, p.y-40));
-        m_emitter->setScale(4.0f);
+        m_emitter->setScale(5.0f);
         m_emitter->setTag(idx);
         ef->gameLayer->addChild(m_emitter, 2000);
         CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::PlayEffect_5_Callback), ef), NULL);

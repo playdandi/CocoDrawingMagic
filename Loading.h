@@ -9,18 +9,24 @@ class Loading : public CCLayer
 {
 public:
     ~Loading(void);
+    static CCScene* scene(int status);
+    
 	virtual bool init();
     virtual void onEnter();
-    virtual void onPause();
     virtual void onExit();
     
-	static CCScene* scene();
 	CREATE_FUNC(Loading);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseGameStart(char* data, int size);
     
     void EndScene();
+    
+protected:
+    CCSize m_winSize;
+
+private:
+    CCSprite* pBlack;
 };
 
 #endif /* defined(__CocoMagic__Loading__) */

@@ -3,13 +3,17 @@
 
 using namespace pugi;
 
+static int status;
+
 Loading::~Loading(void)
 {
     CCLog("Loading 소멸자");
 }
 
-CCScene* Loading::scene()
+CCScene* Loading::scene(int stat)
 {
+    status = stat;
+    
 	CCScene* pScene = CCScene::create();
     
 	Loading* pLayer = Loading::create();
@@ -21,19 +25,15 @@ CCScene* Loading::scene()
 void Loading::onEnter()
 {
     CCLog("Loading :: onEnter");
-    CCLayer::onEnter();
-}
-void Loading::onPause()
-{
-    //CCLog("Loading :: onPause");
     //CCDirector* pDirector = CCDirector::sharedDirector();
-    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
+    CCLayer::onEnter();
 }
 void Loading::onExit()
 {
     CCLog("Loading :: onExit");
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->removeDelegate(this);
+    //CCDirector* pDirector = CCDirector::sharedDirector();
+    //pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
 }
 
@@ -44,27 +44,49 @@ bool Loading::init()
 		return false;
 	}
     
-    // gameStart protocol
-    // http://14.63.225.203/cogma/game/game_start.php?kakao_id=1000&item_a=0&item_b=0&item_c=0&item_d=0&item_e=0
-    char temp[255];
-    std::string url = "http://14.63.225.203/cogma/game/game_start.php?";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-    url += temp;
-    int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
-    int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
-    int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
-    int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
-    int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
-    sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
-    url += temp;
-    CCLog("url = %s", url.c_str());
+    if (status == -1)
+    {
+        // gameStart protocol
+        // http://14.63.225.203/cogma/game/game_start.php?kakao_id=1000&item_a=0&item_b=0&item_c=0&item_d=0&item_e=0
+        char temp[255];
+        std::string url = "http://14.63.225.203/cogma/game/game_start.php?";
+        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+        url += temp;
+        int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
+        int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
+        int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
+        int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
+        int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
+        sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
+        url += temp;
+        CCLog("url = %s", url.c_str());
+        
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(url.c_str());
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Loading::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
     
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(Loading::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    else
+    {
+        // make depth tree
+        Depth::AddCurDepth("Loading", this);
+    
+        // notification post
+        CCString* param = CCString::create("1");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+        
+        m_winSize = CCDirector::sharedDirector()->getWinSize();
+        
+        pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
+        pBlack->setPosition(ccp(0, 0));
+        pBlack->setAnchorPoint(ccp(0, 0));
+        pBlack->setColor(ccc3(0, 0, 0));
+        pBlack->setOpacity(160);
+        this->addChild(pBlack, 5000);
+    }
     
 	return true;
 }
@@ -187,5 +209,12 @@ void Loading::XmlParseGameStart(char* data, int size)
 
 void Loading::EndScene()
 {
-    CCLog("Loading :: EndScene");
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("-1");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    pBlack->removeFromParentAndCleanup(true);
 }

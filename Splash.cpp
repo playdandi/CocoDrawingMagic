@@ -96,8 +96,8 @@ void Splash::LogoLoadingCompleted()
     m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
     m_pTitle->addChild(m_pForKakao, 6);
     
-    CCActionInterval* action = CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350));
-    m_pTitle->runAction(CCEaseBounceOut::create(action));
+    CCActionInterval* action = CCSequence::create(CCEaseBounceOut::create(CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350))), CCCallFuncND::create(this, callfuncND_selector(Splash::SoundCallback), NULL), CCDelayTime::create(2.5f), CCCallFunc::create(this, callfunc_selector(Splash::Button_Callback)), NULL);
+    m_pTitle->runAction(action);
     
     // 클라이언트에 들고 있던 kakao ID, device Type 불러오기
     mKakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey("kakaoId", -1);
@@ -135,7 +135,18 @@ void Splash::LogoLoadingCompleted()
     // 버전 세팅
     iGameVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion", -1);
     iBinaryVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion", -1);
+}
+
+void Splash::SoundCallback(CCNode* sender, void* p)
+{
+    // sound
+    sound->PlayVoice(VOICE_TITLE);
     
+    
+}
+
+void Splash::Button_Callback()
+{
     // 시작 버튼
     m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
     m_pStartBtn->setAnchorPoint(ccp(0, 0));
