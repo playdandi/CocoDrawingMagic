@@ -27,7 +27,7 @@ USING_NS_CC;
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3
 
-#define PUZZLE_TIME 10
+#define PUZZLE_TIME 60
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 

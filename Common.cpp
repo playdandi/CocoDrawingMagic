@@ -116,7 +116,7 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
 CCLayer* Common::MakeScoreLayer(int num)
 {
     CCLayer* layer = CCLayer::create();
-    
+    /*
     int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
     int offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
     char name[30];
@@ -130,9 +130,11 @@ CCLayer* Common::MakeScoreLayer(int num)
     for (int i = 0 ; i < number.size() ; i++)
     {
         if (number[i] == ',')
-            sprintf(name, "number/count_comma.png");
+            sprintf(name, "number/result_comma.png");
+            //sprintf(name, "number/count_comma.png");
         else
-            sprintf(name, "number/count_%c.png", number[i]);
+            sprintf(name, "number/result_%c.png", number[i]);
+            //sprintf(name, "number/count_%c.png", number[i]);
         CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
         //CCLog("%c", number[i]);
         //temp->setAnchorPoint(ccp(1, 0));
@@ -166,6 +168,58 @@ CCLayer* Common::MakeScoreLayer(int num)
     
     layer->setContentSize(CCSizeMake(totalWidth, 0));
 
+    return layer;
+    */
+    
+    
+    //int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
+    int offset[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    char name[30];
+    int totalWidth = 0;
+    
+    std::string commaNumber = Common::MakeComma(num);
+    
+    std::vector<CCSprite*> sprites;
+    for (int i = 0 ; i < commaNumber.size() ; i++)
+    {
+        CCSprite* temp;
+        if (commaNumber[i] == ',')
+            temp = CCSprite::createWithSpriteFrameName("number/result_comma.png");
+        else
+        {
+            sprintf(name, "number/result_%c.png", commaNumber[i]);
+            temp = CCSprite::createWithSpriteFrameName(name);
+        }
+        
+        temp->setTag(i);
+        temp->setAnchorPoint(ccp(0, 0));
+        temp->setScale(0.7f);
+        
+        if (i == 0)
+        {
+            temp->setPosition(ccp(0, 0));
+        }
+        else
+        {
+            //CCSize size = sprites[sprites.size()-1]->getContentSize();
+            if (commaNumber[i] == ',')
+                temp->setPosition(ccp(totalWidth-2, 0));
+            else
+                temp->setPosition(ccp(totalWidth-2, offset[commaNumber[i]-'0']));
+        }
+        
+        layer->addChild(temp, 100);
+        
+        totalWidth += (int)(temp->getContentSize().width * 0.6f) - 2;
+        
+        if (commaNumber[i]-'0' == 1)
+            totalWidth += 2;
+        
+        sprites.push_back(temp);
+    }
+    sprites.clear();
+    
+    layer->setContentSize(CCSize(totalWidth, totalWidth));
     return layer;
 }
 

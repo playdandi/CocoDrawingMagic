@@ -211,28 +211,35 @@ void Puzzle::InitSkills()
 
 void Puzzle::InitInfoBar()
 {
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50), CCSize(1075,75+25), "", "Puzzle", this, 6) );
+    int offset = 20;
+    //spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+vs.height-50-offset/2), CCSize(1075,75+25+offset), "", "Puzzle", this, 6) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_outer.png1", ccp(0.5, 1), ccp(m_winSize.width/2, vo.y+vs.height), CCSize(1075,75+25+offset), "", "Puzzle", this, 6) );
     
     // 별사탕 숫자배경
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png1", ccp(0, 0.5), ccp(100, vo.y+vs.height-47), CCSize(160, 50+10), "", "Puzzle", this, 6) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png1", ccp(0, 0.5), ccp(100-20, vo.y+vs.height-47-offset/2), CCSize(160, 50+10), "", "Puzzle", this, 6) );
     
     // 별사탕
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(50, vo.y+vs.height-30), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(125, vs.height+vo.y-60), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_3.png", ccp(1, 0.5), ccp(95, vs.height+vo.y-47), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_4.png", ccp(1, 0.5), ccp(110, vs.height+vo.y-28), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_2.png", ccp(1, 0.5), ccp(125-20, vs.height+vo.y-60-offset/2 ), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_3.png", ccp(1, 0.5), ccp(95-20, vs.height+vo.y-47-offset/2 ), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_4.png", ccp(1, 0.5), ccp(110-20, vs.height+vo.y-28-offset/2 ), CCSize(0, 0), "", "Puzzle", this, 20) );
     
     // 게이지바 배경
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png2", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(164, 35+15), "", "Puzzle", this, 6) );
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_gauge.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45), CCSize(149, 35), "", "Puzzle", this, 7) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_inner.png2", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45-offset/2 ), CCSize(164, 35+15+offset/2), "", "Puzzle", this, 6) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_gauge.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+vs.height-45+2-offset/2 ), CCSize(149, 35+offset/2), "", "Puzzle", this, 7) );
     // 게이지바 아이콘(모자)
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_gauge_big.png", ccp(1, 0.5), ccp(m_winSize.width-170-82+20, vo.y+vs.height-47), CCSize(0, 0), "", "Puzzle", this, 8) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_gauge_big.png", ccp(1, 0.5), ccp(m_winSize.width-170-82+20 +5, vo.y+vs.height-47-offset/2), CCSize(0, 0), "", "Puzzle", this, 8) );
     
     // pause button
-    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_pause.png", ccp(1, 0.5), ccp(m_winSize.width-25, vs.height+vo.y-50+5), CCSize(0, 0), "", "Puzzle", this, 20) );
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_pause.png", ccp(1, 0.5), ccp(m_winSize.width-25, vs.height+vo.y-50+5-offset/2), CCSize(0, 0), "", "Puzzle", this, 20) );
     
-    // 값들 (별사탕 개수, 점수)
-    spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel("0", fontList[0], 40, ccp(1, 0.5), ccp(100+140, vo.y+vs.height-47), ccc3(255,255,255), "", "Puzzle", this, 20, 0, 255, 1) );
+    // 값들 (별사탕 개수)
+    spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel("0", fontList[0], 40, ccp(1, 0.5), ccp(100+140-20, vo.y+vs.height-47-offset/2+3), ccc3(255,255,255), "", "Puzzle", this, 20, 0, 255, 1) ); // font 원래 40
+    
+    // 미션창
+    spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "mission_window.png", ccp(1, 1), ccp(m_winSize.width-40, vo.y+vs.height-50-50+7 -30-offset/2), CCSize(0, 0), "", "Puzzle", this, 6) );
+    ((CCSprite*)spriteClassInfo->FindSpriteByName("mission_window.png"))->setScale(1.15f);
+    
     
     for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
         spriteClassInfo->AddChild(i);
@@ -647,9 +654,11 @@ void Puzzle::InitBoard()
 void Puzzle::SetScoreAndStarCandy()
 {
     iScore = 0;
+    char n[10];
+    sprintf(n, "%d", iScore);
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
-    pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2, vs.height+vo.y-65));
+    pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93));
     this->addChild(pScoreLayer, 6);
     
     iStarCandy = 0;
@@ -677,9 +686,11 @@ void Puzzle::UpdateScore(int type, int data)
     pScoreLayer->removeAllChildren();
     pScoreLayer->removeFromParentAndCleanup(true);
     
+    char n[12];
+    sprintf(n, "%d", iScore);
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
-    pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2, vs.height+vo.y-65));
+    pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93));
     this->addChild(pScoreLayer, 6);
 }
 
@@ -963,7 +974,7 @@ void Puzzle::UpdateTimer(float f)
             overBg->setAnchorPoint(ccp(0, 0));
             overBg->setPosition(ccp(0, 0));
             overBg->setColor(ccc3(0,0,0));
-            overBg->setOpacity(190);
+            overBg->setOpacity(220);
             this->addChild(overBg, 5000);
             
             CCSprite* sprite = CCSprite::createWithSpriteFrameName("icon_gameover.png");
