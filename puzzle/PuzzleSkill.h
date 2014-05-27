@@ -19,6 +19,8 @@ public:
     
     void Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv);
     
+    int GetSkillAppliedCount(int skillNum);
+    
     void TrySkills(int pieceColor, int queue_pos);
     void Try(int skillNum, int queue_pos);
     
@@ -65,12 +67,13 @@ public:
     void W8_Invoke(std::vector<CCPoint> pos, int queue_pos);
     void W8_Callback(CCNode* sender, void* data);
     void W8_LastChange();
+    void W8_BombDone();
     
     void E3(int num);
     void E4(int num, int queue_pos);
     void E5(int num);
     void E5_Callback(CCNode* sender, void* data);
-    void E7();
+    void E7(int num);
     void E8(int num, int queue_pos);
     void E8_Timer(float f);
     void E8_Bomb(CCNode* sender, void* data);
@@ -105,6 +108,8 @@ private:
     bool skillNumber[NUMOFSKILL];
     int skillProb[NUMOFSKILL];
     int skillLevel[NUMOFSKILL];
+    
+    int skillAppliedCnt[NUMOFSKILL];
 
 	// result variables
     bool skillApplied[QUEUE_CNT][NUMOFSKILL];
@@ -148,8 +153,10 @@ private:
     int W8_accel;
     int W8_callbackCnt;
     bool W8_isLastChangeWaiting;
-    bool W8_isChanging;
+    int W8_isChanging;
     bool W8_isLastChange;
+    bool W8_scheduleDone;
+    bool W8_bombFirst;
     
     ////////////////////////////////////////////////////////////////////////////////////
 

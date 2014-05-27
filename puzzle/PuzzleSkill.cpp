@@ -33,6 +33,7 @@ void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<
         skillNumber[i] = false;
         skillProb[i] = 0;
         skillLevel[i] = 0;
+        skillAppliedCnt[i] = 0;
     }
     
     // 유저가 현재 게임에서 쓸 수 있는 skill 번호들
@@ -42,6 +43,8 @@ void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<
         skillProb[num[i]] = prob[i]; // probability
         skillLevel[num[i]] = lv[i]; // level
     }
+    
+    // 게임 한 판에 시전되는 스킬별 횟수
     
     // 각 스킬 관련 변수들 초기화
     W3_addedScore = 0;
@@ -55,6 +58,11 @@ void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<
         spiritShownCnt[i] = 0;
         isSpiritAlive[i] = false;
     }
+}
+
+int PuzzleSkill::GetSkillAppliedCount(int skillNum)
+{
+    return skillAppliedCnt[skillNum];
 }
 
 void PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
@@ -231,7 +239,7 @@ void PuzzleSkill::Invoke(int skillNum, int queue_pos)
         case 19: E4(skillNum, queue_pos); break;
         case 20: E5(skillNum); break;
         case 21: A6(skillNum, queue_pos); break;
-        case 22: E7(); break;
+        case 22: E7(skillNum); break;
         case 23: E8(skillNum, queue_pos); break;
             
         case 24: M1(skillNum); break;
@@ -245,6 +253,8 @@ void PuzzleSkill::Invoke(int skillNum, int queue_pos)
 void PuzzleSkill::A1(int num, int queue_pos)
 {
     // 마법불꽃, 은은한 달빛, 대지의 숨결 - 각 색깔의 피스 제거 시, 추가점수
+  
+    skillAppliedCnt[num]++;
 
     // 추가점수 = 스킬레벨 * 한붓그리기 개수 * 30 (점)
     A1_addedScore = 30*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
@@ -267,6 +277,8 @@ void PuzzleSkill::A2(int num, int queue_pos)
     // 불2 : 스킬레벨 수만큼 사이클의 주변부를 동시에 터뜨린다.
     // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
     // 땅2 : 스킬레벨 수만큼 완전히 랜덤하게 터뜨린다.
+    
+    skillAppliedCnt[num]++;
     
     // 변수 초기화
     A2_pos.clear();
@@ -378,7 +390,6 @@ void PuzzleSkill::A2(int num, int queue_pos)
                 A2_pos.push_back(ccp(x, y));
             }
         }
-        
     }
     
     // 이펙트 실행 (태양/달/파도 그림)
@@ -403,6 +414,9 @@ void PuzzleSkill::A2Clear()
 void PuzzleSkill::F3(int num, int queue_pos)
 {
     // 뜨거운 것이 좋아 - 10개 이상 피스 제거 시 추가 점수
+    
+    skillAppliedCnt[num]++;
+    
     F3_addedScore = skillLevel[num]*7000; // 나중에 보고 밸런스 조정
     m_pGameLayer->UpdateScore(1, F3_addedScore);
     
@@ -420,6 +434,9 @@ void PuzzleSkill::F3(int num, int queue_pos)
 void PuzzleSkill::F4(int num)
 {
     // 타오르는 마법진 - Magic Time(MT) 때 마법진을 2번 터뜨린다.
+    
+    skillAppliedCnt[num]++;
+    
     F4_isDoubledMT = false;
     int prob = rand()%100;
     if (prob < skillProb[num])
@@ -571,6 +588,8 @@ void PuzzleSkill::F5(int num)
     GetEffect()->GetSpirit(0)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(0);
     isSpiritAlive[0] = false;
+    
+    skillAppliedCnt[num]++;
 }
 void PuzzleSkill::F5_Callback(CCNode* sender, void* data)
 {
@@ -629,6 +648,8 @@ void PuzzleSkill::A6(int num, int queue_pos)
 {
     // 불꽃놀이, 얼음비, 땅의 신비 - 각자의 피스 제거 시 (6개 이상) 일정 확률로 그 위치를 한 번 더 터뜨리기
     
+    skillAppliedCnt[num]++;
+    
     // 폭파
     m_pGameLayer->Bomb(queue_pos, result_pos);
     
@@ -645,6 +666,8 @@ void PuzzleSkill::A6(int num, int queue_pos)
 void PuzzleSkill::F7(int num, int queue_pos)
 {
     // 코코 타임 : 3~5 랜덤한 횟수로 한붓그리기 한번에 자동 진행한다. (한붓그리기 위치는 랜덤)
+    
+    skillAppliedCnt[num]++;
     
     // init
     for (int i = 0 ; i < result_double_pos.size() ; i++)
@@ -754,6 +777,9 @@ void PuzzleSkill::F7Recur(int x, int y, int type, std::vector<CCPoint>& v)
 void PuzzleSkill::F8(int num, int queue_pos)
 {
     // 붉은 용의 숨결
+    
+    skillAppliedCnt[num]++;
+    
     A8_pos.clear();
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
         for (int y = 0 ; y < ROW_COUNT ; y++)
@@ -833,6 +859,9 @@ void PuzzleSkill::F8Check(int x, int y, int idx)
 void PuzzleSkill::W3(int num)
 {
     // 한방울 한방울 - 콤보에 비례한 추가 점수
+    
+    skillAppliedCnt[num]++;
+    
     W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
     
     // sound
@@ -851,6 +880,9 @@ int PuzzleSkill::W3GetScore()
 void PuzzleSkill::W4(int num)
 {
     // 바다 속 진주 - 콤보에 비례한 추가 별사탕
+    
+    skillAppliedCnt[num]++;
+    
     W4_addedCandy = pow(m_pGameLayer->GetCombo(), 0.8f) * (skillLevel[num]*0.3f + 0.7f);
     
     // sound
@@ -938,6 +970,8 @@ void PuzzleSkill::W5(int num)
     GetEffect()->GetSpirit(1)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(1);
     isSpiritAlive[1] = false;
+    
+    skillAppliedCnt[num]++;
 }
 void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
 {
@@ -995,6 +1029,8 @@ void PuzzleSkill::W7(int num)
     // 시간을 얼리다 - 5초 동안 시간을 2배속 늦춘다.
     if (!W7_isTimeSlowed)
     {
+        skillAppliedCnt[num]++;
+        
         W7_isTimeSlowed = true;
         W7_RemainTime = 5000;
         
@@ -1028,37 +1064,54 @@ void PuzzleSkill::W8(int num, int queue_pos)
     if (W8_isActive)
         return;
     
-    W8_isActive = true;
-    W8_remainTime = 10 * 1000;
-    W8_accelTime = 0;
-    W8_accel = 1;
-    W8_isChanging = false;
-    W8_isLastChange = false;
+    skillAppliedCnt[num]++;
+    
     ps = this;
-    SetQueuePos(queue_pos);
     
-    m_pGameLayer->PlayEffect(num, queue_pos);
+    ps->W8_isActive = true;
+    ps->W8_remainTime = 10 * 1000;
+    ps->W8_accelTime = 0;
+    ps->W8_accel = 1;
+    ps->W8_isChanging = 0;
+    ps->W8_isLastChange = false;
+    ps->W8_isLastChangeWaiting = false;
+    ps->W8_scheduleDone = false;
+    ps->W8_bombFirst = false;
     
-    m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W8_Timer), 0.1f);
-    m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W8_AccelTimer), 0.1f);
+    ps->SetQueuePos(queue_pos);
+    
+    ps->m_pGameLayer->GetSound()->PlayVoice(VOICE_GODDESS);
+    ps->m_pGameLayer->PlayEffect(num, queue_pos);
+    
+    ps->m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W8_Timer), 0.1f);
+    ps->m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W8_AccelTimer), 0.1f);
 }
 void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
 {
     CCPoint p = pos[0];
     if (m_pGameLayer->GetPuzzleP8Set()->GetType(p.x, p.y) == PIECE_BLUE)
     {
-        W8_remainTime += 2*1000; // 2초 추가
+        CCLog("W8_invoke : bomb start");
+        if (W8_remainTime <= 0)
+            return;
+        W8_bombFirst = true;
+        //W8_remainTime += 2*1000; // 2초 추가
+        W8_remainTime += (int)pos.size() * 500; // 개수*0.5초 만큼 추가
         W8_remainTime = std::min(W8_remainTime, 10*1000);
+        
         m_pGameLayer->Lock(queue_pos);
-        ps->m_pGameLayer->GetEffect()->Effect15_Bomb(pos, ps->m_pGameLayer->GetEffect());
+        m_pGameLayer->GetEffect()->Effect15_Bomb(pos, m_pGameLayer->GetEffect());
         m_pGameLayer->Bomb(queue_pos, pos);
-        ps->m_pGameLayer->GetEffect()->AddOrbMaxParticle(20);
+        
+        m_pGameLayer->GetEffect()->AddOrbMaxParticle((int)pos.size() * 5);
     }
     else
     {
-        if (!W8_isChanging)
+        if (W8_isChanging == 0) // 바꾸는 건 기존에 바꾸는 액션이 끝나야 가능하다.
         {
-            W8_isChanging = true;
+            CCLog("W8_invoke : other->blue change");
+            m_pGameLayer->SkillSemaphoreUpdate(1);
+            W8_isChanging++;
             W8_callbackCnt = 0;
             int x, y;
 
@@ -1070,10 +1123,10 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
                 y = (int)result_pos[i].y;
                 
                 // lock을 건다.
-                m_pGameLayer->LockEach(x, y);
+                //m_pGameLayer->LockEach(x, y);
                 
                 // 없애기
-                CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, 0.0f), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), this), NULL);
+                CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.08f, 0.0f), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), this), NULL);
                 m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
             }
         }
@@ -1081,61 +1134,60 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
 }
 void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
 {
-    PuzzleSkill* ps = (PuzzleSkill*)data;
+    PuzzleSkill* pss = (PuzzleSkill*)data;
     
-    ps->W8_callbackCnt++;
+    pss->W8_callbackCnt++;
     
-    if (ps->W8_callbackCnt == (int)ps->result_pos.size())
+    if (pss->W8_callbackCnt == (int)pss->result_pos.size())
     {
         int x, y, type;
-        for (int i = 0 ; i < ps->result_pos.size() ; i++)
+        for (int i = 0 ; i < pss->result_pos.size() ; i++)
         {
-            x = (int)ps->result_pos[i].x;
-            y = (int)ps->result_pos[i].y;
+            x = (int)pss->result_pos[i].x;
+            y = (int)pss->result_pos[i].y;
             
             // 기존 피스를 없앤다.
-            ps->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
-            ps->m_pGameLayer->SetSpriteP8Null(x, y);
+            pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+            pss->m_pGameLayer->SetSpriteP8Null(x, y);
             
             // 그 위치에 새로운 blue 피스를 만든다.
             
-            if (!ps->W8_isLastChange)
-                ps->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, PIECE_BLUE);
+            if (!pss->W8_isLastChange)
+                pss->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, PIECE_BLUE);
             else
             {
-                type = -1;
-                while (1)
-                {
-                    if ((type = rand()%5) != PIECE_BLUE)
-                        break;
-                }
-                ps->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, type);
+                type = rand()%5;
+                if (type == PIECE_BLUE) // white piece가 될 확률이 다른 것보다 높지만, 그냥 이렇게 가자.
+                    type = PIECE_WHITE;
+                pss->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, type);
             }
-            ps->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
-            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition(ps->m_pGameLayer->SetPiece8Position(x, y));
+            pss->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
+            pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition( pss->m_pGameLayer->SetPiece8Position(x, y) );
             
             // scale 조정해서 action 준비한다.
-            float scale = ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->getScale();
-            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setScale(0.0f);
+            float scale = pss->m_pGameLayer->GetBoardSize() / (float)1076;
+            //float scale = pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->getScale();
+            pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setScale(0.0f);
             
             // action !
-            CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, scale), CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), ps), NULL);
-            ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
+            CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.08f, scale), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), pss), NULL);
+            pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
         }
     }
-    else if (ps->W8_callbackCnt == 2*(int)ps->result_pos.size())
+    else if (pss->W8_callbackCnt == 2*(int)pss->result_pos.size())
     {
         // 4각형 피스들 갱신
         for (int x = 1; x < COLUMN_COUNT ; x++)
         {
             for (int y = 1 ; y < ROW_COUNT ; y++)
             {
-                if (ps->m_pGameLayer->GetPuzzleP4Set()->GetObject(x, y) != NULL)
-                    ps->m_pGameLayer->GetPuzzleP4Set()->RemoveChild(x, y);
-                ps->m_pGameLayer->GetPuzzleP4Set()->CreatePiece(x, y, ps->m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
-                ps->m_pGameLayer->GetPuzzleP4Set()->AddChild(x, y);
+                if (pss->m_pGameLayer->GetPuzzleP4Set()->GetObject(x, y) != NULL)
+                    pss->m_pGameLayer->GetPuzzleP4Set()->RemoveChild(x, y);
+                pss->m_pGameLayer->GetPuzzleP4Set()->CreatePiece(x, y, pss->m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
+                pss->m_pGameLayer->GetPuzzleP4Set()->AddChild(x, y);
             }
         }
+        /*
         // lock 풀기
         int x, y;
         for (int i = 0 ; i < ps->result_pos.size() ; i++)
@@ -1144,18 +1196,23 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
             y = (int)ps->result_pos[i].y;
             ps->m_pGameLayer->UnLockEach(x, y);
         }
+        */
         
-        ps->W8_isChanging = false;
-        if (ps->W8_isLastChangeWaiting)
-            ps->W8_LastChange();
+        pss->m_pGameLayer->SkillSemaphoreUpdate(-1);
+        
+        pss->W8_isChanging--;
+        if (pss->W8_isLastChangeWaiting)
+            pss->W8_LastChange();
     }
 }
 void PuzzleSkill::W8_LastChange()
 {
+    CCLog("W8_lastChange");
     ps->W8_isLastChangeWaiting = false;
     ps->W8_isLastChange = true;
     
     // 한붓그리던 그림 모두 취소하고 없애기
+    ps->m_pGameLayer->SkillSemaphoreUpdate(1);
     ps->m_pGameLayer->CancelDrawing();
     
     ps->W8_callbackCnt = 0;
@@ -1177,6 +1234,10 @@ void PuzzleSkill::W8_LastChange()
                 ps->result_pos.push_back(ccp(x, y));
         }
     }
+    
+    // effect
+    ps->m_pGameLayer->GetEffect()->Effect15_Last(ps->result_pos, ps->m_pGameLayer->GetEffect());
+    
     // 없앤다. (callback에서 새로 생성한다)
     for (int i = 0 ; i < ps->result_pos.size() ; i++)
     {
@@ -1184,17 +1245,26 @@ void PuzzleSkill::W8_LastChange()
         y = (int)ps->result_pos[i].y;
         
         // lock을 건다.
-        ps->m_pGameLayer->LockEach(x, y);
+        //ps->m_pGameLayer->LockEach(x, y);
         
         // 없애기
-        CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.15f, 0.0f), CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), ps), NULL);
+        CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.08f, 0.0f), CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::W8_Callback), ps), NULL);
         ps->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
     }
 }
 void PuzzleSkill::W8_Timer(float f) // 여신 지속시간 timer
 {
+    if (ps->m_pGameLayer->IsPaused())
+        return;
+    if (ps->W8_scheduleDone || ps->W8_bombFirst)
+        return;
+    
     if (ps->W8_remainTime <= 0)
     {
+        CCLog("Timer remainTime = 0 ; LastChange will be started.");
+        if (ps->W8_bombFirst)
+            return;
+        ps->W8_scheduleDone = true;
         ps->m_pGameLayer->unschedule(schedule_selector(PuzzleSkill::W8_Timer));
         ps->m_pGameLayer->unschedule(schedule_selector(PuzzleSkill::W8_AccelTimer));
         ps->W8_isActive = false;
@@ -1202,20 +1272,29 @@ void PuzzleSkill::W8_Timer(float f) // 여신 지속시간 timer
         
         // 마지막 변화 (모든 blue piece를 다른 색으로 바꾼다)
         ps->W8_isLastChangeWaiting = false;
-        if (!ps->W8_isChanging)
+        if (ps->W8_isChanging == 0)
             ps->W8_LastChange();
         else
             ps->W8_isLastChangeWaiting = true;
     }
     ps->W8_remainTime -= ps->W8_accel*100;
     
+    CCLog("W8_timer = %d %d %d", ps->W8_remainTime, ps->W8_accelTime, ps->W8_accel);
+    
     ps->m_pGameLayer->GetEffect()->AddOrbMaxParticle(-ps->W8_accel);
 }
 void PuzzleSkill::W8_AccelTimer(float f) // 여신 지속시간 감소에 대한 가속도 timer
 {
+    if (ps->m_pGameLayer->IsPaused())
+        return;
+    
     ps->W8_accelTime += 100;
     if (ps->W8_accelTime % 3000 == 0)
         ps->W8_accel++;
+}
+void PuzzleSkill::W8_BombDone()
+{
+    W8_bombFirst = false;
 }
 bool PuzzleSkill::W8_IsActive()
 {
@@ -1229,6 +1308,9 @@ bool PuzzleSkill::W8_IsActive()
 void PuzzleSkill::E3(int num)
 {
     // 떡갈나무지팡이 - 지팡이 레벨에 비례한 추가 별사탕
+    
+    skillAppliedCnt[num]++;
+    
     E3_addedCandy = 0;
     //E3_addedCandy = pow((m_pGameLayer->GetStaffLevel())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
 }
@@ -1236,6 +1318,9 @@ void PuzzleSkill::E3(int num)
 void PuzzleSkill::E4(int num, int queue_pos)
 {
     // 아낌없이 주는 나무 - 10개 이상 피스 제거 시 추가 별사탕
+    
+    skillAppliedCnt[num]++;
+    
     E4_addedCandy = skillLevel[num]*30; // 나중에 보고 밸런스 조정
     
     // 이펙트 실행
@@ -1373,6 +1458,8 @@ void PuzzleSkill::E5(int num)
     GetEffect()->GetSpirit(2)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(2);
     isSpiritAlive[2] = false;
+    
+    skillAppliedCnt[num]++;
 }
 void PuzzleSkill::E5_Callback(CCNode* sender, void* data)
 {
@@ -1405,11 +1492,13 @@ void PuzzleSkill::E5_Callback(CCNode* sender, void* data)
 }
 
 
-void PuzzleSkill::E7()
+void PuzzleSkill::E7(int num)
 {
     // 끈질긴 생명력 - 포션을 1개 얻는다. 한 번 얻으면 더 이상 발동되지 않는다.
     if (!E7_getPotion)
     {
+        skillAppliedCnt[num]++;
+        
         E7_getPotion = true;
         
         //m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -1418,9 +1507,11 @@ void PuzzleSkill::E7()
 
 
 
-
 void PuzzleSkill::E8_Timer(float f) // 라인 흔들기를 시작한다.
 {
+    if (ps->m_pGameLayer->IsPaused())
+        return;
+    
     //if (ps->E8_lineIdx.empty())
     if (ps->E8_cnt == (int)ps->E8_lineIdx.size()) // 끝났음 : 스케쥴링 중지
     {
@@ -1473,6 +1564,10 @@ void PuzzleSkill::E8_Bomb(CCNode* sender, void* data)
         {
             if (y == ROW_COUNT-1 && (x == 0 || x == COLUMN_COUNT-1))
                 continue;
+            
+            // 폭파 개수 갱신
+            ps->m_pGameLayer->UpdatePieceBombCnt(ps->m_pGameLayer->GetPuzzleP8Set()->GetType(x, y), 1);
+            
             CCFiniteTimeAction* action = CCSequence::create(CCSpawn::create(CCScaleTo::create(0.15f, 1.5f), CCFadeOut::create(0.15f), NULL), CCCallFuncND::create(ps->m_pGameLayer, callfuncND_selector(PuzzleSkill::E8_BombCallback), (void*)x), NULL);
             ps->m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
         }
@@ -1593,6 +1688,8 @@ void PuzzleSkill::E8(int num, int queue_pos)
 {
     // 고대나무의 비밀
     // 정해진 회수만큼 라인을 잡아서, 터뜨린다. (초록 피스가 있는 라인)
+    
+    skillAppliedCnt[num]++;
     
     // 변수 초기화
     E8_isActive = false;

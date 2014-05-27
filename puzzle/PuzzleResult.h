@@ -43,7 +43,7 @@ protected:
     float topaz;
     float starcandy;
     float mp;
-    
+
 private:
     CCSprite* pBlack;
     CCSprite* pBlackClose;

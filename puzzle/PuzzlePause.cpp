@@ -32,6 +32,7 @@ void PuzzlePause::onExit()
 
 void PuzzlePause::keyBackClicked()
 {
+    ResumeGame();
 }
 
 

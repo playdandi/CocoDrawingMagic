@@ -96,7 +96,7 @@ void Splash::LogoLoadingCompleted()
     m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
     m_pTitle->addChild(m_pForKakao, 6);
     
-    CCActionInterval* action = CCSequence::create(CCEaseBounceOut::create(CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350))), CCCallFuncND::create(this, callfuncND_selector(Splash::SoundCallback), NULL), CCDelayTime::create(2.0f), CCCallFunc::create(this, callfunc_selector(Splash::Button_Callback)), NULL);
+    CCActionInterval* action = CCSequence::create(CCEaseBounceOut::create(CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350))), CCCallFuncND::create(this, callfuncND_selector(Splash::SoundCallback), NULL), CCDelayTime::create(0.0f), CCCallFunc::create(this, callfunc_selector(Splash::Button_Callback)), NULL);
     m_pTitle->runAction(action);
     
     // 클라이언트에 들고 있던 kakao ID, device Type 불러오기
@@ -140,7 +140,7 @@ void Splash::LogoLoadingCompleted()
 void Splash::SoundCallback(CCNode* sender, void* p)
 {
     // sound
-    sound->PlayVoice(VOICE_TITLE);
+    //sound->PlayVoice(VOICE_TITLE);
     
     
 }

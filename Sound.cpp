@@ -131,9 +131,10 @@ void Sound::PreLoadInGameSound()
     
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/ready.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/go.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/timelimit.np3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/timelimit.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/bonus.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/goddess.wav");
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.5f);
@@ -215,6 +216,7 @@ void Sound::PlayVoice(int type)
         case VOICE_TIMELIMIT: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/timelimit.mp3"); break;
         case VOICE_GAMEOVER: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/gameover2.mp3"); break;
         case VOICE_BONUS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/bonus.mp3"); break;
+        case VOICE_GODDESS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/goddess.wav"); break;
     }
 }
 
@@ -253,6 +255,7 @@ void Sound::UnLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/timelimit.np3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/bonus.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/goddess.wav");
 }
 
 

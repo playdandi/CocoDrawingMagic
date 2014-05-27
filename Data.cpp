@@ -35,10 +35,13 @@ int myRank;
 int myLastWeekHighScore;
 int rewardType;
 
+// 게임에 필요한 미션 내용
+int missionType;
+int missionVal;
+int missionRefVal;
+
 // 게임결과에 필요한 값들
-int prevTopaz;
-int prevStarCandy;
-int prevMP;
+class MyGameResult* myGameResult;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +120,20 @@ void ProfileSprite::SetSprite(CCTexture2D* texture)
 {
     this->profile = new CCSprite();
     this->profile->initWithTexture(texture);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int mission, int newrecord)
+{
+    this->getTopaz = topaz;
+    this->getStarCandy = starcandy;
+    this->getPotion = potion;
+    this->getMP = mp;
+    this->score = score;
+    this->totalScore = totalscore;
+    this->combo = combo;
+    this->isMissionSuccess = (mission == 1);
+    this->isNewRecord = (newrecord == 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

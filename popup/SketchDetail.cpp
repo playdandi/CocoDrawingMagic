@@ -66,10 +66,13 @@ bool SketchDetail::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/sketch/test.plist");
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
 
     return true;
 }
@@ -116,6 +119,7 @@ void SketchDetail::InitSprites()
     int scid = skill_common_id;
     SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
     MySkill* ms = MySkill::GetObj(scid);
+
     bool isOpened = (ms != NULL);
     
     // 스킬 그림의 배경
@@ -183,75 +187,20 @@ void SketchDetail::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0, 0), ccp(105, 1070), CCSize(0, 0), "", "SketchDetail", this, 5) );
     
     
-    // 문구
-    CCLayer* descLayer = CCLayer::create();
-    descLayer->setAnchorPoint(ccp(0, 0));
-    descLayer->setPosition(180, 950);
-    this->addChild(descLayer, 5);
-    spriteClass->layers.push_back(descLayer);
-    
     if (isOpened)
     {
-        
+        MakeOpenedSkillSprites();
     }
     else
     {
-        // '?'스킬의 요구조건을 모두 충족한 경우
-        if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-        {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 충족하여 새로운 마법을 배울 준비가 다 되었어요. '배움' 버튼을 클릭해 보세요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
-        }
-        else
-        {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 모두 갖추면 이 마법을 배울 수 있어요. 조금만 더 힘내면 더 강해진 코코를 볼 수 있어요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
-        }
-        
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_2.png", ccp(0, 1), ccp(0, -85), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_3.png", ccp(0, 1), ccp(0, -170), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png1", ccp(0, 1), ccp(26, -30), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png2", ccp(0, 1), ccp(30, -115), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png3", ccp(0, 1), ccp(30, -200), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_1.png"))->setScale(0.8f);
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_2.png"))->setScale(0.8f);
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_3.png"))->setScale(0.8f);
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png1"))->setScale(0.8f);
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png2"))->setScale(0.8f);
-        ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png3"))->setScale(0.8f);
-        
-        // 만족된 조건에 대해 숫자 옆에 체크 표시하기
-        if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP())
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -43), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -128), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        if (myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv())
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -213), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        
-        SkillInfo* sInfoReq = SkillInfo::GetSkillInfo(sInfo->GetRequiredSkillId());
-        
-        // MP아이콘, 스킬아이콘 배치
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0.5, 0.5), ccp(100, -23), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_magicpoint.png"))->setScale(0.8f);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png5", ccp(0.5, 0.5), ccp(100, -105), CCSize(0, 0), "", "Layer", descLayer, 5) );
-        ((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_brown.png5"))->setScale(0.6f);
-        pos = spriteClass->FindParentCenterPos("background/bg_skill_brown.png5");
-        sprintf(name, "skill_%d.png", sInfoReq->GetId());
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5, 1) );
-        
-        // 각 조건마다의 문구
-        sprintf(name, "%d 이상", sInfo->GetRequiredMP());
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, 0), ccc3(0,0,0), "", "Layer", descLayer, 5) );
-        sprintf(name, "Lv %d 이상 (%s)", sInfo->GetRequiredSkillLv(), sInfoReq->GetName().c_str());
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, -85), ccc3(0,0,0), "", "Layer", descLayer, 5) );
-        sprintf(name, "지팡이 Lv %d 이상", sInfo->GetRequiredStaffLv());
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(65, -170), ccc3(0,0,0), "", "Layer", descLayer, 5) );
+        MakeClosedSkillSprites();
     }
     
     // 가격표
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "SketchDetail", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "SketchDetail", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
-    
+    /*
     // 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
     pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
@@ -286,9 +235,188 @@ void SketchDetail::InitSprites()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
         }
     }
+    */
+}
+
+
+void SketchDetail::MakeOpenedSkillSprites()
+{
+    int scid = skill_common_id;
+    SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
+    MySkill* ms = MySkill::GetObj(scid);
     
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120, 680), CCSize(390, 390), "", "SketchDetail", this, 4) );
+    
+    // 문구
+    CCLayer* descLayer = CCLayer::create();
+    descLayer->setAnchorPoint(ccp(0, 0));
+    descLayer->setPosition(140, 700);
+    this->addChild(descLayer, 5);
+    spriteClass->layers.push_back(descLayer);
+    
+    // 640 1136
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    char name[50];
+    CCArray* animFrames = CCArray::createWithCapacity(4);
+    for (int i = 0 ; i < 4; i++)
+    {
+        sprintf(name, "a%d.png", i+1);
+        CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
+        animFrames->addObject(frame);
+    }
+    
+    CCSprite* first = CCSprite::createWithSpriteFrameName("a1.png");
+    first->setAnchorPoint(ccp(0, 0));
+    first->setPosition(ccp(120, 680));
+    first->setScale((float)390/(float)640);
+    this->addChild(first, 10);
+    
+    CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.1f);
+    CCAnimate* animate = CCAnimate::create(animation);
+    CCFiniteTimeAction* action = animate;
+    
+    first->runAction(CCRepeatForever::create((CCActionInterval*)action));
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    int p11[25] = {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,0, 0,0,0,1,0, 0,0,0,0,0};
+    char temp[50];
+    /*
+    for (int i = 0 ; i < 5 ; i++)
+    {
+        for (int j = 0 ; j < 5 ; j++)
+        {
+            if (p11[i*5+j] == 0) sprintf(temp, "icon/3.png%d", i*5+j);
+            else if (p11[i*5+j] == 1) sprintf(temp, "icon/0.png%d", i*5+j);
+            else if (p11[i*5+j] == 2) sprintf(temp, "icon/1.png%d", i*5+j);
+            else if (p11[i*5+j] == 3) sprintf(temp, "icon/2.png%d", i*5+j);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0, 0), ccp(i*65+10*(i-1), j*65+10*(j-1)), CCSize(0,0), "", "Layer", descLayer, 5) );
+            ((CCSprite*)spriteClass->FindSpriteByName(temp))->setScale((float)65/(float)138);
+        }
+    }
+    */
+    //sprintf(temp, "icon/0.png");
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0, 0), ccp(150, 150), CCSize(0,0), "", "Layer", descLayer, 5) );
+    
+    // 스킬 설명
+    std::string desc = SkillDescription(scid);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(desc, fontList[0], 28, ccp(0, 1), ccp(540, 1070), ccc3(0,0,0), CCSize(420, 250), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
+    // 스킬 강화 설명
+    
+    
+    
+    // 버튼
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
+    CCPoint pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
+
+    // 레벨업 해야하는 경우 (강화)
+    if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()))
+    {
+        btnStatus = 1;
+        // '강화' 글자 필요함
+    }
+    // 일반적인 경우
+    else
+    {
+        btnStatus = 2;
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    }
+}
+
+std::string SketchDetail::SkillDescription(int scid)
+{
+    scid = 21;
+    switch (scid)
+    {
+        case 21: return "붉은색 피스를 터뜨리면 추가점수를 얻어요.\n\n스킬 강화를 통해 추가점수의 양을 더 상승시킬 수 있어요."; break;
+    }
+    return "";
+}
+
+void SketchDetail::MakeClosedSkillSprites()
+{
+    char name[40];
+    
+    int scid = skill_common_id;
+    SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
+    MySkill* ms = MySkill::GetObj(scid);
+    
+    // 문구
+    CCLayer* descLayer = CCLayer::create();
+    descLayer->setAnchorPoint(ccp(0, 0));
+    descLayer->setPosition(180, 950);
+    this->addChild(descLayer, 5);
+    spriteClass->layers.push_back(descLayer);
+    
+    
+    // '?'스킬의 요구조건을 모두 충족한 경우
+    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 충족하여 새로운 마법을 배울 준비가 다 되었어요. '배움' 버튼을 클릭해 보세요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
+    }
+    else
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 모두 갖추면 이 마법을 배울 수 있어요. 조금만 더 힘내면 더 강해진 코코를 볼 수 있어요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
+    }
+    
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_2.png", ccp(0, 1), ccp(0, -85), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_3.png", ccp(0, 1), ccp(0, -170), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png1", ccp(0, 1), ccp(26, -30), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png2", ccp(0, 1), ccp(30, -115), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png3", ccp(0, 1), ccp(30, -200), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_1.png"))->setScale(0.8f);
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_2.png"))->setScale(0.8f);
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_3.png"))->setScale(0.8f);
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png1"))->setScale(0.8f);
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png2"))->setScale(0.8f);
+    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png3"))->setScale(0.8f);
+    
+    // 만족된 조건에 대해 숫자 옆에 체크 표시하기
+    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP())
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -43), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -128), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    if (myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv())
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -213), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    
+    SkillInfo* sInfoReq = SkillInfo::GetSkillInfo(sInfo->GetRequiredSkillId());
+    
+    // MP아이콘, 스킬아이콘 배치
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint.png", ccp(0.5, 0.5), ccp(100, -23), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_magicpoint.png"))->setScale(0.8f);
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png5", ccp(0.5, 0.5), ccp(100, -105), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_brown.png5"))->setScale(0.6f);
+    CCPoint pos = spriteClass->FindParentCenterPos("background/bg_skill_brown.png5");
+    sprintf(name, "skill_%d.png", sInfoReq->GetId());
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5, 1) );
+    
+    // 각 조건마다의 문구
+    sprintf(name, "%d 이상", sInfo->GetRequiredMP());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, 0), ccc3(0,0,0), "", "Layer", descLayer, 5) );
+    sprintf(name, "Lv %d 이상 (%s)", sInfo->GetRequiredSkillLv(), sInfoReq->GetName().c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, -85), ccc3(0,0,0), "", "Layer", descLayer, 5) );
+    sprintf(name, "지팡이 Lv %d 이상", sInfo->GetRequiredStaffLv());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(65, -170), ccc3(0,0,0), "", "Layer", descLayer, 5) );
+    
+    
+    
+    // 버튼
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
+    pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
+    
+    // '?'스킬의 요구조건을 모두 충족한 경우
+    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    {
+        btnStatus = 3;
+        // '배움' 글자 필요함
+    }
+    // 아닌 경우
+    else
+    {
+        btnStatus = 4;
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    }
 }
 
 
@@ -402,6 +530,9 @@ void SketchDetail::EndScene(bool isNoti)
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
+    
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/sketch/test.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/sketch/test.png");
     
     if (isNoti)
     {        

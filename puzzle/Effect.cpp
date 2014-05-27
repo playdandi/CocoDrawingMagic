@@ -517,6 +517,9 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
     {
         CCFiniteTimeAction* bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
         piece->runAction(bomb);
+        
+        // 물 사이클 스킬은 Puzzle의 Bomb함수를 쓰지 않기 때문에, 여기서 개수를 cnt해야 한다.
+        pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType((int)pThis->skillPos[pThis->callbackCnt].x, (int)pThis->skillPos[pThis->callbackCnt].y), 1 );
     }
     
     if (pThis->callbackCnt < (int)pThis->skillPos.size()-1)
@@ -825,6 +828,8 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
 
 void Effect::Effect7_Comet(float f)
 {
+    if (eff->gameLayer->IsPaused())
+        return;
     Effect7_Callback_2(NULL, eff);
 }
 
@@ -908,6 +913,9 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         ef->gameLayer->addChild(m_emitter, 1500);
     }
     
+    // 폭파 개수 갱신
+    ef->gameLayer->UpdatePieceBombCnt(ef->gameLayer->GetPuzzleP8Set()->GetType(x, y), (int)ef->skillDoublePos[idx-1].size());
+    
     // 폭파!
     CCLog("bomb (%d) : size = %d", idx, (int)ef->skillDoublePos[idx-1].size());
     for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
@@ -918,6 +926,7 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         ef->gameLayer->GetSpriteP8(x, y)->setTag(idx); // tag (idx)
         ef->gameLayer->GetSpriteP8(x, y)->runAction(action);
     }
+    
 }
 
 void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
@@ -982,10 +991,26 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     // orb 출현
     m_orb = CCParticleSystemQuad::create("particles/water8_orb.plist");
     m_orb->setAnchorPoint(ccp(0.5, 0));
-    m_orb->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+A8_icon_height));
+    orb_pos = ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+A8_icon_height);
+    m_orb->setPosition(orb_pos);
     m_orb->setScale(1.0f);
     m_orb->setStartSize(100);
-    gameLayer->addChild(m_orb, 1000);
+    gameLayer->addChild(m_orb, 10);
+}
+void Effect::Effect15_Last(std::vector<CCPoint> pos, void* pointer)
+{
+    Effect* ef = (Effect*)pointer;
+    
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/water8_piece.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(ef->gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
+        m_emitter->setScale(2.5f);
+        m_emitter->setDuration(0.35f);
+        ef->gameLayer->addChild(m_emitter, 2000);
+        m_emitter->setAutoRemoveOnFinish(true);
+    }
 }
 void Effect::Effect15_Bomb(std::vector<CCPoint> pos, void* pointer)
 {
@@ -1000,17 +1025,28 @@ void Effect::Effect15_Bomb(std::vector<CCPoint> pos, void* pointer)
         m_emitter->setScale(2.5f);
         ef->gameLayer->addChild(m_emitter, 2000);
         m_emitter->setAutoRemoveOnFinish(true);
+        
+        CCParticleSystemQuad* m_move = CCParticleSystemQuad::create("particles/water8_move.plist");
+        //m_emitter->retain();
+        m_move->setAnchorPoint(ccp(0.5, 0.5));
+        m_move->setPosition(ef->gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
+        m_move->setScale(2.0f);
+        ef->gameLayer->addChild(m_move, 2001);
+        
+        CCActionInterval* action = CCSequence::create( CCEaseIn::create(CCMoveTo::create(0.5f, orb_pos), 0.5f), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect15_Callback), ef), NULL );
+        m_move->runAction(action);
     }
 }
 void Effect::Effect15_Callback(CCNode* sender, void* pointer)
 {
-
+    ((CCParticleSystemQuad*)sender)->setDuration(0.05f);
+    ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
 }
 void Effect::AddOrbMaxParticle(int v)
 {
     int res = std::min((int)m_orb->getStartSize()+v, 100);
     m_orb->setStartSize(res);
-    CCLog("size = %d", (int)m_orb->getStartSize());
+    //CCLog("size = %d", (int)m_orb->getStartSize());
 }
 void Effect::Effect15_Clear()
 {

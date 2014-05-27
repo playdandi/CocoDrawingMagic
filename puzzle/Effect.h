@@ -55,6 +55,7 @@ public:
     void PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (여신)
     void Effect15_Callback(CCNode* sender, void* pointer);
     void Effect15_Bomb(std::vector<CCPoint> pos, void* pointer);
+    void Effect15_Last(std::vector<CCPoint> pos, void* pointer);
     void AddOrbMaxParticle(int v);
     void Effect15_Clear();
     
@@ -117,6 +118,7 @@ private:
     
     CCSprite* A8_icon;
     
+    CCPoint orb_pos;
     CCParticleSystemQuad* m_orb;
     CCParticleSystemQuad* m_W8_bg;
     

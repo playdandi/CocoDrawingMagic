@@ -42,10 +42,14 @@ extern int myRank;
 extern int myLastWeekHighScore;
 extern int rewardType;
 
+// 게임에 필요한 미션 내용
+extern int missionType;
+extern int missionVal;
+extern int missionRefVal;
+
 // 게임결과에 필요한 값들
-extern int prevTopaz;
-extern int prevStarCandy;
-extern int prevMP;
+extern class MyGameResult* myGameResult;
+
 
 using namespace cocos2d;
 
@@ -79,6 +83,21 @@ public:
 private:
     CCSprite* profile;
     std::string profileUrl;
+};
+
+class MyGameResult
+{
+public:
+    MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int mission, int newrecord);
+    int getTopaz;
+    int getStarCandy;
+    int getPotion;
+    int getMP;
+    int score;
+    int totalScore;
+    int combo;
+    bool isMissionSuccess;
+    bool isNewRecord;
 };
 
 class MyInfo

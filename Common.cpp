@@ -113,66 +113,61 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
 }
 */
 
-CCLayer* Common::MakeScoreLayer(int num)
+CCLayer* Common::MakeCombo(int num)
 {
     CCLayer* layer = CCLayer::create();
-    /*
-    int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
-    int offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
+
     char name[30];
     int totalWidth = 0;
+    int totalHeight = 0;
     
-    std::string number = MakeComma(num);
-    //CCLog("number = %s", number.c_str());
+    std::string commaNumber = Common::MakeComma(num);
     
     std::vector<CCSprite*> sprites;
-    //for (int i = number.size()-1 ; i >= 0 ; i--)
-    for (int i = 0 ; i < number.size() ; i++)
+    for (int i = 0 ; i < commaNumber.size() ; i++)
     {
-        if (number[i] == ',')
-            sprintf(name, "number/result_comma.png");
-            //sprintf(name, "number/count_comma.png");
-        else
-            sprintf(name, "number/result_%c.png", number[i]);
-            //sprintf(name, "number/count_%c.png", number[i]);
-        CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
-        //CCLog("%c", number[i]);
-        //temp->setAnchorPoint(ccp(1, 0));
-        temp->setAnchorPoint(ccp(0, 0));
-        //if (i == number.size()-1)
-        if (i == 0)
-        {
-            temp->setPosition(ccp(0, offset[number[i]-'0']));
-            totalWidth += (int)temp->getContentSize().width;
-        }
-        else
-        {
-            if (number[i] == ',')
-            {
-                temp->setPosition(ccp(totalWidth-3, 0));
-                totalWidth += (int)temp->getContentSize().width-3;
-            }
-            else
-            {
-                temp->setPosition(ccp(totalWidth - offsetX[number[i]-'0'], offset[number[i]-'0']));
-                //temp->setPosition(ccp(totalWidth, offset[number[i]-'0']));
-                //totalWidth -= ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
-                totalWidth += ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
-            }
-        }
+        if (commaNumber[i] == ',')
+            continue;
         
+        sprintf(name, "number/combo_%c.png", commaNumber[i]);
+        CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
+        temp->setTag(i);
+        temp->setAnchorPoint(ccp(0, 0));
+        //temp->setScale(0.7f);
+        
+        if (i == 0)
+            temp->setPosition(ccp(0, 0));
+        else
+            temp->setPosition(ccp(totalWidth, totalHeight));
         layer->addChild(temp, 100);
+        
+        //totalWidth += (int)(temp->getContentSize().width * 0.6f) - 2;
+        totalWidth += (int)temp->getContentSize().width;
+        totalHeight += 3;
+        
+        //if (commaNumber[i]-'0' == 1)
+        //    totalWidth += 2;
+        
         sprites.push_back(temp);
     }
     sprites.clear();
     
-    layer->setContentSize(CCSizeMake(totalWidth, 0));
-
+    // '콤보' 글자
+    CCSprite* temp = CCSprite::createWithSpriteFrameName("number/combo_combo.png");
+    temp->setTag((int)commaNumber.size());
+    temp->setAnchorPoint(ccp(0, 0));
+    temp->setPosition(ccp(totalWidth+10, totalHeight-10));
+    layer->addChild(temp, 100);
+    
+    layer->setTag((int)commaNumber.size());
+    //layer->setContentSize(CCSize(totalWidth+10, totalHeight+10));
     return layer;
-    */
-    
-    
-    //int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
+}
+
+CCLayer* Common::MakeScoreLayer(int num)
+{
+    CCLayer* layer = CCLayer::create();
+   
     int offset[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     char name[30];
     int totalWidth = 0;

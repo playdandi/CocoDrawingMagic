@@ -22,6 +22,11 @@ public:
     void InitFairy();
     void InitSkill();
     
+    void MakeOpenedSkillSprites();
+    void MakeClosedSkillSprites();
+    
+    std::string SkillDescription(int scid);
+    
     void EndScene(bool isNoti);
     
     void XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag);

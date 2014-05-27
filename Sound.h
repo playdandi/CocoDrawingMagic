@@ -10,6 +10,7 @@
 #define VOICE_TIMELIMIT 3
 #define VOICE_GAMEOVER 4
 #define VOICE_BONUS 5
+#define VOICE_GODDESS 6
 
 
 using namespace cocos2d;

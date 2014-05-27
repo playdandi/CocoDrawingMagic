@@ -141,9 +141,15 @@ void Loading::XmlParseGameStart(char* data, int size)
         }
         
         // 미션
-        int missionType = gameInfo.child("mission").attribute("type").as_int();
-        int missionVal = gameInfo.child("mission").attribute("value").as_int();
-        int missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
+        /*
+        type : 1-한개피스, 2-특정마법, 3-모든마법, 4-모든피스
+        value : 피스(터트려야하는 수), 마법(시전마법수)
+        reference-value : type1일때-1:물피스, 2:불피스, 3:땅피스
+        (type 2일때 : 시전해야하는 스킬 ID)
+         */
+        missionType = gameInfo.child("mission").attribute("type").as_int();
+        missionVal = gameInfo.child("mission").attribute("value").as_int();
+        missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
         
         // 사용할 active+passive 스킬 목록 (active의 경우, 슬롯 정보도 같이 갱신한다)
         int slotSize = myInfo->GetSlot().size();

@@ -52,6 +52,7 @@ public:
     int GetCombo();
     void UpdateCombo();
     
+    void ComboCallback(CCNode* sender, void* p);
     void ComboTimer(float f);
     void SetTimer();
     void UpdateTimer(float f);
@@ -64,6 +65,10 @@ public:
     
     void StartMagicTime(float f);
     
+    void SkillSemaphoreUpdate(int val);
+    bool IsSkillSemaphoreFree();
+    
+    bool IsPaused();
     void PauseGame();
     
 	virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
@@ -103,7 +108,7 @@ public:
     
     void SetSpiritTouch(bool val);
     
-    
+    void UpdatePieceBombCnt(int type, int cnt);
     
     PuzzleP8Set* GetPuzzleP8Set();
     void SetSpriteP8Null(int x, int y);
@@ -160,6 +165,8 @@ protected:
     float PIECE8_FRAME_WIDTH;
     float PIECE8_FRAME_HEIGHT;
     
+    int iPieceBombCnt[5];
+    
     int m_bLockP8[COLUMN_COUNT][ROW_COUNT];
     int m_bLockP4[COLUMN_COUNT][ROW_COUNT];
     
@@ -178,6 +185,8 @@ protected:
     int m_iNextState[QUEUE_CNT];
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
+    
+    bool isCancelling;
     
     // falling queue
     bool isFalling;
@@ -205,8 +214,12 @@ protected:
     
     int iTouchRound;
     
-    bool isMissionSuccess;
-    int isNewRecord;
+    //bool isMissionSuccess;
+    //int isNewRecord;
+    int iMissionCnt;
+    CCLabelTTF* pMissionLabel;
+    
+    CCSprite* pClock;
     
     int XMLStatus;
     int profileCnt;
@@ -228,7 +241,8 @@ private:
     int iStarCandy;
     CCLabelTTF* pStarCandyLabel;
     int iCombo;
-    CCLabelTTF* pComboLabel;
+    //CCLabelTTF* pComboLabel;
+    //CCLayer* pComboLayer;
     int iComboTimer;
     int iTimer;
     CCLabelTTF* pTimerLabel;

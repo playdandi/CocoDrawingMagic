@@ -153,6 +153,7 @@ public:
     
     static std::string MakeComma(int number);
     static std::string InsertComma(std::string number);
+    static CCLayer* MakeCombo(int num);
     static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
     static CCLayer* MakeItemNumberLayer(std::string number);
