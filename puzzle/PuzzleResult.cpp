@@ -214,7 +214,8 @@ void PuzzleResult::InitSprites()
     char name[50];
     // 스킬 문양 + 그 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(125, 525), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
-    if (myInfo->GetPracticeSkillId() != 0)
+    
+    if (myInfo->GetPracticeSkillId() != 0) // 연습 중인 스킬이 있을 때만 노출되는 것들
     {
         sprintf(name, "skill_%d.png", myInfo->GetPracticeSkillId());
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(125+8, 525+8), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
@@ -232,7 +233,7 @@ void PuzzleResult::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp((125+38)+43+3+offset, 525-8), CCSize(0,0), "", "PuzzleResult", this, 1005) );
         
         // 미션 내용
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸른 피스 200개 터뜨리기", fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(GetMissionContent(), fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
         
         // 연습량 프로그레스바 안의 노란 바
         barLayer = CCLayer::create();
@@ -283,16 +284,9 @@ void PuzzleResult::InitSprites()
     
     // 스킬 이름
     if (myInfo->GetPracticeSkillId() != 0)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName(), fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30-36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName(), fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30-38), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     else
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("연습 스킬 없음", fontList[0], 30, ccp(0, 0), ccp(125+146+10, 525+30-36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
-    // 673
-    // 549, 31 --> 582, 25
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("연습 스킬 없음", fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30-38), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     
     // 코코
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco.png", ccp(0.5, 0.5), ccp(850, 645), CCSize(0,0), "", "PuzzleResult", this, 1005) );
@@ -321,6 +315,31 @@ void PuzzleResult::Callback_ProgressBar(CCNode* sender, void* data)
     }
 }
 
+std::string PuzzleResult::GetMissionContent()
+{
+//    char* s;
+    char s[100];
+    switch (missionType)
+    {
+        case 1:
+            if (missionRefVal == 1) sprintf(s, "파란 피스 %d개 터뜨리기", missionVal);
+            else if (missionRefVal == 2) sprintf(s, "빨간 피스 %d개 터뜨리기", missionVal);
+            else if (missionRefVal == 3) sprintf(s, "초록 피스 %d개 터뜨리기", missionVal);
+            break;
+        case 2:
+            sprintf(s, "'%s' %d회 시전하기", SkillInfo::GetSkillInfo(missionRefVal)->GetName().c_str(), missionVal);
+            break;
+        case 3:
+            sprintf(s, "마법 총 %d회 시전하기", missionVal);
+            break;
+        case 4:
+            sprintf(s, "피스 총 %d개 터뜨리기", missionVal);
+            break;
+    }
+    
+    std::string ret = s;
+    return ret;
+}
 
 
 int test[10] = {11,21,31,15,25,35,23,33,27,28};

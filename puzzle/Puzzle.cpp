@@ -283,7 +283,8 @@ void Puzzle::InitInfoBar()
                 break;
         }
         spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_mission_withs.png", "0", NULL, 6, 1) );
-        ((CCSprite*)spriteClassInfo->FindSpriteByName(name))->setScale(scale);
+        pMissionSprite = ((CCSprite*)spriteClassInfo->FindSpriteByName(name));
+        pMissionSprite->setScale(scale);
         
         // 달성해야 할 회수
         sprintf(name, "%d", missionVal);
@@ -327,7 +328,7 @@ void Puzzle::InitSprites()
     //tbSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
     
     // timer clock icon
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/clock.png", ccp(1, 0.5), ccp(m_winSize.width/2 + 1000/2 - 20-17, vo.y+31.5f+5), CCSize(0,0), "", "Puzzle", this, 1001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/clock.png", ccp(0.5, 0.5), ccp(m_winSize.width/2 + 1000/2 - 20-17-57/(float)2, vo.y+31.5f+5), CCSize(0,0), "", "Puzzle", this, 1001) );
     pClock = ((CCSprite*)spriteClass->FindSpriteByName("icon/clock.png"));
     /*
     CCScale9Sprite* timerbar = ((CCScale9Sprite*)spriteClass->FindSpriteByName("background/bg_bar_timer.png"));
@@ -368,6 +369,7 @@ void Puzzle::InitSprites()
     PIECE8_HEIGHT = (float)152 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_WIDTH = (float)154 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_HEIGHT = (float)154 * (float)boardSize.height/(float)1076;
+    CCLog("%f %f", PIECE8_WIDTH, PIECE8_HEIGHT);
     
     // 구름
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_cloud_near.png", ccp(1, 0), ccp(m_winSize.width, vo.y+vs.height*1.920f/2.920f+350), CCSize(0, 0), "", "Puzzle", this, 1) );
@@ -790,6 +792,7 @@ void Puzzle::UpdateStarCandy(int type, int data)
 void Puzzle::SetCombo()
 {
     iCombo = 0;
+    maxCombo = 0;
     //pComboLayer = NULL;
     /*
     pComboLabel = CCLabelTTF::create("", fontList[2].c_str(), 50);
@@ -810,13 +813,15 @@ int Puzzle::GetCombo()
 
 void Puzzle::UpdateCombo()
 {
+    iComboTimer = 0;
     iCombo++;
+    maxCombo = std::max(maxCombo, iCombo);
+    
     char temp[11];
     sprintf(temp, "%d Combo!", iCombo);
     //pComboLabel->setString(temp);
     
-    iComboTimer = 0;
-    //this->schedule(schedule_selector(Puzzle::ComboTimer), 0.1f);
+
     if (iCombo == 1)
     {
         // 처음 콤보가 적용될 때만 타이머 적용을 하면 된다.
@@ -825,30 +830,21 @@ void Puzzle::UpdateCombo()
     
     if (iCombo > 0 && iCombo % 10 == 0)
     {
-        // 10의 배수마다 W3(콤보비례추가점수)스킬 발동
+        // 10의 배수마다 W3(콤보비례추가점수) 스킬 발동
         skill->Invoke(10, NULL);
         W3_total += skill->W3GetScore();
         UpdateScore(1, skill->W3GetScore());
     }
     else if (iCombo % 10 == 5)
     {
-        // 5, 15,... 마다 W4(콤보비례추가별사탕)스킬 발동
+        // 5, 15,... 마다 W4(콤보비례추가별사탕) 스킬 발동
         skill->Invoke(11, NULL);
         W4_total += skill->W4GetCandy();
         UpdateStarCandy(1, skill->W4GetCandy());
     }
     
-    //pComboLabel->stopAllActions();
-    //pComboLabel->setOpacity(0);
     
-    /*if (pComboLayer != NULL)
-    {
-        pComboLayer->removeAllChildren();
-        pComboLayer->removeFromParentAndCleanup(true);
-        pComboLayer = NULL;
-    }*/
-    
-    if (iCombo > 1)
+    if (iCombo > 1) // 2콤보부터 화면에 노출
     {
         CCLayer* pComboLayer = Common::MakeCombo(iCombo);
         pComboLayer->setAnchorPoint(ccp(0, 0));
@@ -874,6 +870,7 @@ void Puzzle::ComboTimer(float f)
     iComboTimer += 100;
     if (iComboTimer >= 2000)
     {
+        maxCombo = std::max(maxCombo, iCombo);
         iCombo = 0;
         //pComboLabel->setOpacity(0);
         //pComboLayer->removeAllChildren();
@@ -1050,6 +1047,16 @@ void Puzzle::UpdateTimer(float f)
         
         CCActionInterval* action = CCSequence::create(CCRotateBy::create(0.05f, -10), CCRotateBy::create(0.1f, 20), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL);
         timelimit->runAction(action);
+        
+        // 시계 살짝 키우고 색깔블링크+흔들기 시작
+        pTimerLabel->setColor(ccc3(255,255,255));
+        pTimerLabel->setFontSize(30);
+        pTimerLabel->setPosition(ccp(pTimerLabel->getPosition().x+5, pTimerLabel->getPosition().y));
+        pClock->setScale(1.5f);
+        pClock->setPosition(ccp(pClock->getPosition().x-5, pClock->getPosition().y)); // 위치 살짝 왼쪽으로
+        ccColor3B color = pClock->getColor();
+        CCActionInterval* action2 = CCSpawn::create( CCSequence::create(CCTintTo::create(0.2f, 255, 0, 0), CCTintTo::create(0.2f, color.r, color.g, color.b), NULL ), CCSequence::create(CCRotateBy::create(0.15f, 20), CCRotateBy::create(0.3f, -40), CCRotateBy::create(0.15f, 20), NULL), NULL );
+        pClock->runAction( CCRepeatForever::create(action2) );
     }
     else if (iTimer < 5000 && iTimer % 1000 == 0) // 4,3,2,1초에 '시간이없어' 문구 흔들거리기
     {
@@ -1062,6 +1069,13 @@ void Puzzle::UpdateTimer(float f)
         char temp[3];
         sprintf(temp, "%d", iTimer/1000);
         pTimerLabel->setString(temp);
+        
+        if (iTimer % 3000 == 0 && iTimer > 5000)
+        {
+            // 시계 아이콘 흔들거리기 (매 3초마다) (5초 이하로는 하지 않는다)
+            CCActionInterval* action = CCSequence::create(CCRotateBy::create(0.15f, 30), CCRotateBy::create(0.3f, -60), CCRotateBy::create(0.15f, 30), NULL);
+            pClock->runAction(action);
+        }
         
         if (iTimer == 0) // game over
         {
@@ -1216,8 +1230,8 @@ CCPoint Puzzle::SetPiece8Position(int x, int y)
 }
 CCPoint Puzzle::SetPiece4Position(int x, int y)
 {
-    int posX = (x-3)*PIECE8_WIDTH - PIECE8_WIDTH/2;
-    int posY = (y-3)*PIECE8_HEIGHT - PIECE8_HEIGHT/2;
+    float posX = (float)(x-3)*PIECE8_WIDTH - PIECE8_WIDTH/2.0f;
+    float posY = (float)(y-3)*PIECE8_HEIGHT - PIECE8_HEIGHT/2.0f;
     return ccp(posX, posY);
 }
 
@@ -1901,9 +1915,57 @@ void Puzzle::InvokeSkills(int queue_pos)
     }
 }
 
+// 특정 색(type) 피스가 터지는 개수(cnt)를 갱신하고, 그에 맞춰 미션도 갱신한다.
 void Puzzle::UpdatePieceBombCnt(int type, int cnt)
 {
     iPieceBombCnt[type] += cnt;
+    
+    // 미션 내용도 같이 갱신
+    if ( (missionType == 1 &&
+           ((missionRefVal == 1 && type == PIECE_BLUE) ||
+            (missionRefVal == 2 && type == PIECE_RED) ||
+            (missionRefVal == 3 && type == PIECE_GREEN) ) ) ||
+         (missionType == 4) )
+    {
+        iMissionCnt += cnt;
+        
+        char n[6];
+        sprintf(n, "%d", iMissionCnt);
+        pMissionLabel->setString(n);
+        
+        // icon action
+        float scale;
+        if (missionType == 1) scale = 0.5f;
+        else if (missionType == 4) scale = 0.85f;
+        pMissionSprite->setScale(scale+0.5f);
+        pMissionSprite->runAction( CCSpawn::create( CCSequence::create(CCRotateBy::create(0.05f, 10), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL), CCScaleTo::create(0.2f, scale), NULL) );
+    }
+}
+
+// 스킬 발동 시 미션을 갱신한다.
+void Puzzle::UpdateMissionCountBySkill(int skillNum)
+{
+    int csi;
+    if (skillNum < 8) csi = skillNum+21;
+    else if (skillNum < 16) csi = skillNum+3;
+    else if (skillNum < 24) csi = skillNum+15;
+    
+    if ( (missionType == 2 && missionRefVal == csi) ||
+         (missionType == 3) )
+    {
+        iMissionCnt++;
+        
+        char n[4];
+        sprintf(n, "%d", iMissionCnt);
+        pMissionLabel->setString(n);
+        
+        // icon action
+        float scale;
+        if (missionType == 2) scale = 0.6f;
+        else if (missionType == 3) scale = 1.5f;
+        pMissionSprite->setScale(scale+0.5f);
+        pMissionSprite->runAction( CCSpawn::create( CCSequence::create(CCRotateBy::create(0.05f, 10), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL), CCScaleTo::create(0.2f, scale), NULL) );
+    }
 }
 
 void Puzzle::Lock(int queue_pos)
@@ -2005,7 +2067,7 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
     
     // 폭파 개수 갱신
     if (bomb_pos.size() > 0)
-        iPieceBombCnt[ puzzleP8set->GetType(bomb_pos[0].x, bomb_pos[0].y) ] += (int)bomb_pos.size();
+        UpdatePieceBombCnt(puzzleP8set->GetType(bomb_pos[0].x, bomb_pos[0].y) , (int)bomb_pos.size());
     
     // 8각형들을 터뜨린다.
     float delayTime = 0.0f;
@@ -2116,7 +2178,7 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
         else if (m_iState[(int)queue_pos] == SKILL_DOUBLESIX)
         {
             CCLog("bomb callback (%d) DOUBLESIX", (int)queue_pos);
-            std::vector<CCPoint> temp = skill->GetResult(); //skill->A4BGetPos();
+            std::vector<CCPoint> temp = skill->GetResult();
             for (int i = 0 ; i < temp.size() ; i++)
             {
                 puzzleP8set->RemoveChild((int)temp[i].x, (int)temp[i].y);
@@ -2683,7 +2745,7 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         int totalScore = nodeResult.child("score").attribute("now-score").as_int();
         
         // 결과화면에 보낼 데이터 class 생성
-        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, iScore, totalScore, iCombo, isMissionSuccess, isNewRecord);
+        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, iScore, totalScore, maxCombo, isMissionSuccess, isNewRecord);
         
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
@@ -3081,8 +3143,6 @@ void PuzzleP4Set::CreatePiece(int x, int y, int type)
     int ld = (x == 1 && y == 1) ? -3 : gameLayer->GetPuzzleP8Set()->GetType(x-1, y-1);
     int rd = (x == COLUMN_COUNT-1 && y == 1) ? -4 : gameLayer->GetPuzzleP8Set()->GetType(x, y-1);
     
-    //float offsetX = (float)39.7/(float)40;
-    //float offsetY = (float)0.2 /(float)40;
     int offsetX = 1;
     int offsetY = 0;
     object[x][y]->CreateSprites(x, y, lu, ru, ld, rd, ccp(offsetX, offsetY), gameLayer->SetPiece4Position(x, y));

@@ -204,6 +204,14 @@ void PuzzleSkill::SetQueuePos(int queue_pos)
     queuePos = queue_pos;
 }
 
+void PuzzleSkill::UpdateAppliedSkillCount(int skillNum)
+{
+    skillAppliedCnt[skillNum]++;
+    
+    // 미션 내용도 갱신
+    m_pGameLayer->UpdateMissionCountBySkill(skillNum);
+}
+
 void PuzzleSkill::Invoke(int skillNum, int queue_pos)
 {
     // 스킬 목록에 없거나, 있더라도 시전이 되지 않은 경우(확률 실패한 경우), 실행하지 않는다.
@@ -254,7 +262,7 @@ void PuzzleSkill::A1(int num, int queue_pos)
 {
     // 마법불꽃, 은은한 달빛, 대지의 숨결 - 각 색깔의 피스 제거 시, 추가점수
   
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
 
     // 추가점수 = 스킬레벨 * 한붓그리기 개수 * 30 (점)
     A1_addedScore = 30*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
@@ -278,7 +286,7 @@ void PuzzleSkill::A2(int num, int queue_pos)
     // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
     // 땅2 : 스킬레벨 수만큼 완전히 랜덤하게 터뜨린다.
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     // 변수 초기화
     A2_pos.clear();
@@ -415,7 +423,7 @@ void PuzzleSkill::F3(int num, int queue_pos)
 {
     // 뜨거운 것이 좋아 - 10개 이상 피스 제거 시 추가 점수
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     F3_addedScore = skillLevel[num]*7000; // 나중에 보고 밸런스 조정
     m_pGameLayer->UpdateScore(1, F3_addedScore);
@@ -435,7 +443,7 @@ void PuzzleSkill::F4(int num)
 {
     // 타오르는 마법진 - Magic Time(MT) 때 마법진을 2번 터뜨린다.
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     F4_isDoubledMT = false;
     int prob = rand()%100;
@@ -589,7 +597,7 @@ void PuzzleSkill::F5(int num)
     GetEffect()->ReleaseSpirit(0);
     isSpiritAlive[0] = false;
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
 }
 void PuzzleSkill::F5_Callback(CCNode* sender, void* data)
 {
@@ -648,18 +656,82 @@ void PuzzleSkill::A6(int num, int queue_pos)
 {
     // 불꽃놀이, 얼음비, 땅의 신비 - 각자의 피스 제거 시 (6개 이상) 일정 확률로 그 위치를 한 번 더 터뜨리기
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     // 폭파
-    m_pGameLayer->Bomb(queue_pos, result_pos);
+    if (num == 5) // 불꽃놀이는 연달아 터지도록 한다.
+    {
+        // 순서 정하기
+        F6_order.clear();
+        int k;
+        while (result_pos.size() > 0)
+        {
+            k = rand() % (int)result_pos.size();
+            F6_order.push_back(result_pos[k]);
+            
+            for (int i = k+1; i < result_pos.size() ; i++)
+                result_pos[i-1] = result_pos[i];
+            result_pos.pop_back();
+        }
+        result_pos = F6_order;
+        
+        F6_callbackCnt = 0;
+        F6_Callback(NULL, this);
+        SetQueuePos(queue_pos);
+        
+        // 이펙트 실행
+        m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+        m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
+    }
+    else
+    {
+        m_pGameLayer->Bomb(queue_pos, result_pos);
+        
+        // 이펙트 실행
+        m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
+        m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
+        m_pGameLayer->PlayEffect(num, queue_pos);
+        
+        // 사운드
+        m_pGameLayer->GetSound()->PlaySkillSound(num);
+    }
+}
+void PuzzleSkill::F6_Callback(CCNode* sender, void *p)
+{
+    PuzzleSkill* pss = (PuzzleSkill*)p;
+    int x, y;
+
+    pss->F6_callbackCnt++;
     
-    // 이펙트 실행
-    m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
-    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
-    m_pGameLayer->PlayEffect(num, queue_pos);
+    if (pss->F6_callbackCnt <= (int)pss->result_pos.size())
+    {
+        x = pss->result_pos[pss->F6_callbackCnt-1].x;
+        y = pss->result_pos[pss->F6_callbackCnt-1].y;
+        
+        // 피스 폭파 개수 갱신
+        pss->m_pGameLayer->UpdatePieceBombCnt(pss->m_pGameLayer->GetPuzzleP8Set()->GetType(x, y), 1);
+        
+        // 이펙트+사운드
+        pss->m_pGameLayer->GetEffect()->PlayEffect_5(x, y);
+        pss->m_pGameLayer->GetSound()->PlaySkillSound(5);
+        
+        CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.1f, 1.5f), CCFadeOut::create(0.1f), NULL), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::F6_Callback), pss), NULL);
+        pss->m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
+    }
+    else
+    {
+        for (int i = 0 ; i < pss->result_pos.size() ; i++)
+        {
+            x = pss->result_pos[i].x;
+            y = pss->result_pos[i].y;
+            pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+            pss->m_pGameLayer->SetSpriteP8Null(x, y);
+        }
+        pss->result_pos.clear();
+        
+        pss->m_pGameLayer->Falling(pss->queuePos);
+    }
     
-    // 사운드
-    m_pGameLayer->GetSound()->PlaySkillSound(num);
 }
 
 
@@ -667,7 +739,7 @@ void PuzzleSkill::F7(int num, int queue_pos)
 {
     // 코코 타임 : 3~5 랜덤한 횟수로 한붓그리기 한번에 자동 진행한다. (한붓그리기 위치는 랜덤)
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     // init
     for (int i = 0 ; i < result_double_pos.size() ; i++)
@@ -778,7 +850,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
 {
     // 붉은 용의 숨결
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     A8_pos.clear();
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
@@ -860,7 +932,7 @@ void PuzzleSkill::W3(int num)
 {
     // 한방울 한방울 - 콤보에 비례한 추가 점수
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
     
@@ -881,7 +953,7 @@ void PuzzleSkill::W4(int num)
 {
     // 바다 속 진주 - 콤보에 비례한 추가 별사탕
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     W4_addedCandy = pow(m_pGameLayer->GetCombo(), 0.8f) * (skillLevel[num]*0.3f + 0.7f);
     
@@ -971,7 +1043,7 @@ void PuzzleSkill::W5(int num)
     GetEffect()->ReleaseSpirit(1);
     isSpiritAlive[1] = false;
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
 }
 void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
 {
@@ -1029,7 +1101,7 @@ void PuzzleSkill::W7(int num)
     // 시간을 얼리다 - 5초 동안 시간을 2배속 늦춘다.
     if (!W7_isTimeSlowed)
     {
-        skillAppliedCnt[num]++;
+        UpdateAppliedSkillCount(num);
         
         W7_isTimeSlowed = true;
         W7_RemainTime = 5000;
@@ -1064,7 +1136,7 @@ void PuzzleSkill::W8(int num, int queue_pos)
     if (W8_isActive)
         return;
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     ps = this;
     
@@ -1309,7 +1381,7 @@ void PuzzleSkill::E3(int num)
 {
     // 떡갈나무지팡이 - 지팡이 레벨에 비례한 추가 별사탕
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     E3_addedCandy = 0;
     //E3_addedCandy = pow((m_pGameLayer->GetStaffLevel())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
@@ -1319,7 +1391,7 @@ void PuzzleSkill::E4(int num, int queue_pos)
 {
     // 아낌없이 주는 나무 - 10개 이상 피스 제거 시 추가 별사탕
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     E4_addedCandy = skillLevel[num]*30; // 나중에 보고 밸런스 조정
     
@@ -1459,7 +1531,7 @@ void PuzzleSkill::E5(int num)
     GetEffect()->ReleaseSpirit(2);
     isSpiritAlive[2] = false;
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
 }
 void PuzzleSkill::E5_Callback(CCNode* sender, void* data)
 {
@@ -1497,7 +1569,7 @@ void PuzzleSkill::E7(int num)
     // 끈질긴 생명력 - 포션을 1개 얻는다. 한 번 얻으면 더 이상 발동되지 않는다.
     if (!E7_getPotion)
     {
-        skillAppliedCnt[num]++;
+        UpdateAppliedSkillCount(num);
         
         E7_getPotion = true;
         
@@ -1689,7 +1761,7 @@ void PuzzleSkill::E8(int num, int queue_pos)
     // 고대나무의 비밀
     // 정해진 회수만큼 라인을 잡아서, 터뜨린다. (초록 피스가 있는 라인)
     
-    skillAppliedCnt[num]++;
+    UpdateAppliedSkillCount(num);
     
     // 변수 초기화
     E8_isActive = false;

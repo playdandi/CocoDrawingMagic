@@ -65,27 +65,23 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         if (leftup != NULL)
         {
             leftup->setAnchorPoint(ccp(1, 0));
-            leftup->setPosition(pos);
+            leftup->setPosition(ccp(pos.x+1, pos.y-1));
         }
         if (rightup != NULL)
         {
             rightup->setAnchorPoint(ccp(0, 0));
-            //rightup->setRotation(90);
-            rightup->setPosition(ccp((int)pos.x-1, (int)pos.y));
-            //rightup->setPosition(pos);
+            rightup->setPosition(ccp(pos.x-1, pos.y-1));
         }
         if (leftdown != NULL)
         {
             leftdown->setAnchorPoint(ccp(1, 1));
-            //leftdown->setRotation(-90);
-            leftdown->setPosition(ccp((int)pos.x, (int)pos.y+2));
+            leftdown->setPosition(ccp(pos.x+1, pos.y+1));
             //leftdown->setPosition(pos);
         }
         if (rightdown != NULL)
         {
             rightdown->setAnchorPoint(ccp(0, 1));
-            //rightdown->setRotation(180);
-            rightdown->setPosition(ccp((int)pos.x-1, (int)pos.y+2));
+            rightdown->setPosition(ccp(pos.x-1, pos.y+1));
             //rightdown->setPosition(pos);
         }
     }

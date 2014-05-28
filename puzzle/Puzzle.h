@@ -150,6 +150,8 @@ public:
     void Ready_C(CCNode* sender, void* p);
     void ReadyCallback(CCNode* sender, void* pointer);
     
+    void UpdateMissionCountBySkill(int skillNum);
+    
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
     void onHttpRequestCompleted(CCNode *sender, void *data);
@@ -218,6 +220,7 @@ protected:
     //int isNewRecord;
     int iMissionCnt;
     CCLabelTTF* pMissionLabel;
+    CCSprite* pMissionSprite;
     
     CCSprite* pClock;
     
@@ -241,8 +244,8 @@ private:
     int iStarCandy;
     CCLabelTTF* pStarCandyLabel;
     int iCombo;
-    //CCLabelTTF* pComboLabel;
-    //CCLayer* pComboLayer;
+    int maxCombo;
+
     int iComboTimer;
     int iTimer;
     CCLabelTTF* pTimerLabel;

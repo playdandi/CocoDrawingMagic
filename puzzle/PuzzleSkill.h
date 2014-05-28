@@ -28,6 +28,8 @@ public:
     
     void SetQueuePos(int queue_pos);
     
+    void UpdateAppliedSkillCount(int skillNum);
+    
     void Invoke(int skillNum, int queue_pos);
     
     void A1(int num, int queue_pos);
@@ -40,7 +42,9 @@ public:
     void F5_Callback(CCNode* sender, void* data);
     void SpiritTry(int type, int queue_pos);
     bool IsSpiritAlive(int type);
+    
     void A6(int num, int queue_pos);
+    void F6_Callback(CCNode* sender, void *p);
 
     void F7(int num, int queue_pos);
     void F7_Continue(void* pointer, int queue_pos);
@@ -127,6 +131,8 @@ private:
     bool isSpiritAlive[3];
     
     int F5_callbackCnt;
+    int F6_callbackCnt;
+    std::vector<CCPoint> F6_order;
     
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;

@@ -32,6 +32,8 @@ public:
     void Callback(CCNode* sender, void* p);
     void Callback_ProgressBar(CCNode* sender, void* p);
     
+    std::string GetMissionContent();
+    
     void EndScene();
     void EndSceneCallback(CCNode* sender, void* pointer);
     

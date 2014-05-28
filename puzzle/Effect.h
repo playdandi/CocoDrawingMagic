@@ -33,7 +33,8 @@ public:
     void Effect9Callback(CCNode* sender, void* pointer);
     void PlayEffect_17(std::vector<CCPoint> pos);
     
-    void PlayEffect_5(std::vector<CCPoint> pos); // 6개이상한번더
+    //void PlayEffect_5(std::vector<CCPoint> pos); // 6개이상한번더
+    void PlayEffect_5(int x, int y);
     void PlayEffect_5_Callback(CCNode* sender, void* pointer);
     void PlayEffect_13(std::vector<CCPoint> pos); // 6개이상한번더
     void PlayEffect_21(std::vector<CCPoint> pos); // 6개이상한번더

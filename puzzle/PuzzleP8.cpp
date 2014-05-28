@@ -9,7 +9,7 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, 
 
     if (type == -1)
         puzzleP8->type = rand() % TYPE_COUNT;
-    
+
     char name[20];
     sprintf(name, "pieces/%d.png", puzzleP8->type);
     

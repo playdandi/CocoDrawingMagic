@@ -52,7 +52,7 @@ void Effect::PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos)
         case 9:  PlayEffect_9(pos, queue_pos); break;
         case 17: PlayEffect_17(pos); break;
             
-        case 5: PlayEffect_5(pos); break;
+        //case 5: PlayEffect_5(pos); break;
         case 13: PlayEffect_13(pos); break;
         case 21: PlayEffect_21(pos); break;
             
@@ -431,20 +431,19 @@ void Effect::PlayEffect_9(std::vector<CCPoint> pos, int queue_pos)
     // 터뜨릴 개수가 없으면 바로 Falling을 시작하자.
     if ((int)pos.size() <= 1)
     {
-        pThis->gameLayer->Falling(queue_pos);
+        gameLayer->Falling(queue_pos);
         return;
     }
     
     sp_fire = CCSprite::create("particles/fire.png");
     CCParticleSystem* par = CCParticleGalaxy::create();
-    //par->retain();
     par->setTexture(sp_fire->getTexture());
-    
     par->setAnchorPoint(ccp(0.5, 0.5));
+    
     CCPoint first = gameLayer->SetTouch8Position((int)pos[1].x, (int)pos[1].y);
     par->setPosition(ccp((int)first.x-(int)pos[0].x, (int)first.y-(int)pos[0].y));
-    par->setLife(1);
     
+    par->setLife(1);
     par->setStartSize(200);
     par->setSpeed(200);
     par->setSpeedVar(100);
@@ -466,9 +465,9 @@ void Effect::PlayEffect_9(std::vector<CCPoint> pos, int queue_pos)
     callbackCnt = 1;
     
     // sound
-    pThis->gameLayer->GetSound()->PlaySkillSound(9);
+    gameLayer->GetSound()->PlaySkillSound(9);
     
-    CCFiniteTimeAction* action = CCSequence::create(CCBezierBy::create(0.2f, GetBezierConfig(pThis, 1)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect9Callback), (void*)pThis), NULL);
+    CCFiniteTimeAction* action = CCSequence::create(CCBezierBy::create(0.2f, GetBezierConfig(this, 1)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect9Callback), this), NULL);
     par->runAction(action);
 }
 
@@ -518,6 +517,8 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
         CCFiniteTimeAction* bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
         piece->runAction(bomb);
         
+        CCLog("%d %d", (int)pThis->skillPos[pThis->callbackCnt].x, (int)pThis->skillPos[pThis->callbackCnt].y);
+        
         // 물 사이클 스킬은 Puzzle의 Bomb함수를 쓰지 않기 때문에, 여기서 개수를 cnt해야 한다.
         pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType((int)pThis->skillPos[pThis->callbackCnt].x, (int)pThis->skillPos[pThis->callbackCnt].y), 1 );
     }
@@ -541,8 +542,11 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
         {
             x = (int)pThis->skillPos[i].x;
             y = (int)pThis->skillPos[i].y;
-            if (pThis->gameLayer->GetPuzzleP8Set()->GetObject(x, y)->GetPiece() != NULL)
+            CCLog("[[%d %d]]", x, y);
+            //if (pThis->gameLayer->GetPuzzleP8Set()->GetObject(x, y)->GetPiece() != NULL)
+            if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
             {
+                CCLog("(%d %d)", x, y);
                 pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
                 pThis->gameLayer->SetSpriteP8Null(x, y);
             }
@@ -635,8 +639,18 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
 }
 
 
-void Effect::PlayEffect_5(std::vector<CCPoint> pos)
+//void Effect::PlayEffect_5(std::vector<CCPoint> pos)
+void Effect::PlayEffect_5(int x, int y)
 {
+    //CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6_3.plist");
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/LavaFlow.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+    m_emitter->setScale(1.5f);
+    gameLayer->addChild(m_emitter, 2000);
+    m_emitter->setAutoRemoveOnFinish(true);
+    
+    /*
     // 6개 이상 한번 더 (F6 : 불꽃놀이)
     int x, y;
     CCPoint p;
@@ -657,44 +671,8 @@ void Effect::PlayEffect_5(std::vector<CCPoint> pos)
         m_emitter->setScale(4.0f);
         gameLayer->addChild(m_emitter, 2000);
         m_emitter->setAutoRemoveOnFinish(true);
-        
-        /*
-        p = gameLayer->SetTouch8Position(x, y);
-        
-        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire6.plist");
-        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(ccp(p.x+50, p.y+50));
-        //m_emitter->setPosition(ccp(p.x, p.y));
-        m_emitter->setScale(4.0f);
-        m_emitter->setTag(i);
-        gameLayer->addChild(m_emitter, 2000);
-        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_5_Callback), this), NULL);
-        m_emitter->runAction(action);
-        m_emitter->setAutoRemoveOnFinish(true);
-        */
-        /*
-        CCParticleSystemQuad* m_emitter2 = CCParticleSystemQuad::create("particles/fire6.plist");
-        m_emitter2->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter2->setPosition(ccp(p.x-40, p.y+10));
-        m_emitter2->setScale(2.0f);
-        gameLayer->addChild(m_emitter2, 2000);
-        m_emitter2->setAutoRemoveOnFinish(true);
-        
-        CCParticleSystemQuad* m_emitter3 = CCParticleSystemQuad::create("particles/fire6.plist");
-        m_emitter3->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter3->setPosition(ccp(p.x+40, p.y-10));
-        m_emitter3->setScale(2.0f);
-        gameLayer->addChild(m_emitter3, 2000);
-        m_emitter3->setAutoRemoveOnFinish(true);
-        
-        CCParticleSystemQuad* m_emitter4 = CCParticleSystemQuad::create("particles/fire6.plist");
-        m_emitter4->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter4->setPosition(ccp(p.x-20, p.y-40));
-        m_emitter4->setScale(2.0f);
-        gameLayer->addChild(m_emitter4, 2000);
-        m_emitter4->setAutoRemoveOnFinish(true);
-        */
     }
+     */
 }
 void Effect::PlayEffect_5_Callback(CCNode* sender, void* pointer)
 {
