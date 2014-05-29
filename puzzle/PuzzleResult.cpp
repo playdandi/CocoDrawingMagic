@@ -1,4 +1,5 @@
 #include "PuzzleResult.h"
+#include "Puzzle.h"
 
 using namespace cocos2d;
 
@@ -17,6 +18,9 @@ void PuzzleResult::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // sound
+    ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
 }
 void PuzzleResult::onExit()
 {
@@ -233,7 +237,7 @@ void PuzzleResult::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp((125+38)+43+3+offset, 525-8), CCSize(0,0), "", "PuzzleResult", this, 1005) );
         
         // 미션 내용
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(GetMissionContent(), fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::GetMissionContent(missionType, missionVal, missionRefVal), fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
         
         // 연습량 프로그레스바 안의 노란 바
         barLayer = CCLayer::create();
@@ -314,33 +318,6 @@ void PuzzleResult::Callback_ProgressBar(CCNode* sender, void* data)
         ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_levelup.png"))->runAction(rep);
     }
 }
-
-std::string PuzzleResult::GetMissionContent()
-{
-//    char* s;
-    char s[100];
-    switch (missionType)
-    {
-        case 1:
-            if (missionRefVal == 1) sprintf(s, "파란 피스 %d개 터뜨리기", missionVal);
-            else if (missionRefVal == 2) sprintf(s, "빨간 피스 %d개 터뜨리기", missionVal);
-            else if (missionRefVal == 3) sprintf(s, "초록 피스 %d개 터뜨리기", missionVal);
-            break;
-        case 2:
-            sprintf(s, "'%s' %d회 시전하기", SkillInfo::GetSkillInfo(missionRefVal)->GetName().c_str(), missionVal);
-            break;
-        case 3:
-            sprintf(s, "마법 총 %d회 시전하기", missionVal);
-            break;
-        case 4:
-            sprintf(s, "피스 총 %d개 터뜨리기", missionVal);
-            break;
-    }
-    
-    std::string ret = s;
-    return ret;
-}
-
 
 int test[10] = {11,21,31,15,25,35,23,33,27,28};
 int ppp;
@@ -504,6 +481,17 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     delete pThis->spriteClass;
     pThis->spriteClassSkill->RemoveAllObjects();
     delete pThis->spriteClassSkill;
+    
+    pThis->timerStencil->removeFromParentAndCleanup(true);
+    pThis->timerClip->removeFromParentAndCleanup(true);
+    if (myInfo->GetPracticeSkillId() != 0) // 연습 중인 스킬이 있을 때만 노출되는 것들
+    {
+        pThis->barLayer->removeAllChildren();
+        pThis->barLayer->removeFromParentAndCleanup(true);
+        pThis->timerStencil2->removeFromParentAndCleanup(true);
+        pThis->timerClip2->removeFromParentAndCleanup(true);
+    }
+    
     pThis->pBlack->removeFromParentAndCleanup(true);
     pThis->pBlackClose->removeFromParentAndCleanup(true);
     

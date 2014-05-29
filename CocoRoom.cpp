@@ -136,6 +136,24 @@ void CocoRoom::Notification(CCObject* obj)
         // 요정의 정보 갱신
         else if (curState == 2)
         {
+            // 요정 레벨, 기본속성, 추가속성 값 갱신
+            int fid = myInfo->GetActiveFairyId();
+            FairyInfo* f = FairyInfo::GetObj(fid);
+            
+            char fname[30];
+            if (fid > 0)
+                sprintf(fname, "%s (%dLv)", f->GetName().c_str(), myInfo->GetActiveFairyLevel());
+            else
+                sprintf(fname, "요정 없음");
+            ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(0))->setString(fname);
+            
+            if (fid > 0)
+                sprintf(fname, "%s", FairyInfo::GetAbilityName(f, myInfo->GetActiveFairyLevel()).c_str());
+            else
+                sprintf(fname, "없음");
+            ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(2))->setString(fname);
+            
+            // 요정 다음 강화에 필요한 cost 및 버튼 그림 갱신
             SetFairyBuildUp();
         }
         // 오.별 정보 갱신
@@ -150,10 +168,27 @@ void CocoRoom::Notification(CCObject* obj)
         CCLog("CocoRoom : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    else if (param->intValue() == 2)
+    {
+        // 토파즈, 별사탕, MP 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+    }
+    else if (param->intValue() == 8)
+    {
+        // 요정 슬롯 정보 갱신
+        spriteClassFairySlot->RemoveAllObjects();
+        containerFairy->removeAllChildren();
+        containerFairy->removeFromParentAndCleanup(true);
+        MakeScrollFairy();
+    }
     else if (param->intValue() == 9)
     {
         // 스킬 슬롯 정보 갱신
         spriteClassCocoSlot->RemoveAllObjects();
+        containerCoco->removeAllChildren();
+        containerCoco->removeFromParentAndCleanup(true);
         MakeScrollCoco();
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
@@ -517,7 +552,7 @@ void CocoRoom::MakeSpritesFairy()
         sprintf(fname, "%s (%dLv)", f->GetName().c_str(), flv);
     else
         sprintf(fname, "요정 없음");
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 52, ccp(0.5, 0.5), spriteClassFairy->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5, 1) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 52, ccp(0.5, 0.5), spriteClassFairy->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5, 1, 255, 0) );
     
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(570, 1193+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(570, 1196+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
@@ -527,14 +562,14 @@ void CocoRoom::MakeSpritesFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1036+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
     
     // 기본속성 값
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
     
     // 추가속성 값
     if (fid > 0)
         sprintf(fname, "%s", FairyInfo::GetAbilityName(f, flv).c_str());
     else
         sprintf(fname, "없음");
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1134+offset), ccc3(0,167,222), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1134+offset), ccc3(0,167,222), "", "Layer", fairy, 5, 0, 255, 2) );
     
     // 특수능력 값
     if (fid > 0)
@@ -1010,30 +1045,37 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassFairy->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                if (myInfo->GetActiveFairyId() <= 0)
-                    continue;
+                if (myInfo->GetActiveFairyLevel() < FairyBuildUpInfo::GetMaxLevel(myInfo->GetActiveFairyId()))
+                {
+                    
+                    if (myInfo->GetActiveFairyId() <= 0)
+                        continue;
                 
-                sound->playClick();
-                std::vector<int> data;
-                data.push_back(0);
-                data.push_back(FairyBuildUpInfo::GetCostTopaz(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
-                return true;
+                    sound->playClick();
+                    std::vector<int> data;
+                    data.push_back(0);
+                    data.push_back(FairyBuildUpInfo::GetCostStarCandy(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()+1));
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_FAIRY_BY_STARCANDY_TRY, BTN_2, data);
+                    return true;
+                }
             }
         }
-        else if (spriteClassFairy->spriteObj[i]->name == "button/btn_green.png1")
+        else if (spriteClassFairy->spriteObj[i]->name == "button/btn_green.png2")
         {
             if (spriteClassFairy->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                if (myInfo->GetActiveFairyId() <= 0)
-                    continue;
+                if (myInfo->GetActiveFairyLevel() < FairyBuildUpInfo::GetMaxLevel(myInfo->GetActiveFairyId()))
+                {
+                    if (myInfo->GetActiveFairyId() <= 0)
+                        continue;
                 
-                sound->playClick();
-                std::vector<int> data;
-                data.push_back(0);
-                data.push_back(FairyBuildUpInfo::GetCostStarCandy(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()));
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_BY_STARCANDY_TRY, BTN_2, data);
-                return true;
+                    sound->playClick();
+                    std::vector<int> data;
+                    data.push_back(0);
+                    data.push_back(FairyBuildUpInfo::GetCostTopaz(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()+1));
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_FAIRY_BY_TOPAZ_TRY, BTN_2, data);
+                    return true;
+                }
             }
         }
     }

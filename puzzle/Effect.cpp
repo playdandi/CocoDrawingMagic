@@ -780,12 +780,14 @@ void Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector
 }
 
 
-static Effect* eff;
+Effect* eff;
 
 void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true); // 용 삭제
     Effect* ef = (Effect*)pointer;
+    
+    eff = ef;
     
     // fountain effect 출현
     ef->m_F8_fountain = CCParticleSystemQuad::create("particles/fire8_fountain.plist");
@@ -798,14 +800,13 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
     // 혜성 시작
     ef->callbackCnt = 0;
     ef->F8_finishCnt = 0;
-
-    eff = ef;
     
     ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
 }
 
 void Effect::Effect7_Comet(float f)
 {
+    CCLog("timer callback cnt : %d", eff->callbackCnt);
     if (eff->gameLayer->IsPaused())
         return;
     Effect7_Callback_2(NULL, eff);
@@ -834,7 +835,7 @@ void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구�
     CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.5f, pos), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), ef), NULL);
     m_emitter->runAction(action);
     
-    ef->gameLayer->GetSound()->PlayDesginatedSound(70);
+    ef->gameLayer->GetSound()->PlayDesignatedSound(70);
 }
 
 void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어지고 폭파
@@ -862,6 +863,9 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     
     if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
     {
+        // big sound
+        ef->gameLayer->GetSound()->PlayDesignatedSound(72);
+        
         CCLog("big fire : %d %d", x, y);
         for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
         {
@@ -881,6 +885,9 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     }
     else
     {
+        // small sound
+        ef->gameLayer->GetSound()->PlayDesignatedSound(71);
+        
         CCLog("small fire : %d %d", x, y);
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
         //m_emitter->retain();
@@ -955,6 +962,8 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     gameLayer->addChild(m_W8_bg, 6);
     
     // 마법진 위에 여신 출현
+    // (소리)
+    gameLayer->GetSound()->PlayDesignatedSound(150);
     A8_icon = CCSprite::createWithSpriteFrameName("icon/goddess.png");
     A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
@@ -1028,6 +1037,9 @@ void Effect::AddOrbMaxParticle(int v)
 }
 void Effect::Effect15_Clear()
 {
+    // 여신 나오는 소리
+    gameLayer->GetSound()->PlayDesignatedSound(151);
+    
     F8_bg->removeFromParentAndCleanup(true);
     m_W8_bg->removeFromParentAndCleanup(true);
     A8_icon->removeFromParentAndCleanup(true);
@@ -1038,6 +1050,8 @@ void Effect::Effect15_Clear()
 void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // '고대나무'
 {
     // 나무
+    // 나무 나타나는 소리
+    gameLayer->GetSound()->PlayDesignatedSound(230);
     A8_icon = CCSprite::createWithSpriteFrameName("icon/tree.png");
     A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
@@ -1334,8 +1348,8 @@ void Effect::PlayEffect_14()
         
         gameLayer->GetFairyLayer()->pauseSchedulerAndActions();
         
-        // iced-bar sound
-        gameLayer->GetSound()->PlaySkillSound(14);
+        
+        
         // iced-bar
         iced_bar = CCSprite::createWithSpriteFrameName("background/bar_ice.png");
         iced_bar->setAnchorPoint(ccp(0.5, 0));

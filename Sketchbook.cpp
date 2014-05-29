@@ -450,6 +450,16 @@ void Sketchbook::MakeScrollBook(int idx)
         sprintf(name, "background/bg_progress_bar.png%d", i+3);
         spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(133, 28), CCSize(412, 31), "", "Layer", itemLayer, 5) );
         
+        // 연습량 프로그레스바 안의 바
+        float percentage = ((float)ms[i]->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()));
+        CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-12));
+        bar->setAnchorPoint(ccp(0, 0));
+        bar->setPosition(ccp(133+4, 28+8));
+        bar->setColor(ccc3(255,255,255));
+        if (ms[i]->GetExp() == SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()))
+            bar->setColor(ccc3(255,219,53));
+        itemLayer->addChild(bar, 10);
+        
         // 현재 경험치 (연습량) + 레벨업을 위한 max경험치 (연습량)
         if (i < numOfList-1)
         {
@@ -483,6 +493,8 @@ void Sketchbook::MakeScrollBook(int idx)
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                
+                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5))) );
             }
             // '연습' 버튼
             else

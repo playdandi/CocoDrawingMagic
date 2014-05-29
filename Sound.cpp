@@ -114,27 +114,46 @@ void Sound::PreLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombA.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/bombB.mp3");
     
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_2.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_3_land_4.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_5.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_6.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_7.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_dragon.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/fire_8_comet.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_2.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_5.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_6.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/water_7.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_2.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_5.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/pieces/land_6.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_3_land_4.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_5.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_6.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_7.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_8_dragon.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_8_comet.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_8_bomb_big.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/fire_8_bomb_small.mp3");
     
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_1.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_3_4.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_5.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_6.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_7.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_8_goddess_in.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_8_goddess_out.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_8_make_bluepiece.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/water_8_remove_bluepiece.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_5.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_6.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_8_tree_in.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_8_bomb.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/skill/land_8_tree_rooting.mp3");
+    
+    // voices
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/ready.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/go.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/timelimit.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/bonus.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/goddess.wav");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/eit.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/stoptime.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/missionsuccess.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/clock.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/game_result.mp3");
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.5f);
@@ -173,36 +192,58 @@ void Sound::PlayBomb()
     SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/bombB.mp3");
 }
 
+void Sound::PlayGameResult()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/game_result.mp3");
+}
+void Sound::PlayClock()
+{
+    SimpleAudioEngine::sharedEngine()->playEffect("sounds/clock.mp3");
+}
+
 void Sound::PlaySkillSound(int skillNum)
 {
     switch (skillNum)
     {
-        case 0: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_2.mp3"); break;
-        case 1: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_2.mp3"); break;
-        case 2: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_5.mp3"); break;
-        case 5: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_6.mp3"); break;
-        case 6: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_7.mp3"); break;
-        case 7: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_8_dragon.mp3"); break;
+        case 0: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_2.mp3"); break;
+        case 1: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_2.mp3"); break;
+        case 2: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_3_land_4.mp3"); break;
+        case 4: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_5.mp3"); break;
+        case 5: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_6.mp3"); break;
+        case 6: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_7.mp3"); break;
+        case 7: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_8_dragon.mp3"); break;
+        
+        case 8: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_1.mp3"); break;
+        case 9: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_2.mp3"); break;
+        case 10: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_3_4.mp3"); break;
+        case 11: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_3_4.mp3"); break;
+        case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_5.mp3"); break;
+        case 13: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_6.mp3"); break;
+        case 14: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_7.mp3"); break;
             
-        case 9: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_2.mp3"); break;
-        case 10: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        case 11: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        case 12: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_5.mp3"); break;
-        case 13: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_6.mp3"); break;
-        case 14: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/water_7.mp3"); break;
-            
-        case 17: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_2.mp3"); break;
-        case 19: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_3_land_4.mp3"); break;
-        case 20: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_5.mp3"); break;
-        case 21: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/land_6.mp3"); break;
+        case 17: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_2.mp3"); break;
+        case 19: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_3_land_4.mp3"); break;
+        case 20: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_5.mp3"); break;
+        case 21: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_6.mp3"); break;
     }
 }
-void Sound::PlayDesginatedSound(int idx)
+void Sound::PlayDesignatedSound(int idx)
 {
+    // 기초 스킬 소리 이외의 것들 ( idx : skillNum*10 하고 0번~9번들 사용가능 (즉, 최대 10개) )
     switch (idx)
     {
-        case 70: SimpleAudioEngine::sharedEngine()->playEffect("sounds/pieces/fire_8_comet.mp3"); break;
+        case 70: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_8_comet.mp3"); break;
+        case 71: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_8_bomb_small.mp3"); break;
+        case 72: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/fire_8_bomb_big.mp3"); break;
+            
+        case 150: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_8_goddess_in.mp3"); break;
+        case 151: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_8_goddess_out.mp3"); break;
+        case 152: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_8_make_bluepiece.mp3"); break;
+        case 153: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/water_8_remove_bluepiece.mp3"); break;
+            
+        case 230: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_8_tree_in.mp3"); break;
+        case 231: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_8_bomb.mp3"); break;
+        case 232: SimpleAudioEngine::sharedEngine()->playEffect("sounds/skill/land_8_tree_rooting.mp3"); break;
     }
 }
 
@@ -216,7 +257,8 @@ void Sound::PlayVoice(int type)
         case VOICE_TIMELIMIT: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/timelimit.mp3"); break;
         case VOICE_GAMEOVER: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/gameover2.mp3"); break;
         case VOICE_BONUS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/bonus.mp3"); break;
-        case VOICE_GODDESS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/goddess.wav"); break;
+        case VOICE_STOPTIME: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/stoptime.mp3"); break;
+        case VOICE_MISSIONSUCCESS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/missionsuccess.mp3"); break;
     }
 }
 
@@ -234,20 +276,33 @@ void Sound::UnLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/bombA.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/bombB.mp3");
     
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_2.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_3_land_4.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_5.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_6.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_7.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_8_dragon.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/fire_8_comet.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_2.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_5.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_6.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/water_7.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_2.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_5.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/pieces/land_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_3_land_4.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_7.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_8_dragon.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_8_comet.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_8_bomb_big.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/fire_8_bomb_small.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_1.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_3_4.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_7.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_8_goddess_in.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_8_goddess_out.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_8_make_bluepiece.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/water_8_remove_bluepiece.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_5.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_6.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_8_tree_in.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_8_bomb.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/skill/land_8_tree_rooting.mp3");
     
     // voices
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/ready.mp3");
@@ -255,7 +310,12 @@ void Sound::UnLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/timelimit.np3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/bonus.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/goddess.wav");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/eit.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/stoptime.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/missionsuccess.mp3");
+    
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/clock.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/game_result.mp3");
 }
 
 

@@ -42,6 +42,7 @@ protected:
     
 private:
     CCSprite* pBlack;
+    CCSprite* bar;
     SpriteClass* spriteClass;
 };
 

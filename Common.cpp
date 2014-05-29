@@ -40,11 +40,13 @@ std::string fontList[] = {
     "NanumGothic",
     "NanumGothicBold",
     "InkInTheMeat-Tial",
+    "NanumPen",
 #else
     "fonts/NanumGothicExtraBold.ttf",
     "fonts/NanumGothic.ttf",
     "fonts/NanumGothicBold.ttf",
     "fonts/INKITMT.otf",
+    "fonts/NanumPen.ttf",
 #endif
 };
 
@@ -399,7 +401,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
-    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc, priority);
+    else if (to == "FairyOneInfo") nextScene = FairyOneInfo::scene(etc);
     else if (to == "SketchDetail") nextScene = SketchDetail::scene(etc, priority);
     
     else if (to == "WeeklyRankResult") nextScene = WeeklyRankResult::scene();
@@ -441,6 +443,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "SketchDetail") ((SketchDetail*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
     else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(nextScene, 200, 200);
@@ -951,6 +954,30 @@ void Common::RebootSystem(void* p)
 
 
 
+std::string Common::GetMissionContent(int type, int val, int refVal)
+{
+    char s[100];
+    switch (type)
+    {
+        case 1:
+            if (refVal == 1) sprintf(s, "파란 구슬 %d개 부수기", missionVal);
+            else if (refVal == 2) sprintf(s, "빨간 구슬 %d개 부수기", missionVal);
+            else if (refVal == 3) sprintf(s, "초록 구슬 %d개 부수기", missionVal);
+            break;
+        case 2:
+            sprintf(s, "'%s' %d번 그리기", SkillInfo::GetSkillInfo(refVal)->GetName().c_str(), val);
+            break;
+        case 3:
+            sprintf(s, "마법 %d번 그리기", missionVal);
+            break;
+        case 4:
+            sprintf(s, "구슬 %d개 부수기", missionVal);
+            break;
+    }
+    
+    std::string ret = s;
+    return ret;
+}
 
 
 

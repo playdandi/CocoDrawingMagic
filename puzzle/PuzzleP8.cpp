@@ -18,8 +18,7 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, 
     puzzleP8->sprite = CCSprite::createWithSpriteFrameName(name);
     puzzleP8->sprite->setAnchorPoint(ap);
     puzzleP8->sprite->setPosition(pos);
-    //puzzleP8->sprite->setScale(1.05f);
-    puzzleP8->sprite->setScale(scale);
+    puzzleP8->sprite->setScale(scale*1.02f);
     
     puzzleP8->parent = parent;
     puzzleP8->zOrder = zOrder;

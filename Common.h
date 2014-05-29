@@ -52,6 +52,7 @@ USING_NS_CC;
 #define BTN_2 1
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
+#define NEED_TO_REBOOT -4
 #define NEED_TO_BUY_POTION -3
 #define NEED_TO_BUY_TOPAZ -2
 #define NEED_TO_BUY_STARCANDY -1
@@ -84,8 +85,8 @@ USING_NS_CC;
 #define UPGRADE_STAFF_BY_STARCANDY_TRY 26
 #define UPGRADE_STAFF_OK 27
 #define UPGRADE_STAFF_FAIL 28
-#define UPGRADE_STAFF_BY_TOPAZ_NOMONEY 29
-#define UPGRADE_STAFF_BY_STARCANDY_NOMONEY 30
+//#define UPGRADE_STAFF_BY_TOPAZ_NOMONEY 29
+//#define UPGRADE_STAFF_BY_STARCANDY_NOMONEY 30
 #define UPGRADE_STAFF_FULL_LEVEL 31
 #define BUY_FAIRY_BY_TOPAZ_TRY 32
 #define BUY_FAIRY_BY_STARCANDY_TRY 33
@@ -97,8 +98,9 @@ USING_NS_CC;
 #define UPGRADE_FAIRY_BY_STARCANDY_TRY 39
 #define UPGRADE_FAIRY_OK 40
 #define UPGRADE_FAIRY_FAIL 41
-#define UPGRADE_FAIRY_BY_TOPAZ_NOMONEY 42
-#define UPGRADE_FAIRY_BY_STARCANDY_NOMONEY 43
+#define UPGRADE_FAIRY_FULL_LEVEL 42
+//#define UPGRADE_FAIRY_BY_TOPAZ_NOMONEY 42
+//#define UPGRADE_FAIRY_BY_STARCANDY_NOMONEY 43
 #define UPGRADE_SKILL_OK 44
 #define UPGRADE_SKILL_FAIL 45
 #define PURCHASE_SKILL_OK 46
@@ -160,6 +162,8 @@ public:
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int priority = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
+    
+    static std::string GetMissionContent(int type, int val, int refVal);
 };
 
 

@@ -109,6 +109,7 @@ public:
     void SetSpiritTouch(bool val);
     
     void UpdatePieceBombCnt(int type, int cnt);
+    void MissionComplete();
     
     PuzzleP8Set* GetPuzzleP8Set();
     void SetSpriteP8Null(int x, int y);
@@ -135,8 +136,7 @@ public:
     void EndScene();
     void EndSceneCallback();
 
-    void WaitThread(int queue_pos);
-    void WaitOrder(int queue_pos);
+    float GetPieceWidth();
     
     CCSize m_winSize;
     CCSize vs;
@@ -219,8 +219,13 @@ protected:
     //bool isMissionSuccess;
     //int isNewRecord;
     int iMissionCnt;
+    bool isMissionDone;
     CCLabelTTF* pMissionLabel;
     CCSprite* pMissionSprite;
+    CCSprite* pMissionSpriteDetail;
+    CCSprite* pMissionSpriteDetailIcon;
+    CCLabelTTF* pMissionSpriteDetailContent;
+    
     
     CCSprite* pClock;
     

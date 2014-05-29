@@ -1,5 +1,7 @@
 #include "CocoRoomFairyTown.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
@@ -73,10 +75,26 @@ bool CocoRoomFairyTown::init()
     this->addChild(scrollView, 3);
     
     InitSprites();
-    MakeScroll();
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
     
+    isTouched = false;
+    
+    fairyData.clear();
+    
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
+    
+    // 네트워크로 메시지들을 받아온다.
+    char temp[50];
+    std::string url = "http://14.63.225.203/cogma/game/get_purchase_fairy_list.php?";
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    url += temp;
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl(url.c_str());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
+
     return true;
 }
 
@@ -84,7 +102,15 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -97,6 +123,11 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("CocoRoomFairyTown : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 2)
+    {
+        // 스크롤 내용 갱신
+        RenewScroll();
     }
 }
 
@@ -120,52 +151,60 @@ void CocoRoomFairyTown::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_fairytown.png", ccp(0, 0), ccp(103, 1429), CCSize(0, 0), "", "CocoRoomFairyTown", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
                     ccp(0, 0), ccp(900, 1420), CCSize(0, 0), "", "CocoRoomFairyTown", this, 1) );
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
 }
 
 void CocoRoomFairyTown::MakeScroll()
 {
-    int numOfList = fairyInfo.size();
+    spriteClassScroll = new SpriteClass();
+    
+    int numOfList = fairyData.size();
     char fname[50];
     
     // container
     scrollContainer = CCLayer::create();
-    scrollContainer->setContentSize(CCSizeMake(870, ((int)((numOfList+10)-1)/3 + 1)*(290+5)));
+    scrollContainer->setContentSize(CCSizeMake(870, ((int)(numOfList-1)/3 + 1)*(290+5)));
    
-    for (int i = 0 ; i < numOfList+10 ; i++)
+    for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(290, 290));
         itemLayer->setPosition(ccp(20+((290+5)*(i%3)), scrollContainer->getContentSize().height-(295)*(i/3+1) ) );
         scrollContainer->addChild(itemLayer, 2);
-        spriteClass->layers.push_back(itemLayer);
+        spriteClassScroll->layers.push_back(itemLayer);
+        
+        FairyInfo* fi = FairyInfo::GetObj(fairyData[i]->GetCommonId());
         
         // bg
         sprintf(fname, "background/bg_board_brown.png_a%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, fname, ccp(0, 0), ccp(0, 0), CCSize(290, 290), "", "Layer", itemLayer, 3) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, fname, ccp(0, 0), ccp(0, 0), CCSize(290, 290), "", "Layer", itemLayer, 3) );
+        
         // tag에 fairy ID 혹은 이상한 값(터치방지용)을 넣어둔다.
-        if (i < numOfList)
-            spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite9->setTag(i);
+        if (fairyData[i]->GetCommonId() != -1)
+            spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite9->setTag(i);
         else
-            spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite9->setTag(-1);
+            spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite9->setTag(-1);
         
         // 이름
         sprintf(fname, "background/bg_dontknow_1.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, fname, ccp(0, 0), ccp(22, 25), CCSize(248, 58), "", "Layer", itemLayer, 100) );
-        if (i < numOfList)
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fairyInfo[i]->GetName(), fontList[0], 36, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite9->getContentSize().width/2, 11), ccc3(255,255,255), fname, "1", NULL, 100) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, fname, ccp(0, 0), ccp(22, 25), CCSize(248, 58), "", "Layer", itemLayer, 100) );
+        if (fairyData[i]->GetCommonId() != -1)
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(fi->GetName(), fontList[0], 36, ccp(0.5, 0), ccp(spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite9->getContentSize().width/2, 11), ccc3(255,255,255), fname, "1", NULL, 100) );
         
-        if (i >= numOfList)
+        if (fairyData[i]->GetCommonId() == -1)
         {
             // 빈 슬롯 (COMING SOON !)
             sprintf(fname, "icon/icon_fairy_empty.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0.5, 0.5), ccp(290/2, 290/2+17), CCSize(0, 0), "", "Layer", itemLayer, 90) );
-            spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setScale(1.1f);
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0.5, 0.5), ccp(290/2, 290/2+17), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+            spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite->setScale(1.1f);
             continue;
         }
         
         // 그림
-        CCLayer* picture = Fairy::GetFairy(fairyInfo[i]->GetId());
-        switch (fairyInfo[i]->GetId())
+        CCLayer* picture = Fairy::GetFairy(fi->GetId());
+        switch (fi->GetId())
         {
             case 0: picture->setScale(1.0f); break;
             case 1: picture->setScale(0.7f); break;
@@ -176,16 +215,19 @@ void CocoRoomFairyTown::MakeScroll()
         itemLayer->addChild(picture, 10);
 
         // grade
-        if (fairyInfo[i]->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png%d", i);
-        else if (fairyInfo[i]->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png%d", i);
-        else if (fairyInfo[i]->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png%d", i);
-        else if (fairyInfo[i]->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(25, 219), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+        if (fi->GetGrade() == 1) sprintf(fname, "letter/letter_grade_a.png%d", i);
+        else if (fi->GetGrade() == 2) sprintf(fname, "letter/letter_grade_b.png%d", i);
+        else if (fi->GetGrade() == 3) sprintf(fname, "letter/letter_grade_c.png%d", i);
+        else if (fi->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(25, 219), CCSize(0, 0), "", "Layer", itemLayer, 90) );
         
         // check
-        if (myInfo->GetActiveFairyId() == fairyInfo[i]->GetId())
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+        if (myInfo->GetActiveFairyId() == fi->GetId())
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
     }
+    
+    for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
+        spriteClassScroll->AddChild(i);
     
     // container 설정 + offset
     scrollView->setContainer(scrollContainer);
@@ -193,6 +235,17 @@ void CocoRoomFairyTown::MakeScroll()
     scrollView->setContentOffset(ccp(0, (904-40)-scrollContainer->getContentSize().height ));
 }
 
+void CocoRoomFairyTown::RenewScroll()
+{
+    // delete & init all scroll-related variables.
+    spriteClassScroll->RemoveAllObjects();
+    scrollContainer->removeAllChildren();
+    scrollContainer->removeFromParentAndCleanup(true);
+    scrollView->removeAllChildren();
+    
+    // 다시 스크롤 생성
+    MakeScroll();
+}
 
 bool CocoRoomFairyTown::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -217,9 +270,6 @@ bool CocoRoomFairyTown::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_question.png")
-        {
-        }
     }
     
     return true;
@@ -234,21 +284,25 @@ void CocoRoomFairyTown::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
     
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name.substr(0, 31) == "background/bg_board_brown.png_a")
+        if (spriteClassScroll->spriteObj[i]->name.substr(0, 31) == "background/bg_board_brown.png_a")
         {
-            if (spriteClass->spriteObj[i]->sprite9->getTag() == -1)
+            if (spriteClassScroll->spriteObj[i]->sprite9->getTag() == -1)
                 continue;
             
-            CCPoint p = spriteClass->spriteObj[i]->sprite9->convertToNodeSpace(point);
-            CCSize size = spriteClass->spriteObj[i]->sprite9->getContentSize();
+            CCPoint p = spriteClassScroll->spriteObj[i]->sprite9->convertToNodeSpace(point);
+            CCSize size = spriteClassScroll->spriteObj[i]->sprite9->getContentSize();
             if (scrollViewTouch && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClickboard();
-                int idx = spriteClass->spriteObj[i]->sprite9->getTag();
-                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, idx);
+                int idx = spriteClassScroll->spriteObj[i]->sprite9->getTag();
+                // common-fairy-id를 popup창에 넘겨주는데, 구입 type이 토파즈면 음수로 바꿔서 넘겨준다.
+                int cfi = fairyData[idx]->GetCommonId();
+                if (fairyData[idx]->GetCostType() == 2)
+                    cfi *= -1;
+                Common::ShowNextScene(this, "CocoRoomFairyTown", "FairyOneInfo", false, cfi);
                 break;
             }
         }
@@ -283,9 +337,14 @@ void CocoRoomFairyTown::EndScene()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
 
-    // remove all CCNodes
+    // remove all data
+    for (int i = 0 ; i < fairyData.size() ; i++)
+        delete fairyData[i];
+    fairyData.clear();
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClassScroll->RemoveAllObjects();
+    delete spriteClassScroll;
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
@@ -297,3 +356,100 @@ void CocoRoomFairyTown::EndScene()
 void CocoRoomFairyTown::EndSceneCallback()
 {
 }
+
+
+
+void CocoRoomFairyTown::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    char dumpData[BUFFER_SIZE];
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    XmlParseFairyList(dumpData, buffer->size());
+}
+
+void CocoRoomFairyTown::XmlParseFairyList(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        int cfi, costType, costValue;
+        std::string name;
+        
+        xml_object_range<xml_named_node_iterator> msg = nodeResult.child("purchase-fairy-list").children("fairy");
+        for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                name = ait->name();
+                if (name == "common-fairy-id") cfi = ait->as_int();
+                else if (name == "cost-type") costType = ait->as_int();
+                else if (name == "cost-value") costValue = ait->as_int();
+            }
+            // cost-type -->  1: 별사탕 , 2: 토파즈
+            fairyData.push_back( new FairyEach(cfi, costType, costValue) );
+        }
+        
+        for (int i = 0 ; i < 10 ; i++)
+            fairyData.push_back( new FairyEach(-1, -1, -1) );
+        
+        // 스크롤에 정보 표시
+        MakeScroll();
+    }
+    else
+    {
+        CCLog("FAILED : code = %d", code);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+FairyEach::FairyEach(int cfi, int costType, int costValue)
+{
+    this->commonFairyId = cfi;
+    this->costType = costType;
+    this->costValue = costValue;
+}
+int FairyEach::GetCommonId()
+{
+    return commonFairyId;
+}
+int FairyEach::GetCostType()
+{
+    return costType;
+}
+int FairyEach::GetCostValue()
+{
+    return costValue;
+}
+
+

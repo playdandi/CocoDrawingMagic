@@ -7,7 +7,7 @@
 class FairyOneInfo : public CCLayer
 {
 public:
-    static CCScene* scene(int idx, int prio);
+    static CCScene* scene(int cfi);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

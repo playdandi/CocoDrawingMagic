@@ -24,7 +24,7 @@ void PuzzleP4::InitChild()
     rightdown = NULL;
 }
 
-void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint ap, CCPoint pos)
+void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint ap, CCPoint pos, float half_width)
 {
     if (type != BLOCKED)
     {
@@ -65,24 +65,26 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         if (leftup != NULL)
         {
             leftup->setAnchorPoint(ccp(1, 0));
+            leftup->setScale((half_width+4)/(float)35);
             leftup->setPosition(ccp(pos.x+1, pos.y-1));
         }
         if (rightup != NULL)
         {
             rightup->setAnchorPoint(ccp(0, 0));
+            rightup->setScale((half_width+4)/(float)35);
             rightup->setPosition(ccp(pos.x-1, pos.y-1));
         }
         if (leftdown != NULL)
         {
             leftdown->setAnchorPoint(ccp(1, 1));
+            leftdown->setScale((half_width+4)/(float)35);
             leftdown->setPosition(ccp(pos.x+1, pos.y+1));
-            //leftdown->setPosition(pos);
         }
         if (rightdown != NULL)
         {
             rightdown->setAnchorPoint(ccp(0, 1));
+            rightdown->setScale((half_width+4)/(float)35);
             rightdown->setPosition(ccp(pos.x-1, pos.y+1));
-            //rightdown->setPosition(pos);
         }
     }
 }

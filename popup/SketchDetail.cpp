@@ -66,8 +66,6 @@ bool SketchDetail::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/sketch/test.plist");
-    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
@@ -147,6 +145,17 @@ void SketchDetail::InitSprites()
         }
         sprintf(name, "number/level_%d.png", ms->GetLevel() % 10);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(155+43+3+offset, 1085), CCSize(0,0), "", "SketchDetail", this, 5) );
+        
+        // 연습량 프로그레스바 안의 바
+        MySkill* ms = MySkill::GetObj(scid);
+        float percentage = ((float)ms->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
+        bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-10));
+        bar->setAnchorPoint(ccp(0, 0));
+        bar->setPosition(ccp(290+4, 1112+6));
+        bar->setColor(ccc3(255,255,255));
+        if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()))
+            bar->setColor(ccc3(255,219,53));
+        this->addChild(bar, 10);
     }
     else
     {
@@ -242,7 +251,7 @@ void SketchDetail::InitSprites()
 void SketchDetail::MakeOpenedSkillSprites()
 {
     int scid = skill_common_id;
-    SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
+    //SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
     MySkill* ms = MySkill::GetObj(scid);
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120, 680), CCSize(390, 390), "", "SketchDetail", this, 4) );
@@ -254,6 +263,7 @@ void SketchDetail::MakeOpenedSkillSprites()
     this->addChild(descLayer, 5);
     spriteClass->layers.push_back(descLayer);
     
+    /*
     // 640 1136
     //////////////////////////////////////////////////////////////////////////////////////////////////
     char name[50];
@@ -277,10 +287,10 @@ void SketchDetail::MakeOpenedSkillSprites()
     
     first->runAction(CCRepeatForever::create((CCActionInterval*)action));
     //////////////////////////////////////////////////////////////////////////////////////////////////
+    */
     
-    
-    int p11[25] = {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,0, 0,0,0,1,0, 0,0,0,0,0};
-    char temp[50];
+    //int p11[25] = {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,0, 0,0,0,1,0, 0,0,0,0,0};
+    //char temp[50];
     /*
     for (int i = 0 ; i < 5 ; i++)
     {
@@ -301,9 +311,6 @@ void SketchDetail::MakeOpenedSkillSprites()
     // 스킬 설명
     std::string desc = SkillDescription(scid);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(desc, fontList[0], 28, ccp(0, 1), ccp(540, 1070), ccc3(0,0,0), CCSize(420, 250), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
-    // 스킬 강화 설명
-    
-    
     
     // 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
@@ -530,9 +537,6 @@ void SketchDetail::EndScene(bool isNoti)
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
-    
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/sketch/test.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/sketch/test.png");
     
     if (isNoti)
     {        

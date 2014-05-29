@@ -31,9 +31,13 @@ public:
     
     void InitSprites();
     void MakeScroll();
+    void RenewScroll();
     
     void EndScene();
     void EndSceneCallback();
+    
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseFairyList(char* data, int size);
     
 protected:
     CCSize winSize;
@@ -44,9 +48,25 @@ protected:
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    SpriteClass* spriteClassScroll;
     
     CCScrollView* scrollView;
     CCLayer* scrollContainer;
+    
+    std::vector<class FairyEach*> fairyData;
+};
+
+class FairyEach
+{
+public:
+    FairyEach(int cfi, int costType, int costValue);
+    int GetCommonId();
+    int GetCostType();
+    int GetCostValue();
+private:
+    int commonFairyId;
+    int costType;
+    int costValue;
 };
 
 #endif /* defined(__CocoMagic__CocoRoomFairyTown__) */

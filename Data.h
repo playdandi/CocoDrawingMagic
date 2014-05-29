@@ -58,6 +58,7 @@ class Depth
 public:
     Depth(std::string name, int priority, void* pointer = NULL);
     static void* GetCurPointer();
+    static void* GetParentPointer();
     static const char* GetCurName();
     static const char* GetParentName();
     static std::string GetCurNameString();

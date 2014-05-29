@@ -11,6 +11,8 @@
 #define VOICE_GAMEOVER 4
 #define VOICE_BONUS 5
 #define VOICE_GODDESS 6
+#define VOICE_STOPTIME 7
+#define VOICE_MISSIONSUCCESS 8
 
 
 using namespace cocos2d;
@@ -47,10 +49,13 @@ public:
     void ResumeBackgroundInGameSound();
     void StopBackgroundInGameSound();
     
+    void PlayClock();
+    void PlayGameResult();
+    
     void PlayPieceClick(int idx);
     void PlayBomb();
     void PlaySkillSound(int skillNum);
-    void PlayDesginatedSound(int idx);
+    void PlayDesignatedSound(int idx);
     void UnLoadInGameSound();
     
 private:

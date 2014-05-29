@@ -430,6 +430,17 @@ void Ranking::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainWeeklyRankTime(), fontList[0], 48, ccp(0.5, 0.5), ccp(498, 1443), ccc3(255,255,255), "", "Ranking", this, 5) );
     }
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("남음", fontList[0], 30, ccp(0, 0), ccp(550, 1400), ccc3(212, 212, 212), "", "Ranking", this, 5) );
+    
+    
+
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"));
+    CCSize t = temp->getContentSize();
+    temp->setAnchorPoint(ccp(0.5,0.5));
+    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    temp->runAction(CCRepeatForever::create(action));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
 }
 
 void Ranking::MakeScroll()

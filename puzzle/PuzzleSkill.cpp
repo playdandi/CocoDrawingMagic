@@ -1109,6 +1109,10 @@ void PuzzleSkill::W7(int num)
         // 이펙트 실행
         m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
         m_pGameLayer->PlayEffect(num, NULL);
+        
+        // iced-bar sound
+        m_pGameLayer->GetSound()->PlaySkillSound(num);
+        m_pGameLayer->GetSound()->PlayVoice(VOICE_STOPTIME);
     }
 }
 void PuzzleSkill::W7SetTime(int time)
@@ -1152,7 +1156,7 @@ void PuzzleSkill::W8(int num, int queue_pos)
     
     ps->SetQueuePos(queue_pos);
     
-    ps->m_pGameLayer->GetSound()->PlayVoice(VOICE_GODDESS);
+    //ps->m_pGameLayer->GetSound()->PlayVoice(VOICE_GODDESS);
     ps->m_pGameLayer->PlayEffect(num, queue_pos);
     
     ps->m_pGameLayer->schedule(schedule_selector(PuzzleSkill::W8_Timer), 0.1f);
@@ -1173,7 +1177,7 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
         
         m_pGameLayer->Lock(queue_pos);
         m_pGameLayer->GetEffect()->Effect15_Bomb(pos, m_pGameLayer->GetEffect());
-        m_pGameLayer->Bomb(queue_pos, pos);
+        m_pGameLayer->Bomb(queue_pos, pos); // 사운드는 이 함수 안에서 처리
         
         m_pGameLayer->GetEffect()->AddOrbMaxParticle((int)pos.size() * 5);
     }
@@ -1186,6 +1190,9 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
             W8_isChanging++;
             W8_callbackCnt = 0;
             int x, y;
+            
+            // sound
+            m_pGameLayer->GetSound()->PlayDesignatedSound(152);
 
             // 파란색 piece로 바꾸는 액션 실행한다.
             result_pos = pos;
@@ -1591,21 +1598,6 @@ void PuzzleSkill::E8_Timer(float f) // 라인 흔들기를 시작한다.
     }
     else
     {
-        //ps->E8_cnt++;
-        //if (xx == -1) // 초기 검사에만 큐에 저장한다.
-        //    ps->E8_lineIdx.push(x);
-        
-        //ps->E8_check[x] = true;
-        /*
-        int x = ps->E8_lineIdx.front();
-        ps->E8_lineIdx.pop();
-        
-        CCLog("schedule에서 초기 라인 번호 : %d", x);
-        CCLog("schedule : 남은 큐 수 : %d", (int)ps->E8_lineIdx.size());
-        // 흔들리기 + 폭파
-        ps->E8_Bomb(NULL, (void*)x);
-        */
-        
         int x = ps->E8_lineIdx[ps->E8_cnt];
         ps->E8_bottomY[x] = ROW_COUNT-1-ps->E8_lineDepth[ps->E8_cnt]+1;
         ps->E8_curY[x] = ROW_COUNT-1;
@@ -1616,6 +1608,8 @@ void PuzzleSkill::E8_Timer(float f) // 라인 흔들기를 시작한다.
                 ps->E8_bottomY[x]++;
         }
         
+        // 흔드는 소리
+        ps->m_pGameLayer->GetSound()->PlayDesignatedSound(232);
         // 흔들기+폭파 시작
         ps->E8_Bomb(NULL, (void*)x);
         
@@ -1629,6 +1623,10 @@ void PuzzleSkill::E8_Bomb(CCNode* sender, void* data)
     {
         // bomb effect
         ps->m_pGameLayer->GetEffect()->Effect23_Bomb(x);
+        
+        // bomb sound
+        //ps->m_pGameLayer->GetSound()->PlayDesignatedSound(231);
+        ps->m_pGameLayer->GetSound()->PlayBomb();
         
         // 폭파
         ps->E8_bombCallbackCnt[x] = 0;

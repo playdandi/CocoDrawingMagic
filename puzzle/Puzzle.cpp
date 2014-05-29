@@ -32,6 +32,14 @@ void Puzzle::onEnter()
     // Fade Out (서서히 밝아진다) + 3/2/1/시작 액션으로 이동
     CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyAndStart), this), NULL);
     pBlackOpen->runAction(action);
+    
+    // 미션 상세화면 : 시작하자마자 보이기
+    if (missionType > 0)
+    {
+        pMissionSpriteDetail->runAction( CCFadeIn::create(0.3f) );
+        pMissionSpriteDetailIcon->runAction( CCFadeIn::create(0.3f) );
+        pMissionSpriteDetailContent->runAction( CCFadeIn::create(0.3f) );
+    }
 }
 void Puzzle::onExit()
 {
@@ -210,7 +218,7 @@ void Puzzle::InitSkills()
                 if (id == 38) skillProb.push_back(100);
                 else skillProb.push_back(100);
             }
-            CCLog("적용 스킬 : %d", id);
+            //CCLog("적용 스킬 : %d", id);
             skillLv.push_back(ms->GetLevel());
         }
     }
@@ -249,14 +257,15 @@ void Puzzle::InitInfoBar()
     if (missionType > 0)
     {
         // 배경
-        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "background/bg_mission_withs.png", ccp(1, 1), ccp(m_winSize.width+35, vo.y+vs.height-50-50+7 -30-offset/2-7), CCSize(0, 0), "", "Puzzle", this, 6) );
-        ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission_withs.png"))->setScale(1.2f);
+        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "background/bg_mission.png", ccp(1, 1), ccp(m_winSize.width+35, vo.y+vs.height-50-50+7 -30-offset/2-7), CCSize(0, 0), "", "Puzzle", this, 6) );
+        ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission.png"))->setScale(1.2f);
      
         // 미션 타입에 따른 그림
         char name[30];
         float scale;
+        int fontSize, padding;
         CCPoint pos;
-        CCLog("%d %d %d", missionType, missionVal, missionRefVal);
+
         switch (missionType)
         {
             case 1:
@@ -265,40 +274,79 @@ void Puzzle::InitInfoBar()
                 else if (missionRefVal == 3) sprintf(name, "pieces/%d.png", PIECE_GREEN);
                 scale = 0.5f;
                 pos = ccp(55, 106);
+                fontSize = 72;
+                padding = 15;
                 break;
             case 2:
                 sprintf(name, "skill_%d.png", missionRefVal);
                 scale = 0.6f;
                 pos = ccp(55, 106);
+                fontSize = 68;
+                padding = 10;
                 break;
             case 3:
                 sprintf(name, "icon/icon_menu_coco.png");
                 scale = 1.5f;
                 pos = ccp(35, 111);
+                fontSize = 88;
+                padding = 20;
                 break;
             case 4:
                 sprintf(name, "icon/all_piece.png");
                 scale = 0.85f;
                 pos = ccp(45, 103);
+                fontSize = 88;
+                padding = 20;
                 break;
         }
-        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_mission_withs.png", "0", NULL, 6, 1) );
+        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_mission.png", "0", NULL, 6, 1) );
         pMissionSprite = ((CCSprite*)spriteClassInfo->FindSpriteByName(name));
         pMissionSprite->setScale(scale);
         
+        // 아래에 상세화면
+        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, "background/bg_mission_detail.png", ccp(0.5, 0), ccp(m_winSize.width/2, vo.y+63 +5), CCSize(0, 0), "", "Puzzle", this, 100, 0, 0) );
+        ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission_detail.png"))->setScale((float)1044/(float)966);
+        CCSize bs = ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission_detail.png"))->getContentSize();
+        pMissionSpriteDetail = ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission_detail.png"));
+        
+        // 상세화면 내용
+        sprintf(name, "%s2", name);
+        spriteClassInfo->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0.5), ccp(0,0), CCSize(0, 0), "background/bg_mission_detail.png", "0", NULL, 100, 1, 0) );
+        pMissionSpriteDetailIcon = ((CCSprite*)spriteClassInfo->FindSpriteByName(name));
+        
+        if (missionType == 1) scale = 0.6f;
+        else if (missionType == 2) scale = 0.7f;
+        else if (missionType == 3) scale = 1.3f;
+        else if (missionType == 4) scale = 1.0f;
+        ((CCSprite*)spriteClassInfo->FindSpriteByName(name))->setScale(scale);
+        CCSize ps = ((CCSprite*)spriteClassInfo->FindSpriteByName(name))->getContentSize();
+        ps.width *= scale;
+        ps.height *= scale;
+        
+        // 상세화면의 미션 내용
+        std::string missionContent = Common::GetMissionContent(missionType, missionVal, missionRefVal);
+        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(missionContent, fontList[4], fontSize, ccp(1, 0.5), ccp(0,0), ccc3(255,255,255), "background/bg_mission_detail.png", "0", NULL, 100, 1, 0, 88888) );
+        CCSize fs = ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(88888))->getContentSize();
+        pMissionSpriteDetailContent = ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(88888));
+        
+        // (위치 지정)
+        float offset = (ps.width + (float)padding + fs.width) / 2.0f;
+        ((CCSprite*)spriteClassInfo->FindSpriteByName(name))->setPosition(ccp(bs.width/2-offset, bs.height/2));
+        ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(88888))->setPosition(ccp(bs.width/2+offset, bs.height/2));
+        
         // 달성해야 할 회수
         sprintf(name, "%d", missionVal);
-        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 32, ccp(0, 1), ccp(171+9, 137), ccc3(255,255,255), "background/bg_mission_withs.png", "0", NULL, 6, 1) );
+        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 32, ccp(0, 1), ccp(171+9, 137), ccc3(255,255,255), "background/bg_mission.png", "0", NULL, 6, 1, 255, 99997) );
         
-        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel("/", fontList[0], 32, ccp(0.5, 1), ccp(171, 137), ccc3(255,255,255), "background/bg_mission_withs.png", "0", NULL, 6, 1) );
+        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel("/", fontList[0], 32, ccp(0.5, 1), ccp(171, 137), ccc3(255,255,255), "background/bg_mission.png", "0", NULL, 6, 1, 255, 99998) );
         
         // 현재 달성한 회수
         iMissionCnt = 0;
+        isMissionDone = false;
         sprintf(name, "%d", iMissionCnt);
-        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 32, ccp(1, 1), ccp(171-9, 137), ccc3(255,255,255), "background/bg_mission_withs.png", "0", NULL, 6, 2, 255, 99999) );
+        spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 32, ccp(1, 1), ccp(171-9, 137), ccc3(255,255,255), "background/bg_mission.png", "0", NULL, 6, 2, 255, 99999) );
         pMissionLabel = ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(99999));
     }
-
     
     for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
         spriteClassInfo->AddChild(i);
@@ -884,17 +932,6 @@ void Puzzle::ComboTimer(float f)
 void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true); // pBlackOpen 제거
- 
-    /*
-    readyTimeLabel = CCLabelTTF::create("셋", fontList[0].c_str(), 82);
-    readyTimeLabel->setAnchorPoint(ccp(0.5,0.5));
-    readyTimeLabel->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
-    readyTimeLabel->setOpacity(0);
-    this->addChild(readyTimeLabel, 5000);
-    
-    iReadyTime = 3000;
-    ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::Ready), 0.1f);
-    */
     
     sound->PlayVoice(VOICE_READY);
     
@@ -923,10 +960,14 @@ void Puzzle::Ready_C(CCNode* sender, void* p)
     
     CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
     sprite->runAction(action);
-    /*
-    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.2f), CCEaseBackIn::create(CCMoveBy::create(0.7f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
-    sprite->runAction(action);
-     */
+
+    // 미션 상세화면 fade out
+    if (missionType > 0)
+    {
+        pMissionSpriteDetail->runAction( CCFadeOut::create(0.3f) );
+        pMissionSpriteDetailIcon->runAction( CCFadeOut::create(0.3f) );
+        pMissionSpriteDetailContent->runAction( CCFadeOut::create(0.3f) );
+    }
 }
 void Puzzle::Ready(float f)
 {
@@ -1036,7 +1077,9 @@ void Puzzle::UpdateTimer(float f)
     // 5초 남았을 때 이펙트+목소리 표현
     if (iTimer == 5000)
     {
+        // 성우 소리 + 시계 소리
         sound->PlayVoice(VOICE_TIMELIMIT);
+        sound->PlayClock();
         
         timelimit = CCSprite::createWithSpriteFrameName("letter_timelimit.png");
         timelimit->setAnchorPoint(ccp(0.5, 0.5));
@@ -1921,24 +1964,40 @@ void Puzzle::UpdatePieceBombCnt(int type, int cnt)
     iPieceBombCnt[type] += cnt;
     
     // 미션 내용도 같이 갱신
-    if ( (missionType == 1 &&
+    if ( !isMissionDone &&
+         ((missionType == 1 &&
            ((missionRefVal == 1 && type == PIECE_BLUE) ||
             (missionRefVal == 2 && type == PIECE_RED) ||
             (missionRefVal == 3 && type == PIECE_GREEN) ) ) ||
-         (missionType == 4) )
+         (missionType == 4)) )
     {
         iMissionCnt += cnt;
+        if (iMissionCnt >= missionVal)
+            isMissionDone = true;
         
         char n[6];
         sprintf(n, "%d", iMissionCnt);
         pMissionLabel->setString(n);
         
         // icon action
-        float scale;
-        if (missionType == 1) scale = 0.5f;
-        else if (missionType == 4) scale = 0.85f;
-        pMissionSprite->setScale(scale+0.5f);
-        pMissionSprite->runAction( CCSpawn::create( CCSequence::create(CCRotateBy::create(0.05f, 10), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL), CCScaleTo::create(0.2f, scale), NULL) );
+        pMissionSprite->stopAllActions();
+        float scale, varScale;
+        if (missionType == 1) { scale = 0.5f; varScale = 0.2f; }
+        else if (missionType == 4) { scale = 0.85f; varScale = 0.5f; }
+        pMissionSprite->setScale(scale + varScale);
+        pMissionSprite->setRotation(0);
+        
+        CCActionInterval* action;
+        if (missionType == 1)
+            action = CCSpawn::create( CCSequence::create(CCRotateBy::create(0.05f, 10), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL), CCScaleTo::create(0.2f, scale), NULL);
+        else if (missionType == 4)
+            action = CCScaleTo::create(0.2f, scale);
+        
+        pMissionSprite->runAction(action);
+        
+        // 미션 달성하면 표현
+        if (isMissionDone)
+            MissionComplete();
     }
 }
 
@@ -1950,22 +2009,63 @@ void Puzzle::UpdateMissionCountBySkill(int skillNum)
     else if (skillNum < 16) csi = skillNum+3;
     else if (skillNum < 24) csi = skillNum+15;
     
-    if ( (missionType == 2 && missionRefVal == csi) ||
-         (missionType == 3) )
+    if ( !isMissionDone &&
+         ((missionType == 2 && missionRefVal == csi) ||
+         (missionType == 3)) )
     {
         iMissionCnt++;
+        if (iMissionCnt >= missionVal)
+            isMissionDone = true;
         
         char n[4];
         sprintf(n, "%d", iMissionCnt);
         pMissionLabel->setString(n);
         
         // icon action
+        pMissionSprite->stopAllActions();
         float scale;
         if (missionType == 2) scale = 0.6f;
         else if (missionType == 3) scale = 1.5f;
         pMissionSprite->setScale(scale+0.5f);
+        pMissionSprite->setRotation(0);
         pMissionSprite->runAction( CCSpawn::create( CCSequence::create(CCRotateBy::create(0.05f, 10), CCRotateBy::create(0.1f, -20), CCRotateBy::create(0.05f, 10), NULL), CCScaleTo::create(0.2f, scale), NULL) );
+        
+        // 미션 달성하면 표현
+        if (isMissionDone)
+            MissionComplete();
     }
+}
+
+void Puzzle::MissionComplete()
+{
+    ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(99997))->setOpacity(0);
+    ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(99998))->setOpacity(0);
+    pMissionLabel->setAnchorPoint(ccp(0.5, 1));
+    pMissionLabel->setPosition(ccp(171+14, 137-2));
+    pMissionLabel->setFontSize(32);
+    pMissionLabel->setColor(ccc3(255,204,33));
+    pMissionLabel->setString("미션 완료!");
+    
+    CCSprite* sp = CCSprite::create("particles/effect_10.png");
+    CCParticleSystem* par = CCParticleFlower::create();
+    par->setTexture(sp->getTexture());
+    par->setAnchorPoint(ccp(0.5, 0.5));
+    par->setPosition(pMissionSprite->getPosition());
+    par->setStartSize(65);
+    par->setLife(0.4);
+    par->setSpeed(180);//120);
+    par->setSpeedVar(70);
+    ccColor4F startColor = par->getStartColor();
+    startColor.r = 0.95f;
+    startColor.g = 0.95f;
+    startColor.b = 0.95f;
+    par->setStartColor(startColor);
+    par->setDuration(1.0f);
+    par->setAutoRemoveOnFinish(true);
+    ((CCSprite*)spriteClassInfo->FindSpriteByName("background/bg_mission.png"))->addChild(par, 1000);
+    
+    // sound
+    sound->PlayVoice(VOICE_MISSIONSUCCESS);
 }
 
 void Puzzle::Lock(int queue_pos)
@@ -2062,12 +2162,16 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
     // sound bomb
     if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(0, queue_pos) && globalType[queue_pos] == PIECE_RED)
         sound->PlaySkillSound(0);
+    else if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(8, queue_pos) && globalType[queue_pos] == PIECE_BLUE)
+        sound->PlaySkillSound(8);
+    else if (skill->W8_IsActive())
+        sound->PlayDesignatedSound(153);
     else
         sound->PlayBomb();
     
     // 폭파 개수 갱신
-    if (bomb_pos.size() > 0)
-        UpdatePieceBombCnt(puzzleP8set->GetType(bomb_pos[0].x, bomb_pos[0].y) , (int)bomb_pos.size());
+    //if (bomb_pos.size() > 0)
+    //    UpdatePieceBombCnt(puzzleP8set->GetType(bomb_pos[0].x, bomb_pos[0].y) , (int)bomb_pos.size());
     
     // 8각형들을 터뜨린다.
     float delayTime = 0.0f;
@@ -2077,6 +2181,9 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
     {
         x = (int)bomb_pos[i].x;
         y = (int)bomb_pos[i].y;
+        
+        // 폭파 개수 갱신
+        UpdatePieceBombCnt(puzzleP8set->GetType(x, y), 1);
 
         float bombTime = 0.15f;
         if (m_iState[queue_pos] == SKILL_CYCLE)
@@ -2087,16 +2194,22 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
         // 그 다음이 사이클 주변부 터지는 스킬이면 조금 딜레이준다.
         if (m_iNextState[queue_pos] == SKILL_CYCLE)
             delayTime = 0.1f;
+        // 6개이상 한번더 (불꽃놀이/얼음비/바람) 스킬 : 시작 전에 딜레이를 조금 준다.
+        else if (m_iState[queue_pos] == SKILL_DOUBLESIX)
+            delayTime = 0.15f;
         
-        // 터지는 액션
+        // 터지는 액션 (BOMB!)
         CCFiniteTimeAction* action;
-        if (m_iState[queue_pos] == SKILL_DOUBLESIX && globalType[queue_pos] == PIECE_BLUE) // 6개이상 한번더(blue) : 터지고 살짝 딜레이를 준다.
+        if (m_iState[queue_pos] == SKILL_DOUBLESIX)
         {
-            action = CCSequence::create(
-                        CCSpawn::create(CCScaleTo::create(bombTime, 1.5f), CCFadeOut::create(bombTime), NULL),
-                                        CCDelayTime::create(0.7f),
-                        CCCallFuncND::create(this, callfuncND_selector(Puzzle::BombCallback), (void*)queue_pos),
-                        NULL);
+            if (globalType[queue_pos] == PIECE_BLUE) // 얼음비 : 터지고 살짝 딜레이를 준다. (이펙트 길게 보여주기 위해)
+                action = CCSequence::create( CCSpawn::create(CCScaleTo::create(bombTime, 1.5f), CCFadeOut::create(bombTime), NULL),
+                                CCDelayTime::create(0.7f),
+                                CCCallFuncND::create(this, callfuncND_selector(Puzzle::BombCallback), (void*)queue_pos), NULL);
+            else // 불꽃놀이/바람 : 시작 전에 딜레이를 주어, 직전에 행해진 한붓그리기 폭발과 간격을 둔다.
+                action = CCSequence::create( CCDelayTime::create(delayTime),
+                            CCSpawn::create(CCScaleTo::create(bombTime, 1.5f), CCFadeOut::create(bombTime), NULL),
+                            CCCallFuncND::create(this, callfuncND_selector(Puzzle::BombCallback), (void*)queue_pos), NULL);
         }
         else
         {
@@ -2957,6 +3070,11 @@ void Puzzle::EndSceneCallback()
 {
 }
 
+float Puzzle::GetPieceWidth()
+{
+    return PIECE8_WIDTH;
+}
+
 PuzzleP8Set* Puzzle::GetPuzzleP8Set()
 {
     return puzzleP8set;
@@ -3143,9 +3261,12 @@ void PuzzleP4Set::CreatePiece(int x, int y, int type)
     int ld = (x == 1 && y == 1) ? -3 : gameLayer->GetPuzzleP8Set()->GetType(x-1, y-1);
     int rd = (x == COLUMN_COUNT-1 && y == 1) ? -4 : gameLayer->GetPuzzleP8Set()->GetType(x, y-1);
     
+    // scale
+    float diaHalfWidth = gameLayer->GetPieceWidth() / (2.0f + sqrt(2.0f));
+    
     int offsetX = 1;
     int offsetY = 0;
-    object[x][y]->CreateSprites(x, y, lu, ru, ld, rd, ccp(offsetX, offsetY), gameLayer->SetPiece4Position(x, y));
+    object[x][y]->CreateSprites(x, y, lu, ru, ld, rd, ccp(offsetX, offsetY), gameLayer->SetPiece4Position(x, y), diaHalfWidth);
 }
 int PuzzleP4Set::GetType(int x, int y)
 {
