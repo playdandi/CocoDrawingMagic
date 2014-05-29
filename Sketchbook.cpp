@@ -492,9 +492,10 @@ void Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
-                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5))) );
+                CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCRepeatForever::create(action) );
             }
             // '연습' 버튼
             else
@@ -514,7 +515,10 @@ void Sketchbook::MakeScrollBook(int idx)
                 sprintf(name, "button/btn_green_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                
+                CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCRepeatForever::create(action) );
             }
             // 아닌 경우
             else
