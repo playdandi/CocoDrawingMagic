@@ -181,8 +181,10 @@ bool BuyPotion::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                std::vector<int> nullData;
-                Common::ShowPopup(this, "BuyPotion", "NoImage", false, BUYPOTION_1, BTN_2, nullData);
+                std::vector<int> data;
+                data.push_back(0);
+                data.push_back(5);
+                Common::ShowPopup(this, "BuyPotion", "NoImage", false, BUYPOTION_1, BTN_2, data);
                 break;
             }
         }

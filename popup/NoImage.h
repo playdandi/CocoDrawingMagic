@@ -6,7 +6,7 @@
 class NoImage : public CCLayer
 {
 public:
-    static CCScene* scene(int popupType, int btnType, std::vector<int> data, int etc, int prio);
+    static CCScene* scene(int popupType, int btnType, std::vector<int> data, int etc);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

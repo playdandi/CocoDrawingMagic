@@ -163,6 +163,7 @@ public:
     int GetPracticeSkillLv();
     
     void SetTodayCandy(int todayCandyType, int todayCandyValueChoice, int todayCandyValueMiss, int istodayCandyUsed);
+    void SetTodayCandy(int isTodayCandyUsed);
     int GetTodayCandyType();
     int GetTodayCandyValueChoice();
     int GetTodayCandyValueMiss();
@@ -252,6 +253,7 @@ class MyFairy
 {
 public:
     MyFairy(int cfi, int ufi, int level, int isUse);
+    static MyFairy* GetObj(int cfi);
     bool IsUse();
     int GetId();
     int GetUserId();
@@ -303,8 +305,6 @@ class Friend
 public:
     Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
     
-    //void SetSprite(CCTexture2D* texture);
-    //void SetSprite();
     void SetProfile(CCSprite* sp);
     void SetPotionSprite();
     void SetScore(int highScore, int weeklyHighScore, int certificateType);
@@ -334,6 +334,7 @@ public:
     void SetRemainPotionTime(int time);
     void SetRemainRequestPotionTime(int time);
     void SetRemainRequestTopazTime(int time);
+    void SetProperties(int fire, int water, int land, int master);
     bool IsFire();
     bool IsWater();
     bool IsLand();

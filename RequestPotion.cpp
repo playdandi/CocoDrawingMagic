@@ -59,7 +59,6 @@ bool RequestPotion::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100 + (487-630)));
     scrollView->setAnchorPoint(ccp(0, 0));

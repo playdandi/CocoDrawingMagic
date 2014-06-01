@@ -189,7 +189,8 @@ void Profile::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png1",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 1, 1) );
-        pos = ccp(191, 940);
+        pos.x += 92;
+        //pos = ccp(191, 940);
     }
     if (friendList[idx]->IsWater())
     {
@@ -198,7 +199,8 @@ void Profile::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png2",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 1, 1) );
-        pos = ccp(280, 940);
+        //pos = ccp(280, 940);
+        pos.x += 92;
     }
     if (friendList[idx]->IsLand())
     {
@@ -207,6 +209,7 @@ void Profile::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png3",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 1, 1) );
+        pos.x += 92;
     }
     
     // degree

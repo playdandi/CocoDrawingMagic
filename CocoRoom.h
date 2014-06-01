@@ -44,8 +44,10 @@ public:
     
     void MakeSpritesCandy();
     void SetTodayCandyList();
-    void DecideUser();
+    void DecideUser(int selectedKakaoId);
+    void TodayCandy_Result(int selectedKakaoId);
     void Callback(CCNode* sender, void* data);
+    void Callback2(CCNode* sender, void* kakaoId);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseFairyList(char* data, int size);
@@ -59,6 +61,7 @@ protected:
     int curState;
     
     bool isTodayCandyWorking;
+    CCSprite* todaycandy_bg;
     
 private:
     CCParticleSystem* par;

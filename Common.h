@@ -130,10 +130,13 @@ USING_NS_CC;
 #define TODAYCANDY_RESULT_WIN 70
 #define TODAYCANDY_RESULT_LOSE 71
 #define TODAYCANDY_ALREADY_DONE 72
-
+#define TODAYCANDY_NOTENOUGH_FRIENDS 73
+#define PRACTICE_SKILL_FULL_EXP 74
 
 #define LOADING_MESSAGE 0
 
+
+#define BTN_MENU_GAMEREADY 0 
 
 using namespace cocos2d;
 using namespace cocos2d::extension;

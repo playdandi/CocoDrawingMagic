@@ -240,6 +240,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(25).c_str());
                 std::vector<int> data;
                 data.push_back(number);
+                data.push_back(priceTopaz[number]->GetPrice(myInfo->GetDeviceType()));
                 Common::ShowPopup(this, "BuyTopaz", "NoImage", false, BUY_TOPAZ_TRY, BTN_2, data);
                 break;
             }

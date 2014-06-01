@@ -39,10 +39,12 @@ void Loading::onExit()
 
 bool Loading::init()
 {
-	if (CCLayer::init() == false)
+	if (!CCLayer::init())
 	{
 		return false;
 	}
+    
+    m_winSize = CCDirector::sharedDirector()->getWinSize();
     
     if (status == -1)
     {
@@ -67,25 +69,43 @@ bool Loading::init()
         req->setResponseCallback(this, httpresponse_selector(Loading::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
+        
+        pCoco = CCSprite::createWithSpriteFrameName("image/coco_room.png");
+        pCoco->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+        pCoco->setScale(0.8f);
+        this->addChild(pCoco, 5);
+        
+        pLoading = CCSprite::createWithSpriteFrameName("letter/letter_loading1.png");
+        pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-200));
+        this->addChild(pLoading, 5);
+        
+        CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -20)), CCMoveBy::create(0.5f, ccp(0, 20)), NULL);
+        pLoading->runAction(CCRepeatForever::create(action));
     }
     
     else
     {
         // make depth tree
         Depth::AddCurDepth("Loading", this);
+        
+        CCLog("Loading 시작 주소 : %p", this);
     
         // notification post
         CCString* param = CCString::create("1");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
         
-        m_winSize = CCDirector::sharedDirector()->getWinSize();
-        
+        /*
         pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
         pBlack->setPosition(ccp(0, 0));
         pBlack->setAnchorPoint(ccp(0, 0));
         pBlack->setColor(ccc3(0, 0, 0));
         pBlack->setOpacity(160);
         this->addChild(pBlack, 5000);
+         */
+        pLoading = CCSprite::createWithSpriteFrameName("icon/icon_loading_android.png");
+        pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+        this->addChild(pLoading, 5000);
+        pLoading->runAction(CCRepeatForever::create(CCRotateBy::create(0.2f, 72)));
     }
     
 	return true;
@@ -130,6 +150,8 @@ void Loading::XmlParseGameStart(char* data, int size)
     if (code == 0)
     {
         xml_node gameInfo = nodeResult.child("game-info");
+        
+        // item 사용/미사용 결과 받아서 client에 저장해 두기
         int item;
         char name[10];
         for (int i = 0 ; i < 5; i++)
@@ -179,10 +201,12 @@ void Loading::XmlParseGameStart(char* data, int size)
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
         myInfo->SetMoney(topaz, starcandy);
+        
         // potion 갱신
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
         int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
         myInfo->SetPotion(potion, remainTime);
+        
         // item 개수 갱신
         std::vector<int> items;
         for (int i = 0; i < 5; i++)
@@ -203,8 +227,19 @@ void Loading::XmlParseGameStart(char* data, int size)
                 myInfo->SetPracticeSkill(ms->GetCommonId(), ms->GetLevel());
         }
         
+        // '끈질긴 생명력' 스킬 발동 결과
+        int addedPotion = gameInfo.child("add-potion").attribute("add-number").as_int();
+        
+        // image memory 해제
+        pCoco->removeFromParentAndCleanup(true);
+        pLoading->removeFromParentAndCleanup(true);
+        CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
+        CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+        CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
+        CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+        
         // 게임 시작!
-        Common::ShowNextScene(this, "Loading", "Puzzle", true);
+        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
     }
     else
     {
@@ -222,5 +257,7 @@ void Loading::EndScene()
     CCString* param = CCString::create("-1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
-    pBlack->removeFromParentAndCleanup(true);
+    pLoading->removeFromParentAndCleanup(true);
+    
+    this->removeFromParentAndCleanup(true);
 }

@@ -24,7 +24,7 @@ class PuzzleP4Set;
 class Puzzle : public CCLayerColor
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int addedPotion);
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -225,7 +225,6 @@ protected:
     CCSprite* pMissionSpriteDetail;
     CCSprite* pMissionSpriteDetailIcon;
     CCLabelTTF* pMissionSpriteDetailContent;
-    
     
     CCSprite* pClock;
     

@@ -59,11 +59,11 @@ bool RequestTopaz::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
-    scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
+    scrollView->setViewSize(CCSizeMake(929, 904+243+45-100 + (487-630)));
     scrollView->setAnchorPoint(ccp(0, 0));
-    scrollView->setPosition(ccp(77, 492-45+40));
+    //scrollView->setPosition(ccp(77, 492-45+40));
+    scrollView->setPosition(ccp(77, 630));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollView, 3);
@@ -127,6 +127,11 @@ void RequestTopaz::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                     ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "RequestTopaz", this, 1) );
     
+    // 설명 창 배경
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",ccp(0, 0), ccp(110, 478), CCSize(857, 132), "", "RequestTopaz", this, 2) );
+    CCPoint p = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("요청한 친구에게는 24시간 후 다시 요청 가능합니다.", fontList[0], 36, ccp(0.5, 0.5), p, ccc3(78,47,8), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
 }
@@ -145,13 +150,6 @@ void RequestTopaz::MakeScroll()
         // 요청시간이 아직 남아있는 친구는 리스트에 보이지 않게 한다.
         if (friendList[i]->GetRemainRequestTopazTime() > 0)
             continue;
-        /*
-        CCLayer* itemLayer = CCLayer::create();
-        itemLayer->setContentSize(CCSizeMake(862, 166));
-        itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
-        scrollContainer->addChild(itemLayer, 2);
-        spriteClassScroll->layers.push_back(itemLayer);
-        height++;*/
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
@@ -197,7 +195,6 @@ void RequestTopaz::MakeScroll()
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
     scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
-    //scrollView->setContentOffset(ccp(0, 904+243+45-100-(numOfList*166)), false);
 }
 
 void RequestTopaz::RenewScroll()

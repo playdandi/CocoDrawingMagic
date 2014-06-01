@@ -59,6 +59,7 @@ void AppDelegate::applicationDidEnterBackground()
     }
 
     // if you use SimpleAudioEngine, it must be pause
+    SimpleAudioEngine::sharedEngine()->pauseAllEffects();
     SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
 }
 
@@ -79,9 +80,12 @@ void AppDelegate::applicationWillEnterForeground()
         
         // if you use SimpleAudioEngine, it must resume here
         SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+        SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
     else
     {
+        SimpleAudioEngine::sharedEngine()->resumeAllEffects();
+        
         // 인게임 중이면, Puzzle 화면으로 돌아갈 경우에 한해 Pause 화면을 띄워준다. (게임결과 화면에서는 필요없다)
         if (Depth::GetCurNameString() == "Puzzle")
         {
@@ -89,10 +93,6 @@ void AppDelegate::applicationWillEnterForeground()
             void* p = Depth::GetCurPointer();
             ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
             ((Puzzle*)p)->PauseGame();
-            //if(SimpleAudioEngine::sharedEngine()->isBackgroundMusicPlaying())
-            //    CCLog("YES");
-            //else
-            //    CCLog("No");
         }
     }
 }

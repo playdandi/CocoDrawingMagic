@@ -26,6 +26,14 @@ void GameReady::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 현재 연습중인 스킬이 max exp라면 팝업창을 띄운다.
+    MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
+    if ( ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()) )
+    {
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "GameReady", "NoImage", false, PRACTICE_SKILL_FULL_EXP, BTN_1, nullData);
+    }
 }
 void GameReady::onExit()
 {
@@ -168,6 +176,17 @@ void GameReady::Notification(CCObject* obj)
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+        
+        // 포션 개수에 따른 포션 아이콘 업데이트
+        char name[40];
+        for (int i = 0 ; i < 5 ; i++)
+        {
+            sprintf(name, "icon/icon_potion.png%d", i);
+            if (i < myInfo->GetPotion())
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+            else
+                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
+        }
     }
     else if (param->intValue() == 3)
     {
@@ -355,6 +374,16 @@ void GameReady::InitSprites()
     
     // 아이템별 설명
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("행복하지 않을 이유가 하나도 없습니다.", fontList[0], 36, ccp(0, 0), ccp(97, 736), ccc3(0,0,0), CCSize(909, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "GameReady", this, 5) );
+    
+    // 게임시작 버튼 움직이기
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"));
+    CCSize t = temp->getContentSize();
+    temp->setAnchorPoint(ccp(0.5,0.5));
+    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    temp->runAction(CCRepeatForever::create(action));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
 }
 
 void GameReady::InitProperties()
@@ -366,19 +395,19 @@ void GameReady::InitProperties()
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
-        pos = ccp(904, 1611);
+        pos.x += 57;
     }
     if (myInfo->IsWater())
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
+        pos.x += 57;
     }
     if (myInfo->IsLand())
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
+        pos.x += 57;
     }
     
     for (int i = 0 ; i < spriteClassProperty->spriteObj.size() ; i++)
@@ -618,30 +647,30 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png1")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png1")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "GameReady", "BuyTopaz", false, 1);
+                Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png2")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png2")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "GameReady", "BuyStarCandy", false, 1);
+                Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png3")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_potion_time.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "GameReady", "BuyPotion", false, 1);
+                Common::ShowNextScene(this, "Ranking", "BuyPotion", false, 0);
                 break;
             }
         }
@@ -777,15 +806,15 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 // 슬롯 구매
                 std::vector<int> data;
                 if ((int)myInfo->GetSlot().size() >= (int)skillSlotInfo.size())
-                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data);
+                    Common::ShowPopup(this, "GameReady", "NoImage", false, BUY_SKILLSLOT_FULL, BTN_1, data);
                 else
                 {
                     data.push_back((int)myInfo->GetSlot().size()+1);
                     data.push_back(SkillSlotInfo::GetCost((int)myInfo->GetSlot().size()+1));
                     if (SkillSlotInfo::GetCostType((int)myInfo->GetSlot().size()+1) == 1)
-                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 2);
+                        Common::ShowPopup(this, "GameReady", "NoImage", false, BUY_SKILLSLOT_BY_STARCANDY_TRY, BTN_2, data, 2);
                     else
-                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 2);
+                        Common::ShowPopup(this, "GameReady", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 2);
                 }
                 break;
             }

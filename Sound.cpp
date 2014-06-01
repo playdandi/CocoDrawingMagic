@@ -10,7 +10,7 @@ using namespace CocosDenshion;
  switch (platform)
  {
  case CC_PLATFORM_IOS:
- ext = "wav"; break;
+ ext = "m4a"; break;
  case CC_PLATFORM_ANDROID:
  ext = "ogg"; break;
  }

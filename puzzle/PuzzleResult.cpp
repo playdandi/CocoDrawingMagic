@@ -20,7 +20,7 @@ void PuzzleResult::onEnter()
     CCLayer::onEnter();
     
     // sound
-    ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
+    //((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
 }
 void PuzzleResult::onExit()
 {
@@ -112,18 +112,16 @@ void PuzzleResult::InitSprites()
     
     // 스트랩
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png", ccp(0, 0), ccp(14, 1343+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_gameready.png", ccp(0, 0), ccp(409, 1389+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_gameresult.png", ccp(0, 0), ccp(409, 1389+off), CCSize(0, 0), "", "PuzzleResult", this, 1003) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_gameresult.png", ccp(0.5, 0), ccp(m_winSize.width/2, 1389+off), CCSize(0, 0), "", "PuzzleResult", this, 1003) );
     
     // 기록갱신 마크
     if (myGameResult->isNewRecord)
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_up.png", ccp(0.5, 0.5), ccp(220, 1370+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
-        ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_up.png"))->setScale(1.2f);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_newrecord.png", ccp(0.5, 0.5), ccp(240, 1340+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
     }
     
     // 점수
-    //score = 13059823;
-    //score = 391108;
     varScore = 0;
     
     char number[50];
@@ -239,6 +237,15 @@ void PuzzleResult::InitSprites()
         // 미션 내용
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::GetMissionContent(missionType, missionVal, missionRefVal), fontList[0], 27, ccp(0, 0), ccp(125+146+10, 525+30+36), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
         
+        // 미션 성공/실패 아이콘 노출
+        if (myGameResult->isMissionSuccess)
+        {
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_success.png", ccp(0.5,0.5), ccp(125+15, 525+146-30), CCSize(0,0), "", "PuzzleResult", this, 1005) );
+            ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_success.png"))->setScale(0.9f);
+        }
+        else
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_fail.png", ccp(0.5,0.5), ccp(125+40, 525+146-20), CCSize(0,0), "", "PuzzleResult", this, 1010) );
+        
         // 연습량 프로그레스바 안의 노란 바
         barLayer = CCLayer::create();
         CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, 412+10-6, 31-6));
@@ -298,11 +305,17 @@ void PuzzleResult::InitSprites()
     ((CCSprite*)spriteClass->FindSpriteByName("image/coco.png"))->setFlipX(true);
     
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, 300), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
-    CCPoint pos = spriteClass->FindParentCenterPos("button/btn_red.png");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(pos.x, pos.y+5), CCSize(0, 0), "button/btn_red.png", "0", this, 1005, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, 300), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
+    CCPoint pos = spriteClass->FindParentCenterPos("button/btn_green.png");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_green.png", ccp(0.5, 0.5), ccp(pos.x, pos.y+5), CCSize(0, 0), "button/btn_green.png", "0", this, 1005, 1) );
     
 
+    // 게임시작 버튼 움직이기
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green.png"));
+    CCActionInterval* action2 = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    temp->runAction(CCRepeatForever::create(action2));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
 }
@@ -437,7 +450,7 @@ void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
+        if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {

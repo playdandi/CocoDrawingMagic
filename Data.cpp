@@ -452,6 +452,10 @@ void MyInfo::SetTodayCandy(int todayCandyType, int todayCandyValueChoice, int to
     this->todayCandyValueMiss = todayCandyValueMiss;
     this->istodayCandyUsed = (istodayCandyUsed == 1);
 }
+void MyInfo::SetTodayCandy(int isTodayCandyUsed)
+{
+    this->istodayCandyUsed = (isTodayCandyUsed == 1);
+}
 int MyInfo::GetTodayCandyType()
 {
     return todayCandyType;
@@ -581,6 +585,16 @@ MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
     this->user_fairy_id = ufi;
     this->level = level;
     this->isUse = isUse;
+}
+MyFairy* MyFairy::GetObj(int cfi)
+{
+    for (int i = 0 ; i < myInfo->GetFairyList().size() ; i++)
+    {
+        MyFairy* mf = myInfo->GetFairyList()[i];
+        if (mf->GetId() == cfi)
+            return mf;
+    }
+    return NULL;
 }
 bool MyFairy::IsUse()
 {
@@ -733,6 +747,14 @@ void Friend::SetSprite()
     this->profile->retain();
 }
 */
+
+void Friend::SetProperties(int fire, int water, int land, int master)
+{
+    this->propertyFire = (fire == 1) ? true : false;
+    this->propertyWater = (water == 1) ? true : false;
+    this->propertyLand = (land == 1) ? true : false;
+    this->propertyMaster = (master == 1) ? true : false;
+}
 
 void Friend::SetPotionSprite()
 {

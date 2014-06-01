@@ -371,6 +371,9 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 
                 sound->playClick();
                 
+                // Loading 화면으로 MESSAGE request 넘기기
+                Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
+                
                 httpStatus = 1;
                 // 메시지에 대한 처리 서버 통신
                 char temp[50];

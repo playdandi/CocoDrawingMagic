@@ -152,10 +152,11 @@ void InviteFriend::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_30.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png3"), CCSize(0, 0), "background/bg_dontknow_1.png3", "0", NULL, 2, 1) );
     
     // 그림들
+    /*
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_10.png", ccp(0.5, 0), ccp(98+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_20.png", ccp(0.5, 0), ccp(390+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_30.png", ccp(0.5, 0), ccp(686+293/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
-    
+    */
     
     // progress bar 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96+10, 192-15), CCSize(700, 30), "", "InviteFriend", this, 2) );

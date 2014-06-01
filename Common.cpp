@@ -410,7 +410,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Loading") nextScene = Loading::scene(etc);
     else if (to == "RankUp") nextScene = RankUp::scene();
     
-    else if (to == "Puzzle") nextScene = Puzzle::scene();
+    else if (to == "Puzzle") nextScene = Puzzle::scene(etc);
     else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
     else if (to == "PuzzlePause") nextScene = PuzzlePause::scene(etc);
     
@@ -438,15 +438,21 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);
-    else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "RequestTopaz") ((RequestTopaz*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "RequestPotion") ((RequestPotion*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SketchDetail") ((SketchDetail*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
     else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "MagicList") ((MagicList*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "Setting") ((Setting*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(nextScene, 200, 200);
     else if (from == "RankUp")
     {
         if (isReplaced)
@@ -474,10 +480,12 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
         ((Sketchbook*)obj)->SetTouchLock(false);
     
     CCScene* popup;
-    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc, priority);
+    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
     
     if (from == "Splash") ((Splash*)obj)->addChild(popup, 200, 200);
     else if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
+    else if (from == "GameReady") ((GameReady*)obj)->addChild(popup, 200, 200);
+    else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
@@ -486,11 +494,13 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "RequestTopaz") ((RequestTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
-    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
+    else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(popup, 200, 200);
     else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(popup, 200, 200);
-    else if (from == "GameReady") ((GameReady*)obj)->addChild(popup, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
     else if (from == "MagicList") ((MagicList*)obj)->addChild(popup, 200, 200);
+    else if (from == "RankUp") ((RankUp*)obj)->addChild(popup, 200, 200);
+    else if (from == "Setting") ((Setting*)obj)->addChild(popup, 200, 200);
+    else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {
         if(isReplaced) {
             CCNode* parent = ((SketchDetail*)obj)->getParent();

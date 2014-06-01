@@ -31,8 +31,11 @@ void MagicList::onEnter()
 void MagicList::onExit()
 {
     CCLog("MagicList :: onExit");
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->removeDelegate(this);
+    if (code != 0)
+    {
+        CCDirector* pDirector = CCDirector::sharedDirector();
+        pDirector->getTouchDispatcher()->removeDelegate(this);
+    }
     CCLayer::onExit();
 }
 
@@ -99,7 +102,18 @@ void MagicList::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == -1)
+    {
+        if (code != 0) // 성공적으로 네트워크가 마무리되면, 터치를 활성화시키지 않는다. (어차피 끄니까)
+        {
+            // 터치 활성
+            CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+            this->setTouchPriority(Depth::GetCurPriority());
+            isTouched = false;
+            CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        }
+    }
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -175,14 +189,11 @@ void MagicList::InitSprites()
                 flag = false;
                 for (int k = 0 ; k < myInfo->GetSlot().size() ; k++)
                 {
-                    CCLog("hihi = %d", myInfo->GetSlot()[k]->GetCommonId());
                     if (myInfo->GetSlot()[k]->GetCommonId() == sid[i*4+j])
                         flag = true;
                 }
                 if (flag)
                 {
-                    //sprintf(name2, "background/bg_skill_select.png%c", (4*i+j)+'a');
-                    CCLog("hi");
                     sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
                     ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(255);
                 }
@@ -190,15 +201,6 @@ void MagicList::InitSprites()
                 sprintf(name2, "skill_%d.png", si->GetId());
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229+12, 1451-i*160+offset+12), CCSize(0, 0), "", "Layer", layer, 20, 0, 255, si->GetId()) );
             }
-            
-            /*
-            sprintf(name2, "background/bg_skill_select.png%c", (4*i+j)+'a');
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), "", "Layer", layer, 20) );
-            sprintf(name2, "background/bg_skill_yellow.png%c", (4*i+j)+'a');
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                        ccp(0, 0), ccp(1545-i*160, 127+j*229), CCSize(0, 0), "", "Layer", layer, 20) );
-             */
         }
     }
     
@@ -412,7 +414,8 @@ void MagicList::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void MagicList::TryEnd()
 {
-    sound->playBoardMove(); // 이 scene만 사운드가 다르다.
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
     
     // http://14.63.225.203/cogma/game/using_skill.php?kakao_id=1000&slot_id_list[0]=1&user_skill_id_list[0]=1&slot_id_list[1]=2&user_skill_id_list[1]=3
     char temp[255];
@@ -473,10 +476,14 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
         CCLog("error offset: %d", result.offset);
         return;
     }
-    
+
     // get data
     xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
+    code = nodeResult.child("code").text().as_int();
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     if (code == 0)
     {
         // skill-slot 갱신
@@ -494,6 +501,8 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
             }
             myInfo->AddSkillSlot(id, csi, usi);
         }
+        
+        sound->playBoardMove(); // 창 닫는 소리
         
         SendToParent();
         EndScene();

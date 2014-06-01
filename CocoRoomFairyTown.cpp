@@ -81,7 +81,7 @@ bool CocoRoomFairyTown::init()
     fairyData.clear();
     
     // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
     
     // 네트워크로 메시지들을 받아온다.
     char temp[50];
@@ -221,9 +221,15 @@ void CocoRoomFairyTown::MakeScroll()
         else if (fi->GetGrade() == 4) sprintf(fname, "letter/letter_grade_d.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(25, 219), CCSize(0, 0), "", "Layer", itemLayer, 90) );
         
-        // check
-        if (myInfo->GetActiveFairyId() == fi->GetId())
+        
+        if (myInfo->GetActiveFairyId() == fi->GetId()) // 착용중 표시 (check)
+        {
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+        }
+        else if (MyFairy::GetObj(fi->GetId()) == NULL) // 구입하지않음 표시 (lock)
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(1, 1), ccp(287, 287), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+        }
     }
     
     for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)

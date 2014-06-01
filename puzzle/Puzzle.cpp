@@ -3,6 +3,8 @@
 
 using namespace pugi;
 
+static int addedPotion;
+
 enum
 {
 	zBackground = 0,
@@ -11,9 +13,10 @@ enum
     zPieceConn = 3,
 };
 
-CCScene* Puzzle::scene()
+CCScene* Puzzle::scene(int potion)
 {
-    CCLog("Puzzle : scene");
+    addedPotion = potion;
+    
 	CCScene* pScene = CCScene::create();
     
 	Puzzle* pLayer = Puzzle::create();
@@ -1928,7 +1931,6 @@ void Puzzle::InvokeSkills(int queue_pos)
         if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos))
             m_iState[queue_pos] = m_iNextState[queue_pos];
         
-        //if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos) && !skill->IsApplied(23, queue_pos))
         if ((!skill->IsApplied(7, queue_pos) && !skill->IsApplied(23, queue_pos)) ||
             (skill->IsApplied(23, queue_pos) && skill->E8_IsFinished()))
         {
@@ -2804,11 +2806,6 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         int getPotion = nodeResult.child("game-get").attribute("potion").as_int();
         int getMP = nodeResult.child("game-get").attribute("mp").as_int();
         
-        // 이전 값 저장 (MP는 프로토콜 바뀌면 제대로 받도록 하자)
-        //prevTopaz = myInfo->GetTopaz();
-        //prevStarCandy = myInfo->GetStarCandy();
-        //prevMP = myInfo->GetMPTotal();
-        
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
@@ -2816,8 +2813,8 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         
         // 포션 갱신
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
-        int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
-        myInfo->SetPotion(potion, potionRemainTime);
+        //int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetPotion(potion, myInfo->GetRemainPotionTimeNumber());
         
         // 코코 정보 갱신
         int mp = nodeResult.child("coco").attribute("magic-point").as_int();

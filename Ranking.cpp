@@ -153,7 +153,7 @@ void Ranking::RenewAllTime()
     // 따라서 갱신된 '포션남은시간'이 음수가 될 수 있는데, 12분씩 추가하면서 포션 값도 바꾸며 제자리를 찾아준다.
     int potion = myInfo->GetPotion();
     int remainPotionTime = myInfo->GetRemainPotionTimeNumber() - deltaTime;
-    while (remainPotionTime < 0)
+    while (potion < 5 && remainPotionTime < 0) // 예외 = game_end에서 포션 개수가 갱신되었기 때문에, 이미 개수가 5개보다 많을 수도 있다.
     {
         remainPotionTime += 720;
         potion++;
@@ -305,19 +305,19 @@ void Ranking::InitProperties()
     {
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
-        pos = ccp(904, 1611);
+        pos.x += 57;
     }
     if (myInfo->IsWater())
     {
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
+        pos.x += 57;
     }
     if (myInfo->IsLand())
     {
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "Ranking", this, 5) );
         spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
-        pos = ccp(959, 1611);
+        pos.x += 57;
     }
     
     for (int i = 0 ; i < spriteClassProperty->spriteObj.size() ; i++)
@@ -628,6 +628,9 @@ void Ranking::PotionTimer(float f)
 }
 
 
+CCRect rect;
+int kind;
+int idx;
 
 bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -638,6 +641,10 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrollViewTouched = false;
     
     CCPoint point = pTouch->getLocation();
+    
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
     
     // scrollview touch check
     if (scrollView->boundingBox().containsPoint(point))
@@ -650,29 +657,33 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
+                spriteClass->spriteObj[i]->sprite->setOpacity(200);
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
+                kind = BTN_MENU_GAMEREADY;
+                idx = i;
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png1")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png1")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png2")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png2")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
                 break;
             }
         }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_topinfo_plus.png3")
+        else if (spriteClass->spriteObj[i]->name == "background/bg_potion_time.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -767,27 +778,23 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
     }
     
-    //scrollViewLastPoint = scrollView->getContentOffset();
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_GAMEREADY:
+                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
+                spriteClass->spriteObj[idx]->sprite->setOpacity(255);
+                break;
+        }
+    }
+    else if (idx > -1)
+        spriteClass->spriteObj[idx]->sprite->setOpacity(255);
+    
     isOnceScrollViewTouched = true;
     isScrolling = false;
     isScrollViewTouched = false;
     isTouched = false;
-    
-    //scrollView->setBounceable(false);
-    //scrollView->setBounceable(true);
-    //scrollView->i
-    /*
-    //scrollView->setClippingToBounds(false);
-    //scrollView->setBounceable(false);
-    scrollView->setAccelerometerEnabled(true);
-    CCLog("%d" ,scrollView->isAccelerometerEnabled());
-    CCLog("%d" ,scrollView->isBounceable());
-    CCLog("%d" ,scrollView->isClippingToBounds());
-    */
-//    CCLog("%d" ,scrollView->isDragging());
-    //CCLog("%d", scrollView->isAccelerometerEnabled());
-    //scrollView->setAccelerometerEnabled(true);
-    //scrollView->setAccelerometerInterval(0.5);
 }
 
 
@@ -819,10 +826,6 @@ void Ranking::EndScene()
         pBlack->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
     

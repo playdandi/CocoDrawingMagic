@@ -165,7 +165,7 @@ void SketchDetail::InitSprites()
     // 스킬 이름 배경
     //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(300, 1177), CCSize(442, 89), "", "SketchDetail", this, 5) );
     // 스킬 이름
-    CCPoint pos = spriteClass->FindParentCenterPos("background/bg_gameready_name.png1");
+    //CCPoint pos = spriteClass->FindParentCenterPos("background/bg_gameready_name.png1");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(sInfo->GetName(), fontList[0], 60, ccp(0, 0), ccp(300, 1152), ccc3(0,0,0), "", "SketchDetail", this, 5) );
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(sInfo->GetName(), fontList[0], 48, ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), ccc3(0,0,0), "background/bg_gameready_name.png1", "1", NULL, 5, 1) );
     
@@ -189,7 +189,7 @@ void SketchDetail::InitSprites()
         sprintf(name, "0");
         sprintf(name2, "/0");
     }
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(0, 0), ccp(300+412+10, 1117), ccc3(255,255,255), "", "SketchDetail", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(1, 0), ccp(300+412+10+33-3, 1117), ccc3(255,255,255), "", "SketchDetail", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[2], 30, ccp(0, 0), ccp(300+412+10+33, 1112), ccc3(182,142,142), "", "SketchDetail", this, 5) );
     
     // dotted line
@@ -208,7 +208,10 @@ void SketchDetail::InitSprites()
     // 가격표
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "SketchDetail", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "SketchDetail", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
+    if (isOpened)
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, ms->GetLevel()+1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
+    else
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
     /*
     // 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
@@ -320,7 +323,7 @@ void SketchDetail::MakeOpenedSkillSprites()
     if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()))
     {
         btnStatus = 1;
-        // '강화' 글자 필요함
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_red.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     }
     // 일반적인 경우
     else
@@ -346,7 +349,7 @@ void SketchDetail::MakeClosedSkillSprites()
     
     int scid = skill_common_id;
     SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
-    MySkill* ms = MySkill::GetObj(scid);
+    //MySkill* ms = MySkill::GetObj(scid);
     
     // 문구
     CCLayer* descLayer = CCLayer::create();
@@ -416,7 +419,7 @@ void SketchDetail::MakeClosedSkillSprites()
     if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
     {
         btnStatus = 3;
-        // '배움' 글자 필요함
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     }
     // 아닌 경우
     else
@@ -626,9 +629,14 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
             CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
         else if (from == 1) // GameReady의 돈 정보 갱신
             CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        param = CCString::create("3");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
         // 스케치북 스킬리스트 화면 정보 갱신
+        param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        
+        
         
         // 성공/실패 팝업창 띄우기
         std::vector<int> data;

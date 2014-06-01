@@ -27,6 +27,8 @@ protected:
 
 private:
     CCSprite* pBlack;
+    CCSprite* pCoco;
+    CCSprite* pLoading;
 };
 
 #endif /* defined(__CocoMagic__Loading__) */

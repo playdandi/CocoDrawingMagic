@@ -11,7 +11,7 @@ static int fromWhere;
 
 static int newSkillType;
 
-CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc, int prio)
+CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc)
 {
     // data
     type = popupType;
@@ -88,147 +88,277 @@ void NoImage::InitSprites()
     
     spriteClass = new SpriteClass();
     
+    int offset = 0;
+    
     // pop-up 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "NoImage", this, 1) );
+                    ccp(0, 0), ccp(49, 640+offset), CCSize(982, 623-offset*2), "", "NoImage", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "NoImage", this, 1) );
+                    ccp(0, 0), ccp(76, 678+offset), CCSize(929, 562-offset*2), "", "NoImage", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png",
-                    ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "NoImage", this, 1) );
+                    ccp(0, 0), ccp(809, 1039-offset), CCSize(0, 0), "", "NoImage", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
-                    ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "NoImage", this, 1) );
+                    ccp(0, 0), ccp(900, 1132-offset), CCSize(0, 0), "", "NoImage", this, 1) );
+    
+    
+    bool hasImage = false;
+    if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == UPGRADE_STAFF_OK ||
+        type == BUY_TOPAZ_TRY || type == BUY_TOPAZ_OK || type == NEED_TO_BUY_TOPAZ ||
+        type == NEED_TO_BUY_STARCANDY || type == BUY_STARCANDY_OK || type == BUY_STARCANDY_TRY ||
+        type == NEED_TO_BUY_POTION || type == BUYPOTION_1 || type == BUYPOTION_OK ||
+        type == UPGRADE_FAIRY_OK || type == UPGRADE_FAIRY_BY_STARCANDY_TRY || type == UPGRADE_FAIRY_BY_TOPAZ_TRY ||
+        type == BUY_PROPERTY_TRY || type == BUY_PROPERTY_OK ||
+        type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_OK ||
+        type == TODAYCANDY_RESULT_LOSE || type == TODAYCANDY_RESULT_WIN)
+    {
+        hasImage = true;
+        
+        switch (type)
+        {
+            case UPGRADE_STAFF_BY_TOPAZ_TRY:
+            case UPGRADE_STAFF_BY_STARCANDY_TRY:
+            case UPGRADE_STAFF_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/magicstaff.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setScale(0.85f);
+                ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setRotation(20);
+                ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->runAction(CCRepeatForever::create(CCSequence::create(CCRotateBy::create(1.0f, -10), CCRotateBy::create(2.0f, 20), CCRotateBy::create(1.0f, -10), NULL)));
+                break;
+            case NEED_TO_BUY_TOPAZ:
+            case BUY_TOPAZ_TRY:
+            case BUY_TOPAZ_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_topaz.png"))->setScale(1.5f);
+                break;
+            case NEED_TO_BUY_STARCANDY:
+            case BUY_STARCANDY_TRY:
+            case BUY_STARCANDY_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_starcandy.png"))->setScale(1.5f);
+                break;
+            case NEED_TO_BUY_POTION:
+            case BUYPOTION_1:
+            case BUYPOTION_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_potion.png"))->setScale(2.0f);
+                break;
+            case UPGRADE_FAIRY_BY_STARCANDY_TRY:
+            case UPGRADE_FAIRY_BY_TOPAZ_TRY:
+            case UPGRADE_FAIRY_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_capsule.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_capsule.png"))->setScale(1.0f);
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_capsule.png"))->setRotation(20);
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_capsule.png"))->runAction(CCRepeatForever::create(CCSequence::create(CCRotateBy::create(1.0f, -10), CCRotateBy::create(2.0f, 20), CCRotateBy::create(1.0f, -10), NULL)));
+                break;
+            case BUY_PROPERTY_TRY:
+            case BUY_PROPERTY_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_room.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("image/coco_room.png"))->setScale(0.62f);
+                //((CCSprite*)spriteClass->FindSpriteByName("image/coco_room.png"))->setFlipX(true);
+                break;
+            case BUY_SKILLSLOT_BY_STARCANDY_TRY:
+            case BUY_SKILLSLOT_BY_TOPAZ_TRY:
+            case BUY_SKILLSLOT_OK:
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                ((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_yellow.png"))->setScale(1.3f);
+                break;
+            case TODAYCANDY_RESULT_WIN:
+            case TODAYCANDY_RESULT_LOSE:
+                CCSprite* profile = ProfileSprite::GetProfile(friendList[d[1]]->GetImageUrl());
+                if (friendList[d[1]]->GetImageUrl() != "")
+                {
+                    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2, 0, 255, 1.5f) );
+                    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "NoImage", this, 3) );
+                    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_profile.png"))->setScale(1.65f);
+                }
+                else
+                {
+                    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "NoImage", this, 2, 0, 255, 1.65f) );
+                }
+                break;
+        }
+    }
+    
     
     // text (각 팝업 상황에 맞는 문구를 만들어 출력한다)
-    int deltaX = 0;
-    CCPoint deltaSize = ccp(0, 0);
-    char text[250], cost[10];
+    //int deltaX = 0;
+    //CCPoint deltaSize = ccp(0, 0);
+    char text[250];
+    std::string title;
+    int fontSize = 40;
     switch (type)
     {
         case YOU_WERE_BLOCKED:
+            title = "오류";
             sprintf(text, "블록된 계정입니다. 문의사항은 help@playdandi.com 으로 이메일을 보내주세요."); break;
         case NEED_TO_REBOOT:
+            title = "다시 시작하기";
             sprintf(text, "세션 종료 혹은 업데이트로 인해 게임을 재부팅합니다."); break;
         case NEED_TO_BUY_POTION:
+            title = "포션 부족";
             sprintf(text, "포션이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NEED_TO_BUY_TOPAZ:
+            title = "토파즈 부족";
             sprintf(text, "토파즈가 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NEED_TO_BUY_STARCANDY:
+            title = "별사탕 부족";
             sprintf(text, "별사탕이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
         case NETWORK_FAIL:
+            title = "오류";
             sprintf(text, "[오류] 다시 시도해 주세요."); break;
         case BUY_TOPAZ_TRY:
+            title = "토파즈 구매하기";
             sprintf(text, "토파즈 %d개를 구매하시겠습니까?", priceTopaz[d[0]]->GetCount()); break;
         case BUY_TOPAZ_OK:
+            title = "토파즈 구매하기";
             sprintf(text, "토파즈를 성공적으로 구매하였습니다."); break;
         case BUY_STARCANDY_TRY:
+            title = "별사탕 구매하기";
             sprintf(text, "토파즈를 사용하여 별사탕 %d개를 구매하시겠습니까?", priceStarCandy[d[0]]->GetCount()); break;
         case BUY_STARCANDY_OK:
+            title = "별사탕 구매하기";
             sprintf(text, "별사탕을 성공적으로 구매하였습니다."); break;
         case POPUP_EXIT:
+            title = "종료하기";
             sprintf(text, "코코가 그리는 마법을 종료하시겠습니까?"); break;
         case BUYPOTION_1:
+            title = "포션 구매하기";
             sprintf(text, "토파즈 5개를 사용하여 포션 5개를 구매하시겠습니까?"); break;
         case BUYPOTION_OK:
+            title = "포션 구매하기";
             sprintf(text, "포션 5개를 구매하였습니다."); break;
         case POTION_SEND_TRY:
-            sprintf(text, "%s님에게 포션을 1개 보내시겠습니까?", friendList[d[0]]->GetNickname().c_str()); break;
+            title = "포션 보내기";
+            sprintf(text, "%s님에게 포션을 1개 보내시겠습니까?\n(1시간에 한 번 보낼 수 있습니다)", friendList[d[0]]->GetNickname().c_str()); break;
         case POTION_SEND_OK:
+            title = "포션 보내기";
             sprintf(text, "성공적으로 포션을 보냈습니다."); break;
         case POTION_SEND_REJECT:
+            title = "포션 보내기";
             sprintf(text, "수신 거부 상태인 친구입니다."); break;
         case POTION_SEND_NO_FRIEND:
+            title = "포션 보내기";
             sprintf(text, "친구가 아닙니다."); break;
         case POTION_SEND_EARLY:
+            title = "포션 보내기";
             sprintf(text, "포션을 보낸지 1시간이 경과하지 않았습니다."); break;
         case MESSAGE_OK_STARCANDY:
+            title = "메시지함";
             sprintf(text, "별사탕 %d개를 받았습니다.", d[0]); break;
         case MESSAGE_OK_TOPAZ:
+            title = "메시지함";
             sprintf(text, "토파즈 %d개를 받았습니다.", d[0]); break;
         case MESSAGE_OK_POTION:
+            title = "메시지함";
             sprintf(text, "포션 %d개를 받았습니다.", d[0]); break;
         case MESSAGE_OK_POTION_REQUEST:
+            title = "메시지함";
             sprintf(text, "요청한 포션을 보내고, 포션을 1개 받았습니다."); break;
         case MESSAGE_EMPTY:
+            title = "메시지함";
             sprintf(text, "삭제된 메시지입니다."); break;
         case MESSAGE_ALL_TRY:
+            title = "메시지함";
             sprintf(text, "포션을 모두 받으시겠습니까?"); break;
         case MESSAGE_ALL_OK:
+            title = "메시지함";
             sprintf(text, "모든 포션을 받았습니다."); break;
         case SEND_TOPAZ_TRY:
+            title = "토파즈 선물하기";
             sprintf(text, "%s님에게 토파즈 %d개를 선물하시겠습니까?", friendList[d[0]]->GetNickname().c_str(), priceTopaz[d[1]]->GetCount()); break;
         case SEND_TOPAZ_OK:
+            title = "토파즈 선물하기";
             sprintf(text, "토파즈를 선물하였습니다!"); break;
         case SEND_TOPAZ_FAIL:
+            title = "토파즈 선물하기";
             sprintf(text, "선물을 보내지 못하였습니다. 다시 시도해 주세요."); break;
             
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            title = "지팡이 강화하기";
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?\n(강화 확률이 높아요!)", myInfo->GetMPStaffPercent(),
                     magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            title = "지팡이 강화하기";
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            title = "지팡이 강화하기";
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 성공!\nMP가 많이 증가했어요!"); break;
         case UPGRADE_STAFF_FAIL:
+            title = "지팡이 강화하기";
             sound->playLvUpFail();
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
-            sprintf(text, "강화 실패!\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ"); break;
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
+            sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
         case UPGRADE_STAFF_FULL_LEVEL:
-            sprintf(text, "이미 지팡이가 최고 레벨입니다."); break;
+            title = "지팡이 강화하기";
+            sprintf(text, "이미 최고 레벨입니다."); break;
         
         case UPGRADE_FAIRY_BY_TOPAZ_TRY:
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            title = "요정 강화하기";
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "요정 강화 by 토파즈 \n(강화 확률이 높아요!)"); break;
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            title = "요정 강화하기";
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "요정 강화 by 별사탕"); break;
         case UPGRADE_FAIRY_OK:
+            title = "요정 강화하기";
             sound->playLvUpSuccess();
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 성공!\n 요정 능력치가 blah blah"); break;
         case UPGRADE_FAIRY_FAIL:
+            title = "요정 강화하기";
             sound->playLvUpFail();
-            deltaX = 150;
-            deltaSize = ccp(-200, 100);
-            sprintf(text, "강화 실패!\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ"); break;
+            //deltaX = 150;
+            //deltaSize = ccp(-200, 100);
+            sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
         case UPGRADE_FAIRY_FULL_LEVEL:
-            sprintf(text, "이미 요정이 최고 레벨입니다."); break;
+            title = "요정 강화하기";
+            sprintf(text, "이미 최고 레벨입니다."); break;
             
         case BUY_FAIRY_BY_STARCANDY_TRY:
+            title = "요정 구매하기";
             sprintf(text, "'%s' 요정을 별사탕 %d개로 구매하시겠습니까?", fairyInfo[d[0]]->GetName().c_str(), fairyInfo[d[0]]->GetCostStarCandy()); break;
         case BUY_FAIRY_BY_TOPAZ_TRY:
+            title = "요정 구매하기";
             sprintf(text, "'%s' 요정을 토파즈 %d개로 구매하시겠습니까?", fairyInfo[d[0]]->GetName().c_str(), fairyInfo[d[0]]->GetCostTopaz()); break;
         case BUY_FAIRY_OK:
+            title = "요정 구매하기";
             sprintf(text, "요정을 성공적으로 구매하였습니다!"); break;
         case BUY_FAIRY_FAIL:
+            title = "요정 구매하기";
             sprintf(text, "요정을 구매하지 못하였습니다. 다시 시도해 주세요."); break;
+            
         case UPGRADE_SKILL_OK:
+            title = "마법 강화하기";
             sprintf(text, "축하해요! '%s'의 레벨이 %d가 되었어요!", SkillInfo::GetSkillInfo(d[0])->GetName().c_str(), d[1]); break;
-        case UPGRADE_SKILL_FAIL:
-        case PURCHASE_SKILL_FAIL:
-            sprintf(text, "에러 발생. 다시 시도해주세요."); break;
         case PURCHASE_SKILL_OK:
+            title = "마법 배우기";
             sprintf(text, "축하해요! '%s' 마법을 새로 배웠어요!", SkillInfo::GetSkillInfo(d[0])->GetName().c_str()); break;
         case BUY_SKILLSLOT_BY_STARCANDY_TRY:
         case BUY_SKILLSLOT_BY_TOPAZ_TRY:
+            title = "슬롯 구매하기";
             sprintf(text, "%d번째 슬롯을 구매하시겠습니까?", d[0]); break;
         case BUY_SKILLSLOT_OK:
+            title = "슬롯 구매하기";
             sprintf(text, "슬롯을 성공적으로 구매하였습니다."); break;
         case BUY_SKILLSLOT_FAIL:
+            title = "슬롯 구매하기";
             sprintf(text, "슬롯 구매를 실패하였습니다. 다시 시도해 주세요."); break;
         case BUY_SKILLSLOT_FULL:
+            title = "슬롯 구매하기";
             sprintf(text, "이미 모든 슬롯을 구매하였습니다."); break;
         case BUY_PROPERTY_TRY:
+            title = "마법 속성 열기";
             switch (d[0])
             {
                 case 1: sprintf(text, "'불'속성 마법을 배우게 됩니다. '불'속성을 습득하시겠습니까?"); break;
@@ -238,34 +368,52 @@ void NoImage::InitSprites()
             }
             break;
         case BUY_PROPERTY_FAIL:
+            title = "마법 속성 열기";
             sprintf(text, "속성 습득을 실패하였습니다. 다시 시도해 주세요."); break;
         case BUY_PROPERTY_OK:
+            title = "마법 속성 열기";
             sprintf(text, "새로운 속성을 습득하였습니다. 더욱 풍부해진 마법들을 새로 익혀 보세요!"); break;
+            
         case INVITE_FRIEND_OK:
+            title = "친구 초대하기";
             sprintf(text, "친구를 초대하였습니다. 별사탕 1,000개와 포션 1개를 지급해 드렸습니다."); break;
         case INVITE_FRIEND_MONTH_OVER_30:
+            title = "친구 초대하기";
             sprintf(text, "한달 최대 30명까지만 초대 가능합니다. 다음 달에 새로운 친구를 불러 보아요!"); break;
         case INVITE_FRIEND_DAY_OVER_20:
+            title = "친구 초대하기";
             sprintf(text, "하루 최대 20명까지만 초대 가능합니다. 내일 새로운 친구를 불러 보아요!"); break;
         case INVITE_FRIEND_ALREADY_DID:
+            title = "친구 초대하기";
             sprintf(text, "이미 초대장을 보낸 친구입니다."); break;
         case INVITE_FRIEND_10:
+            title = "친구 초대하기";
             sprintf(text, "친구를 10명 초대하여 별사탕 15,000개가 추가로 지급되었습니다."); break;
         case INVITE_FRIEND_20:
+            title = "친구 초대하기";
             sprintf(text, "친구를 20명 초대하여 토파즈 10개가 추가로 지급되었습니다."); break;
         case INVITE_FRIEND_30:
+            title = "친구 초대하기";
             sprintf(text, "친구를 30명 초대하여 토파즈 25개가 추가로 지급되었습니다."); break;
+            
         case REQUEST_POTION_OK:
+            title = "포션 조르기";
             sprintf(text, "포션을 성공적으로 요청하였습니다."); break;
         case REQUEST_POTION_REJECT:
+            title = "포션 조르기";
             sprintf(text, "수신거부 상태인 친구입니다."); break;
         case REQUEST_POTION_EARLY:
         case REQUEST_TOPAZ_EARLY:
+            title = "포션 조르기";
             sprintf(text, "요청한 친구에게는 24시간 후 다시 요청 가능합니다."); break;
+            
         case REQUEST_TOPAZ_OK:
+            title = "토파즈 조르기";
             sprintf(text, "토파즈를 성공적으로 요청하였습니다."); break;
         case REQUEST_TOPAZ_NO_FRIEND:
+            title = "토파즈 조르기";
             sprintf(text, "친구가 아닙니다."); break;
+            
         case TODAYCANDY_RESULT_WIN:
             char present[15];
             switch (myInfo->GetTodayCandyType())
@@ -274,7 +422,11 @@ void NoImage::InitSprites()
                 case 2: sprintf(present, "토파즈"); break;
                 case 3: sprintf(present, "포션"); break;
             }
-            sprintf(text, "축하합니다! 오늘의 별사탕에 당첨되셨어요! %s %d개를 지급해 드렸습니다. 참가한 친구들에게는 %s %d개를 보냈습니다.", present, myInfo->GetTodayCandyValueChoice(), present, myInfo->GetTodayCandyValueMiss());
+            title = present;
+            title += " 당첨!";
+            fontSize = 32;
+            //sprintf(text, "축하합니다! %s님께서 오늘의 별사탕에 당첨되셨어요! %s %d개를 지급해 드렸습니다. 참가한 친구들에게는 %s %d개를 보냈습니다.", present, myInfo->GetTodayCandyValueChoice(), present, myInfo->GetTodayCandyValueMiss());
+            sprintf(text, "축하합니다!\n%s님께서 %s %d개에 당첨되셨어요.\n(메시지함으로 전송되었습니다)", MyInfo::GetName().c_str(), present, myInfo->GetTodayCandyValueChoice());
             break;
         case TODAYCANDY_RESULT_LOSE:
             switch (myInfo->GetTodayCandyType())
@@ -283,43 +435,93 @@ void NoImage::InitSprites()
                 case 2: sprintf(present, "토파즈"); break;
                 case 3: sprintf(present, "포션"); break;
             }
-            sprintf(text, "참가상으로 %s %d개를 지급해 드렸습니다! 오늘은 \"%s\"님이 당첨되어 %s %d개를 보냈습니다. 카카오톡 메시지를 전달하시겠습니까?", present, myInfo->GetTodayCandyValueMiss(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
+            title = present;
+            title += " 당첨!";
+            fontSize = 32;
+            //sprintf(text, "참가상으로 %s %d개를 지급해 드렸습니다! 오늘은 \"%s\"님이 당첨되어 %s %d개를 보냈습니다. 카카오톡 메시지를 전달하시겠습니까?", present, myInfo->GetTodayCandyValueMiss(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
+            sprintf(text, "축하합니다!\n%s님께서 %s %d개에 당첨되셨어요.\n%s님께 %s %d개를 보냅니다.\n(카카오톡 메시지가 전송됩니다)", Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
             break;
         case TODAYCANDY_ALREADY_DONE:
+            title = "오늘의 별사탕";
             sprintf(text, "오늘은 이미 완료한 상태입니다."); break;
+        case TODAYCANDY_NOTENOUGH_FRIENDS:
+            title = "오늘의 별사탕";
+            sprintf(text, "친구가 4명 필요해요.\n친구를 초대해 보아요."); break;
+        case PRACTICE_SKILL_FULL_EXP:
+            title = "스킬 연습 완료";
+            sprintf(text, "'%s'\n스킬의 연습이 완료되었습니다.\n스케치북에서 LEVEL UP 하세요!", SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName().c_str());
+            break;
     }
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
+
+    // 내용 문장
+    if (!hasImage)
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(winSize.width/2, winSize.height/2), ccc3(78,47,8), CCSize(829-20, 250), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
+    else
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], fontSize, ccp(0, 0.5), ccp(126+254+50, winSize.height/2), ccc3(78,47,8), CCSize(525, 250), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
+    
+    // 팝업창 타이틀 (종료할 때만 띄우지 않는다)
+    if (type != POPUP_EXIT)
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(126+5, 678+562-offset - 35), CCSize(759-126+52, 90), "", "NoImage", this, 1) );
+        CCPoint pos = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(title, fontList[0], 48, ccp(0.5,0.5), ccp(pos.x+2, pos.y+3-1), ccc3(0,0,0), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(title, fontList[0], 48, ccp(0.5,0.5), ccp(pos.x, pos.y+3), ccc3(242,242,242), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
+    }
+    
     
     // 가격표
-    if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_PROPERTY_TRY)
+    if (type == BUY_TOPAZ_TRY) // 유일하게 '별사탕'/'토파즈' 아이콘이 없는 경우임
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
-                    ccp(0, 0), ccp(493, 723), CCSize(201, 77), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0, 0), ccp(493, 723+offset), CCSize(201, 77), "", "NoImage", this, 5) );
+        CCPoint pos = spriteClass->FindParentCenterPos("background/bg_degree_desc.png2");
+        
+        std::string val = "";
+        if (myInfo->GetDeviceType() == 1) // ANDROID
+            val = "₩ " + Common::MakeComma(d[1]);
+        else if (myInfo->GetDeviceType() == 2) // iPHONE
+            val = "$ " + Common::MakeComma(d[1]/100) + "." + Common::MakeComma(d[1]%100);
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 40, ccp(0.5, 0.5), ccp(pos.x+2, pos.y-2), ccc3(0,0,0), "background/bg_degree_desc.png2", "1", NULL, 5, 1) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 40, ccp(0.5, 0.5), pos, ccc3(255,255,255), "background/bg_degree_desc.png2", "1", NULL, 5, 1) );
+    }
+    else if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_PROPERTY_TRY || type == BUYPOTION_1)
+    {
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0, 0), ccp(493, 723+offset), CCSize(201, 77), "", "NoImage", this, 5) );
         
         if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
         else
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730), CCSize(0, 0), "", "NoImage", this, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
         
+        char cost[10];
         sprintf(cost, "x %d", d[1]);
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 36, ccp(0, 0), ccp(580, 743), ccc3(255,255,255), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580+2, 743+offset-2), ccc3(0,0,0), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580, 743+offset), ccc3(255,255,255), "", "NoImage", this, 5) );
     }
     
     
     // 취소 버튼이 필요할 경우 넣는다.
     if (btn == BTN_2)
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png",
-                    ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711+offset), CCSize(0, 0), "", "NoImage", this, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_cancel.png",
-            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 5) );
+            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 5, 1) );
     }
     
-    // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png",
-                    ccp(0, 0), ccp(717, 711), CCSize(0, 0), "", "NoImage", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",
-            ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5) );
+    
+    if (type == TODAYCANDY_NOTENOUGH_FRIENDS)
+    {
+        // 오.별 사람수 모자란 팝업창에서만 버튼이 다르다.
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(717+5-200, 711-7+offset), CCSize(0, 0), "", "NoImage", this, 5) );
+        CCPoint pos = spriteClass->FindParentCenterPos("button/btn_blue.png");
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_friendinvite.png", ccp(0.5,0.5), ccp(pos.x, pos.y+7), CCSize(0, 0), "button/btn_blue.png", "0", NULL, 5, 1) );
+    }
+    else
+    {
+        // 확인 버튼
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711+offset), CCSize(0, 0), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    }
     
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -355,6 +557,16 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_blue.png")
+        {
+            // 오.별에서 친구 부족하다는 팝업창에서 '친구 초대하기' 버튼 눌렀을 때
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                Common::ShowNextScene(Depth::GetParentPointer(), "CocoRoom", "InviteFriend", false);
+                EndScene();
+                return true;
+            }
+        }
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -384,6 +596,11 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         // 요정 구매 성공 후에는 'FairyOneInfo' 창도 같이 끄자.
                         CCString* param = CCString::create("2");
                         CCNotificationCenter::sharedNotificationCenter()->postNotification("FairyOneInfo", param);
+                    }
+                    else if (type == PRACTICE_SKILL_FULL_EXP)
+                    {
+                        EndScene();
+                        Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "Sketchbook", false, 0);
                     }
                     else
                     {
@@ -791,6 +1008,12 @@ void NoImage::XmlParseBuyTopaz(char* data, int size)
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
         myInfo->SetMoney(topaz, starcandy);
         
+        // 부모 scene에 갱신
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+        
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
     }
@@ -823,6 +1046,12 @@ void NoImage::XmlParseBuyStarCandy(char* data, int size)
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
         myInfo->SetMoney(topaz, starcandy);
+        
+        // 부모 scene에 갱신
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUY_STARCANDY_OK, BTN_1);
@@ -859,6 +1088,11 @@ void NoImage::XmlParseBuyPotion(char* data, int size)
         int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
         myInfo->SetMoney(topaz, starcandy);
         myInfo->SetPotion(potion, remainTime);
+        
+        // 부모 scene에 갱신
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUYPOTION_OK, BTN_1);
@@ -1180,14 +1414,13 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
             myInfo->AddFairy(cfi, ufi, level, isUse);
         }
         
-        // GameReady에 topaz, starcandy, mp 정보 변경시킨다.
-        CCString* param = CCString::create("2");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        
         // CocoRoomFairyTown에 요정리스트 정보 갱신한다.
+        CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoomFairyTown", param);
         
-        // CocoRoom에 요정슬롯 정보 갱신한다.
+        // CocoRoom에 요정슬롯 + (토파즈/별사탕/MP) 정보 갱신한다.
+        param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         param = CCString::create("8");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         
@@ -1257,13 +1490,17 @@ void NoImage::XmlParseBuySkillSlot(char* data, int size)
         
         // 부모 scene에 슬롯 정보 갱신된 것 전달
         CCString* param = CCString::create("9");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+        /*
         if (fromWhere == 1)
             CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         else if (fromWhere == 2)
             CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         else if (fromWhere == 3)
             CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-        
+        */
         ReplaceScene("NoImage", BUY_SKILLSLOT_OK, BTN_1);
     }
     else
@@ -1313,6 +1550,11 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
         int land = nodeResult.child("properties").attribute("land").as_int();
         int master = nodeResult.child("properties").attribute("master").as_int();
         myInfo->SetProperties(fire, water, land, master);
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+                friendList[i]->SetProperties(fire, water, land, master);
+        }
         
         // 각 scene에 property 정보 갱신된 것 전달
         CCString* param = CCString::create("8");

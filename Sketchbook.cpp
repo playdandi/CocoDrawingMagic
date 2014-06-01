@@ -147,6 +147,11 @@ void Sketchbook::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         CCLog("스케치북 : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        
+        // 토파즈, 별사탕, MP 정보 업데이트
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
     }
     else if (param->intValue() == 1)
     {
@@ -385,6 +390,8 @@ void Sketchbook::MakeScrollBook(int idx)
         else
             sInfo = SkillInfo::GetSkillInfo(ms[i]->GetCommonId());
         
+        //CCLog("next skill = (%d), %s", sInfo->GetId(), sInfo->GetName().c_str());
+        
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setPosition(ccp(27, (std::min(numOfList, 8)-i-1)*206));
         containerBook->addChild(itemLayer, 5);
@@ -436,8 +443,12 @@ void Sketchbook::MakeScrollBook(int idx)
         // 스킬 이름
         CCPoint pos = spriteClassBook->FindParentCenterPos(name);
         spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(sInfo->GetName(), fontList[0], 48, ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), ccc3(255,255,255), name, "1", NULL, 5, 1) );
+        
         // 스킬 간략 설명
-        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetShortDesc(sInfo->GetId()), fontList[0], 30, ccp(0.5, 0.5), ccp(169+(int)pos.x, 92), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
+        if (i < numOfList-1)
+            spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(SkillInfo::GetShortDesc(sInfo->GetId()), fontList[0], 30, ccp(0.5, 0.5), ccp(169+(int)pos.x, 92), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
+        else
+            spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel("스킬을 배우면 알 수 있어요", fontList[0], 30, ccp(0.5, 0.5), ccp(169+(int)pos.x, 92), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
         
         // '패시브' 스킬에 대해 '자동효과' 문구 넣기
         if (!sInfo->IsActive() && i < numOfList-1)
@@ -450,15 +461,19 @@ void Sketchbook::MakeScrollBook(int idx)
         sprintf(name, "background/bg_progress_bar.png%d", i+3);
         spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(133, 28), CCSize(412, 31), "", "Layer", itemLayer, 5) );
         
+        
         // 연습량 프로그레스바 안의 바
-        float percentage = ((float)ms[i]->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()));
-        CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-12));
-        bar->setAnchorPoint(ccp(0, 0));
-        bar->setPosition(ccp(133+4, 28+8));
-        bar->setColor(ccc3(255,255,255));
-        if (ms[i]->GetExp() == SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()))
-            bar->setColor(ccc3(255,219,53));
-        itemLayer->addChild(bar, 10);
+        if (i < numOfList-1)
+        {
+            float percentage = ((float)ms[i]->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()))   ;
+            CCSprite* bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-12));
+            bar->setAnchorPoint(ccp(0, 0));
+            bar->setPosition(ccp(133+4, 28+8));
+            bar->setColor(ccc3(255,255,255));
+            if (ms[i]->GetExp() == SkillBuildUpInfo::GetMaxExp(ms[i]->GetCommonId(), ms[i]->GetLevel()))
+                bar->setColor(ccc3(255,219,53));
+            itemLayer->addChild(bar, 10);
+        }
         
         // 현재 경험치 (연습량) + 레벨업을 위한 max경험치 (연습량)
         if (i < numOfList-1)
@@ -471,7 +486,7 @@ void Sketchbook::MakeScrollBook(int idx)
             sprintf(name, "0");
             sprintf(name2, "/0");
         }
-        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(0, 0), ccp(549, 31), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
+        spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(1, 0), ccp(582-3, 31), ccc3(255,255,255), "", "Layer", itemLayer, 5) );
         spriteClassBook->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[2], 30, ccp(0, 0), ccp(582, 25), ccc3(182,142,142), "", "Layer", itemLayer, 5) );
         
         if (i < numOfList-1)
@@ -489,7 +504,7 @@ void Sketchbook::MakeScrollBook(int idx)
             {
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, ms[i]->GetCommonId()) ); // 태그에 common_id를 둔다.
-                sprintf(name2, "letter/letter_practice.png%d", i+3);
+                sprintf(name2, "letter/letter_buildup_red.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
@@ -514,6 +529,12 @@ void Sketchbook::MakeScrollBook(int idx)
             {
                 sprintf(name, "button/btn_green_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
+                
+                CCPoint p = spriteClassBook->FindParentCenterPos(name);
+                sprintf(name2, "letter/letter_require.png%d", i);
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setScale(0.95f);
+                
                 sprintf(name2, "icon/icon_levelup.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
@@ -525,6 +546,9 @@ void Sketchbook::MakeScrollBook(int idx)
             {
                 sprintf(name, "button/btn_green_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
+                CCPoint p = spriteClassBook->FindParentCenterPos(name);
+                sprintf(name2, "letter/letter_require.png%d", i);
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
         }
     }
@@ -652,6 +676,24 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1);
                 }
+                break;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png1")
+        {
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
+                break;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png2")
+        {
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
                 break;
             }
         }

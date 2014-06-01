@@ -43,6 +43,8 @@ protected:
     bool isScrolling;
     bool isScrollViewTouched;
     
+    int code;
+    
 private:
     SpriteClass* spriteClass;
     SpriteClass* spriteClassBtn;
