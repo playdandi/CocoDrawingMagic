@@ -118,7 +118,7 @@ void PuzzleResult::InitSprites()
     // 기록갱신 마크
     if (myGameResult->isNewRecord)
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_newrecord.png", ccp(0.5, 0.5), ccp(240, 1340+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_newrecord.png", ccp(0.5, 0.5), ccp(320, 1389+90+off), CCSize(0, 0), "", "PuzzleResult", this, 1002) );
     }
     
     // 점수
@@ -149,12 +149,15 @@ void PuzzleResult::InitSprites()
     
     // 기본점수 값
     sprintf(number, "%s", Common::MakeComma(myGameResult->score).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500+2, 1088+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500, 1088+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     // MP 추가점수 값
     sprintf(number, "+ %s", Common::MakeComma(myGameResult->totalScore - myGameResult->score).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500+2, 1018+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500, 1018+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     // 콤보 값
     sprintf(number, "%d", myGameResult->combo);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 42, ccp(0, 0.5), ccp(500+2, 958+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 42, ccp(0, 0.5), ccp(500, 958+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     
     /*
@@ -176,9 +179,11 @@ void PuzzleResult::InitSprites()
     
     // 별사탕 개수
     sprintf(number, "+ %s", Common::MakeComma(myGameResult->getStarCandy).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265+2, 907-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265, 907), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     // 추가 MP 수
     sprintf(number, "+ %s", Common::MakeComma(myGameResult->getMP).c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265+2, 840-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265, 840), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     
     // 포션 빈칸
@@ -240,11 +245,14 @@ void PuzzleResult::InitSprites()
         // 미션 성공/실패 아이콘 노출
         if (myGameResult->isMissionSuccess)
         {
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_success.png", ccp(0.5,0.5), ccp(125+15, 525+146-30), CCSize(0,0), "", "PuzzleResult", this, 1005) );
-            ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_success.png"))->setScale(0.9f);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_success.png", ccp(0.5,0.5), ccp(125+5, 525+146-30+30), CCSize(0,0), "", "PuzzleResult", this, 1005) );
+            ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_success.png"))->setRotation(-20);
         }
         else
+        {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_fail.png", ccp(0.5,0.5), ccp(125+40, 525+146-20), CCSize(0,0), "", "PuzzleResult", this, 1010) );
+            ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_fail.png"))->setRotation(-10);
+        }
         
         // 연습량 프로그레스바 안의 노란 바
         barLayer = CCLayer::create();

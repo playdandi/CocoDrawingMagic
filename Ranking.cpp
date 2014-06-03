@@ -35,7 +35,7 @@ void Ranking::onEnter()
     
     if (fromWhere != -1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
-    else if (!myInfo->IsWeeklyRankReward())
+    else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onExit()
@@ -628,9 +628,9 @@ void Ranking::PotionTimer(float f)
 }
 
 
-CCRect rect;
-int kind;
-int idx;
+static CCRect rect;
+static int kind;
+static int idx;
 
 bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -657,9 +657,9 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                spriteClass->spriteObj[i]->sprite->setOpacity(200);
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(170,170,170));
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
-                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
                 kind = BTN_MENU_GAMEREADY;
                 idx = i;
                 break;
@@ -773,7 +773,7 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(i);
                 Common::ShowPopup(this, "Ranking", "NoImage", false, POTION_SEND_TRY, BTN_2, data);
-                break;
+                return;
             }
         }
     }
@@ -784,12 +784,16 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             case BTN_MENU_GAMEREADY:
                 Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
-                spriteClass->spriteObj[idx]->sprite->setOpacity(255);
+                //spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+                //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
                 break;
         }
     }
-    else if (idx > -1)
-        spriteClass->spriteObj[idx]->sprite->setOpacity(255);
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
+    }
     
     isOnceScrollViewTouched = true;
     isScrolling = false;
@@ -826,6 +830,10 @@ void Ranking::EndScene()
         pBlack->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
     

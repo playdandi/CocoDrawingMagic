@@ -15,7 +15,6 @@ CCScene* Loading::scene(int stat)
     status = stat;
     
 	CCScene* pScene = CCScene::create();
-    
 	Loading* pLayer = Loading::create();
 	pScene->addChild(pLayer);
     
@@ -25,15 +24,11 @@ CCScene* Loading::scene(int stat)
 void Loading::onEnter()
 {
     CCLog("Loading :: onEnter");
-    //CCDirector* pDirector = CCDirector::sharedDirector();
-    //pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void Loading::onExit()
 {
     CCLog("Loading :: onExit");
-    //CCDirector* pDirector = CCDirector::sharedDirector();
-    //pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
 }
 
@@ -48,6 +43,10 @@ bool Loading::init()
     
     if (status == -1)
     {
+        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
+        
+        LoadingSprites();
+        
         // gameStart protocol
         // http://14.63.225.203/cogma/game/game_start.php?kakao_id=1000&item_a=0&item_b=0&item_c=0&item_d=0&item_e=0
         char temp[255];
@@ -69,39 +68,24 @@ bool Loading::init()
         req->setResponseCallback(this, httpresponse_selector(Loading::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
         req->release();
+    }
+    else if (status == LOADING_PUZZLEEND)
+    {
+        // make depth tree
+        Depth::AddCurDepth("Loading", this);
         
-        pCoco = CCSprite::createWithSpriteFrameName("image/coco_room.png");
-        pCoco->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
-        pCoco->setScale(0.8f);
-        this->addChild(pCoco, 5);
-        
-        pLoading = CCSprite::createWithSpriteFrameName("letter/letter_loading1.png");
-        pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-200));
-        this->addChild(pLoading, 5);
-        
-        CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -20)), CCMoveBy::create(0.5f, ccp(0, 20)), NULL);
-        pLoading->runAction(CCRepeatForever::create(action));
+        LoadingSprites();
     }
     
     else
     {
         // make depth tree
         Depth::AddCurDepth("Loading", this);
-        
-        CCLog("Loading 시작 주소 : %p", this);
     
         // notification post
         CCString* param = CCString::create("1");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-        
-        /*
-        pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
-        pBlack->setPosition(ccp(0, 0));
-        pBlack->setAnchorPoint(ccp(0, 0));
-        pBlack->setColor(ccc3(0, 0, 0));
-        pBlack->setOpacity(160);
-        this->addChild(pBlack, 5000);
-         */
+
         pLoading = CCSprite::createWithSpriteFrameName("icon/icon_loading_android.png");
         pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
         this->addChild(pLoading, 5000);
@@ -109,6 +93,45 @@ bool Loading::init()
     }
     
 	return true;
+}
+
+void Loading::LoadingSprites()
+{
+    pCoco = CCSprite::createWithSpriteFrameName("loading/coco_loading.png");
+    pCoco->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
+    pCoco->setScale(1.0f);
+    this->addChild(pCoco, 5);
+    
+    pLoading = CCSprite::createWithSpriteFrameName("loading/loading1.png");
+    pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
+    pLoading->setTag(1);
+    this->addChild(pLoading, 5);
+    pLoading2 = CCSprite::createWithSpriteFrameName("loading/loading2.png");
+    pLoading2->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
+    pLoading2->setTag(2);
+    pLoading2->setOpacity(0);
+    this->addChild(pLoading2, 5);
+    
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
+    pLoading->runAction(action);
+}
+
+void Loading::Callback(CCNode* sender, void* pointer)
+{
+    CCLog("!!!!!!!! : %d", sender->getTag());
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
+    if (sender->getTag() == 1)
+    {
+        pLoading->setOpacity(255);
+        pLoading2->setOpacity(0);
+        pLoading->runAction(action);
+    }
+    else
+    {
+        pLoading->setOpacity(0);
+        pLoading2->setOpacity(255);
+        pLoading2->runAction(action);
+    }
 }
 
 void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
@@ -233,10 +256,7 @@ void Loading::XmlParseGameStart(char* data, int size)
         // image memory 해제
         pCoco->removeFromParentAndCleanup(true);
         pLoading->removeFromParentAndCleanup(true);
-        CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
-        CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
-        CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
-        CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+        pLoading2->removeFromParentAndCleanup(true);
         
         // 게임 시작!
         Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
@@ -258,6 +278,11 @@ void Loading::EndScene()
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     pLoading->removeFromParentAndCleanup(true);
+    if (status == LOADING_PUZZLEEND)
+    {
+        pCoco->removeFromParentAndCleanup(true);
+        pLoading2->removeFromParentAndCleanup(true);
+    }
     
     this->removeFromParentAndCleanup(true);
 }

@@ -19,6 +19,8 @@ public:
     
     void InitSprites();
     
+    void Notification(CCObject* obj);
+    
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseResult(char* data, int size);
     
@@ -36,6 +38,8 @@ protected:
     bool kakaoMsgReserved;
     bool pushNotiReserved;
     bool potionMsgReserved;
+    
+    int code;
     
 private:
     CCSprite* pBlack;

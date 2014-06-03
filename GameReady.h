@@ -65,6 +65,10 @@ private:
     SpriteClass* spriteClassFairy;
     SpriteClass* spriteClassSkill;
     SpriteClass* spriteClassSlot;
+    
+    CCScale9Sprite* sp9;
+    CCDrawNode* stencil;
+    CCClippingNode* clip;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */

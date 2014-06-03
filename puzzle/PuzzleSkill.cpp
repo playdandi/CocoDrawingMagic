@@ -592,9 +592,12 @@ void PuzzleSkill::F5(int num)
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 정령을 화면에서 없애기
+    GetEffect()->RemoveSpirit(0);
+    /*
     GetEffect()->GetSpirit(0)->setDuration(0.3f);
     GetEffect()->GetSpirit(0)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(0);
+    */
     isSpiritAlive[0] = false;
     
     UpdateAppliedSkillCount(num);
@@ -846,19 +849,24 @@ void PuzzleSkill::F7Recur(int x, int y, int type, std::vector<CCPoint>& v)
         F7Recur(x+1, y, type, v);
 }
 
+static PuzzleSkill* psF8;
+
 void PuzzleSkill::F8(int num, int queue_pos)
 {
     // 붉은 용의 숨결
     
     UpdateAppliedSkillCount(num);
     
+    psF8 = this;
+    
+    F8_finishCnt = 0;
     A8_pos.clear();
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
         for (int y = 0 ; y < ROW_COUNT ; y++)
             F8_check[x][y] = 0;
     F8_check[0][0] = F8_check[0][ROW_COUNT-1] = F8_check[COLUMN_COUNT-1][0] = F8_check[COLUMN_COUNT-1][ROW_COUNT-1] = -1;
     
-    int count = rand()%skillLevel[num] + 7;
+    int count = skillLevel[num] + 7;
     
     // 카운트 개수만큼 랜덤한 위치를 구한다.
     int x, y, ch, idx = 0;
@@ -924,6 +932,77 @@ void PuzzleSkill::F8Check(int x, int y, int idx)
     }
 }
 
+void PuzzleSkill::F8_Timer()
+{
+    A8_callbackCnt = 0;
+    m_pGameLayer->schedule(schedule_selector(PuzzleSkill::F8_Comet), 0.2f);
+}
+void PuzzleSkill::F8_Comet(float f)
+{
+    if (psF8->m_pGameLayer->IsPaused())
+        return;
+    
+    psF8->A8_callbackCnt++;
+    if (psF8->A8_callbackCnt >= (int)psF8->A8_pos.size())
+        psF8->m_pGameLayer->unschedule(schedule_selector(PuzzleSkill::F8_Comet));
+    
+    //CCLog("timer callback cnt : %d", psF8->A8_callbackCnt);
+    Effect* ef = psF8->m_pGameLayer->GetEffect();
+    ef->Effect7_Callback_2(psF8->A8_callbackCnt-1, ef);
+}
+
+void PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
+{
+    SetQueuePos(queue_pos);
+    F8_bombCallbackCnt[idx] = 0;
+    CCLog("F8 Bomb : (idx = %d)", idx);
+    int x, y;
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        x = (int)pos[i].x;
+        y = (int)pos[i].y;
+        
+        m_pGameLayer->UpdatePieceBombCnt(m_pGameLayer->GetPuzzleP8Set()->GetType(x, y), 1);
+        
+        CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F8_BombCallback), this), NULL);
+        m_pGameLayer->GetSpriteP8(x, y)->setTag(idx);
+        m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
+    }
+}
+
+void PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
+{
+    PuzzleSkill* pss = (PuzzleSkill*)pointer;
+    int idx = sender->getTag();
+    
+    pss->F8_bombCallbackCnt[idx]++;
+    if (pss->F8_bombCallbackCnt[idx] >= pss->result_double_pos[idx].size())
+    {
+        int x, y;
+        for (int i = 0 ; i < pss->result_double_pos[idx].size() ; i++)
+        {
+            x = pss->result_double_pos[idx][i].x;
+            y = pss->result_double_pos[idx][i].y;
+            pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+            pss->m_pGameLayer->SetSpriteP8Null(x, y);
+        }
+        
+        pss->m_pGameLayer->FallingQueuePushAndFalling(pss->queuePos);
+    }
+}
+
+
+
+
+void PuzzleSkill::F8_FinishCountUp()
+{
+    F8_finishCnt++;
+    CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
+}
+bool PuzzleSkill::F8_IsFinished()
+{
+    return (F8_finishCnt >= (int)A8_pos.size());
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1038,9 +1117,12 @@ void PuzzleSkill::W5(int num)
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 정령을 화면에서 없애기
+    GetEffect()->RemoveSpirit(1);
+    /*
     GetEffect()->GetSpirit(1)->setDuration(0.3f);
     GetEffect()->GetSpirit(1)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(1);
+    */
     isSpiritAlive[1] = false;
     
     UpdateAppliedSkillCount(num);
@@ -1246,6 +1328,7 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
             // scale 조정해서 action 준비한다.
             float scale = pss->m_pGameLayer->GetBoardSize() / (float)1076;
             //float scale = pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->getScale();
+            CCLog("scale = %f" ,scale);
             pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setScale(0.0f);
             
             // action !
@@ -1322,6 +1405,8 @@ void PuzzleSkill::W8_LastChange()
     {
         x = (int)ps->result_pos[i].x;
         y = (int)ps->result_pos[i].y;
+        
+        CCLog("last : %d %d", x, y);
         
         // lock을 건다.
         //ps->m_pGameLayer->LockEach(x, y);
@@ -1533,9 +1618,12 @@ void PuzzleSkill::E5(int num)
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 정령을 화면에서 없애기
+    GetEffect()->RemoveSpirit(2);
+    /*
     GetEffect()->GetSpirit(2)->setDuration(0.3f);
     GetEffect()->GetSpirit(2)->setAutoRemoveOnFinish(true);
     GetEffect()->ReleaseSpirit(2);
+    */
     isSpiritAlive[2] = false;
     
     UpdateAppliedSkillCount(num);

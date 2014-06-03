@@ -205,7 +205,7 @@ void MagicList::InitSprites()
     }
     
     // 스킬 선택/비선택할 때 설명 text
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("", fontList[0], 36, ccp(0, 0), ccp(77+15, 726+15), ccc3(0,0,0), CCSize(929-15*2, 200-15*2), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("", fontList[0], 32, ccp(0.5, 0.5), ccp(77+929/2, 726+offset+200/2), ccc3(0,0,0), CCSize(929-80, 200-15), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10, 0, 255, 999) );
     
     
     // slot part
@@ -341,6 +341,11 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         
                         RenewSlot();
                         sound->playClick();
+                        
+                        // 설명 글 갱신
+                        ((CCLabelTTF*)spriteClass->FindLabelByTag(999))->setString(
+                            ("[ "+SkillInfo::GetSkillInfo(sid)->GetName()+" ]\n  "+SkillInfo::GetFullDesc(sid)).c_str());
+                        
                         break;
                     }
                 }
@@ -357,9 +362,13 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             sprintf(name, "background/bg_skill_select.png%d", sid);
                             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
                             
-                            //SendToParent();
                             RenewSlot();
                             sound->playClick();
+                            
+                            // 설명 글 갱신
+                            ((CCLabelTTF*)spriteClass->FindLabelByTag(999))->setString(
+                                ("[ "+SkillInfo::GetSkillInfo(sid)->GetName()+" ]\n  "+SkillInfo::GetFullDesc(sid)).c_str());
+                            
                             break;
                         }
                     }
@@ -481,7 +490,7 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
     xml_node nodeResult = xmlDoc.child("response");
     code = nodeResult.child("code").text().as_int();
     
-    // Loading 창 끄기
+    // Loading 창 끄기 (EndScene이 바로 뒤에 실행된다면 여기서 해야 함 [code 확인 때문에])
     ((Loading*)Depth::GetCurPointer())->EndScene();
     
     if (code == 0)

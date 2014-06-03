@@ -133,7 +133,7 @@ void CocoRoomTodayCandy::MakeScroll()
     // make scroll
     scrollContainer = CCLayer::create();
     scrollContainer->setPosition(ccp(77, 492+904+243));
-    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
+    //scrollContainer->setContentSize(CCSizeMake(862, (numOfList-1)*166));
     
     int height = 0;
     char fname[50], fname2[50];
@@ -144,7 +144,8 @@ void CocoRoomTodayCandy::MakeScroll()
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
-        itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
+        //itemLayer->setPosition(ccp(34, (numOfList-1-height)*166));
+        itemLayer->setPosition(ccp(34, height*166));
         scrollContainer->addChild(itemLayer, 2);
         spriteClass->layers.push_back(itemLayer);
         height++;
@@ -187,9 +188,15 @@ void CocoRoomTodayCandy::MakeScroll()
     }
     
     // container 생성 + offset
+    //scrollView->setContainer(scrollContainer);
+    //scrollView->setContentSize(scrollContainer->getContentSize());
+    //scrollView->setContentOffset(ccp(0, 904-80-((numOfList-1)*166)), false);
+    
+    //scrollContainer->setContentSize(CCSizeMake(862, (numOfList-1)*166));
+    scrollContainer->setContentSize(CCSizeMake(862, height*166));
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
+    scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
 }
 
 void CocoRoomTodayCandy::SetSelectMode(int idx)
@@ -321,7 +328,7 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 char name[15];
                 for (int i = 1 ; i < todayCandyKakaoId.size() ; i++)
                 {
-                    CCLog("%d", todayCandyKakaoId[i]);
+                    //CCLog("%d", todayCandyKakaoId[i]);
                     sprintf(name, "todayCandy_%d", i);
                     CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[i]);
                 }
@@ -360,9 +367,20 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         if (isScrollViewTouched && !isScrolling &&
             (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
         {
-            sound->playClick();
-            RefreshTodayCandyList(i);
-            break;
+            // 이미 4명 모두 선택되어 있다면 클릭을 못하게 한다.
+            int cnt = 0;
+            for (int j = 0 ; j < selected.size() ; j++)
+            {
+                if (selected[j])
+                    cnt++;
+            }
+            
+            if (selected[i] || (!selected[i] && cnt < 4))
+            {
+                sound->playClick();
+                RefreshTodayCandyList(i);
+                break;
+            }
         }
     }
 }

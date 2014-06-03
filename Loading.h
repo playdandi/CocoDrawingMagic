@@ -17,6 +17,9 @@ public:
     
 	CREATE_FUNC(Loading);
     
+    void LoadingSprites();
+    void Callback(CCNode* sender, void* pointer);
+    
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseGameStart(char* data, int size);
     
@@ -29,6 +32,7 @@ private:
     CCSprite* pBlack;
     CCSprite* pCoco;
     CCSprite* pLoading;
+    CCSprite* pLoading2;
 };
 
 #endif /* defined(__CocoMagic__Loading__) */

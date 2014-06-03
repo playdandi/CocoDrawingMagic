@@ -76,6 +76,9 @@ bool InviteFriend::init()
     spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
     
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+    
     // 네트워크로 초대할 친구 리스트를 받아온다.
     httpStatus = 0;
     char temp[50];
@@ -101,7 +104,7 @@ void InviteFriend::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == 0 || param->intValue() == -1)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -210,7 +213,7 @@ void InviteFriend::MakeScroll()
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60, 25), CCSize(223+160-5, 76), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_starcandy_mini.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(13, 6), CCSize(0, 0), name, "1", NULL, 3, 1) );
-        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1000", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1,000", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // potion bg + potion + text(x 1)
         //sprintf(name, "background/bg_degree_desc.png2%d", i);
@@ -219,7 +222,7 @@ void InviteFriend::MakeScroll()
         //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17, 7), CCSize(0, 0), name, "1", NULL, 3, 1) );
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17+215, 10), CCSize(0, 0), name, "1", NULL, 3, 1) );
         ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setScale(0.8f);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // button
@@ -302,6 +305,9 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 int idx = atoi(spriteClassScroll->spriteObj[i]->name.substr(24, 25).c_str());
+                
+                // Loading 화면으로 MESSAGE request 넘기기
+                Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
                 
                 // 친구를 초대한다.
                 httpStatus = 1;
@@ -404,6 +410,9 @@ void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
+
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

@@ -29,7 +29,7 @@ void GameReady::onEnter()
     
     // 현재 연습중인 스킬이 max exp라면 팝업창을 띄운다.
     MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
-    if ( ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()) )
+    if ( ms != NULL && ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()) )
     {
         std::vector<int> nullData;
         Common::ShowPopup(this, "GameReady", "NoImage", false, PRACTICE_SKILL_FULL_EXP, BTN_1, nullData);
@@ -302,6 +302,7 @@ void GameReady::InitSprites()
         sprintf(name, "background/bg_skill_brown.png%d", i+1);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(84+193*i, 972), CCSize(0, 0), "", "GameReady", this, 5) );
 
+        /*
         if (itemSelected[i]) alpha = 255;
         else alpha = 0;
         sprintf(name2, "background/bg_skill_select.png%d", i+1);
@@ -312,26 +313,23 @@ void GameReady::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 2, alpha) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
-        if (i >= 2) {
-            sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5, 1) );
-        }
+        sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5, 1) );
+        */
 
         // 아이템 아이콘
+        CCPoint p =spriteClass->FindParentCenterPos(name);
         if (i == 0)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_clear.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_clear.png", ccp(0.5, 0.5), ccp(p.x+1, p.y+2), CCSize(0, 0), name, "0", NULL, 6, 1) );
         else if (i == 1)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_paint.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_paint.png", ccp(0.5, 0.5), p, CCSize(0, 0), name, "0", NULL, 6, 1) );
         //sprintf(name2, "icon/icon_item_%d.png", i+1);
         //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
+
         
         if (myInfo->GetItem(i) > 0)
         {
-            /*
-            itemNumLayer[i] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)));
-            itemNumLayer[i]->setPosition(ccp(84+193*i+130, 965));
-            this->addChild(itemNumLayer[i], 10);
-            */
+            // 아이템 별 남은 개수
             CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)));
             layer->setPosition(ccp(84+193*i+130, 965));
             this->addChild(layer, 10);
@@ -339,10 +337,16 @@ void GameReady::InitSprites()
         }
         else
         {
+            // 남은 개수가 0이면 가격을 적는다 (별사탕 x개)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(84+193*i-15, 925), CCSize(0, 0), "", "GameReady", this, 5) );
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("1200", fontList[0], 36, ccp(0, 0), ccp(84+193*i+50, 935), ccc3(255,255,255), "", "GameReady", this, 5) );
+            int val = 1100;
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(val), fontList[0], 36, ccp(0, 0), ccp(84+193*i+50, 935), ccc3(255,255,255), "", "GameReady", this, 5) );
         }
     }
+    
+    // 아이템별 설명
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아이템은 준비중입니다.", fontList[0], 36, ccp(0.5, 0), ccp(winSize.width/2, 736), ccc3(0,0,0), CCSize(880, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "GameReady", this, 5) );
+    
     
     // slot part
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png5", ccp(0, 0), ccp(49, 458), CCSize(982, 223), "", "GameReady", this, 1) );
@@ -372,8 +376,6 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1190), ccc3(121,71,0), "", "GameReady", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1193), ccc3(255,219,53), "", "GameReady", this, 5) );
     
-    // 아이템별 설명
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("행복하지 않을 이유가 하나도 없습니다.", fontList[0], 36, ccp(0, 0), ccp(97, 736), ccc3(0,0,0), CCSize(909, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "GameReady", this, 5) );
     
     // 게임시작 버튼 움직이기
     CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"));
@@ -510,7 +512,6 @@ void GameReady::InitSkill()
     
     int sid = myInfo->GetPracticeSkillId();
     int slv = myInfo->GetPracticeSkillLv();
-    //CCLog("sid slv = %d %d", sid, slv);
     
     // 배경판
     spriteClassSkill->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(0, 0), CCSize(263, 236), "", "Layer", skillLayer, 1) );
@@ -550,18 +551,44 @@ void GameReady::InitSkill()
         sprintf(skillName, "skill_%d.png", sid);
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClassSkill->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
         // 스킬 이름
-        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 1) );
+        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(19+228/2,22+53/2), ccc3(255,255,255), "", "Layer", skillLayer, 7) );
+        //spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 100, 1) );
         
+        // 797-699-50
         // Lv. <- 이 그림
-        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797-699, 850-772), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(19, 850-772), CCSize(0, 0), "", "Layer", skillLayer, 5) );
         // 레벨 숫자 이미지
         CCSize size = ((CCSprite*)spriteClassSkill->FindSpriteByName("number/level_lv.png"))->getContentSize();
         sprintf(skillName, "number/level_%d.png", slv % 10);
-        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797-699+size.width, 850-772+3), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(19+size.width, 850-772+3), CCSize(0, 0), "", "Layer", skillLayer, 5) );
+        
+        // 연습량
+        sprintf(skillName, "%d", MySkill::GetObj(sid)->GetExp());
+        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(skillName, fontList[0], 32, ccp(1, 0), ccp(797-699+100, 850-772), ccc3(255,219,53), "", "Layer", skillLayer, 5) ); // 현재 연습량
+        sprintf(skillName, "/%d", SkillBuildUpInfo::GetMaxExp(sid, slv));
+        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(skillName, fontList[0], 28, ccp(0, 0), ccp(797-699+105, 850-772+3), ccc3(255,255,255), "", "Layer", skillLayer, 5) ); // 이 레벨의 max 경험치량
     }
     
     for (int i = 0 ; i < spriteClassSkill->spriteObj.size() ; i++)
         spriteClassSkill->AddChild(i);
+    
+    
+    if (sid > 0 && MySkill::GetObj(sid)->GetExp() > 0)
+    {
+        // 연습 중인 스킬이 있으며, 연습량이 0보다 클 때
+        sp9 = CCScale9Sprite::createWithSpriteFrameName("background/bg_gameready_name.png");
+        sp9->setContentSize(CCSize(228 * MySkill::GetObj(sid)->GetExp() / SkillBuildUpInfo::GetMaxExp(sid, slv), 53));
+        sp9->setAnchorPoint(ccp(0,0));
+        sp9->setPosition(ccp(19, 22));
+        sp9->setColor(ccc3(170,170,170));
+
+        stencil = CCDrawNode::create();
+        CCPoint ver[] = { ccp(19, 22), ccp(19+228, 22), ccp(19+228, 22+53), ccp(19, 22+53) };
+        stencil->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
+        clip = CCClippingNode::create(stencil);
+        clip->addChild(sp9, 5);
+        skillLayer->addChild(clip, 5);
+    }
 }
 
 
@@ -620,6 +647,12 @@ void GameReady::PotionTimer(float f)
     }
 }
 
+
+
+static CCRect rect;
+static int kind;
+static int idx;
+
 bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     if (isTouched || isStarting)
@@ -629,7 +662,12 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     
     CCPoint point = pTouch->getLocation();
-    CCLog("GameReady : (%d , %d)", (int)point.x, (int)point.y);
+    //CCLog("GameReady : (%d , %d)", (int)point.x, (int)point.y);
+    
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
+    
     
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
@@ -674,7 +712,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
-
+        /*
         else if (spriteClass->spriteObj[i]->name.substr(0, 29) == "background/bg_skill_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -701,6 +739,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 check->setOpacity(255-check->getOpacity());
             }
         }
+        */
         else if (spriteClass->spriteObj[i]->name == "button/btn_blue.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -708,68 +747,13 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 if (myInfo->GetPotion() > 0)
                 {
-                    isStarting = true;
-                    
-                    // 포션 1개 없애기
-                    /*
-                    if (myInfo->GetPotion() <= 5) // 5개보다 많을 때는 액션 없어도 될 듯.
-                    {
-                        CCPoint p = spriteClass->FindParentCenterPos("icon/icon_potion_empty.png0");
-                        CCPoint realPos = ccp(89+83*(myInfo->GetPotion()-1)+p.x, 1480+p.y);
-                        
-                        char name[25];
-                        sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion()-1);
-                        CCPoint bluePos = spriteClass->FindParentCenterPos("button/btn_blue.png");
-                        CCActionInterval* action = CCSequence::create(
-                                            CCMoveBy::create(1.0f, ccp(318+bluePos.x-realPos.x, 193+bluePos.y-realPos.y)), CCFadeOut::create(0.3f), NULL);
-                        ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
-                    }
-                    */
-                    
-                    sound->playGameStart();
-                    
-                    CCPoint p = ccp(530+50, 1508+15);
-                    if (myInfo->GetPotion() <= 5)
-                        p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
-                    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
-                    //m_emitter->retain();
-                    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-                    m_emitter->setPosition(p);
-                    this->addChild(m_emitter, 2000);
-                    m_emitter->setAutoRemoveOnFinish(true);
-                    
-                    if (myInfo->GetPotion() > 5)
-                        myInfo->SetPotion(myInfo->GetPotion()-1, 0);
-                    else if (myInfo->GetPotion() == 5)
-                        myInfo->SetPotion(myInfo->GetPotion()-1, 720);
-                    else
-                        myInfo->SetPotion(myInfo->GetPotion()-1, -1);
-                    
-                    CCString* param = CCString::create("2");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-                    
-                    if (myInfo->GetPotion() < 5)
-                    {
-                        char name[25];
-                        sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion());
-                        CCActionInterval* action = CCFadeOut::create(0.2f);
-                        ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
-                    }
-
-                    
-                    pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
-                    pBlackClose->setPosition(ccp(0, 0));
-                    pBlackClose->setAnchorPoint(ccp(0, 0));
-                    pBlackClose->setColor(ccc3(0, 0, 0));
-                    pBlackClose->setOpacity(0);
-                    this->addChild(pBlackClose, 1000);
-                    
-                    callbackType = 1;
-                    CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.8f),
-                            CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
-                    pBlackClose->runAction(action);
-                    
-                    return true;
+                    sound->playClick();
+                    spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(170,170,170));
+                    rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                    kind = BTN_MENU_GAMESTART;
+                    idx = i;
+                    break;
                 }
                 else
                 {
@@ -852,6 +836,66 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         sound->playBoardMove(); // 이 scene만 사운드가 다르다.
         Common::ShowNextScene(this, "GameReady", "MagicList", false, 0);
+        return;
+    }
+    
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_GAMESTART:
+                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
+                //spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+                //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(255,255,255));
+                isStarting = true;
+                
+                sound->playGameStart();
+                
+                CCPoint p = ccp(530+50, 1508+15);
+                if (myInfo->GetPotion() <= 5)
+                    p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
+                CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
+                //m_emitter->retain();
+                m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+                m_emitter->setPosition(p);
+                this->addChild(m_emitter, 2000);
+                m_emitter->setAutoRemoveOnFinish(true);
+                
+                if (myInfo->GetPotion() > 5)
+                    myInfo->SetPotion(myInfo->GetPotion()-1, 0);
+                else if (myInfo->GetPotion() == 5)
+                    myInfo->SetPotion(myInfo->GetPotion()-1, 720);
+                else
+                    myInfo->SetPotion(myInfo->GetPotion()-1, -1);
+                
+                CCString* param = CCString::create("2");
+                CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+                
+                if (myInfo->GetPotion() < 5)
+                {
+                    char name[25];
+                    sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion());
+                    CCActionInterval* action = CCFadeOut::create(0.2f);
+                    ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
+                }
+                
+                pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+                pBlackClose->setPosition(ccp(0, 0));
+                pBlackClose->setAnchorPoint(ccp(0, 0));
+                pBlackClose->setColor(ccc3(0, 0, 0));
+                pBlackClose->setOpacity(0);
+                this->addChild(pBlackClose, 1000);
+                
+                callbackType = 1;
+                CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.8f), CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
+                pBlackClose->runAction(action);
+                break;
+        }
+    }
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(255,255,255));
     }
     
     isScrolling = false;

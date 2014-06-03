@@ -52,6 +52,12 @@ public:
 
     void F8(int num, int queue_pos);
     void F8Check(int x, int y, int idx);
+    void F8_Comet(float f);
+    void F8_Timer();
+    void F8_BombCallback(CCNode* sender, void* pointer);
+    void F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx);
+    void F8_FinishCountUp();
+    bool F8_IsFinished();
     
     void W3(int num);
     int W3GetScore();
@@ -139,9 +145,11 @@ private:
     int F7_callbackCntMini;
     
     int F8_check[COLUMN_COUNT][ROW_COUNT];
+    int F8_bombCallbackCnt[20];
     
     int A8_cnt;
     int A8_callbackCnt;
+    int F8_finishCnt;
     std::vector<CCPoint> A8_pos;
     
     ////////////////////////////////////////////////////////////////////////////////////

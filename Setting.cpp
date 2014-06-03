@@ -69,6 +69,29 @@ bool Setting::init()
     return true;
 }
 
+void Setting::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == -1)
+    {
+        if (code != 0) // 성공적으로 네트워크가 마무리되면, 터치를 활성화시키지 않는다. (어차피 끄니까)
+        {
+            // 터치 활성
+            CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+            this->setTouchPriority(Depth::GetCurPriority());
+            isTouched = false;
+            CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        }
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("Setting : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+}
+
 void Setting::InitSprites()
 {
     pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
@@ -215,6 +238,9 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 // 카카오메시지, 푸시메시지, 포션수신 중 하나라도 바뀐 게 있다면 서버에 전송.
                 if (kakaoMsgReserved != myInfo->GetKakaoMsg() || pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
                 {
+                    // Loading 화면으로 MESSAGE request 넘기기
+                    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+                    
                     char temp[50];
                     std::string url = "http://14.63.225.203/cogma/game/setting.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
@@ -376,7 +402,11 @@ void Setting::XmlParseResult(char* data, int size)
     
     // get data
     xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
+    code = nodeResult.child("code").text().as_int();
+    
+    // Loading 창 끄기 (EndScene이 바로 뒤에 실행된다면 여기서 해야 함 [code 확인 때문에])
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     if (code == 0)
     {
         CCLog("setting code 0 SUCCESS");

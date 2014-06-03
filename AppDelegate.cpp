@@ -56,6 +56,8 @@ void AppDelegate::applicationDidEnterBackground()
     else
     {
         isInGamePause = true;
+        void* p = Depth::GetCurPointer();
+        ((Puzzle*)p)->CancelDrawing();
     }
 
     // if you use SimpleAudioEngine, it must be pause

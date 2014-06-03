@@ -166,7 +166,7 @@ void BuyStarCandy::MakeScroll()
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(226, 18), CCSize(201, 77), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_topaz_mini.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(16, 5), CCSize(0, 0), name, "1", NULL, 3) );
-        sprintf(name, "x %d", priceStarCandy[i]->GetPrice());
+        sprintf(name, "%d", priceStarCandy[i]->GetPrice());
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(311, 37), ccc3(255,255,255), "", "Layer", itemLayer, 3) );
         
         // button

@@ -27,7 +27,7 @@ void SketchDetail::onEnter()
 {
     CCLog("SketchDetail :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, priority, true);
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void SketchDetail::onExit()
@@ -56,8 +56,8 @@ bool SketchDetail::init()
     
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
-    this->setTouchPriority(priority);
-    CCLog("SketchDetail : touch prio = %d", priority);
+    this->setTouchPriority(Depth::GetCurPriority());
+    CCLog("SketchDetail : touch prio = %d", Depth::GetCurPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SketchDetail::Notification), Depth::GetCurName(), NULL);
@@ -79,7 +79,7 @@ void SketchDetail::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == 0 || param->intValue() == -1)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -147,7 +147,7 @@ void SketchDetail::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(155+43+3+offset, 1085), CCSize(0,0), "", "SketchDetail", this, 5) );
         
         // 연습량 프로그레스바 안의 바
-        MySkill* ms = MySkill::GetObj(scid);
+        //MySkill* ms = MySkill::GetObj(scid);
         float percentage = ((float)ms->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
         bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-10));
         bar->setAnchorPoint(ccp(0, 0));
@@ -205,49 +205,17 @@ void SketchDetail::InitSprites()
         MakeClosedSkillSprites();
     }
     
-    // 가격표
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "SketchDetail", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "SketchDetail", this, 5) );
-    if (isOpened)
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, ms->GetLevel()+1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
-    else
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
-    /*
-    // 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "SketchDetail", this, 5, 0, 255, scid) );
-    pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
-    if (isOpened)
+    // 가격표 (스킬을 마스터했을 경우 표시하지 않는다)
+    if ( (isOpened && !SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel())) ||
+          !isOpened )
     {
-        // 레벨업 해야하는 경우 (강화)
-        if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()))
-        {
-            btnStatus = 1;
-            // '강화' 글자 필요함
-        }
-        // 일반적인 경우
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "SketchDetail", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "SketchDetail", this, 5) );
+        if (isOpened)
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, ms->GetLevel()+1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
         else
-        {
-            btnStatus = 2;
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-            
-        }
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "SketchDetail", this, 5) );
     }
-    else
-    {
-        // '?'스킬의 요구조건을 모두 충족한 경우
-        if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-        {
-            btnStatus = 3;
-            // '배움' 글자 필요함
-        }
-        // 아닌 경우
-        else
-        {
-            btnStatus = 4;
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-        }
-    }
-    */
 }
 
 
@@ -320,7 +288,8 @@ void SketchDetail::MakeOpenedSkillSprites()
     CCPoint pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
 
     // 레벨업 해야하는 경우 (강화)
-    if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()))
+    if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()) &&
+        !SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel()))
     {
         btnStatus = 1;
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_red.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
@@ -465,6 +434,9 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     }
                     else
                     {
+                        // Loading 화면으로 MESSAGE request 넘기기
+                        Common::ShowNextScene(this, "SketchDetail", "Loading", false, LOADING_MESSAGE);
+                        
                         // upgrade skill
                         char temp[255];
                         std::string url = "http://14.63.225.203/cogma/game/upgrade_skill.php?";
@@ -493,6 +465,9 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (btnStatus == 3) // '?'스킬의 요구조건을 모두 충족한 경우
                 {
+                    // Loading 화면으로 MESSAGE request 넘기기
+                    Common::ShowNextScene(this, "SketchDetail", "Loading", false, LOADING_MESSAGE);
+                    
                     // purchase skill
                     //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
                     
@@ -541,6 +516,8 @@ void SketchDetail::EndScene(bool isNoti)
     // release depth tree
     Depth::RemoveCurDepth();
     
+    Depth::DumpDepth();
+    
     if (isNoti)
     {        
         // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
@@ -569,6 +546,9 @@ void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

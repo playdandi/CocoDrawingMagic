@@ -85,13 +85,15 @@ public:
     void Lock(int queue_pos);
     void LockEach(int x, int y);
     void UnLockEach(int x, int y);
-    void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);
+    void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos, int F8_idx = -1);
     void BombCallback(CCNode* sender, void *queue_pos);
     
     void FallingProcess();
     void Falling(int queue_pos, int xx = -1);
 	void FallingCallback(CCNode* sender, void* queue_pos);
     void FallingQueuePushAndFalling(int queue_pos);
+    
+    void GoNextState(int queue_pos);
     
     //void WaitOrder(int queue_pos);
     

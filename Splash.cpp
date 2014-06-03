@@ -204,8 +204,8 @@ bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (m_pStartBtn->boundingBox().containsPoint(point))
     {
         isStarting = true;
-        m_pStartBtn->setOpacity(120);
-        m_pStartLetter->setOpacity(120);
+        m_pStartBtn->setColor(ccc3(170,170,170));
+        m_pStartLetter->setColor(ccc3(170,170,170));
     }
     
     if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
@@ -256,8 +256,8 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     }
     else
     {
-        m_pStartBtn->setOpacity(255);
-        m_pStartLetter->setOpacity(255);
+        m_pStartBtn->setColor(ccc3(255,255,255));
+        m_pStartLetter->setColor(ccc3(255,255,255));
         isStarting = false;
     }
 }
@@ -330,10 +330,12 @@ void Splash::XmlParseVersion(char* data, int size)
             if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
             else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
             else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
+            else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
             url += temp;
             if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
             else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
             else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
+            else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
             url += temp;
             
             CCHttpRequest* req = new CCHttpRequest();
@@ -598,12 +600,14 @@ void Splash::WriteResFile(char* data, int size)
     if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
     else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
     else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
+    else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
     url += temp;
     if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
     else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
     else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
+    else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
     url += temp;
-    //CCLog("url = %s", url.c_str());
+    CCLog("url = %s", url.c_str());
     
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
@@ -649,6 +653,7 @@ void Splash::XmlParseLogin(char* data, int size)
         std::string url = "http://14.63.225.203/cogma/game/user_info.php?";
         sprintf(temp, "kakao_id=%d", mKakaoId);
         url += temp;
+        CCLog("url = %s", url.c_str());
         
         CCHttpRequest* req = new CCHttpRequest();
         req->setUrl(url.c_str());
@@ -838,6 +843,7 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
     // get data
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
+    CCLog("code = %d", code);
     if (code == 0)
     {
         myRank = nodeResult.child("my-rank").attribute("rank").as_int();
@@ -952,6 +958,14 @@ void Splash::XmlParseFriends(char* data, int size)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
+            // nickname 너무 길면 자르자.
+            if (nickname.size() > 20)
+            {
+                CCLog("%s", nickname.c_str());
+                nickname = nickname.substr(0, 20);
+                CCLog("%s", nickname.c_str());
+            }
+            
             friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
@@ -1038,6 +1052,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     
     // parse xml data
     httpStatus++;
+    CCLog("httpStatus-1 = %d", httpStatus-1);
     switch (httpStatus-1)
     {
         case HTTP_VERSION:

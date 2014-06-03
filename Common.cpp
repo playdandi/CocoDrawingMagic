@@ -471,6 +471,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         else
             ((Puzzle*)obj)->addChild(nextScene, 200, 200);
     }
+    else if (from == "NoImage") ((NoImage*)obj)->addChild(nextScene, 200, 200);
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
@@ -478,6 +479,14 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
 {
     if (from == "Sketchbook")
         ((Sketchbook*)obj)->SetTouchLock(false);
+    
+    CCNode* parent;
+    // replace = true 면, 순서상 EndScene을 먼저 해 줘야한다... (나중에 다시 리팩토링 해야 함)
+    if (from == "SketchDetail") {
+        parent = ((SketchDetail*)obj)->getParent();
+        ((SketchDetail*)obj)->EndScene(false);
+    }
+
     
     CCScene* popup;
     if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
@@ -503,20 +512,19 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {
         if(isReplaced) {
-            CCNode* parent = ((SketchDetail*)obj)->getParent();
-            ((SketchDetail*)obj)->EndScene(false);
+            //CCNode* parent = ((SketchDetail*)obj)->getParent();
+            //((SketchDetail*)obj)->EndScene(false);
             parent->addChild(popup, 200, 200);
         }
         else ((SketchDetail*)obj)->addChild(popup, 200, 200);
     }
     else if (from == "NoImage") {
-        if (isReplaced) {
-            //((NoImage*)obj)->getParent()->addChild(popup, 200, 200);
+        //if (isReplaced) {
             ((NoImage*)obj)->addChild(popup, 200, 200);
-        }
+        /*}
         else {
             ((NoImage*)obj)->addChild(popup, 200, 200);
-        }
+        }*/
     }
 }
 
@@ -627,7 +635,7 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     return obj;
 }
 
-SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha)
+SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha, int tag)
 {
     SpriteObject* obj = new SpriteObject();
     
@@ -637,6 +645,7 @@ SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, 
     obj->label->setPosition(pos);
     obj->label->setColor(color);
     obj->label->setOpacity(alpha);
+    obj->label->setTag(tag);
     
     // parent
     obj->parentName = parentName;

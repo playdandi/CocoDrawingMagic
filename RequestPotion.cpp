@@ -100,6 +100,14 @@ void RequestPotion::Notification(CCObject* obj)
         CCLog("RequestPotion 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    else if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
 }
 
 void RequestPotion::InitSprites()
@@ -253,6 +261,9 @@ void RequestPotion::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 
+                // Loading 화면으로 MESSAGE request 넘기기
+                Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+                
                 int friendkakaoId = spriteClassScroll->spriteObj[i]->sprite->getTag();
                 // http://14.63.225.203/cogma/game/request_potion.php?kakao_id=1001&friend_kakao_id=1000
                 char temp[255];
@@ -334,6 +345,9 @@ void RequestPotion::onHttpRequestCompleted(CCNode *sender, void *data)
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

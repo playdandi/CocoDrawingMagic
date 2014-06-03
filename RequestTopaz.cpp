@@ -101,6 +101,14 @@ void RequestTopaz::Notification(CCObject* obj)
         CCLog("RequestTopaz 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    else if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
 }
 
 
@@ -253,6 +261,9 @@ void RequestTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 sound->playClick();
+                
+                // Loading 화면으로 MESSAGE request 넘기기
+                Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
 
                 //http://14.63.225.203/cogma/game/request_topaz.php?kakao_id=1000&friend_kakao_id=1001
                 int friendkakaoId = spriteClassScroll->spriteObj[i]->sprite->getTag();
@@ -332,6 +343,9 @@ void RequestTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

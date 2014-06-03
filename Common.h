@@ -133,10 +133,12 @@ USING_NS_CC;
 #define TODAYCANDY_NOTENOUGH_FRIENDS 73
 #define PRACTICE_SKILL_FULL_EXP 74
 
+#define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
 
 
-#define BTN_MENU_GAMEREADY 0 
+#define BTN_MENU_GAMEREADY 0
+#define BTN_MENU_GAMESTART 1
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -174,9 +176,12 @@ class SpriteObject
 {
 public:
     static SpriteObject* Create(int spriteType, std::string name, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
+    
     static SpriteObject* CreateFromSprite(int spriteType, CCSprite* spr, CCPoint ap, CCPoint pos, CCSize size, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, float scale = 1.0f, int tag = -1);
+    
     static SpriteObject* CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
-    static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255);
+    
+    static SpriteObject* CreateLabelArea(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, CCSize range, CCTextAlignment align, CCVerticalTextAlignment align_vertical, std::string parentName, std::string parentType, void* parent, int zOrder, int priority = 0, int alpha = 255, int tag = -1);
 
     int type;
     CCSprite* sprite;

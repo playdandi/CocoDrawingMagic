@@ -142,11 +142,9 @@ void Sketchbook::Notification(CCObject* obj)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        //this->setKeypadEnabled(true);
-        //this->setTouchEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
-        CCLog("스케치북 : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -156,7 +154,7 @@ void Sketchbook::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("스케치북 : 터치 비활성");
+        CCLog("Sketchbook : 터치 비활성");
         //this->setKeypadEnabled(false);
         //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -186,6 +184,15 @@ void Sketchbook::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+    }
+    
+    else if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
 }
 
@@ -306,27 +313,27 @@ void Sketchbook::MakeScroll(int state, bool isFromPopup)
 
 void Sketchbook::SetMenuChange(int state)
 {
-    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png1"))->setOpacity(170);
+    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png1"))->setColor(ccc3(170,170,170));
     ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png1"))->setZOrder(0);
-    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_fire.png"))->setOpacity(170);
-    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png2"))->setOpacity(170);
+    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_fire.png"))->setColor(ccc3(170,170,170));
+    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png2"))->setColor(ccc3(170,170,170));
     ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png2"))->setZOrder(0);
-    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_water.png"))->setOpacity(170);
-    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png3"))->setOpacity(170);
+    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_water.png"))->setColor(ccc3(170,170,170));
+    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png3"))->setColor(ccc3(170,170,170));
     ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png3"))->setZOrder(0);
-    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_land.png"))->setOpacity(170);
-    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png4"))->setOpacity(170);
+    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_land.png"))->setColor(ccc3(170,170,170));
+    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png4"))->setColor(ccc3(170,170,170));
     ((CCSprite*)spriteClass->FindSpriteByName("background/bg_sketchbook_select.png4"))->setZOrder(0);
-    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_master.png"))->setOpacity(170);
+    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_master.png"))->setColor(ccc3(170,170,170));
     
     char name[38];
     sprintf(name, "background/bg_sketchbook_select.png%d", state+1);
-    ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+    ((CCSprite*)spriteClass->FindSpriteByName(name))->setColor(ccc3(255,255,255));
     ((CCSprite*)spriteClass->FindSpriteByName(name))->setZOrder(2);
-    if (state+1 == 1) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_fire.png"))->setOpacity(255);
-    else if (state+1 == 2) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_water.png"))->setOpacity(255);
-    else if (state+1 == 3) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_land.png"))->setOpacity(255);
-    else ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_master.png"))->setOpacity(255);
+    if (state+1 == 1) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_fire.png"))->setColor(ccc3(255,255,255));
+    else if (state+1 == 2) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_water.png"))->setColor(ccc3(255,255,255));
+    else if (state+1 == 3) ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_land.png"))->setColor(ccc3(255,255,255));
+    else ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_property_master.png"))->setColor(ccc3(255,255,255));
 }
 
 
@@ -527,19 +534,21 @@ void Sketchbook::MakeScrollBook(int idx)
             if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() &&
                 MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
             {
-                sprintf(name, "button/btn_green_mini.png%d", i+3);
+                sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
                 
                 CCPoint p = spriteClassBook->FindParentCenterPos(name);
-                sprintf(name2, "letter/letter_require.png%d", i);
+                sprintf(name2, "letter/letter_get.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setScale(0.95f);
                 
+                /*
                 sprintf(name2, "icon/icon_levelup.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
                 CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
                 ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCRepeatForever::create(action) );
+                 */
             }
             // 아닌 경우
             else
@@ -752,6 +761,9 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // '연습' 누를 때
                 if (id < 0) // 이때 id는 user_id
                 {
+                    // Loading 화면으로 MESSAGE request 넘기기
+                    Common::ShowNextScene(this, "Sketchbook", "Loading", false, LOADING_MESSAGE);
+                    
                     char temp[255];
                     std::string url = "http://14.63.225.203/cogma/game/practice_skill.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
@@ -860,6 +872,9 @@ void Sketchbook::onHttpRequestCompleted(CCNode *sender, void *data)
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

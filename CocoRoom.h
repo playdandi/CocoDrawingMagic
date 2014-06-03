@@ -34,6 +34,8 @@ public:
     void InitSprites();
     void MakeSprites(int state);
     
+    void SetMenuChange(int state);
+    
     void MakeSpritesCoco();
     void SetStaffBuildUp();
     void MakeScrollCoco();
@@ -82,6 +84,10 @@ private:
     CCLayer* coco;
     CCLayer* fairy;
     CCLayer* candy;
+    
+    CCSprite* floor;
+    CCDrawNode* stencil;
+    CCClippingNode* clip;
 };
 
 #endif /* defined(__CocoMagic__CocoRoom__) */

@@ -195,14 +195,14 @@ void FairyOneInfo::InitSprites()
         {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(503, 730), CCSize(0, 0), "", "FairyOneInfo", this, 5) );
             
-            sprintf(fname, "x %d", fi->GetCostTopaz());
+            sprintf(fname, "%s", Common::MakeComma(fi->GetCostTopaz()).c_str());
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(588, 738), ccc3(255,255,255), "", "FairyOneInfo", this, 5) );
         }
         else // 별사탕 가격
         {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(503, 730), CCSize(0, 0), "", "FairyOneInfo", this, 5) );
             
-            sprintf(fname, "x %d", fi->GetCostStarCandy());
+            sprintf(fname, "%s", Common::MakeComma(fi->GetCostStarCandy()).c_str());
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(588, 738), ccc3(255,255,255), "", "FairyOneInfo", this, 5) );
         }
     

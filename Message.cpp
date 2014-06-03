@@ -243,15 +243,14 @@ void Message::MakeScroll()
             {
                 sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
+                int w = ((CCSprite*)spriteClassScroll->FindSpriteByName(spriteName))->getContentSize().width;
+                sprintf(spriteName2, "icon/icon_medal_mini.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName2, ccp(1, 0), ccp(w, 0), CCSize(0,0), spriteName, "0", NULL, 2, 1) );
             }
             else if (msgData[i]->GetProfileUrl() == "PET_IMG_NOMEDAL") // 오.별 참가상
             {
                 sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
-                int w = ((CCSprite*)spriteClassScroll->FindSpriteByName(spriteName))->getContentSize().width;
-                
-                sprintf(spriteName2, "icon/icon_medal_mini.png%d", i);
-                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName2, ccp(1, 0), ccp(w, 0), CCSize(0,0), spriteName, "0", NULL, 2, 1) );
             }
         }
         
@@ -280,10 +279,21 @@ void Message::MakeScroll()
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
             case 4: // 포션 (포션아이콘 + 받기)
-            case 5: // 포션요청 (포션아이콘 + 받기)
                 sprintf(spriteName, "button/btn_receive_potion.png%d", i);
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 sprintf(spriteName, "letter/letter_receive.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                break;
+            case 5: // 포션요청 (포션아이콘 + 받기)
+                sprintf(spriteName, "button/btn_receive_potion.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 55), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                sprintf(spriteName, "letter/letter_present.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                break;
+            case 6: // 토파즈 (토파즈아이콘 + 받기)
+                sprintf(spriteName, "button/btn_receive_topaz.png%d", i);
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(667, 60), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
+                sprintf(spriteName, "letter/letter_present.png%d", i);
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(725, 62), CCSize(0, 0), "", "Layer", itemLayer, 3, 0) );
                 break;
         }

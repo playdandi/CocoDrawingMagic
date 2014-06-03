@@ -19,9 +19,14 @@ public:
     void PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer);
     void PlayEffect_Default(std::vector<CCPoint> pos);
     void PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos);
+    
     void SetSpirit(int type);
-    CCParticleSystemQuad* GetSpirit(int type);
-    void ReleaseSpirit(int type);
+    void SetSpirit_Callback(CCNode* sender, void* pointer);
+    CCSprite* GetSpirit(int type);
+    void RemoveSpirit(int type);
+    void RemoveSpirit_Callback(CCNode* sender, void* pointer);
+    //CCParticleSystemQuad* GetSpirit(int type);
+    //void ReleaseSpirit(int type);
     
     void PlayEffect_0(std::vector<CCPoint> pos);
     void PlayEffect_8(std::vector<CCPoint> pos);
@@ -49,9 +54,10 @@ public:
     void PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos);
     void Effect7_Comet(float f);
     void Effect7_Callback_1(CCNode* sender, void* pointer);
-    void Effect7_Callback_2(CCNode* sender, void* pointer);
+    void Effect7_Callback_2(int idx, void* pointer);
     void Effect7_Callback_3(CCNode* sender, void* pointer);
     void Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer);
+    void Effect7_Clear();
     
     void PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (여신)
     void Effect15_Callback(CCNode* sender, void* pointer);
@@ -77,6 +83,8 @@ public:
     void Effect14Callback(CCNode* sender, void* data);
     
     //void PlayEffect_Spirit();
+    
+    std::vector<CCPoint> GetDoublePos(int idx);
     
     void ShowStarCandy(std::vector<CCPoint> pos);
     //void ShowStarCandy_Callback(CCNode* sender, void* data);
@@ -124,9 +132,14 @@ private:
     CCParticleSystemQuad* m_W8_bg;
     
     // 정령
+    CCSprite* spirit_fire;
+    CCSprite* spirit_water;
+    CCSprite* spirit_land;
+    /*
     CCParticleSystemQuad* fire;
     CCParticleSystemQuad* water;
     CCParticleSystemQuad* land;
+    */
     
     // 기본 별사탕에 대한 변수
     int starCandyCallbackCnt;

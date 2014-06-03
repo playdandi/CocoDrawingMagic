@@ -77,6 +77,28 @@ bool NoImage::init()
     return true;
 }
 
+/*
+void NoImage::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 0 || param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("NoImage : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("NoImage : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+}
+*/
+
 void NoImage::InitSprites()
 {
     pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
@@ -180,8 +202,6 @@ void NoImage::InitSprites()
     
     
     // text (각 팝업 상황에 맞는 문구를 만들어 출력한다)
-    //int deltaX = 0;
-    //CCPoint deltaSize = ccp(0, 0);
     char text[250];
     std::string title;
     int fontSize = 40;
@@ -274,26 +294,18 @@ void NoImage::InitSprites()
             
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
             title = "지팡이 강화하기";
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?\n(강화 확률이 높아요!)", myInfo->GetMPStaffPercent(),
                     magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
             title = "지팡이 강화하기";
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "지팡이 능력치를 +%d%%에서 +%d%%로 강화하시겠습니까?", myInfo->GetMPStaffPercent(), magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetBonusMPPercent()); break;
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
             title = "지팡이 강화하기";
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 성공!\nMP가 많이 증가했어요!"); break;
         case UPGRADE_STAFF_FAIL:
             title = "지팡이 강화하기";
             sound->playLvUpFail();
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
         case UPGRADE_STAFF_FULL_LEVEL:
             title = "지팡이 강화하기";
@@ -301,25 +313,17 @@ void NoImage::InitSprites()
         
         case UPGRADE_FAIRY_BY_TOPAZ_TRY:
             title = "요정 강화하기";
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "요정 강화 by 토파즈 \n(강화 확률이 높아요!)"); break;
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
             title = "요정 강화하기";
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "요정 강화 by 별사탕"); break;
         case UPGRADE_FAIRY_OK:
             title = "요정 강화하기";
             sound->playLvUpSuccess();
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 성공!\n 요정 능력치가 blah blah"); break;
         case UPGRADE_FAIRY_FAIL:
             title = "요정 강화하기";
             sound->playLvUpFail();
-            //deltaX = 150;
-            //deltaSize = ccp(-200, 100);
             sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
         case UPGRADE_FAIRY_FULL_LEVEL:
             title = "요정 강화하기";
@@ -484,19 +488,19 @@ void NoImage::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 40, ccp(0.5, 0.5), ccp(pos.x+2, pos.y-2), ccc3(0,0,0), "background/bg_degree_desc.png2", "1", NULL, 5, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 40, ccp(0.5, 0.5), pos, ccc3(255,255,255), "background/bg_degree_desc.png2", "1", NULL, 5, 1) );
     }
-    else if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_PROPERTY_TRY || type == BUYPOTION_1)
+    else if (type == BUY_STARCANDY_TRY || type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_PROPERTY_TRY || type == BUYPOTION_1 || type == UPGRADE_FAIRY_BY_STARCANDY_TRY || type == UPGRADE_FAIRY_BY_TOPAZ_TRY)
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0, 0), ccp(493, 723+offset), CCSize(201, 77), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(1, 0), ccp(493+201, 723+offset), CCSize(201+30, 77), "", "NoImage", this, 5) );
         
-        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
+        if (type == UPGRADE_STAFF_BY_STARCANDY_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == UPGRADE_FAIRY_BY_STARCANDY_TRY)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(513-25, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
         else
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(513-25, 730+offset), CCSize(0, 0), "", "NoImage", this, 5) );
         
         char cost[10];
-        sprintf(cost, "x %d", d[1]);
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580+2, 743+offset-2), ccc3(0,0,0), "", "NoImage", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580, 743+offset), ccc3(255,255,255), "", "NoImage", this, 5) );
+        sprintf(cost, "%s", Common::MakeComma(d[1]).c_str());
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580+2-25, 743+offset-2), ccc3(0,0,0), "", "NoImage", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(cost, fontList[0], 40, ccp(0, 0), ccp(580-25, 743+offset), ccc3(255,255,255), "", "NoImage", this, 5) );
     }
     
     
@@ -926,6 +930,9 @@ void NoImage::Exit()
 
 void NoImage::HttpRequest(std::string url)
 {
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+    
     // post request
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
@@ -945,6 +952,9 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
         ReplaceScene("NoImage", NETWORK_FAIL, BTN_1); // network fail로 간주
         return;
     }
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();

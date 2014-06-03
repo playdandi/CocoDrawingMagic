@@ -17,9 +17,9 @@ void Effect::Init(Effect* effect, Puzzle* layer)
     
     sp_fire = NULL;
     A8_icon = NULL;
-    fire = NULL;
-    water = NULL;
-    land = NULL;
+    spirit_fire = NULL;
+    spirit_water = NULL;
+    spirit_land = NULL;
     m_orb = NULL;
     m_W8_bg = NULL;
     F8_bg = NULL;
@@ -209,30 +209,41 @@ void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
 
 void Effect::SetSpirit(int type)
 {
+    CCActionInterval* action = CCSequence::create(CCFadeIn::create(0.7f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::SetSpirit_Callback), this), NULL );
+    
+    if (type == 0)
+    {
+        spirit_fire = CCSprite::createWithSpriteFrameName("icon/spirit_fire.png");
+        spirit_fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
+        spirit_fire->setOpacity(0);
+        gameLayer->addChild(spirit_fire, 100);
+        spirit_fire->runAction(action);
+    }
+    else if (type == 1)
+    {
+        spirit_water = CCSprite::createWithSpriteFrameName("icon/spirit_water.png");
+        spirit_water->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1));
+        spirit_water->setOpacity(0);
+        gameLayer->addChild(spirit_water, 100);
+        spirit_water->runAction(action);
+    }
+    else if (type == 2)
+    {
+        spirit_land = CCSprite::createWithSpriteFrameName("icon/spirit_land.png");
+        spirit_land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
+        spirit_land->setOpacity(0);
+        gameLayer->addChild(spirit_land, 100);
+        spirit_land->runAction(action);
+    }
+    
+    /*
     if (type == 0) // 불의 정령
     {
         fire = CCParticleSystemQuad::create("particles/fire2.plist");
         //fire = CCParticleSystemQuad::create("particles/spirit_fire.plist");
         fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
-        //fire->setScale(2.0f);
         fire->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(fire, 100);
-        
-        /*
-        CCPoint p = gameLayer->SetTouch8Position(0, ROW_COUNT-1);
-        CCParticleSystemQuad* e1 = CCParticleSystemQuad::create("particles/spirit_fire_lefteye.plist");
-        e1->setPosition(ccp(p.x-30, p.y+40));
-        e1->setScale(2.0f);
-        //e1->retain();
-        e1->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(e1, 100);
-        CCParticleSystemQuad* e2 = CCParticleSystemQuad::create("particles/spirit_fire_righteye.plist");
-        e2->setPosition(ccp(p.x+30, p.y+40));
-        e2->setScale(2.0f);
-        //e2->retain();
-        e2->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(e2, 100);
-        */
     }
     else if (type == 1) // 물의 정령
     {
@@ -251,7 +262,39 @@ void Effect::SetSpirit(int type)
         land->setAnchorPoint(ccp(0.5, 0.5));
         gameLayer->addChild(land, 100);
     }
+     */
 }
+void Effect::SetSpirit_Callback(CCNode* sender, void* pointer)
+{
+    sender->runAction( CCRepeatForever::create(CCSequence::create(CCScaleTo::create(0.5f, 0.95f), CCScaleTo::create(0.5f, 1.05f), NULL)) );
+}
+
+CCSprite* Effect::GetSpirit(int type)
+{
+    if (type == 0) return spirit_fire;
+    else if (type == 1) return spirit_water;
+    else return spirit_land;
+}
+
+void Effect::RemoveSpirit(int type)
+{
+    CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::RemoveSpirit_Callback), this), NULL);
+    GetSpirit(type)->setTag(type);
+    GetSpirit(type)->runAction(action);
+}
+void Effect::RemoveSpirit_Callback(CCNode* sender, void* pointer)
+{
+    int type = sender->getTag();
+    sender->removeFromParentAndCleanup(true);
+    sender = NULL;
+    /*
+    if (type == 0) spirit_fire = NULL;
+    else if (type == 1) spirit_water = NULL;
+    else if (type == 2) spirit_land = NULL;
+    */
+}
+
+/*
 CCParticleSystemQuad* Effect::GetSpirit(int type)
 {
     if (type == 0)
@@ -278,6 +321,7 @@ void Effect::ReleaseSpirit(int type)
             break;
     }
 }
+*/
 
 void Effect::PlayEffect_0(std::vector<CCPoint> pos)
 {
@@ -801,36 +845,37 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
     ef->callbackCnt = 0;
     ef->F8_finishCnt = 0;
     
-    ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
+    //ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
+    
+    ef->gameLayer->GetSkill()->F8_Timer();
 }
 
 void Effect::Effect7_Comet(float f)
 {
+    /*
     CCLog("timer callback cnt : %d", eff->callbackCnt);
     if (eff->gameLayer->IsPaused())
         return;
     Effect7_Callback_2(NULL, eff);
+    */
 }
 
-void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구기
+void Effect::Effect7_Callback_2(int idx, void* pointer) // 혜성 떨구기
 {
     Effect* ef = (Effect*)pointer;
     
-    CCLog("혜성 callback cnt : %d", ef->callbackCnt+1);
-    int x = (int)ef->skillPos[ef->callbackCnt].x;
-    int y = (int)ef->skillPos[ef->callbackCnt].y;
+    //CCLog("혜성 callback cnt : %d", idx);
+    int x = (int)ef->skillPos[idx].x;
+    int y = (int)ef->skillPos[idx].y;
     CCPoint pos = ef->gameLayer->SetTouch8Position(x, y);
-    
-    ef->callbackCnt++;
-    ef->cbCnt.push_back(ef->callbackCnt);
     
     // 혜성이 떨어진다~!
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_comet.plist");
-    //m_emitter->retain();
     m_emitter->setAnchorPoint(ccp(0.5, 0.5));
     m_emitter->setPosition((int)pos.x+400, (int)pos.y+1920);
     m_emitter->setScale(2.0f);
     ef->gameLayer->addChild(m_emitter, 1500);
+    m_emitter->setTag(idx);
     
     CCActionInterval* action = CCSequence::create( CCMoveTo::create(0.5f, pos), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_3), ef), NULL);
     m_emitter->runAction(action);
@@ -840,26 +885,23 @@ void Effect::Effect7_Callback_2(CCNode* sender, void* pointer) // 혜성 떨구�
 
 void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어지고 폭파
 {
+    int idx = sender->getTag();
+    
     // 혜성 삭제
     ((CCParticleSystemQuad*)sender)->setDuration(0.1f);
     ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
     
     Effect* ef = (Effect*)pointer;
+
+    int x = (int)ef->skillPos[idx].x;
+    int y = (int)ef->skillPos[idx].y;
+    //CCLog("Effect : bomb start = %d (%d, %d)", (int)idx, x, y);
     
-    int idx;
-    for (int i = 0 ; i < ef->cbCnt.size() ; i++)
+    /*if (ef->gameLayer->GetSpriteP8(x, y) == NULL)
     {
-        if (ef->cbCnt[i] > 0)
-        {
-            idx = ef->cbCnt[i];
-            ef->cbCnt[i] *= -1;
-            break;
-        }
-    }
-    
-    int x = (int)ef->skillPos[idx-1].x;
-    int y = (int)ef->skillPos[idx-1].y;
-    CCLog("Effect : bomb start = %d (%d, %d)", (int)idx, x, y);
+        CCLog("빠자! (%d, %d)", x, y);
+        return;
+    }*/
     
     if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
     {
@@ -867,14 +909,13 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         ef->gameLayer->GetSound()->PlayDesignatedSound(72);
         
         CCLog("big fire : %d %d", x, y);
-        for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
+        for (int i = 0 ; i < ef->skillDoublePos[idx].size() ; i++)
         {
-            x = ef->skillDoublePos[idx-1][i].x;
-            y = ef->skillDoublePos[idx-1][i].y;
+            x = (int)ef->skillDoublePos[idx][i].x;
+            y = (int)ef->skillDoublePos[idx][i].y;
             if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
             {
                 CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_bigfire.plist");
-                //m_emitter->retain();
                 m_emitter->setAnchorPoint(ccp(0.5, 0.5));
                 m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
                 m_emitter->setScale(2.0f);
@@ -890,7 +931,6 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         
         CCLog("small fire : %d %d", x, y);
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
-        //m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
         m_emitter->setScale(2.0f);
@@ -899,30 +939,34 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     }
     
     // 폭파 개수 갱신
-    ef->gameLayer->UpdatePieceBombCnt(ef->gameLayer->GetPuzzleP8Set()->GetType(x, y), (int)ef->skillDoublePos[idx-1].size());
+    //ef->gameLayer->UpdatePieceBombCnt(ef->gameLayer->GetPuzzleP8Set()->GetType(x, y), (int)ef->skillDoublePos[idx].size());
     
     // 폭파!
-    CCLog("bomb (%d) : size = %d", idx, (int)ef->skillDoublePos[idx-1].size());
-    for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
-    {
-        x = ef->skillDoublePos[idx-1][i].x;
-        y = ef->skillDoublePos[idx-1][i].y;
-        CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL), CCCallFuncND::create(ef->gameLayer, callfuncND_selector(Effect::Effect7_Callback_4), ef), NULL);
-        ef->gameLayer->GetSpriteP8(x, y)->setTag(idx); // tag (idx)
-        ef->gameLayer->GetSpriteP8(x, y)->runAction(action);
-    }
-    
+    //CCLog("bomb (%d) : size = %d", idx, (int)ef->skillDoublePos[idx].size());
+    //CCLog("폭파! (%d)", idx);
+    //ef->gameLayer ->Bomb(ef->queuePos, ef->skillDoublePos[idx], idx);
+    ef->gameLayer->GetSkill()->F8_Bomb(ef->queuePos, ef->skillDoublePos[idx], idx);
+}
+std::vector<CCPoint> Effect::GetDoublePos(int idx)
+{
+    return skillDoublePos[idx];
 }
 
+void Effect::Effect7_Clear()
+{
+    m_F8_fountain->setDuration(0.01f);
+    m_F8_fountain->setAutoRemoveOnFinish(true);
+    F8_bg->removeFromParentAndCleanup(true);
+}
 void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
 {
     Effect* ef = (Effect*)pointer;
     int idx = ((CCSprite*)sender)->getTag();
     
-    ef->F8_bomb_cbCnt[idx-1]++;
-    if (ef->F8_bomb_cbCnt[idx-1] == (int)ef->skillDoublePos[idx-1].size())
+    ef->F8_bomb_cbCnt[idx]++;
+    if (ef->F8_bomb_cbCnt[idx] == (int)ef->skillDoublePos[idx].size())
     {
-        for (int i = 0 ; i < ef->skillDoublePos[idx-1].size() ; i++)
+        for (int i = 0 ; i < ef->skillDoublePos[idx].size() ; i++)
         {
             ef->gameLayer->GetPuzzleP8Set()->RemoveChild((int)ef->skillDoublePos[idx-1][i].x, (int)ef->skillDoublePos[idx-1][i].y);
             ef->gameLayer->SetSpriteP8Null((int)ef->skillDoublePos[idx-1][i].x, (int)ef->skillDoublePos[idx-1][i].y);
@@ -982,7 +1026,7 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     m_orb->setPosition(orb_pos);
     m_orb->setScale(1.0f);
     m_orb->setStartSize(100);
-    gameLayer->addChild(m_orb, 10);
+    gameLayer->addChild(m_orb, z1);
 }
 void Effect::Effect15_Last(std::vector<CCPoint> pos, void* pointer)
 {
@@ -1340,11 +1384,11 @@ void Effect::PlayEffect_14()
         W7Start->runAction(startAction);
         
         if (gameLayer->GetSkill()->IsSpiritAlive(0))
-            fire->pauseSchedulerAndActions();
+            spirit_fire->pauseSchedulerAndActions();
         if (gameLayer->GetSkill()->IsSpiritAlive(1))
-            water->pauseSchedulerAndActions();
+            spirit_water->pauseSchedulerAndActions();
         if (gameLayer->GetSkill()->IsSpiritAlive(2))
-            land->pauseSchedulerAndActions();
+            spirit_land->pauseSchedulerAndActions();
         
         gameLayer->GetFairyLayer()->pauseSchedulerAndActions();
         
@@ -1408,11 +1452,11 @@ void Effect::PlayEffect_14()
         iced_bar = NULL;
         
         if (gameLayer->GetSkill()->IsSpiritAlive(0))
-            fire->resumeSchedulerAndActions();
+            spirit_fire->resumeSchedulerAndActions();
         if (gameLayer->GetSkill()->IsSpiritAlive(1))
-            water->resumeSchedulerAndActions();
+            spirit_water->resumeSchedulerAndActions();
         if (gameLayer->GetSkill()->IsSpiritAlive(2))
-            land->resumeSchedulerAndActions();
+            spirit_land->resumeSchedulerAndActions();
         
         gameLayer->GetFairyLayer()->resumeSchedulerAndActions();
     }
@@ -1496,9 +1540,9 @@ void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
 
 void Effect::RemoveAllObjects()
 {
-    if (fire != NULL) fire->removeFromParentAndCleanup(true);
-    if (water != NULL) water->removeFromParentAndCleanup(true);
-    if (land != NULL) land->removeFromParentAndCleanup(true);
+    if (spirit_fire != NULL) spirit_fire->removeFromParentAndCleanup(true);
+    if (spirit_water != NULL) spirit_water->removeFromParentAndCleanup(true);
+    if (spirit_land != NULL) spirit_land->removeFromParentAndCleanup(true);
 }
 
 
