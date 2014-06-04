@@ -214,7 +214,8 @@ void Effect::SetSpirit(int type)
     if (type == 0)
     {
         spirit_fire = CCSprite::createWithSpriteFrameName("icon/spirit_fire.png");
-        spirit_fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
+        //spirit_fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
+        spirit_fire->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
         spirit_fire->setOpacity(0);
         gameLayer->addChild(spirit_fire, 100);
         spirit_fire->runAction(action);
@@ -230,7 +231,8 @@ void Effect::SetSpirit(int type)
     else if (type == 2)
     {
         spirit_land = CCSprite::createWithSpriteFrameName("icon/spirit_land.png");
-        spirit_land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
+        //spirit_land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
+        spirit_land->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
         spirit_land->setOpacity(0);
         gameLayer->addChild(spirit_land, 100);
         spirit_land->runAction(action);
@@ -280,11 +282,12 @@ void Effect::RemoveSpirit(int type)
 {
     CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::RemoveSpirit_Callback), this), NULL);
     GetSpirit(type)->setTag(type);
+    GetSpirit(type)->resumeSchedulerAndActions();
     GetSpirit(type)->runAction(action);
 }
 void Effect::RemoveSpirit_Callback(CCNode* sender, void* pointer)
 {
-    int type = sender->getTag();
+    //int type = sender->getTag();
     sender->removeFromParentAndCleanup(true);
     sender = NULL;
     /*
@@ -1540,9 +1543,9 @@ void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
 
 void Effect::RemoveAllObjects()
 {
-    if (spirit_fire != NULL) spirit_fire->removeFromParentAndCleanup(true);
-    if (spirit_water != NULL) spirit_water->removeFromParentAndCleanup(true);
-    if (spirit_land != NULL) spirit_land->removeFromParentAndCleanup(true);
+    if (gameLayer->GetSkill()->IsSpiritAlive(0)) spirit_fire->removeFromParentAndCleanup(true);
+    if (gameLayer->GetSkill()->IsSpiritAlive(1)) spirit_water->removeFromParentAndCleanup(true);
+    if (gameLayer->GetSkill()->IsSpiritAlive(2)) spirit_land->removeFromParentAndCleanup(true);
 }
 
 

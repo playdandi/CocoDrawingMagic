@@ -132,6 +132,8 @@ USING_NS_CC;
 #define TODAYCANDY_ALREADY_DONE 72
 #define TODAYCANDY_NOTENOUGH_FRIENDS 73
 #define PRACTICE_SKILL_FULL_EXP 74
+#define USING_FAIRY 75
+
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -156,7 +158,7 @@ extern Sound* sound;
 class Common
 {
 public:
-    static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
+    //static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
     
     static std::string MakeComma(int number);
     static std::string InsertComma(std::string number);

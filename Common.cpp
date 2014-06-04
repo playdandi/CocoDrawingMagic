@@ -979,9 +979,9 @@ std::string Common::GetMissionContent(int type, int val, int refVal)
     switch (type)
     {
         case 1:
-            if (refVal == 1) sprintf(s, "파란 구슬 %d개 부수기", missionVal);
-            else if (refVal == 2) sprintf(s, "빨간 구슬 %d개 부수기", missionVal);
-            else if (refVal == 3) sprintf(s, "초록 구슬 %d개 부수기", missionVal);
+            if (refVal == 1) sprintf(s, "파란 피스 %d개 그리기", missionVal);
+            else if (refVal == 2) sprintf(s, "빨간 피스 %d개 그리기", missionVal);
+            else if (refVal == 3) sprintf(s, "초록 피스 %d개 그리기", missionVal);
             break;
         case 2:
             sprintf(s, "'%s' %d번 그리기", SkillInfo::GetSkillInfo(refVal)->GetName().c_str(), val);
@@ -990,7 +990,7 @@ std::string Common::GetMissionContent(int type, int val, int refVal)
             sprintf(s, "마법 %d번 그리기", missionVal);
             break;
         case 4:
-            sprintf(s, "구슬 %d개 부수기", missionVal);
+            sprintf(s, "피스 %d개 그리기", missionVal);
             break;
     }
     

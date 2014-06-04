@@ -17,6 +17,8 @@ public:
     
     CREATE_FUNC(WeeklyRankResult);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     
     void EndScene();

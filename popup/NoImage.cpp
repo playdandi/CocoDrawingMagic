@@ -45,8 +45,12 @@ void NoImage::onExit()
 
 void NoImage::keyBackClicked()
 {
-    sound->playClick();
-    EndScene();
+    if (!isKeybackTouched)
+    {
+        isKeybackTouched = true;
+        sound->playClick();
+        EndScene();
+    }
 }
 
 
@@ -74,30 +78,24 @@ bool NoImage::init()
     
     InitSprites();
     
+    isEnded = false;
+    isTouched = false;
+    isTouchDone = false;
+    isKeybackTouched = false;
+    
     return true;
 }
 
-/*
 void NoImage::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
-    
-    if (param->intValue() == 0 || param->intValue() == -1)
+
+    if (param->intValue() == 10)
     {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setTouchPriority(Depth::GetCurPriority());
+        // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
-        CCLog("NoImage : 터치 활성 (Priority = %d)", this->getTouchPriority());
-    }
-    else if (param->intValue() == 1)
-    {
-        // 터치 비활성
-        CCLog("NoImage : 터치 비활성");
-        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
 }
-*/
 
 void NoImage::InitSprites()
 {
@@ -313,14 +311,14 @@ void NoImage::InitSprites()
         
         case UPGRADE_FAIRY_BY_TOPAZ_TRY:
             title = "요정 강화하기";
-            sprintf(text, "요정 강화 by 토파즈 \n(강화 확률이 높아요!)"); break;
+            sprintf(text, "요정의 능력을 강화하시겠습니까?\n(강화 확률이 높아요!)"); break;
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
             title = "요정 강화하기";
-            sprintf(text, "요정 강화 by 별사탕"); break;
+            sprintf(text, "요정의 능력을 강화하시겠습니까?"); break;
         case UPGRADE_FAIRY_OK:
             title = "요정 강화하기";
             sound->playLvUpSuccess();
-            sprintf(text, "강화 성공!\n 요정 능력치가 blah blah"); break;
+            sprintf(text, "강화 성공!\n 요정의 능력치가 증가했어요!"); break;
         case UPGRADE_FAIRY_FAIL:
             title = "요정 강화하기";
             sound->playLvUpFail();
@@ -535,9 +533,10 @@ void NoImage::InitSprites()
 
 bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (isTouched)
+    if (isTouched || isTouchDone)
         return false;
     isTouched = true;
+    isTouchDone = true;
     
     CCPoint point = pTouch->getLocation();
     
@@ -631,21 +630,21 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     CCNode* parent = this->getParent();
                     EndScene();
                     Common::ShowNextScene(parent, Depth::GetCurName(), "BuyPotion", false, 3); // curName == 결국 부모
-                    break;
+                    return true;
                 }
                 else if (type == NEED_TO_BUY_TOPAZ)
                 {
                     CCNode* parent = this->getParent();
                     EndScene();
                     Common::ShowNextScene(parent, Depth::GetCurName(), "BuyTopaz", false, 3); // curName == 결국 부모
-                    break;
+                    return true;
                 }
                 else if (type == NEED_TO_BUY_STARCANDY)
                 {
                     CCNode* parent = this->getParent();
                     EndScene();
                     Common::ShowNextScene(parent, Depth::GetCurName(), "BuyStarCandy", false, 3); // curName == 결국 부모
-                    break;
+                    return true;
                 }
                 else if (type == BUY_TOPAZ_TRY)
                 {
@@ -674,6 +673,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url : %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == BUYPOTION_1)
                 {
@@ -688,6 +688,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url : %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == POTION_SEND_TRY)
                 {
@@ -699,6 +700,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     url += temp;
                     CCLog("url : %s", url.c_str());
                     HttpRequest(url);
+                    return true;
                 }
                 else if (type == MESSAGE_ALL_TRY)
                 {
@@ -708,6 +710,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     url += temp;
                     CCLog("url : %s", url.c_str());
                     HttpRequest(url);
+                    return true;
                 }
                 else if (type == SEND_TOPAZ_TRY)
                 {
@@ -721,6 +724,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     url += temp;
                     CCLog("url : %s", url.c_str());
                     HttpRequest(url);
+                    return true;
                 }
                 else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
                 {
@@ -748,6 +752,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == UPGRADE_FAIRY_BY_TOPAZ_TRY || type == UPGRADE_FAIRY_BY_STARCANDY_TRY)
                 {
@@ -775,6 +780,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
                 {
@@ -806,6 +812,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
                 {
@@ -828,6 +835,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
                 else if (type == BUY_PROPERTY_TRY)
                 {
@@ -852,12 +860,14 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url);
                     }
+                    return true;
                 }
-                break;
+                return true;
             }
         }
     }
     
+    isTouchDone = false;
     return true;
 }
 
@@ -868,12 +878,16 @@ void NoImage::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    isTouched = false;
+    if (!isEnded)
+        isTouched = false;
 }
 
 
 void NoImage::ReplaceScene(std::string to, int type, int btnType)
 {
+    isEnded = true;
+    isTouched = true;
+    
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -895,6 +909,9 @@ void NoImage::ReplaceScene(std::string to, int type, int btnType)
 
 void NoImage::EndScene()
 {
+    isEnded = true;
+    isTouched = true;
+    
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -987,6 +1004,8 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
         case BUY_FAIRY_BY_TOPAZ_TRY:
         case BUY_FAIRY_BY_STARCANDY_TRY:
             XmlParseBuyFairy(dumpData, buffer->size()); break;
+        case USING_FAIRY:
+            XmlParseUsingFairy(dumpData, buffer->size()); break;
         case BUY_SKILLSLOT_BY_STARCANDY_TRY:
         case BUY_SKILLSLOT_BY_TOPAZ_TRY:
             XmlParseBuySkillSlot(dumpData, buffer->size()); break;
@@ -1434,7 +1453,27 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
         param = CCString::create("8");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         
-        ReplaceScene("NoImage", BUY_FAIRY_OK, BTN_1);
+        if ((int)myInfo->GetFairyList().size() == 1)
+        {
+            // 요정을 사고 난 뒤 갱신된 요정리스트에 요정이 1개다? => 처음 구입한 요정이다.
+            // 따라서, 자동으로 그 요정이 착용되도록 using_fairy.php를 호출해 준다.
+            char temp[150];
+            std::string url = "http://14.63.225.203/cogma/game/using_fairy.php?";
+            sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+            url += temp;
+            sprintf(temp, "user_fairy_id=%d", myInfo->GetFairyList()[0]->GetUserId());
+            url += temp;
+            CCLog("url = %s", url.c_str());
+            
+            type = USING_FAIRY;
+            
+            HttpRequest(url);
+        }
+        else
+        {
+            // 그게 아닌 경우
+            ReplaceScene("NoImage", BUY_FAIRY_OK, BTN_1);
+        }
     }
     else
     {
@@ -1456,6 +1495,57 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
             ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
         else // 재부팅 시키기
             ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
+    }
+}
+
+void NoImage::XmlParseUsingFairy(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        // init
+        myInfo->ClearFairyList();
+        
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("fairy-list").children("fairy");
+        int cfi, ufi, level, isUse;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-fairy-id") cfi = ait->as_int();
+                else if (name == "user-fairy-id") ufi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "is-use") isUse = ait->as_int();
+            }
+            myInfo->AddFairy(cfi, ufi, level, isUse);
+        }
+        
+        // 정보 갱신 (게임준비, 코코방_요정, 친구리스트의 내정보)
+        CCString* param = CCString::create("4");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        Friend::ChangeMyFairyInfo();
+        param = CCString::create("7");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+        
+        ReplaceScene("NoImage", BUY_FAIRY_OK, BTN_1);
+    }
+    else
+    {
+        CCLog("XmlParseFairyList : failed code = %d", code);
     }
 }
 

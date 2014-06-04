@@ -31,6 +31,7 @@ public:
     
 protected:
     CCSize m_winSize;
+    bool isKeybackTouched;
     
 private:
     CCSprite* pBlack;    

@@ -126,6 +126,7 @@ void CocoRoom::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP 정보 업데이트
@@ -184,6 +185,8 @@ void CocoRoom::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("CocoRoom : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollView->setTouchEnabled(false);
     }
     else if (param->intValue() == 2)
     {
@@ -191,6 +194,11 @@ void CocoRoom::Notification(CCObject* obj)
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+    }
+    else if (param->intValue() == 7)
+    {
+        // 요정을 처음 구입했을 경우 -> 그 요정을 바로 자동 착용 -> 정보 갱신해야 함.
+        MakeSprites(-curState);
     }
     else if (param->intValue() == 8)
     {
@@ -211,6 +219,11 @@ void CocoRoom::Notification(CCObject* obj)
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(100))->setString(name);
     }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
 
     else if (param->intValue() == -1)
     {
@@ -218,6 +231,7 @@ void CocoRoom::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
 }
@@ -601,7 +615,12 @@ void CocoRoom::MakeSpritesFairy()
         default: picture->setScale(2.0f); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
-    picture->setPosition(ccp(300, 1186+offset-50));
+    switch (fid)
+    {
+        case 1: picture->setPosition(ccp(300, 1186+offset-50)); break;
+        case 2: picture->setPosition(ccp(310, 1156+offset-50)); break;
+        default: picture->setPosition(ccp(310, 1136+offset-50)); break;
+    }
     picture->setTag(99999);
     fairy->addChild(picture, 100);
     
@@ -625,7 +644,10 @@ void CocoRoom::MakeSpritesFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1036+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
     
     // 기본속성 값
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
+    if (fid > 0)
+        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
+    else
+        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("없음", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
     
     // 추가속성 값
     if (fid > 0)
@@ -738,12 +760,16 @@ void CocoRoom::MakeSpritesCandy()
     // 마법진 배경
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "background/bg_todaycandy.png", ccp(0.5, 0.5), ccp(188+357, 528+357), CCSize(0, 0), "", "Layer", candy, 79) );
 
+    SetTodayCandyList(); // 5명의 프로필 사진과 이름을 들고온다.
+    
     // 5명의 이름
+    /*
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel(MyInfo::GetName(), fontList[0], 36, ccp(0.5, 1), ccp(542, 1210+offset2-65), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, 0) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("?", fontList[0], 36, ccp(0.5, 1), ccp(273, 1015+offset2-65), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, 1) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("?", fontList[0], 36, ccp(0.5, 1), ccp(334, 752+offset2-65), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, 2) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("?", fontList[0], 36, ccp(0.5, 1), ccp(728, 752+offset2-65), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, 3) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::CreateLabel("?", fontList[0], 36, ccp(0.5, 1), ccp(805, 1015+offset2-65), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, 4) );
+    
     
     SetTodayCandyList(); // 5명의 프로필 사진과 이름을 들고온다.
     
@@ -759,7 +785,7 @@ void CocoRoom::MakeSpritesCandy()
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png3", ccp(0.5, 1), ccp(334, 752+offset2-65), CCSize(std::max(150, (int)s2.width+30), 58), "", "Layer", candy, 105) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4", ccp(0.5, 1), ccp(728, 752+offset2-65), CCSize(std::max(150, (int)s3.width+30), 58), "", "Layer", candy, 105) );
     spriteClassCandy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png5", ccp(0.5, 1), ccp(805, 1015+offset2-65), CCSize(std::max(150, (int)s4.width+30), 58), "", "Layer", candy, 105) );
-    
+    */
     
     // question
     //spriteClassCandy->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question.png", ccp(0, 0), ccp(916, 515), CCSize(0, 0), "", "Layer", candy, 5) );
@@ -781,8 +807,8 @@ void CocoRoom::MakeSpritesCandy()
 
 void CocoRoom::SetTodayCandyList()
 {
-    for (int i = 0 ; i < 5 ; i++)
-        ((CCLabelTTF*)spriteClassCandy->FindLabelByTag(i))->setString("?");
+    //for (int i = 0 ; i < 5 ; i++)
+    //    ((CCLabelTTF*)spriteClassCandy->FindLabelByTag(i))->setString("?");
     
     spriteClassCandyList->RemoveAllObjects();
     
@@ -814,7 +840,19 @@ void CocoRoom::SetTodayCandyList()
             }
 
             // name 변경
-            ((CCLabelTTF*)spriteClassCandy->FindLabelByTag(i))->setString(friendList[idx]->GetNickname().c_str());
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabel(friendList[idx]->GetNickname(), fontList[0], 36, ccp(0.5, 1), ccp(pos[i].x, pos[i].y-65-5), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, i+1) );
+            CCSize s0 = ((CCLabelTTF*)spriteClassCandyList->FindLabelByTag(i+1))->getContentSize();
+            
+            // name의 배경
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png1", ccp(0.5, 1), ccp(pos[i].x, pos[i].y-65), CCSize(std::max(150, (int)s0.width+30), 58), "", "Layer", candy, 105) );
+        }
+        else
+        {
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateLabel("?", fontList[0], 36, ccp(0.5, 1), ccp(pos[i].x, pos[i].y-65-5), ccc3(255,255,255), "", "Layer", candy, 110, 0, 255, i+1) );
+            CCSize s0 = ((CCLabelTTF*)spriteClassCandyList->FindLabelByTag(i+1))->getContentSize();
+            
+            // name의 배경
+            spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png1", ccp(0.5, 1), ccp(pos[i].x, pos[i].y-65), CCSize(std::max(150, (int)s0.width+30), 58), "", "Layer", candy, 105) );
         }
     }
     
@@ -1073,7 +1111,17 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             else if (curState == 3 && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false); // 오.별 친구고르기
+                if (myInfo->IsTodayCandyUsed())
+                {
+                    // 오늘 오.별을 이미 1번 행한 경우
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_ALREADY_DONE, BTN_1, nullData);
+                }
+                else
+                {
+                    // 오.별 친구고르기
+                    Common::ShowNextScene(this, "CocoRoom", "CocoRoomTodayCandy", false);
+                }
                 return true;
             }
         }

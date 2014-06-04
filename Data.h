@@ -62,6 +62,7 @@ public:
     static const char* GetCurName();
     static const char* GetParentName();
     static std::string GetCurNameString();
+    static std::string GetParentNameString();
     static int GetCurPriority();
     static void AddCurDepth(std::string name, void* pointer = NULL);
     static void RemoveCurDepth();
@@ -100,6 +101,8 @@ public:
     int combo;
     bool isMissionSuccess;
     bool isNewRecord;
+    std::vector<int> skillNum;
+    std::vector<int> skillCnt;
 };
 
 class MyInfo

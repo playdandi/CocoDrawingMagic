@@ -87,6 +87,11 @@ void FairyOneInfo::Notification(CCObject* obj)
         // 요정 구매 성공 후에 돌아올 경우 : 즉시 종료
         EndScene();
     }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
 }
 
 void FairyOneInfo::InitSprites()

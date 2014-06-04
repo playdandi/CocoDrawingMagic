@@ -34,6 +34,8 @@ void GameReady::onEnter()
         std::vector<int> nullData;
         Common::ShowPopup(this, "GameReady", "NoImage", false, PRACTICE_SKILL_FULL_EXP, BTN_1, nullData);
     }
+    
+    Depth::DumpDepth();
 }
 void GameReady::onExit()
 {
@@ -85,7 +87,6 @@ bool GameReady::init()
     
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
-    //scrollViewSlot->retain();
     scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
     scrollViewSlot->setViewSize(CCSizeMake(782-40, 177-20));
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
@@ -142,6 +143,7 @@ void GameReady::Notification(CCObject* obj)
         //this->setTouchEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollViewSlot->setTouchEnabled(true);
         CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
@@ -168,6 +170,8 @@ void GameReady::Notification(CCObject* obj)
         //this->setKeypadEnabled(false);
         //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollViewSlot->setTouchEnabled(false);
     }
     else if (param->intValue() == 2)
     {
@@ -216,6 +220,13 @@ void GameReady::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"))->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(255,255,255));
     }
 }
 
@@ -395,20 +406,20 @@ void GameReady::InitProperties()
     CCPoint pos = ccp(848, 1611);
     if (myInfo->IsFire())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png1", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png1"), CCSize(0, 0), "background/bg_property.png1", "0", NULL, 5, 1) );
         pos.x += 57;
     }
     if (myInfo->IsWater())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png2", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png2"), CCSize(0, 0), "background/bg_property.png2", "0", NULL, 5, 1) );
         pos.x += 57;
     }
     if (myInfo->IsLand())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property.png3", ccp(0, 0), pos, CCSize(0, 0), "", "GameReady", this, 5) );
+        spriteClassProperty->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClassProperty->FindParentCenterPos("background/bg_property.png3"), CCSize(0, 0), "background/bg_property.png3", "0", NULL, 5, 1) );
         pos.x += 57;
     }
     
@@ -512,13 +523,14 @@ void GameReady::InitSkill()
     
     int sid = myInfo->GetPracticeSkillId();
     int slv = myInfo->GetPracticeSkillLv();
+    CCLog("sid, siv = %d %d", sid, slv);
     
     // 배경판
     spriteClassSkill->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(0, 0), CCSize(263, 236), "", "Layer", skillLayer, 1) );
     
     skillLayer->setContentSize(CCSizeMake(263, 236));
     
-    // 스킬 배경=
+    // 스킬 배경
     spriteClassSkill->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2", ccp(0, 0), ccp(19, 22), CCSize(228, 53), "", "Layer", skillLayer, 5) );
     CCPoint pos = spriteClassSkill->FindParentCenterPos("background/bg_gameready_name.png2");
     if (sid == 0) // 배운 스킬이 없는 경우 '스킬 없음' 표시
@@ -554,7 +566,6 @@ void GameReady::InitSkill()
         spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(19+228/2,22+53/2), ccc3(255,255,255), "", "Layer", skillLayer, 7) );
         //spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 100, 1) );
         
-        // 797-699-50
         // Lv. <- 이 그림
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(19, 850-772), CCSize(0, 0), "", "Layer", skillLayer, 5) );
         // 레벨 숫자 이미지
@@ -662,7 +673,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     
     CCPoint point = pTouch->getLocation();
-    //CCLog("GameReady : (%d , %d)", (int)point.x, (int)point.y);
+    CCLog("GameReady : (%d , %d)", (int)point.x, (int)point.y);
     
     rect = CCRectZero;
     kind = -1;

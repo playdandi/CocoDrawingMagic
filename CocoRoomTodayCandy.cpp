@@ -82,6 +82,43 @@ bool CocoRoomTodayCandy::init()
     return true;
 }
 
+void CocoRoomTodayCandy::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        scrollView->setTouchEnabled(true);
+        CCLog("CocoRoomTodayCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        scrollView->setTouchEnabled(true);
+        CCLog("CocoRoomTodayCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("CocoRoomTodayCandy : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollView->setTouchEnabled(false);
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
+}
+
 void CocoRoomTodayCandy::InitSprites()
 {
     pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
@@ -137,7 +174,7 @@ void CocoRoomTodayCandy::MakeScroll()
     
     int height = 0;
     char fname[50], fname2[50];
-    for (int i = 0 ; i < numOfList ; i++)
+    for (int i = numOfList-1 ; i >= 0 ; i--)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             continue;

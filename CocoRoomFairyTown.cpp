@@ -65,7 +65,6 @@ bool CocoRoomFairyTown::init()
     
     // scrollView 생성
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904-40));
     scrollView->setAnchorPoint(ccp(0, 0));
@@ -108,6 +107,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
@@ -116,6 +116,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
@@ -123,11 +124,18 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("CocoRoomFairyTown : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollView->setTouchEnabled(false);
     }
     else if (param->intValue() == 2)
     {
         // 스크롤 내용 갱신
         RenewScroll();
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
     }
 }
 

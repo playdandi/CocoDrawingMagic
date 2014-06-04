@@ -54,8 +54,8 @@ void Puzzle::onExit()
 
 void Puzzle::keyBackClicked()
 {
-    //CCDirector::sharedDirector()->end();
-    PauseGame();
+    if (!isInGamePause)
+        PauseGame();
 }
 
 bool Puzzle::init()
@@ -149,6 +149,8 @@ bool Puzzle::init()
     
     XMLStatus = 0;
     
+    readyCnt = 0;
+    
 	return true;
 }
 
@@ -167,6 +169,7 @@ void Puzzle::Notification(CCObject* obj)
         CCLog("Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         sound->ResumeBackgroundInGameSound();
+        sound->ResumeAllEffects();
         
         // 정령 다시 움직이기
         if (skill->IsSpiritAlive(0))
@@ -188,6 +191,7 @@ void Puzzle::Notification(CCObject* obj)
     else if (param->intValue() == 2)
     {
         sound->StopBackgroundInGameSound();
+        sound->ResumeAllEffects();
         
         // 종료하고 Ranking으로 돌아가자.
         CCLog("Puzzle 종료. Ranking으로 돌아감.");
@@ -954,7 +958,6 @@ void Puzzle::Ready_C(CCNode* sender, void* p)
     sprite->setAnchorPoint(ccp(0.5, 0.5));
     sprite->setPosition(ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120+180));
     sprite->setScale(1.2f);
-    //sprite->setOpacity(0);
     this->addChild(sprite, 5000);
     
     CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
@@ -972,26 +975,6 @@ void Puzzle::Ready(float f)
 {
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCEaseBackIn::create(CCMoveBy::create(0.3f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
     readyTimeLabel->runAction(action);
-    
-    /*
-    if (iReadyTime % 1000 == 0)
-    {
-        if (iReadyTime == 3000) readyTimeLabel->setString("셋");
-        else if (iReadyTime == 2000) readyTimeLabel->setString("둘");
-        else if (iReadyTime == 1000) readyTimeLabel->setString("하나");
-        else readyTimeLabel->setString("수업 시작!");
-        readyTimeLabel->setOpacity(255);
-        
-        if (iReadyTime == 0) // 게임 시작!
-        {
-            this->unschedule(schedule_selector(Puzzle::Ready));
-            
-            CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCEaseBackIn::create(CCMoveBy::create(0.3f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
-            readyTimeLabel->runAction(action);
-        }
-    }
-    iReadyTime -= 250;
-    */
 }
 void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
 {
@@ -1395,8 +1378,13 @@ void Puzzle::StartMagicTime(float f)
 
 void Puzzle::PauseGame()
 {
+    if (isInGamePause)
+        return;
     isInGamePause = true;
+    
     sound->PauseBackgroundInGameSound();
+    
+    CancelDrawing();
     
     // 정령 멈추기
     if (skill->IsSpiritAlive(0))
@@ -1502,16 +1490,14 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     // 3가지 정령 중 하나를 터치할 때 동작한다. (좌표 기준인데, 정령이 없으면 아예 시도하지 않는다)
     if ((x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == 0))
     {
-        CCLog("정령 부분 터치함");
         if (m_iSpiritSP == 0 && !skill->W8_IsActive()) // '여신의 은총' 실행 중이면 중지.
         {
-            //CCLog("정령 되나요?");
             // 정령이 살아있지 않다면 터치 종료.
-            if (x == 0 && y == ROW_COUNT-1 && !skill->IsSpiritAlive(0))
+            if (x == 0 && y == ROW_COUNT-1 && !skill->IsSpiritAlive(2)) // 땅의 정령 (왼쪽 위)
                 return (m_bTouchStarted = false);
-            else if (x == COLUMN_COUNT-1 && y == ROW_COUNT-1 && !skill->IsSpiritAlive(1))
+            else if (x == COLUMN_COUNT-1 && y == ROW_COUNT-1 && !skill->IsSpiritAlive(1)) // 물의 정령 (오른쪽 위)
                 return (m_bTouchStarted = false);
-            else if (x == COLUMN_COUNT-1 && y == 0 && !skill->IsSpiritAlive(2))
+            else if (x == COLUMN_COUNT-1 && y == 0 && !skill->IsSpiritAlive(0)) // 불의 정령 (오른쪽 아래)
                 return (m_bTouchStarted = false);
             
             m_bTouchStarted = false;
@@ -1522,12 +1508,12 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             m_bIsSpiritExecuted = true;
             
             // 각 정령에 관련된 스킬 발동!
-            if (x == 0 && y == ROW_COUNT-1)
-                skill->Invoke(4, NULL);
-            else if (x == COLUMN_COUNT-1 && y == ROW_COUNT-1)
-                skill->Invoke(12, NULL);
-            else if (x == COLUMN_COUNT-1 && y == 0)
+            if (x == 0 && y == ROW_COUNT-1) // 땅
                 skill->Invoke(20, NULL);
+            else if (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) // 물
+                skill->Invoke(12, NULL);
+            else if (x == COLUMN_COUNT-1 && y == 0) // 불
+                skill->Invoke(4, NULL);
         }
         
         return (m_bTouchStarted = false);
@@ -2894,8 +2880,22 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         // score 정보 갱신
         int totalScore = nodeResult.child("score").attribute("now-score").as_int();
         
+        
         // 결과화면에 보낼 데이터 class 생성
         myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, iScore, totalScore, maxCombo, isMissionSuccess, isNewRecord);
+        int num;
+        for (int i = 0 ; i < NUMOFSKILL ; i++)
+        {
+            if (skill->GetSkillAppliedCount(i) > 0)
+            {
+                if (i < 8) num = i+21;
+                else if (i < 16) num = i+3;
+                else if (i < 24) num = i+15;
+                myGameResult->skillNum.push_back(num);
+                myGameResult->skillCnt.push_back(skill->GetSkillAppliedCount(i));
+            }
+        }
+        
         
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
@@ -3024,6 +3024,8 @@ void Puzzle::EndScene()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    this->stopAllActions();
+    
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
@@ -3037,6 +3039,8 @@ void Puzzle::EndScene()
     delete effect;
     skill->RemoveAllObjects();
     delete skill;
+    sound->StopAllEffects();
+    sound->StopBackgroundInGameSound();
     sound->UnLoadInGameSound();
     delete sound;
     
@@ -3044,13 +3048,11 @@ void Puzzle::EndScene()
     delete puzzleP4set;
     puzzleP8set->RemoveAllObjects();
     delete puzzleP8set;
-    
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    
     while (!fallingQueue.empty())
         fallingQueue.pop();
-    
+
     for (int i = 0 ; i < lock8xy.size() ; i++) lock8xy[i].clear();
     for (int i = 0 ; i < lock4xy.size() ; i++) lock4xy[i].clear();
     for (int i = 0 ; i < piece4xy.size() ; i++) piece4xy[i].clear();
@@ -3061,7 +3063,7 @@ void Puzzle::EndScene()
     piece4xy.clear();
     piece8xy.clear();
     strap.clear();
-    
+
     for (int i = 0 ; i < strap.size() ; i++)
     {
         for (int j = 0 ; j < strap[i].size() ; j++)
@@ -3069,13 +3071,11 @@ void Puzzle::EndScene()
         strap[i].clear();
     }
     strap.clear();
-
     //pComboLabel->removeFromParentAndCleanup(true);
     pTimerLabel->removeFromParentAndCleanup(true);
     
     puzzleLayer->removeAllChildren();
     puzzleLayer->removeFromParentAndCleanup(true);
-    
     timerLayer->removeAllChildren();
     timerLayer->removeFromParentAndCleanup(true);
     timerStencil->removeFromParentAndCleanup(true);
@@ -3087,6 +3087,7 @@ void Puzzle::EndScene()
     for (int i = 0 ; i < fairy_sp.size() ; i++)
         fairy_sp[i]->removeFromParentAndCleanup(true);
     fairy_sp.clear();
+
     cocoLayer->removeAllChildren();
     cocoLayer->removeFromParentAndCleanup(true);
     fairyLayer->removeAllChildren();

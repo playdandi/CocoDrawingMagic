@@ -59,10 +59,15 @@ const char* Depth::GetCurName()
 {
     return depth[depth.size()-1]->name.c_str();
 }
+std::string Depth::GetParentNameString()
+{
+    return depth[depth.size()-2]->name;
+}
 std::string Depth::GetCurNameString()
 {
     return depth[depth.size()-1]->name;
 }
+
 int Depth::GetCurPriority()
 {
     return depth[depth.size()-1]->priority;
@@ -1338,32 +1343,32 @@ std::string SkillInfo::GetFullDesc(int sid)
 {
     switch (sid)
     {
-        case 21: return "를 그리면 추가 점수를 획득해요."; break;
-        case 22: return "사이클로 그리면 주변 를 부술 수 있어요"; break;
-        case 23: return "8개 이상 그리면 추가 점수를 획득해요."; break;
-        case 24: return "MagicTime 때의 마법진을 두 번 터뜨려요."; break;
-        case 25: return "사랑의 불꽃으로 를 만들어요."; break;
-        case 26: return "한 번에 6개 이상 를 그리면 불꽃으로 한 번 더 터뜨려요."; break;
-        case 27: return "가끔 코코가 스스로 를 터뜨려요."; break;
-        case 28: return "한 번에 10개 이상 그리면 드래곤을 소환해요!"; break;
+        case 21: return "빨간 피스를 그리면 추가 점수를 획득해요."; break;
+        case 22: return "빨간 피스를 사이클로 그리면 주변 피스를 터뜨릴 수 있어요"; break;
+        case 23: return "빨간 피스를 한 번에 8개 이상 그리면 추가 점수를 획득해요."; break;
+        case 24: return "MagicTime 때 마법진을 두 번 터뜨려요."; break;
+        case 25: return "사랑의 불꽃으로 빨간 피스를 여러 개 만들어요."; break;
+        case 26: return "빨간 피스를 한 번에 6개 이상 그리면 불꽃으로 한 번 더 터뜨려요."; break;
+        case 27: return "가끔 코코가 스스로 피스들을 터뜨려요."; break;
+        case 28: return "빨간 피스를 한 번에 10개 이상 그리면 드래곤을 소환해요!"; break;
             
-        case 11: return "를 그리면 추가 점수를 획득해요."; break;
-        case 12: return "를 사이클로 그리면 파도가 를 부숴요."; break;
+        case 11: return "파란 피스를 그리면 추가 점수를 획득해요."; break;
+        case 12: return "파란 피스를 사이클로 그리면 파도가 피스를 터뜨려요."; break;
         case 13: return "10콤보마다 추가 점수를 획득해요."; break;
         case 14: return "50콤보마다 추가 별사탕을 획득해요."; break;
-        case 15: return "파랑나비가 날아와 를 만들어요."; break;
-        case 16: return "한 번에 6개 이상 를 그리면 얼음비가 한 번 더 터뜨려요."; break;
+        case 15: return "파란 나비가 날아와 파란 피스를 만들어요."; break;
+        case 16: return "파란 피스를 한 번에 6개 이상 그리면 얼음비가 한 번 더 터뜨려요."; break;
         case 17: return "코코가 시간을 얼려 잠시 동안 시간이 가지 않아요."; break;
-        case 18: return "한 번에 10개 이상 그리면 여신을 소환해요!"; break;
+        case 18: return "파란 피스를 한 번에 10개 이상 그리면 여신을 소환해요!"; break;
             
-        case 31: return "를 그리면 추가 점수를 획득해요."; break;
-        case 32: return "를 사이클로 그리면 무작위로 를 터뜨려요."; break;
+        case 31: return "초록 피스를 그리면 추가 점수를 획득해요."; break;
+        case 32: return "초록 피스를 사이클로 그리면 무작위로 피스를 터뜨려요."; break;
         case 33: return "지팡이의 레벨만큼 별사탕을 추가로 획득해요."; break;
-        case 34: return "를 10개 이상 그리면 추가 별사탕을 획득해요."; break;
-        case 35: return "마법 잎사귀가 를 모두 모아줘요."; break;
-        case 36: return "한 번에 를 6개 이상 그리면 상쾌한 바람으로 한 번 더 터뜨려요."; break;
+        case 34: return "초록 피스를 한 번에 10개 이상 그리면 추가 별사탕을 획득해요."; break;
+        case 35: return "마법 잎사귀가 초록 피스를 모두 모아줘요."; break;
+        case 36: return "초록 피스를 한 번에 6개 이상 그리면 상쾌한 바람으로 한 번 더 터뜨려요."; break;
         case 37: return "가끔씩 포션 1개를 얻을 수 있어요."; break;
-        case 38: return "한 번에 를 10개 이상 그리면 고대나무를 소환해요!"; break;
+        case 38: return "초록 피스를 한 번에 10개 이상 그리면 고대나무를 소환해요!"; break;
     }
     return "";
 }

@@ -236,6 +236,8 @@ protected:
     int curMyRank;
     bool isRankUp;
     
+    int readyCnt;
+    
 private:
     Sound* sound;
     PuzzleSkill* skill;

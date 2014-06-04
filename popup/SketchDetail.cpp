@@ -40,6 +40,7 @@ void SketchDetail::onExit()
 
 void SketchDetail::keyBackClicked()
 {
+    sound->playClick();
     EndScene(true);
 }
 
@@ -92,6 +93,11 @@ void SketchDetail::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("SketchDetail : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
     }
 }
 
@@ -413,6 +419,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                sound->playClick();
                 EndScene(true);
                 break;
             }
@@ -509,8 +516,6 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void SketchDetail::EndScene(bool isNoti)
 {
-    sound->playClick();
-    
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree

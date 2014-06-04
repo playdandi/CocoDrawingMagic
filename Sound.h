@@ -29,6 +29,9 @@ public:
     void ResumeBackgroundSound();
     void StopBackgroundSound();
     
+    void StopAllEffects();
+    void ResumeAllEffects();
+    
     void playWarning();
     void playClick();
     void playClickboard();

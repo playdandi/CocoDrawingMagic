@@ -90,6 +90,7 @@ void RequestTopaz::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // scroll 갱신
@@ -100,6 +101,7 @@ void RequestTopaz::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("RequestTopaz 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        scrollView->setTouchEnabled(false);
     }
     else if (param->intValue() == -1)
     {
@@ -107,7 +109,13 @@ void RequestTopaz::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
     }
 }
 

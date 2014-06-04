@@ -8,7 +8,8 @@
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
-class PuzzleResult : public CCLayer
+class PuzzleResult : public CCLayer,
+                    public CCScrollViewDelegate
 {
 public:
     static CCScene* scene();
@@ -19,6 +20,8 @@ public:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
+    virtual void scrollViewDidScroll(CCScrollView* view);
+    virtual void scrollViewDidZoom(CCScrollView* view);
     
     CREATE_FUNC(PuzzleResult);
     
@@ -45,6 +48,9 @@ protected:
     float topaz;
     float starcandy;
     float mp;
+    
+    bool isScrolling;
+    int skillIdx;
 
 private:
     CCSprite* pBlack;
@@ -61,6 +67,8 @@ private:
     CCClippingNode* timerClip;
     CCDrawNode* timerStencil2;
     CCClippingNode* timerClip2;
+    
+    CCScrollView* scrollView;
 };
 
 #endif /* defined(__magician__PuzzleResult__) */

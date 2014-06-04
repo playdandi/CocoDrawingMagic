@@ -32,7 +32,11 @@ void PuzzlePause::onExit()
 
 void PuzzlePause::keyBackClicked()
 {
-    ResumeGame();
+    if (!isKeybackTouched)
+    {
+        isKeybackTouched = true;
+        ResumeGame();
+    }
 }
 
 
@@ -61,6 +65,10 @@ bool PuzzlePause::init()
     
     InitSprites();
     //InitSprites2();
+    
+    isKeybackTouched = false;
+    
+    CCLog("PuzzlePause : init - done");
     
     return true;
 }
@@ -136,7 +144,7 @@ bool PuzzlePause::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 ResumeGame();
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_pause_end.png")
@@ -144,7 +152,7 @@ bool PuzzlePause::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 EndGame();
-                break;
+                return true;
             }
         }
     }

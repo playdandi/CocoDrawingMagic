@@ -17,6 +17,8 @@ public:
     
     CREATE_FUNC(NoImage);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     
     void ReplaceScene(std::string to, int type, int btnType);
@@ -36,6 +38,7 @@ public:
     void XmlParseUpgradeStaff(char* data, int size);
     void XmlParseUpgradeFairy(char* data, int size);
     void XmlParseBuyFairy(char* data, int size);
+    void XmlParseUsingFairy(char* data, int size);
     void XmlParseBuySkillSlot(char* data, int size);
     void XmlParseBuySkillProperty(char* data, int size);
     void XmlParseGetFirstSkill(char* data, int size);
@@ -43,6 +46,9 @@ public:
 protected:
     CCSize winSize;
     bool isTouched;
+    bool isTouchDone;
+    bool isEnded;
+    bool isKeybackTouched;
     
 private:
     CCSprite* pBlack;

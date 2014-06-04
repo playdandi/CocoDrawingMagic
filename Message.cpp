@@ -109,6 +109,7 @@ void Message::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
@@ -117,6 +118,7 @@ void Message::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollView->setTouchEnabled(true);
         CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 메시지 data 갱신 (전체 포션 받기를 했을 때는 행하지 않는다)
@@ -145,11 +147,18 @@ void Message::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("Message : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollView->setTouchEnabled(false);
     }
     else if (param->intValue() == 2)
     {
         // scroll 갱신
         RenewScroll();
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
     }
 }
 

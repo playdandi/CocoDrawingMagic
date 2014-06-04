@@ -60,7 +60,14 @@ void Sound::ResumeBackgroundSound()
     SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
 }
 
-
+void Sound::StopAllEffects()
+{
+    SimpleAudioEngine::sharedEngine()->stopAllEffects();
+}
+void Sound::ResumeAllEffects()
+{
+    SimpleAudioEngine::sharedEngine()->resumeAllEffects();
+}
 
 void Sound::playClick()
 {

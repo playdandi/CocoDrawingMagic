@@ -20,7 +20,7 @@ public:
     
     void InitSprites();
     void InitBtn();
-    void MakeScrollSlot();
+    void MakeScrollSlot(bool isAutoMove);
     
     void Notification(CCObject* obj);
     
@@ -29,7 +29,7 @@ public:
     void EndScene();
     void EndSceneCallback();
     
-    void RenewSlot();
+    void RenewSlot(bool isAutoMove);
     void SendToParent();
     
     void XmlParseSkillSlot(char* data, int size);

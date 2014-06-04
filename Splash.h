@@ -58,6 +58,8 @@ public:
     void LastActionStart();
     void LastActionCallback(CCNode* sender, void *data);
     void LastActionCallback2(CCNode* sender, void *data);
+    
+    std::string SubstrNickname(std::string nickname);
     void EndScene();
     
     
@@ -80,12 +82,12 @@ protected:
 private:
     CCSprite* m_pBackground;
     CCSprite* m_pTitle;
-    CCSprite* m_pForKakao;
+    //CCSprite* m_pForKakao;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
     
-    CCTextFieldTTF* m_pEditName;
+    //CCTextFieldTTF* m_pEditName;
 };
 
 

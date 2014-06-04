@@ -25,6 +25,8 @@ public:
 
     CREATE_FUNC(CocoRoomTodayCandy);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void MakeScroll();
     

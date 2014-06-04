@@ -171,7 +171,10 @@ void PuzzleResult::InitSprites()
     
     int offset;
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(140, 800), CCSize(430, 150), "", "PuzzleResult", this, 1005) );
+    // 별사탕, MP, 포션, 토파즈 (새로 받은) 정보 위치
+    // 원래 size (430, 150)
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(140, 800), CCSize(330, 150), "", "PuzzleResult", this, 1005) );
+    
     // 별사탕, MP 아이콘
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_starcandy_2.png", ccp(0, 0), ccp(160, 870), CCSize(0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_magicpoint_mini.png", ccp(0, 0), ccp(163, 810), CCSize(0,0), "", "PuzzleResult", this, 1005) );
@@ -186,6 +189,7 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265+2, 840-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265, 840), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     
+    /*
     // 포션 빈칸
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_empty.png", ccp(0, 0), ccp(430, 825+7), CCSize(0,0), "", "PuzzleResult", this, 1005) );
     // 포션
@@ -202,10 +206,11 @@ void PuzzleResult::InitSprites()
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_topaz.png2", ccp(0, 0), ccp(465, 825-10), CCSize(0,0), "", "PuzzleResult", this, 1006) );
     }
-    
+    */
     
     // 스킬 문양들 쏟아져 나오는 부분
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(140+430+20, 800), CCSize(350, 150), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(590-100, 800), CCSize(350+100, 150), "", "PuzzleResult", this, 1005) );
+    
     
     
     // 말풍선
@@ -340,6 +345,80 @@ void PuzzleResult::Callback_ProgressBar(CCNode* sender, void* data)
     }
 }
 
+void PuzzleResult::InitSkills()
+{
+    int numOfList = myGameResult->skillNum.size();
+    CCLayer* container = CCLayer::create();
+    
+    char name[20], name2[20];
+    int width = 0;
+    for (int i = 0 ; i < numOfList ; i++)
+    {
+        sprintf(name, "skill_%d.png", myGameResult->skillNum[i]);
+        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(width, 0), CCSize(0,0), "", "Layer", container, 1007, 0, 0, i+10000) );
+        //((CCSprite*)spriteClassSkill->FindSpriteByName(name))->setOpacity(0);
+        
+        sprintf(name2, "X %d", myGameResult->skillCnt[i]);
+        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[0], 32, ccp(0.5, 0.5), ccp(width+146/2-15, 15), ccc3(255,255,255), "", "Layer", container, 1007, 0, 0, i+20000) );
+        
+        width = width + ((CCSprite*)spriteClassSkill->FindSpriteByName(name))->getContentSize().width - 20;
+    }
+    
+    for (int i = 0 ; i < spriteClassSkill->spriteObj.size() ; i++)
+        spriteClassSkill->AddChild(i);
+    
+    width += 20;
+    container->setContentSize(CCSizeMake(width, 150));
+    
+    scrollView = CCScrollView::create();
+    scrollView->setDirection(kCCScrollViewDirectionHorizontal);
+    scrollView->setViewSize(CCSizeMake(100+350-30, 150-20));
+    scrollView->setAnchorPoint(ccp(0, 0));
+    scrollView->setPosition(ccp(590-100+15, 800+10));
+    scrollView->setDelegate(this);
+    scrollView->setContainer(container);
+    scrollView->setContentSize(container->getContentSize());
+    scrollView->setTouchPriority(Depth::GetCurPriority());
+    this->addChild(scrollView, 1006);
+
+    skillIdx = 0;
+    this->schedule(schedule_selector(PuzzleResult::SkillTimer), 0.33f);
+}
+
+void PuzzleResult::SkillTimer(float f)
+{
+    /*
+    char number[30];
+    sprintf(number, "skill_%d.png", test[ppp]);
+    CCActionInterval* action = CCSequence::create(CCJumpBy::create(1.5f, ccp(-(350+50), 0), 80, 3), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::Callback), NULL), NULL);
+    ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->runAction(action);
+    
+    ppp++;
+    */
+    CCLog("%d %d", skillIdx, (int)myGameResult->skillNum.size());
+    if (skillIdx < myGameResult->skillNum.size())
+    {
+        if (skillIdx == 3) // 4개째 만들어질 때 스크롤링 시작
+        {
+            CCLog("min offset = %d", (int)scrollView->minContainerOffset().x);
+            float d = (float)abs((int)scrollView->minContainerOffset().x) / (float)146 / 2;
+            CCLog("time = %f", d);
+            scrollView->setContentOffsetInDuration(ccp(scrollView->minContainerOffset().x, 0), d);
+        }
+        CCActionInterval* action = CCFadeIn::create(0.33f);
+        ((CCSprite*)spriteClassSkill->FindSpriteByTag(skillIdx+10000))->runAction(action);
+        ((CCLabelTTF*)spriteClassSkill->FindLabelByTag(skillIdx+20000))->runAction((CCActionInterval*)action->copy());
+        //spriteClassSkill->spriteObj[skillIdx]->sprite->runAction(action);
+        skillIdx++;
+    }
+    else
+    {
+        this->unschedule(schedule_selector(PuzzleResult::SkillTimer));
+    }
+}
+
+
+/*
 int test[10] = {11,21,31,15,25,35,23,33,27,28};
 int ppp;
 void PuzzleResult::InitSkills()
@@ -373,7 +452,7 @@ void PuzzleResult::Callback(CCNode* sender, void* p)
     CCActionInterval* rep = CCRepeatForever::create(action);
     sender->runAction(rep);
 }
-
+*/
 
 void PuzzleResult::ScoreTimer(float f)
 {
@@ -393,16 +472,6 @@ void PuzzleResult::ScoreTimer(float f)
     pScoreLayer->setAnchorPoint(ccp(0, 0));
     pScoreLayer->setPosition(ccp(m_winSize.width/2 - pScoreLayer->getContentSize().width/2, 1230+50));
     this->addChild(pScoreLayer, 1005);
-}
-void PuzzleResult::SkillTimer(float f)
-{
-    char number[30];
-    sprintf(number, "skill_%d.png", test[ppp]);
-    
-    CCActionInterval* action = CCSequence::create(CCJumpBy::create(1.5f, ccp(-(350+50), 0), 80, 3), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::Callback), NULL), NULL);
-    ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->runAction(action);
-    
-    ppp++;
 }
 void PuzzleResult::TopazTimer(float f)
 {
@@ -443,7 +512,20 @@ void PuzzleResult::MPTimer(float f)
 
 bool PuzzleResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
+    CCPoint point = pTouch->getLocation();
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(170,170,170));
+                return true;
+            }
+        }
+    }
     return true;
 }
 
@@ -455,6 +537,9 @@ void PuzzleResult::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
+    
+    ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green.png"))->setColor(ccc3(255,255,255));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(255,255,255));
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -503,8 +588,8 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->spriteClassSkill->RemoveAllObjects();
     delete pThis->spriteClassSkill;
     
-    pThis->timerStencil->removeFromParentAndCleanup(true);
-    pThis->timerClip->removeFromParentAndCleanup(true);
+    //pThis->timerStencil->removeFromParentAndCleanup(true);
+    //pThis->timerClip->removeFromParentAndCleanup(true);
     if (myInfo->GetPracticeSkillId() != 0) // 연습 중인 스킬이 있을 때만 노출되는 것들
     {
         pThis->barLayer->removeAllChildren();
@@ -516,6 +601,18 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->pBlack->removeFromParentAndCleanup(true);
     pThis->pBlackClose->removeFromParentAndCleanup(true);
     
+    pThis->scrollView->getContainer()->removeAllChildren();
+    pThis->scrollView->removeAllChildren();
+    pThis->scrollView->removeFromParentAndCleanup(true);
+    
     pThis->removeFromParentAndCleanup(true);
 }
 
+void PuzzleResult::scrollViewDidScroll(CCScrollView* view)
+{
+    isScrolling = true;
+}
+
+void PuzzleResult::scrollViewDidZoom(CCScrollView* view)
+{
+}

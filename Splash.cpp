@@ -79,7 +79,7 @@ bool Splash::init()
     
     httpStatus = 0;
     
-    m_pEditName = NULL;
+    //m_pEditName = NULL;
     
 	return true;
 }
@@ -90,11 +90,13 @@ void Splash::LogoLoadingCompleted()
     m_pTitle = CCSprite::createWithSpriteFrameName("background/Title.png");
     m_pTitle->setPosition(ccp(winSize.width/2, 1350+1000));
     this->addChild(m_pTitle, 5);
+    /*
     m_pForKakao = CCSprite::createWithSpriteFrameName("letter/letter_forkakao.png");
     m_pForKakao->setAnchorPoint(ccp(0, 1));
     m_pForKakao->setScale(0.8f);
     m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
     m_pTitle->addChild(m_pForKakao, 6);
+    */
     
     CCActionInterval* action = CCSequence::create(CCEaseBounceOut::create(CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350))), CCCallFuncND::create(this, callfuncND_selector(Splash::SoundCallback), NULL), CCDelayTime::create(0.0f), CCCallFunc::create(this, callfunc_selector(Splash::Button_Callback)), NULL);
     m_pTitle->runAction(action);
@@ -123,13 +125,16 @@ void Splash::LogoLoadingCompleted()
     if (mKakaoId == -1)
     {
         // 처음이면 kakao platform에 동의하는 창으로 넘어가야 한다.
-        //mKakaoId = 1000;
-        //CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+        mKakaoId = 1020;
+        CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+        
+        /*
         m_pEditName = CCTextFieldTTF::textFieldWithPlaceHolder("ID", CCSize(300, 100), kCCTextAlignmentCenter, fontList[0].c_str(), 72);
         m_pEditName->setColor(ccc3(0,0,0));
         m_pEditName->setPosition(ccp(319+446/2, 191+160/2+5+200));
         m_pEditName->setAnchorPoint(ccp(0.5,0.5));
         this->addChild(m_pEditName);
+        */
     }
     
     // 버전 세팅
@@ -208,8 +213,8 @@ bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         m_pStartLetter->setColor(ccc3(170,170,170));
     }
     
-    if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
-        m_pEditName->attachWithIME();
+    //if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
+    //    m_pEditName->attachWithIME();
     //else
     //    m_pEditName->detachWithIME();
     
@@ -232,6 +237,7 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         isLoading = true;
         
+        /*
         // kakao id save (처음 로그인 때만)
         if (mKakaoId == -1)
         {
@@ -239,6 +245,7 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
             m_pEditName->setOpacity(0);
         }
+        */
         
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
@@ -318,7 +325,7 @@ void Splash::XmlParseVersion(char* data, int size)
             // 로그인 시도
             m_pMsgLabel->setString("로그인 중...");
             char temp[255];
-            std::string url = "http://14.63.225.203/cogma/game/login.php?";
+            std::string url = "";
             sprintf(temp, "game_version=%d&", iGameVersion);
             url += temp;
             sprintf(temp, "kakao_id=%d&", mKakaoId);
@@ -337,9 +344,11 @@ void Splash::XmlParseVersion(char* data, int size)
             else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
             else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
             url += temp;
+            CCLog("url = %s", url.c_str());
             
             CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl(url.c_str());
+            req->setUrl("http://14.63.225.203/cogma/game/login.php?");
+            req->setRequestData(url.c_str(), url.size());
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
             CCHttpClient::getInstance()->send(req);
@@ -588,7 +597,7 @@ void Splash::WriteResFile(char* data, int size)
     // 로그인 시도
     m_pMsgLabel->setString("로그인 중...");
     char temp[255];
-    std::string url = "http://14.63.225.203/cogma/game/login.php?";
+    std::string url = "";
     sprintf(temp, "game_version=%d&", iGameVersion);
     url += temp;
     sprintf(temp, "kakao_id=%d&", mKakaoId);
@@ -610,7 +619,8 @@ void Splash::WriteResFile(char* data, int size)
     CCLog("url = %s", url.c_str());
     
     CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
+    req->setUrl("http://14.63.225.203/cogma/game/login.php?");
+    req->setRequestData(url.c_str(), url.size());
     req->setRequestType(CCHttpRequest::kHttpPost);
     req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
     CCHttpClient::getInstance()->send(req);
@@ -864,6 +874,10 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
                 else if (name == "last-week-high-score") lastWeekHighScore = ait->as_int();
                 else if (name == "is-friend") isFriend = ait->as_int();
             }
+            
+            // nickname 너무 길면 자르자.
+            nickname = SubstrNickname(nickname);
+            
             lastWeeklyRank.push_back( new LastWeeklyRank(nickname, profileUrl, rank, lastWeekHighScore, isFriend) );
             if (ProfileSprite::GetProfile(profileUrl) == NULL) // 프로필 sprite에 모은다.
                 profiles.push_back( new ProfileSprite(profileUrl) );
@@ -959,12 +973,7 @@ void Splash::XmlParseFriends(char* data, int size)
             }
             
             // nickname 너무 길면 자르자.
-            if (nickname.size() > 20)
-            {
-                CCLog("%s", nickname.c_str());
-                nickname = nickname.substr(0, 20);
-                CCLog("%s", nickname.c_str());
-            }
+            nickname = SubstrNickname(nickname);
             
             friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
@@ -1052,7 +1061,6 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     
     // parse xml data
     httpStatus++;
-    CCLog("httpStatus-1 = %d", httpStatus-1);
     switch (httpStatus-1)
     {
         case HTTP_VERSION:
@@ -1145,16 +1153,36 @@ void Splash::LastActionCallback2(CCNode* sender, void *data)
     Common::ShowNextScene(this, "Splash", "Ranking", true);
 }
 
+std::string Splash::SubstrNickname(std::string nickname)
+{
+    if (nickname.size() > 20)
+    {
+        //CCLog("%s", nickname.c_str());
+        int i;
+        for (i = 0 ; i < nickname.size() ; i++)
+        {
+            if (i >= 20)
+                break;
+            if (isascii(nickname[i]) != 1)
+                i += 2;
+        }
+        nickname = nickname.substr(0, i);
+        nickname += "...";
+        //CCLog("%s", nickname.c_str());
+    }
+    return nickname;
+}
+
 void Splash::EndScene()
 {
-    CCLog("Splash :: EndScene");
     m_pBackground->removeFromParentAndCleanup(true);
+    //m_pForKakao->removeFromParentAndCleanup(true);
     m_pTitle->removeFromParentAndCleanup(true);
     m_pMsgLabel->removeFromParentAndCleanup(true);
     m_pStartBtn->removeFromParentAndCleanup(true);
     m_pStartLetter->removeFromParentAndCleanup(true);
     
-    if (m_pEditName != NULL)
-        m_pEditName->removeFromParentAndCleanup(true);
+    //if (m_pEditName != NULL)
+    //    m_pEditName->removeFromParentAndCleanup(true);
 }
 

@@ -17,6 +17,8 @@ public:
     
     CREATE_FUNC(DegreeInfo);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     
     void EndScene();

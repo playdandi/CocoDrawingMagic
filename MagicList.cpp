@@ -89,7 +89,7 @@ bool MagicList::init()
     
     InitSprites();
     InitBtn();
-    MakeScrollSlot();
+    MakeScrollSlot(false);
     
     isTouched = false;
     isScrolling = false;
@@ -110,6 +110,7 @@ void MagicList::Notification(CCObject* obj)
             CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
             this->setTouchPriority(Depth::GetCurPriority());
             isTouched = false;
+            scrollViewSlot->setTouchEnabled(true);
             CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
         }
     }
@@ -119,11 +120,12 @@ void MagicList::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        scrollViewSlot->setTouchEnabled(true);
         CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 스킬 슬롯 정보 갱신
         spriteClassSlot->RemoveAllObjects();
-        MakeScrollSlot();
+        MakeScrollSlot(false);
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
@@ -133,6 +135,12 @@ void MagicList::Notification(CCObject* obj)
         // 터치 비활성
         CCLog("MagicList 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        scrollViewSlot->setTouchEnabled(false);
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
     }
 }
 
@@ -205,7 +213,7 @@ void MagicList::InitSprites()
     }
     
     // 스킬 선택/비선택할 때 설명 text
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("", fontList[0], 32, ccp(0.5, 0.5), ccp(77+929/2, 726+offset+200/2), ccc3(0,0,0), CCSize(929-80, 200-15), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10, 0, 255, 999) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("스킬 설명 부분", fontList[0], 36, ccp(0.5, 0.5), ccp(77+929/2, 726+offset+200/2), ccc3(78,47,8), CCSize(929-80, 200-10), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10, 0, 255, 999) );
     
     
     // slot part
@@ -244,7 +252,7 @@ void MagicList::InitBtn()
         spriteClassBtn->AddChild(i);
 }
 
-void MagicList::MakeScrollSlot()
+void MagicList::MakeScrollSlot(bool isAutoMove)
 {
     scrollViewSlot->removeAllChildren();
     
@@ -275,6 +283,9 @@ void MagicList::MakeScrollSlot()
     // scrollView의 container 재설정
     scrollViewSlot->setContainer(containerSlot);
     scrollViewSlot->setContentSize(containerSlot->getContentSize());
+    
+    if (isAutoMove)
+        scrollViewSlot->setContentOffsetInDuration(ccp(scrollViewSlot->minContainerOffset().x, 0), 0.4f);
 }
 
 
@@ -339,12 +350,12 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         sprintf(name, "background/bg_skill_select.png%d", sid);
                         ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
                         
-                        RenewSlot();
+                        RenewSlot(false);
                         sound->playClick();
                         
                         // 설명 글 갱신
                         ((CCLabelTTF*)spriteClass->FindLabelByTag(999))->setString(
-                            ("[ "+SkillInfo::GetSkillInfo(sid)->GetName()+" ]\n  "+SkillInfo::GetFullDesc(sid)).c_str());
+                            (SkillInfo::GetSkillInfo(sid)->GetName()+"\n "+SkillInfo::GetFullDesc(sid)).c_str());
                         
                         break;
                     }
@@ -362,12 +373,12 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             sprintf(name, "background/bg_skill_select.png%d", sid);
                             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
                             
-                            RenewSlot();
+                            RenewSlot( (j >= 5) );
                             sound->playClick();
                             
                             // 설명 글 갱신
                             ((CCLabelTTF*)spriteClass->FindLabelByTag(999))->setString(
-                                ("[ "+SkillInfo::GetSkillInfo(sid)->GetName()+" ]\n  "+SkillInfo::GetFullDesc(sid)).c_str());
+                                (SkillInfo::GetSkillInfo(sid)->GetName()+"\n "+SkillInfo::GetFullDesc(sid)).c_str());
                             
                             break;
                         }
@@ -523,11 +534,11 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
     }
 }
 
-void MagicList::RenewSlot()
+void MagicList::RenewSlot(bool isAutoMove)
 {
     // 스킬 슬롯 정보 갱신
     spriteClassSlot->RemoveAllObjects();
-    MakeScrollSlot();
+    MakeScrollSlot(isAutoMove);
     char name[7];
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
     ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);

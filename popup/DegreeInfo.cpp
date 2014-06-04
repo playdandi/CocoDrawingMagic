@@ -58,6 +58,17 @@ bool DegreeInfo::init()
     return true;
 }
 
+void DegreeInfo::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
+}
+
 void DegreeInfo::InitSprites()
 {
     spriteClass = new SpriteClass();

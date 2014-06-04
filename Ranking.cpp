@@ -38,6 +38,10 @@ void Ranking::onEnter()
     else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
+void Ranking::onPause()
+{
+    CCLog("Ranking : onPause");
+}
 void Ranking::onExit()
 {
     CCLog("Ranking :: onExit");
@@ -48,9 +52,9 @@ void Ranking::onExit()
 
 void Ranking::keyBackClicked()
 {
-    if (isKeyBackClicked)
-        return;
-    isKeyBackClicked = true;
+    //if (isKeyBackClicked)
+    //    return;
+    //isKeyBackClicked = true;
     
     sound->playWarning();
     
@@ -194,6 +198,7 @@ void Ranking::Notification(CCObject* obj)
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
+        scrollView->setTouchEnabled(true);
         isTouched = false;
         isKeyBackClicked = false;
         CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
@@ -239,6 +244,8 @@ void Ranking::Notification(CCObject* obj)
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+        
+        scrollView->setTouchEnabled(false);
     }
     else if (param->intValue() == 2)
     {
@@ -293,6 +300,13 @@ void Ranking::Notification(CCObject* obj)
     {
         // 스킬 속성 종류 갱신
         InitProperties();
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
     }
 }
 
@@ -549,8 +563,6 @@ void Ranking::MakeScroll()
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
-    //scrollViewLastPoint = scrollView->getContentOffset();
-    //scrollView->setBounceable(false);
     this->addChild(scrollView, 5);
 }
 
@@ -744,6 +756,7 @@ void Ranking::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
+    CCLog("%d %d", (int)point.x, (int)point.y);
     
     CCPoint p;
     for (int i = 0 ; i < friendList.size() ; i++)
@@ -846,28 +859,14 @@ void Ranking::EndScene()
         Common::ShowNextScene(this, "Ranking", "Loading", true);
 }
 
-
+CCScrollView* Ranking::GetScrollView()
+{
+    return scrollView;
+}
 
 void Ranking::scrollViewDidScroll(CCScrollView* view)
 {
-    //view->stopAllActions();
-    /*
-    if (isOnceScrollViewTouched && !scrollView->isDragging())
-    {
-        CCLog("%f , %f", scrollViewLastPoint.x, scrollViewLastPoint.y);
-        scrollView->setContentOffset(scrollViewLastPoint);
-        //return;
-    }
-    else {
-     */
-    //CCLog("dragging : %d" ,);
-    //if (scrollView->isDragging())
-    //{
-    //CCPoint p = scrollView->getContentOffset();
-    //CCLog("offset : %d , %d", (int)p.x, (int)p.y);
-    //CCLog("%d , %d, %d", scrollView->isRunning(), scrollView->isTouchMoved(), scrollView->isDragging());
     isScrolling = true;
-    //}
 }
 
 void Ranking::scrollViewDidZoom(CCScrollView* view)

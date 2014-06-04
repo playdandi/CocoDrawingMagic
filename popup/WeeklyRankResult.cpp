@@ -59,6 +59,17 @@ bool WeeklyRankResult::init()
     return true;
 }
 
+void WeeklyRankResult::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
+}
+
 void WeeklyRankResult::InitSprites()
 {
     pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));

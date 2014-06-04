@@ -85,6 +85,11 @@ void BuyPotion::Notification(CCObject* obj)
         CCLog("BuyPotion 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
 }
 
 
