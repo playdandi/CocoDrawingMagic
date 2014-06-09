@@ -62,6 +62,10 @@ public:
     std::string SubstrNickname(std::string nickname);
     void EndScene();
     
+//    RSA* createRSA(unsigned char * key, int pub);
+    RSA* createRSA(unsigned char * key, int pub);
+    int public_encrypt(unsigned char * data,int data_len, unsigned char * key, unsigned char *encrypted);
+    
     
 protected:
     CCSize winSize;
@@ -87,7 +91,7 @@ private:
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
     
-    //CCTextFieldTTF* m_pEditName;
+    CCTextFieldTTF* m_pEditName;
 };
 
 

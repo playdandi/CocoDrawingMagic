@@ -43,6 +43,9 @@ int missionRefVal;
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
 
+//char* publicKey = "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKP5Lsq9tblK50ghhot8gT3xc8tlae71\nUUpRjkB2aNyvAgMBAAE=\n-----END PUBLIC KEY-----";
+
+RSA* rsa;
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority, void* pointer)
@@ -152,7 +155,7 @@ MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int sco
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt)
+void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId)
 {
     this->kakaoId = kakaoId;
     this->deviceType = deviceType;
@@ -161,6 +164,11 @@ void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool p
     this->settingPushNoti = pushNoti;
     this->settingPotionMsg = potionMsg;
     this->msgCnt = msgCnt;
+    
+    this->mySessionId = sessionId;
+    int pos = sessionId.find("|");
+    this->keyValue = atoi(sessionId.substr(0, pos).c_str());
+    this->userId = atoi(sessionId.substr(pos+1, sessionId.size()-1).c_str());
 }
 
 void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
@@ -192,9 +200,13 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->propertyMaster = (master == 1);
 }
 
-void MyInfo::SetSessionId(std::string sessionId)
+int MyInfo::GetKeyValue()
 {
-    this->mySessionId = sessionId;
+    return keyValue;
+}
+int MyInfo::GetUserId()
+{
+    return userId;
 }
 std::string MyInfo::GetSessionId()
 {
@@ -940,21 +952,20 @@ int Friend::GetSkillLv()
 }
 
 ////////////////////////////////////////////////////////////////////////
+
 bool compare(Friend *f1, Friend *f2)
 {
     if (f1->GetWeeklyHighScore() == f2->GetWeeklyHighScore())
     {
-        if (f1->GetWeeklyHighScore() == -1)
+        if (f2->GetWeeklyHighScore() == -1 && f2->GetKakaoId() == myInfo->GetKakaoId())
         {
-            if (f1->GetKakaoId() == myInfo->GetKakaoId())
-                return true;
-            return f1->GetScoreUpdateTime() < f2->GetScoreUpdateTime();
+            return false;
         }
         return f1->GetScoreUpdateTime() < f2->GetScoreUpdateTime();
     }
-    
     return f1->GetWeeklyHighScore() > f2->GetWeeklyHighScore();
 }
+
 bool compare2(MagicStaffBuildUpInfo* m1, MagicStaffBuildUpInfo* m2)
 {
     return m1->GetLevel() < m2->GetLevel();
@@ -1470,3 +1481,58 @@ int SkillPropertyInfo::GetCost(int id)
     }
     return -1;
 }
+
+
+std::string publicKey[50] = {
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKP5Lsq9tblK50ghhot8gT3xc8tlae71\nUUpRjkB2aNyvAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALzWoATQDVpBh2rkFW1mQgTjaLzPsRJS\n85yZaPJJg2w1AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMRqHd2eF1ay4fTfIXwVd9RVOLDr97T7\n622CxntE8uMpAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALHCeffAZ4Q7lz6gk0PZPJkQTpvIgfv3\nsdTSxYMbFnItAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAOS4aluR021tajHIbLJ1EbDuwwwB8IDd\npjNe+9q+vEWHAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAN3vc0LJx98ewD7PBN00KOPs/ITvrWOk\npe2P5m6wKJBDAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANJs3KvwjJGG6Epnv0ub163FJ1tD9n7H\nf53nBEG5KseHAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANWZF9M42xoyxmxfM8+saVxuUd+UNYUo\n/hXz+qCv1f53AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAJo5ZMeDrodG90I3GT1SHJRGE5N67lH+\nURT1NCRjGXjjAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALOM4E2bgh0z7BaHr/2zhQsdgwZY8Svt\nOOL3neOHd2HnAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMULd2hyzdtKxJQ7WXBTt9me7g6dWB93\nyALsWi/4GvY5AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALKKlhiNzIekK0cPkXBc0qjHL/do04jr\nTQl58WBhUvAJAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAN+qViqleHafSnxl9/be8jTUFTdHybBH\niIFgpV7IG7SrAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMuub9wMAmfUw+4Xpto/gBECgFk1FB27\nbh6n8NzL8fkrAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANjtgLXQl9Aq64xzegDy/YYxuyVlyV9H\numkPmaXYCNnXAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMMipUaOGu3u80Vd01kzhlkXxkKE09pc\ntf68QrnKmBtnAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANVYX+MILQgeol+OG7ARQh1jF7vzXMSi\nc5ffWWfg3H8JAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKXVif0tWyFxwzD6Emdnp1D/EDDLMEAa\n2XsS/ZF8iSQbAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMMrlFAMgJwtRn/qrpQzAPcAdyplLUge\n5d5iELdbirjXAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMDo6CDq8etFinj7r+MQ+B1OkIOoP8OJ\ny0wrJaNf1fP5AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANQJ/cWWQFLixQUvOLwCLM6FQLQVq/n7\nfBYeG1/nCp8HAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAM4P54RBFgQqYF+uBnHPijXxMjw4kR7Q\nNZu61ISHc4cdAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAO9Q1Rh6Ta1TG/jj/wRJul31TP2cBfP7\nPaGGC0QggkkZAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANmFvceYEZ/jN9ebmqcdEWriBK3H1yyo\nqSUu2EUHrQSbAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALdxlEBAfB5RbJM+kNqmDFaVhO0k5VNR\nyw/X1GCP39fLAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANypBkKBnrCGzPuFyB4MlTd9rumAzwQw\ndatgigwlQketAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAL8n+yUJK7sLnwq6M21pRrwiTj8zl6V6\nf0nPRniAXFNhAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAOwC6cUqrFZ5u8Go6gDfi7Sv9QM5kFQ5\nb8diFQk/OSVHAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANH1T3/AmyK+6qoC5nLWxzQ4wYTLLnws\nkJxbYEpi97CFAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANg39NJQTB+YwAugXh+LrDZMYmTdUSYo\nG+2xhRJdwphHAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAJVoRsLVfx92EschDqSgI9CPYfMAleH1\nJN85+QJyhqvJAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAL8Bh1aXk95A7ymK+fQecSeOYeCZuRd/\nCoskl9F5joENAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANJZbOSL+joIZ555P+9IBgXFDLmlU0vV\nH797NoUpWDSDAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhALzyajxLljRC+zibmY7XyUhAmEFBiL5+\nBjpOY62awr0fAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKtayBZ3ETyDBgnJ8FkyBuFJM2MW9yQ6\nMV6nVn37dqz1AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMJI1VgRwgJghP1RrrOsi15fJkIaq20r\nhhgR7DLK68SrAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMHkDHmffzllNvb9WyWjOKfuZhKIwF11\nEm3ETLKRxoJ/AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKWI4cHhJNoLmUfNKjHFUIUHbiOSHQOT\n38nc9kEC0brXAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAL6lwIQGwZKyH/q9B4GtzlC1ew7xNGDS\nzmEujuew/u9DAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAJzbOyMVNqtmePHkjvNUobIh82cafVEF\nkDMhelL1xfQrAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhANORJXy1SudTCGi4nqvJ/ryE0OGUWGUy\n1Y8wkL5ch3EPAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMLuudEqRc1cQ+hT94lgFJNi/5yOvkoH\nAj79iqYxj2wLAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAL70qjsyGvu2ER5UEnHTb+pTl3Ctp9Oa\nb/MbguhYC9azAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAK7xf0fXzYnJSi3DvNfGPLuZFWQhKtZT\nKufu9vRWxsvRAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMF26lJ0QWEfadZ+3cNFokn1UT6/LvPR\nukhD7SVm+ol/AgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAM6fa8H3xmABEvzoCwyhe3ajP9ymDopx\nt3b754RhsWNtAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAJdjcNY3DoFZ1ECeZof1S89vwUQxjuD/\nr1wZJtUyxAodAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAMhHFO4jZLHIUICOMglozNQXfueLLYTg\najeFqDz2sY3VAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKXzm6qAV+dQ5lRipruyD+m2c77pe/Ap\nkuM+MXvlDMkfAgMBAAE=\n-----END PUBLIC KEY-----",
+    "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKiqkETW1rk1KoVoqcXEfQ5X3eZZX8Q0\nfmUYwcIdOvEPAgMBAAE=\n-----END PUBLIC KEY-----",
+};
+

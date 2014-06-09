@@ -171,6 +171,7 @@ public:
     static void RebootSystem(void* p);
     
     static std::string GetMissionContent(int type, int val, int refVal);
+    static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
 };
 
 

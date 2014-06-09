@@ -3,6 +3,18 @@
 
 #include "Common.h"
 
+#include "CCKeyConfig.h"
+
+#include "openssl/rsa.h"
+#include "openssl/bio.h"
+#include "openssl/err.h"
+#include "openssl/bn.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
+#include "openssl/rand.h"
+#include "openssl/pem.h"
+
 #define POTION_X 0
 #define POTION_SEND 1
 #define POTION_REMAIN 2
@@ -49,6 +61,10 @@ extern int missionRefVal;
 
 // 게임결과에 필요한 값들
 extern class MyGameResult* myGameResult;
+
+//extern char* publicKey;
+extern std::string publicKey[50];
+extern RSA* rsa;
 
 
 using namespace cocos2d;
@@ -108,11 +124,13 @@ public:
 class MyInfo
 {
 public:
-    void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt);
+    void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
     
     std::string GetSessionId();
-    void SetSessionId(std::string sessionId);
+    int GetKeyValue();
+    int GetUserId();
+    //void SetSessionId(std::string sessionId);
     static CCSprite* GetProfile();
     static std::string GetName();
     int GetDeviceType();
@@ -190,6 +208,7 @@ public:
     void ClearSkillSlot();
 
 private:
+    int keyValue;
     std::string mySessionId;
     
     bool settingKakaoMsg;

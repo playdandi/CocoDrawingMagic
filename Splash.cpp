@@ -1,6 +1,7 @@
 #include "Splash.h"
 #include "pugixml/pugixml.hpp"
 
+
 using namespace pugi;
 
 Splash::~Splash(void)
@@ -79,7 +80,7 @@ bool Splash::init()
     
     httpStatus = 0;
     
-    //m_pEditName = NULL;
+    m_pEditName = NULL;
     
 	return true;
 }
@@ -125,16 +126,14 @@ void Splash::LogoLoadingCompleted()
     if (mKakaoId == -1)
     {
         // 처음이면 kakao platform에 동의하는 창으로 넘어가야 한다.
-        mKakaoId = 1020;
-        CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
+        //mKakaoId = 1020;
+        //CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
         
-        /*
         m_pEditName = CCTextFieldTTF::textFieldWithPlaceHolder("ID", CCSize(300, 100), kCCTextAlignmentCenter, fontList[0].c_str(), 72);
         m_pEditName->setColor(ccc3(0,0,0));
         m_pEditName->setPosition(ccp(319+446/2, 191+160/2+5+200));
         m_pEditName->setAnchorPoint(ccp(0.5,0.5));
         this->addChild(m_pEditName);
-        */
     }
     
     // 버전 세팅
@@ -148,6 +147,45 @@ void Splash::SoundCallback(CCNode* sender, void* p)
     //sound->PlayVoice(VOICE_TITLE);
     
     
+}
+
+
+
+RSA* Splash::createRSA(unsigned char * key, int pub)
+{
+    RSA *rsa= NULL;
+    BIO *keybio ;
+    keybio = BIO_new_mem_buf(key, -1);
+    if (keybio==NULL)
+    {
+        printf( "Failed to create key BIO");
+        return 0;
+    }
+    if(pub)
+    {
+        CCLog("public");
+        rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
+    }
+    else
+    {
+        rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa,NULL, NULL);
+    }
+    if(rsa == NULL)
+    {
+        CCLog("res null");
+        exit(0);
+        printf( "Failed to create RSA");
+    }
+    
+    return rsa;
+}
+
+int Splash::public_encrypt(unsigned char* data,int data_len, unsigned char * key, unsigned char *encrypted)
+{
+//    int padding = RSA_PKCS1_PADDING;
+    RSA * rsa = createRSA(key,1);
+    int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
+    return result;
 }
 
 void Splash::Button_Callback()
@@ -167,7 +205,55 @@ void Splash::Button_Callback()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     this->setKeypadEnabled(true);
 	this->setTouchEnabled(true);
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    
+   // char* publicKey = "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKP5Lsq9tblK50ghhot8gT3xc8tlae71\nUUpRjkB2aNyvAgMBAAE=\n-----END PUBLIC KEY-----";
+    
+    //BIO* keyBIO = NULL;
+    //RSA* rsa = NULL;
+    
+    /*
+    BIO* bp = BIO_new_mem_buf(publicKey, -1);
+    if (bp == NULL)
+    {
+        CCLog("bio  error ");
+        exit(1);
+    }
+    
+    rsa = PEM_read_bio_RSA_PUBKEY(bp, &rsa, NULL, NULL);
+    
+    // pem파일 public key 추출
+    //rsa = PEM_read_bio_RSA_PUBKEY(keyBIO, NULL, NULL, NULL);
+    
+    // 키를 로드 하는데 에러 발생
+    if(rsa == NULL) {
+        CCLog("로드 불가능");
+        BIO_printf(errBIO, "키를 로드 할 수 없습니다.");
+        ERR_print_errors(errBIO);
+        exit(1);
+    }
+    */
+    
+     /*
+    unsigned char plainText[4098] = "Hello this";
+    unsigned char  encrypted[4098]={};
+    unsigned char decrypted[4098]={};
+    
+      int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
+    int len = 11;
+    int encrypted_length= public_encrypt(plainText,len, (unsigned char*)publicKey,encrypted);
+    if(encrypted_length == -1)
+    {
+        //printLastError("Public Encrypt failed ");
+        CCLog("ak...");
+        exit(0);
+    }
+     */
 }
+
+
+
 
 void Splash::keyboardWillShow(CCIMEKeyboardNotificationInfo &info)
 {
@@ -213,10 +299,8 @@ bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         m_pStartLetter->setColor(ccc3(170,170,170));
     }
     
-    //if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
-    //    m_pEditName->attachWithIME();
-    //else
-    //    m_pEditName->detachWithIME();
+    if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
+        m_pEditName->attachWithIME();
     
     return true;
 }
@@ -237,7 +321,6 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         isLoading = true;
         
-        /*
         // kakao id save (처음 로그인 때만)
         if (mKakaoId == -1)
         {
@@ -245,7 +328,6 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
             m_pEditName->setOpacity(0);
         }
-        */
         
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
@@ -655,18 +737,49 @@ void Splash::XmlParseLogin(char* data, int size)
         
         // 내 정보 class (extern) 만들기
         myInfo = new MyInfo();
-        myInfo->Init(mKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt);
+        myInfo->Init(mKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId);
         
         // 내 모든 정보 요청
         m_pMsgLabel->setString("나의 정보를 요청 중...");
-        char temp[50];
-        std::string url = "http://14.63.225.203/cogma/game/user_info.php?";
+        char temp[255];
+        std::string url = "";
         sprintf(temp, "kakao_id=%d", mKakaoId);
         url += temp;
         CCLog("url = %s", url.c_str());
         
+        
+        rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
+        unsigned char encrypted[4096];
+        int result = RSA_public_encrypt((int)url.size(), (unsigned char*)(url.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
+        if(result == -1)
+        {
+            CCLog("히밤..에러남...");
+            exit(0);
+        }
+        
+        std::string postData = "";
+        sprintf(temp, "PS=%d|%d|%d|%d", myInfo->GetKeyValue(), myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
+        CCLog("%s", temp);
+        postData += temp;
+        postData += "&";
+        
+        std::string encoded = Common::base64_encode(reinterpret_cast<const unsigned char*>(encrypted), strlen((const char*)encrypted));
+        for (int i = 0 ; i < encoded.size() ; i++)
+            if (encoded[i] == '+')
+                encoded[i] = '-';
+        CCLog("%s", encrypted);
+        CCLog("Encoded = %s", encoded.c_str());
+
+        
+        sprintf(temp, "a=%s", encoded.c_str());
+        postData += temp;
+        
+        CCLog("%s", postData.c_str());
+
+
         CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
+        req->setUrl("http://14.63.225.203/cogma/game/test_user_info.php?");
+        req->setRequestData(postData.c_str(), postData.size());
         req->setRequestType(CCHttpRequest::kHttpPost);
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
@@ -739,9 +852,6 @@ void Splash::XmlParseMyInfo(char *data, int size)
         int profileSkillId = nodeResult.child("profile-skill").attribute("id").as_int();
         int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
         myInfo->SetProfileSkill(profileSkillId, profileSkillLv);
-        
-        // LOGIN 프로토콜에서 받았던 session id 저장.
-        myInfo->SetSessionId(sessionId);
         
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-slot").children("slot");
         int id, csi, usi;
@@ -1057,6 +1167,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
         ss = ss.substr(pos+12, ss.size()-1);
         ss = ss.substr( ss.find("PS=")+3, ss.find("; path=")-3 );
         sessionId = ss;
+        CCLog("session ID = %s", sessionId.c_str());
     }
     
     // parse xml data
@@ -1182,7 +1293,7 @@ void Splash::EndScene()
     m_pStartBtn->removeFromParentAndCleanup(true);
     m_pStartLetter->removeFromParentAndCleanup(true);
     
-    //if (m_pEditName != NULL)
-    //    m_pEditName->removeFromParentAndCleanup(true);
+    if (m_pEditName != NULL)
+        m_pEditName->removeFromParentAndCleanup(true);
 }
 
