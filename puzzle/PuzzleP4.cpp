@@ -8,7 +8,7 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type)
     if (type != -100)
         puzzleP4->type = type;
     else
-        puzzleP4->type = (rand()%100 < 50) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+        puzzleP4->type = (rand()%100 < 30) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
 
     puzzleP4->parent = parent;
     puzzleP4->zOrder = zOrder;

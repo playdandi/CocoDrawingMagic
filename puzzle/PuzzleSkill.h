@@ -37,7 +37,7 @@ public:
     std::vector<CCPoint> A2GetPos();
     void A2Clear();
     void F3(int num, int queue_pos);
-    void F4(int num);
+    //void F4(int num);
     void F5(int num);
     void F5_Callback(CCNode* sender, void* data);
     void SpiritTry(int type, int queue_pos);
@@ -47,8 +47,7 @@ public:
     void F6_Callback(CCNode* sender, void *p);
 
     void F7(int num, int queue_pos);
-    void F7_Continue(void* pointer, int queue_pos);
-    void F7Recur(int x, int y, int type, std::vector<CCPoint>& v);
+    
 
     void F8(int num, int queue_pos);
     void F8Check(int x, int y, int idx);
@@ -61,8 +60,8 @@ public:
     
     void W3(int num);
     int W3GetScore();
-    void W4(int num);
-    int W4GetCandy();
+    //void W4(int num);
+    //int W4GetCandy();
     void W5(int num);
     void W5_Callback(CCNode* sender, void* data);
     void W7(int num);
@@ -80,7 +79,7 @@ public:
     void W8_BombDone();
     
     void E3(int num);
-    void E4(int num, int queue_pos);
+    //void E4(int num, int queue_pos);
     void E5(int num);
     void E5_Callback(CCNode* sender, void* data);
     void E7(int num);
@@ -95,6 +94,12 @@ public:
 
     std::vector<CCPoint> A8GetPos();
     void A8Clear();
+    
+    bool IsRenewNeeded();
+    void IsRenewNeeded_Recur(int x, int y, int type, int cnt);
+    void RenewPuzzle(int queue_pos);
+    void RenewPuzzle_Recur(int x, int y, int type, std::vector<CCPoint>& v);
+    void RenewPuzzle_End(void* pointer, int queue_pos);
     
     void M1(int num);
     void M2(int num);
@@ -131,7 +136,7 @@ private:
     std::vector<CCPoint> A2_pos;
     
     int F3_addedScore;
-    bool F4_isDoubledMT;
+    //bool F4_isDoubledMT;
     
     int spiritShownCnt[3];
     bool isSpiritAlive[3];
@@ -155,7 +160,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////
     
     int W3_addedScore;
-    int W4_addedCandy;
+    //int W4_addedCandy;
     int W5_callbackCnt;
 
     int W7_RemainTime;
@@ -175,7 +180,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////
 
     int E3_addedCandy;
-    int E4_addedCandy;
+    //int E4_addedCandy;
 
     std::vector<CCPoint> E5_pos;
     std::vector<CCPoint> E5_pos_end;
@@ -201,6 +206,9 @@ private:
     //int E8_maxScheduleCnt;
     
     ////////////////////////////////////////////////////////////////////////////////////
+    
+    int renewCheck_maxCnt;
+    bool renewCheck[COLUMN_COUNT][ROW_COUNT];
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;

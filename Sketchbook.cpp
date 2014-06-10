@@ -387,13 +387,18 @@ void Sketchbook::MakeScrollBook(int idx)
     for (int i = 0 ; i < numOfList ; i++)
     {
         if (myInfo->GetSkillList()[i]->GetCommonId() / 10 == idx)
+        {
             ms.push_back(myInfo->GetSkillList()[i]);
+            CCLog("%d", myInfo->GetSkillList()[i]->GetCommonId());
+        }
     }
     numOfList = ms.size();
     numOfList++;
     
+    int numOfMaxSkill = 7;
+    
     containerBook = CCLayer::create();
-    containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, 8)*206));
+    containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, numOfMaxSkill)*206));
   
     SkillInfo* sInfo;
     int id;
@@ -404,7 +409,7 @@ void Sketchbook::MakeScrollBook(int idx)
         if (i == numOfList-1)
         {
             sInfo = GetNextSkillInfo(idx);
-            if (sInfo == NULL || numOfList == 9)
+            if (sInfo == NULL || numOfList == numOfMaxSkill+1)
                 continue;
         }
         else
@@ -413,7 +418,7 @@ void Sketchbook::MakeScrollBook(int idx)
         //CCLog("next skill = (%d), %s", sInfo->GetId(), sInfo->GetName().c_str());
         
         CCLayer* itemLayer = CCLayer::create();
-        itemLayer->setPosition(ccp(27, (std::min(numOfList, 8)-i-1)*206));
+        itemLayer->setPosition(ccp(27, (std::min(numOfList, numOfMaxSkill)-i-1)*206));
         containerBook->addChild(itemLayer, 5);
         spriteClassBook->layers.push_back(itemLayer);
         

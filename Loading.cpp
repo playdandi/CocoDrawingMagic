@@ -118,7 +118,6 @@ void Loading::LoadingSprites()
 
 void Loading::Callback(CCNode* sender, void* pointer)
 {
-    CCLog("!!!!!!!! : %d", sender->getTag());
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
     if (sender->getTag() == 1)
     {

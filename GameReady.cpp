@@ -313,9 +313,9 @@ void GameReady::InitSprites()
         sprintf(name, "background/bg_skill_brown.png%d", i+1);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(84+193*i, 972), CCSize(0, 0), "", "GameReady", this, 5) );
 
-        /*
         if (itemSelected[i]) alpha = 255;
         else alpha = 0;
+        
         sprintf(name2, "background/bg_skill_select.png%d", i+1);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1, alpha) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
@@ -324,16 +324,24 @@ void GameReady::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 2, alpha) );
         spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
-        sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5, 1) );
-        */
+        if (i < 4)
+        {
+            sprintf(name2, "background/bg_skill_yellow.png%d", i+1);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 5, 1) );
+        }
 
+        
         // 아이템 아이콘
-        CCPoint p =spriteClass->FindParentCenterPos(name);
+        CCPoint p = spriteClass->FindParentCenterPos(name);
         if (i == 0)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_clear.png", ccp(0.5, 0.5), ccp(p.x+1, p.y+2), CCSize(0, 0), name, "0", NULL, 6, 1) );
         else if (i == 1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_time.png", ccp(0.5, 0.5), p, CCSize(0, 0), name, "0", NULL, 6, 1) );
+        else if (i == 2)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_paint.png", ccp(0.5, 0.5), p, CCSize(0, 0), name, "0", NULL, 6, 1) );
+        else if (i == 3)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_staff.png", ccp(0.5, 0.5), p, CCSize(0, 0), name, "0", NULL, 6, 1) );
+        
         //sprintf(name2, "icon/icon_item_%d.png", i+1);
         //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
 
@@ -348,10 +356,13 @@ void GameReady::InitSprites()
         }
         else
         {
+            if (i < 4)
+            {
             // 남은 개수가 0이면 가격을 적는다 (별사탕 x개)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(84+193*i-15, 925), CCSize(0, 0), "", "GameReady", this, 5) );
             int val = 1100;
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(val), fontList[0], 36, ccp(0, 0), ccp(84+193*i+50, 935), ccc3(255,255,255), "", "GameReady", this, 5) );
+            }
         }
     }
     
@@ -723,7 +734,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
-        /*
+        // item select 관련
         else if (spriteClass->spriteObj[i]->name.substr(0, 29) == "background/bg_skill_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -734,6 +745,10 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sprintf(n2, "icon/icon_check.png%c", name[name.size()-1]);
                 
                 int tag = name[name.size()-1] - '0';
+                if (tag == 5)
+                {
+                    return true;
+                }
                 itemSelected[tag-1] = !itemSelected[tag-1];
                 // user default에도 바로바로 저장.
                 sprintf(itemName, "item_%d", tag-1);
@@ -750,7 +765,6 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 check->setOpacity(255-check->getOpacity());
             }
         }
-        */
         else if (spriteClass->spriteObj[i]->name == "button/btn_blue.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))

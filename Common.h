@@ -21,8 +21,8 @@ USING_NS_CC;
 #define PIECE_RED 0
 #define PIECE_BLUE 1
 #define PIECE_GREEN 2
-#define PIECE_WHITE 3
-#define PIECE_YELLOW 4
+#define PIECE_YELLOW 3
+#define PIECE_WHITE 4
 
 #define TYPE_DIA_COUNT 3
 #define TYPE_SP_COUNT 3

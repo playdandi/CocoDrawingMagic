@@ -6,7 +6,7 @@
 class PuzzleP8
 {
 public:
-    static PuzzleP8* CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, float scale, int type = -1);
+    static PuzzleP8* CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, float scale, bool clear, int type = -1);
     void SetType(int type);
     int GetType();
     int GetZOrder();

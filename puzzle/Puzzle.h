@@ -154,6 +154,14 @@ public:
     
     void UpdateMissionCountBySkill(int skillNum);
     
+    void SetRenewFlag(bool flag);
+    bool IsRenewing();
+    
+    bool IsItemClear();
+    bool IsItemTime();
+    bool IsItemPaint();
+    bool IsItemStaff();
+    
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
     void onHttpRequestCompleted(CCNode *sender, void *data);
@@ -237,6 +245,12 @@ protected:
     bool isRankUp;
     
     int readyCnt;
+    bool isRenewing;
+    
+    bool item_clear;
+    bool item_time;
+    bool item_paint;
+    bool item_staff;
     
 private:
     Sound* sound;

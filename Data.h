@@ -3,8 +3,6 @@
 
 #include "Common.h"
 
-#include "CCKeyConfig.h"
-
 #include "openssl/rsa.h"
 #include "openssl/bio.h"
 #include "openssl/err.h"

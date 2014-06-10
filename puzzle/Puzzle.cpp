@@ -85,6 +85,14 @@ bool Puzzle::init()
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
     // game3.plist는 loading화면에서 preload했음.
     
+    
+    // item 사용 여부
+    item_clear = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
+    item_time = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
+    item_paint = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
+    item_staff = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
+    
+    
     spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
     
@@ -150,6 +158,7 @@ bool Puzzle::init()
     XMLStatus = 0;
     
     readyCnt = 0;
+    isRenewing = false;
     
 	return true;
 }
@@ -890,6 +899,7 @@ void Puzzle::UpdateCombo()
         W3_total += skill->W3GetScore();
         UpdateScore(1, skill->W3GetScore());
     }
+    /*
     else if (iCombo > 0 && iCombo % 50 == 0)
     {
         // 50, 100, ... 마다 W4(콤보비례추가별사탕) 스킬 발동
@@ -897,6 +907,7 @@ void Puzzle::UpdateCombo()
         W4_total += skill->W4GetCandy();
         UpdateStarCandy(1, skill->W4GetCandy());
     }
+    */
     
     
     if (iCombo > 1) // 2콤보부터 화면에 노출
@@ -922,6 +933,10 @@ void Puzzle::ComboCallback(CCNode* sender, void* p)
 
 void Puzzle::ComboTimer(float f)
 {
+    // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중 -> 시간을 정지시킨다.
+    if (isRenewing || isInGamePause || m_iSkillSP > 0)
+        return;
+    
     iComboTimer += 100;
     if (iComboTimer >= 2000)
     {
@@ -997,9 +1012,14 @@ void Puzzle::SetTimer()
     CCPoint p = timerbar->getPosition();
     CCSize s = timerbar->getContentSize();
     
+    feverRemainTime = 0;
+    
     iTimer = 1000 * PUZZLE_TIME;
+    if (item_time)
+        iTimer += (1000 * 5);
+
     char n[5];
-    sprintf(n, "%d", PUZZLE_TIME);
+    sprintf(n, "%d", PUZZLE_TIME + (item_time * 5));
     pTimerLabel = CCLabelTTF::create(n, fontList[0].c_str(), 24);
     pTimerLabel->setAnchorPoint(ccp(0.5, 0.5));
     pTimerLabel->setColor(ccc3(0,0,0));
@@ -1009,12 +1029,11 @@ void Puzzle::SetTimer()
 
 void Puzzle::UpdateTimer(float f)
 {
+    feverRemainTime -= 100;
+    
     //////////////////////////////////////// 시간을 정지해야 하는 상황들 ////////////////////////////////////
-    // Pause 상태에는 시간을 정지시킨다.
-    if (isInGamePause)
-        return;
-    // Magic Time 발동 중에는 시간이 정지된다.
-    if (isMagicTime)
+    // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중
+    if (isRenewing || isInGamePause || m_iSkillSP > 0)
         return;
     
     // "W7 : 시간을 얼리다" 스킬이 적용 중이면 5초 동안 정지한다.
@@ -1032,17 +1051,12 @@ void Puzzle::UpdateTimer(float f)
     // "W8 : 여신의 은총" 스킬이 적용 중이면 정지한다.
     if (skill->W8_IsActive())
         return;
-    
-    // 한붓그리기 직후 발동된 active한 스킬이 하나라도 있으면 정지.
-    if (m_iSkillSP > 0)
-        return;
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    
     
     iTimer -= 100;
     
     // timer 이동
-    float delta = (float)1000/(PUZZLE_TIME*10);
+    float delta = (float)1000/((PUZZLE_TIME + (item_time*5))*10);
     CCPoint tl = timerLayer->getPosition();
     CCPoint tp = timerClip->getPosition();
     
@@ -1161,6 +1175,7 @@ void Puzzle::UpdateTimer(float f)
         }
     }
     
+    /*
     if (isFeverTime)
     {
         feverRemainTime -= 100;
@@ -1192,6 +1207,7 @@ void Puzzle::UpdateTimer(float f)
             feverSpr.clear();
         }
     }
+    */
 }
 
 void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
@@ -1209,6 +1225,14 @@ void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
     // sound
     sound->PlayVoice(VOICE_BONUS);
 }
+
+void Puzzle::SetFeverTime()
+{
+    isFeverTime = true;
+    feverRemainTime = 1000 * 5;
+    skill->FT_Start();
+}
+
 
 /*
 CCPoint Puzzle::SetPiece8Position(int x, int y)
@@ -1745,17 +1769,21 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             }
             ////////////////////////////////////////////////////////////////////////////////
             
-            // 스킬 발동 try (발동되는 스킬들 조사)
-            // 여기서 스킬에 따라 skill Lock이 걸릴 수 있다. (그러면 스킬발동 종료까지 터치 아예 못함)
-            m_bSkillLock[touch_cnt%QUEUE_CNT] = false;
-            skill->TrySkills(globalType[touch_cnt%QUEUE_CNT], touch_cnt%QUEUE_CNT);
-            if (m_bSkillLock[touch_cnt%QUEUE_CNT])
+            
+            if (!isFeverTime)
             {
-                m_iSkillSP++; // skill semaphore 증가
-                CCLog("스킬 lock 걸림 (%d)", touch_cnt%QUEUE_CNT);
+                // 스킬 발동 try (발동되는 스킬들 조사)
+                // 여기서 스킬에 따라 skill Lock이 걸릴 수 있다. (그러면 스킬발동 종료까지 터치 아예 못함)
+                m_bSkillLock[touch_cnt%QUEUE_CNT] = false;
+                skill->TrySkills(globalType[touch_cnt%QUEUE_CNT], touch_cnt%QUEUE_CNT);
+                if (m_bSkillLock[touch_cnt%QUEUE_CNT])
+                {
+                    m_iSkillSP++; // skill semaphore 증가
+                    CCLog("스킬 lock 걸림 (%d)", touch_cnt%QUEUE_CNT);
+                }
+                else
+                    CCLog("스킬 발동 X (%d)", touch_cnt%QUEUE_CNT);
             }
-            else
-                CCLog("스킬 발동 X (%d)", touch_cnt%QUEUE_CNT);
             
             m_iBombCallbackType[touch_cnt%QUEUE_CNT] = 0;
             
@@ -1770,9 +1798,16 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             // 스킬 실행 (오토마타 표 참조)
             iTouchRound++;
             skill->SetQueuePos((touch_cnt-1)%QUEUE_CNT);
-            m_iState[(touch_cnt-1)%QUEUE_CNT] = SKILL_STOPTIME;
-            InvokeSkills((touch_cnt-1)%QUEUE_CNT);
-            
+            if (!isFeverTime)
+            {
+                m_iState[(touch_cnt-1)%QUEUE_CNT] = SKILL_STOPTIME;
+                InvokeSkills((touch_cnt-1)%QUEUE_CNT);
+            }
+            else
+            {
+                // 피버타임용 진행
+                InvokeFeverTime((touch_cnt-1)%QUEUE_CNT);
+            }
             m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
         }
         
@@ -1820,6 +1855,12 @@ void Puzzle::CancelDrawing()
     m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
     
     isCancelling = false;
+}
+
+void Puzzle::InvokeFeverTime(int queue_pos)
+{
+    Lock(queue_pos);
+    Bomb(queue_pos, piece8xy[queue_pos]);
 }
 
 void Puzzle::InvokeSkills(int queue_pos)
@@ -1914,15 +1955,14 @@ void Puzzle::InvokeSkills(int queue_pos)
         skill->Invoke(7, queue_pos); skill->Invoke(15, queue_pos); skill->Invoke(23, queue_pos);
         
         // '고대나무' 스킬을 검사할 때는 미리 state를 넘겨 놓는다.
-        if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos))
-            m_iState[queue_pos] = m_iNextState[queue_pos];
+        //if (!skill->IsApplied(7, queue_pos) && !skill->IsApplied(15, queue_pos))
+        //    m_iState[queue_pos] = m_iNextState[queue_pos];
         
         if ((!skill->IsApplied(7, queue_pos) && !skill->IsApplied(23, queue_pos)) ||
             (skill->IsApplied(23, queue_pos) && skill->E8_IsFinished()))
         {
             // 스킬이 발동되지 않았으면 다음으로 넘긴다.
             // 참고 : '여신의 은총' 스킬은 발동 유무에 관계없이 다음으로 넘긴다.
-            // 참고 : '고대나무' 스킬은 발동되더라도 초록 피스가 하나도 없다면 역시 다음으로 넘긴다.
             m_iState[queue_pos] = m_iNextState[queue_pos];
             InvokeSkills(queue_pos);
         }
@@ -1933,6 +1973,10 @@ void Puzzle::InvokeSkills(int queue_pos)
         CCLog("state(%d) DONE!", queue_pos);
         // 모든 스킬이 끝났다. 원상태로 되돌리자.
         
+        // 피스판 갱신 필요성 검사
+        while (skill->IsRenewNeeded())
+            skill->RenewPuzzle(queue_pos);
+        
         // skill Lock을 푼다.
         if (m_bSkillLock[queue_pos])
         {
@@ -1941,7 +1985,6 @@ void Puzzle::InvokeSkills(int queue_pos)
         }
         
         m_iSpiritSP--;
-        
         iTouchRound--;
     }
 }
@@ -2519,6 +2562,10 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
                 // '여신의 은총' 실행 중이면 폭발이 끝났다는 신호를 보낸다.
                 if (skill->W8_IsActive())
                 {
+                    // 피스판 갱신 필요성 검사
+                    while (skill->IsRenewNeeded())
+                        skill->RenewPuzzle((int)queue_pos);
+                    
                     skill->W8_BombDone();
                 }
                 else
@@ -2532,6 +2579,10 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
 
 void Puzzle::GoNextState(int queue_pos)
 {
+    // 피스 갱신으로 인해 실행된 경우는 무시하자.
+    if (m_iState[queue_pos] == SKILL_DONE)
+        return;
+    
     // 다음 스킬로 넘어간다.
     m_iState[queue_pos] = m_iNextState[queue_pos];
     CCLog("Falling callback (%d) - 다음 스킬 [일반] : %d", queue_pos, m_iState[queue_pos]);
@@ -2546,7 +2597,14 @@ void Puzzle::FallingQueuePushAndFalling(int queue_pos)
         FallingProcess();
 }
 
-
+void Puzzle::SetRenewFlag(bool flag)
+{
+    isRenewing = flag;
+}
+bool Puzzle::IsRenewing()
+{
+    return isRenewing;
+}
 
 void Puzzle::GameEnd(CCNode* sender, void* pointer)
 {
@@ -3183,6 +3241,23 @@ void Puzzle::SetSpriteP8(int x, int y, CCSprite* sp)
     spriteP8[x][y] = sp;
 }
 
+bool Puzzle::IsItemClear()
+{
+    return item_clear;
+}
+bool Puzzle::IsItemTime()
+{
+    return item_time;
+}
+bool Puzzle::IsItemPaint()
+{
+    return item_paint;
+}
+bool Puzzle::IsItemStaff()
+{
+    return item_staff;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3198,7 +3273,7 @@ void PuzzleP8Set::SetPuzzleLayer(CCLayer* layer)
 
 void PuzzleP8Set::CreatePiece(int x, int y, int type)
 {
-    object[x][y] = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x, y), gameLayer, 20, gameLayer->GetBoardSize()/(float)1076, type);
+    object[x][y] = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x, y), gameLayer, 20, gameLayer->GetBoardSize()/(float)1076, gameLayer->IsItemClear(), type);
     gameLayer->SetSpriteP8(x, y, object[x][y]->GetPiece());
 }
 

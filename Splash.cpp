@@ -153,23 +153,27 @@ void Splash::SoundCallback(CCNode* sender, void* p)
 
 RSA* Splash::createRSA(unsigned char * key, int pub)
 {
-    RSA *rsa= NULL;
-    BIO *keybio ;
+    RSA* rsa = NULL;
+    BIO* keybio;
     keybio = BIO_new_mem_buf(key, -1);
-    if (keybio==NULL)
+    
+    if (keybio == NULL)
     {
         printf( "Failed to create key BIO");
         return 0;
     }
+    
+    rsa = PEM_read_bio_RSA_PUBKEY(keybio, NULL, NULL, NULL);
+    /*
     if(pub)
     {
-        CCLog("public");
-        rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
+        rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
     }
     else
     {
-        rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa,NULL, NULL);
+        rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
     }
+    */
     if(rsa == NULL)
     {
         CCLog("res null");
@@ -742,18 +746,18 @@ void Splash::XmlParseLogin(char* data, int size)
         // 내 모든 정보 요청
         m_pMsgLabel->setString("나의 정보를 요청 중...");
         char temp[255];
+
         std::string url = "";
         sprintf(temp, "kakao_id=%d", mKakaoId);
         url += temp;
         CCLog("url = %s", url.c_str());
         
-        
+//        reinterpret_cast<const unsigned char*>(url.c_str())
         rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
         unsigned char encrypted[4096];
         int result = RSA_public_encrypt((int)url.size(), (unsigned char*)(url.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
         if(result == -1)
         {
-            CCLog("히밤..에러남...");
             exit(0);
         }
         
@@ -763,23 +767,22 @@ void Splash::XmlParseLogin(char* data, int size)
         postData += temp;
         postData += "&";
         
-        std::string encoded = Common::base64_encode(reinterpret_cast<const unsigned char*>(encrypted), strlen((const char*)encrypted));
+        std::string encoded = Common::base64_encode(encrypted, result);
         for (int i = 0 ; i < encoded.size() ; i++)
             if (encoded[i] == '+')
                 encoded[i] = '-';
         CCLog("%s", encrypted);
         CCLog("Encoded = %s", encoded.c_str());
-
         
         sprintf(temp, "a=%s", encoded.c_str());
         postData += temp;
         
         CCLog("%s", postData.c_str());
 
-
         CCHttpRequest* req = new CCHttpRequest();
         req->setUrl("http://14.63.225.203/cogma/game/test_user_info.php?");
         req->setRequestData(postData.c_str(), postData.size());
+        //req->setRequestData(url.c_str(), url.size());
         req->setRequestType(CCHttpRequest::kHttpPost);
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);

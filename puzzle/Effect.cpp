@@ -1234,7 +1234,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
     else
     {
         // 콜백 끝
-        pThis->gameLayer->GetSkill()->F7_Continue(pThis->gameLayer->GetSkill(), pThis->queuePos);
+        pThis->gameLayer->GetSkill()->RenewPuzzle_End(pThis->gameLayer->GetSkill(), pThis->queuePos);
     }
 }
 
