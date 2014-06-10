@@ -107,6 +107,13 @@ public:
     void M4(int num);
     void M5(int num);
     
+    void FT_StartEnd(int queue_pos);
+    void FT_Bomb(std::vector<CCPoint> p);
+    void FT_Callback(CCNode* sender, void* pointer);
+    void FT_CreatePiece(int pos);
+    void FT_Create_Recur(int x, int y, int cnt, int minx, int maxx);
+    bool IsFTBombing();
+    
     std::vector<CCPoint> GetResult();
     std::vector< std::vector<CCPoint> > GetResultDouble();
     std::vector<CCPoint> GetResultEnd();
@@ -206,6 +213,12 @@ private:
     //int E8_maxScheduleCnt;
     
     ////////////////////////////////////////////////////////////////////////////////////
+    
+    int FT_pos;
+    int FT_callbackCnt;
+    int FT_createCnt;
+    bool isFTBombing;
+    bool FT_check[COLUMN_COUNT][ROW_COUNT];
     
     int renewCheck_maxCnt;
     bool renewCheck[COLUMN_COUNT][ROW_COUNT];

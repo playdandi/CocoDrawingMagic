@@ -81,7 +81,27 @@ bool Splash::init()
     httpStatus = 0;
     
     m_pEditName = NULL;
-    
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    JniMethodInfo t;
+    if (JniHelper::getStaticMethodInfo(t,
+                                        "com/playDANDi/CocoMagic/CocoMagic",
+                                        "GetRegistrationId",
+                                        "()Ljava/lang/String;"))
+    {
+        // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+		jstring str = (jstring)t.env->CallStaticObjectMethod(t.classID,t.methodID);
+        
+		const char* msg = t.env->GetStringUTFChars(str, 0);
+        strcpy(regId, msg);
+		CCLog("받은메시지 = %s", regId); // 여기서 전달받은 값이 출력됨
+
+		t.env->ReleaseStringUTFChars(str, msg);
+		// Release
+		t.env->DeleteLocalRef(t.classID);
+    }
+#endif
+
 	return true;
 }
 
@@ -389,7 +409,7 @@ void Splash::XmlParseVersion(char* data, int size)
             iBinaryVersion = binaryVersion;
             CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
         }
-        if (gameVersion != iGameVersion)
+        else if (gameVersion != iGameVersion)
         {
             CCLog("게임 버전 다름");
             m_pMsgLabel->setString("못생긴 리소스 설득 중...");
@@ -402,49 +422,57 @@ void Splash::XmlParseVersion(char* data, int size)
             CCHttpClient::getInstance()->send(req);
             req->release();
         }
-        else
+        else // 최신 버전임
         {
             // 새 리소스 XML parsing
             m_pMsgLabel->setString("못생긴 리소스 배치 중...");
             XMLParseGameData();
             
             // 로그인 시도
-            m_pMsgLabel->setString("로그인 중...");
-            char temp[255];
-            std::string url = "";
-            sprintf(temp, "game_version=%d&", iGameVersion);
-            url += temp;
-            sprintf(temp, "kakao_id=%d&", mKakaoId);
-            url += temp;
-            sprintf(temp, "push_token=TEST_PUSH_VALUE&");
-            url += temp;
-            sprintf(temp, "device_type=%d&", mDeviceType);
-            url += temp;
-            if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
-            else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
-            else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
-            else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
-            url += temp;
-            if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
-            else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
-            else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
-            else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
-            url += temp;
-            CCLog("url = %s", url.c_str());
-            
-            CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl("http://14.63.225.203/cogma/game/login.php?");
-            req->setRequestData(url.c_str(), url.size());
-            req->setRequestType(CCHttpRequest::kHttpPost);
-            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-            CCHttpClient::getInstance()->send(req);
-            req->release();
+            TryLogin();
         }
     }
     else
     {
         CCLog("failed code = %d", code);
     }
+}
+
+void Splash::TryLogin()
+{
+    m_pMsgLabel->setString("로그인 중...");
+    char temp[255];
+    std::string url = "";
+    sprintf(temp, "game_version=%d&", iGameVersion);
+    url += temp;
+    sprintf(temp, "kakao_id=%d&", mKakaoId);
+    url += temp;
+    if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) // 안드로이드는 기기 고유 id를,
+        sprintf(temp, "push_token=%s&", regId);
+    else                                            // iPhone은 아이폰에서 기기 고유 id를 받아넣는다.
+        sprintf(temp, "push_token=TEST_PUSH_VALUE&");
+    url += temp;
+    sprintf(temp, "device_type=%d&", mDeviceType);
+    url += temp;
+    if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
+    else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
+    else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
+    else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
+    url += temp;
+    if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
+    else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
+    else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
+    else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
+    url += temp;
+    CCLog("url = %s", url.c_str());
+    
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl("http://14.63.225.203/cogma/game/login.php?");
+    req->setRequestData(url.c_str(), url.size());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
 }
 
 void Splash::XMLParseGameData()
@@ -681,36 +709,7 @@ void Splash::WriteResFile(char* data, int size)
     XMLParseGameData();
     
     // 로그인 시도
-    m_pMsgLabel->setString("로그인 중...");
-    char temp[255];
-    std::string url = "";
-    sprintf(temp, "game_version=%d&", iGameVersion);
-    url += temp;
-    sprintf(temp, "kakao_id=%d&", mKakaoId);
-    url += temp;
-    sprintf(temp, "push_token=TEST_PUSH_VALUE&");
-    url += temp;
-    sprintf(temp, "device_type=%d&", mDeviceType);
-    url += temp;
-    if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
-    else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
-    else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
-    else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
-    url += temp;
-    if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
-    else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
-    else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
-    else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
-    url += temp;
-    CCLog("url = %s", url.c_str());
-    
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl("http://14.63.225.203/cogma/game/login.php?");
-    req->setRequestData(url.c_str(), url.size());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    TryLogin();
 }
 
 void Splash::XmlParseLogin(char* data, int size)

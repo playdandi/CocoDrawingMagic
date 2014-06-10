@@ -8,6 +8,7 @@
 #include "Data.h"
 #include "Fairy.h"
 #include "Loading.h"
+#include "platform/android/jni/JniHelper.h"
 
 USING_NS_CC;
 

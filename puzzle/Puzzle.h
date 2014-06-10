@@ -157,6 +157,11 @@ public:
     void SetRenewFlag(bool flag);
     bool IsRenewing();
     
+    void StartFeverTime();
+    void EndFeverTime();
+    bool IsFeverTime();
+    int GetFeverRemainTime();
+    
     bool IsItemClear();
     bool IsItemTime();
     bool IsItemPaint();
@@ -300,6 +305,7 @@ private:
     CCSprite* fever;
     bool isFeverTime;
     int feverRemainTime;
+    int forFeverTimeCnt;
     std::vector<CCSprite*> feverSpr;
     
     int m_iFallingCallbackCnt;

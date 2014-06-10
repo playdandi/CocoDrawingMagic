@@ -2103,8 +2103,16 @@ void PuzzleSkill::RenewPuzzle_End(void* pointer, int queue_pos)
 }
 
 
-void PuzzleSkill::FT_Start()
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void PuzzleSkill::FT_StartEnd(int queue_pos)
 {
+    SetQueuePos(queue_pos);
+    result_pos.clear();
+    
+    FT_pos = 2;
+    
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
     {
         for (int y = 0 ; y < ROW_COUNT ; y++)
@@ -2114,24 +2122,217 @@ void PuzzleSkill::FT_Start()
                 (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
                 continue;
             
-            
+            m_pGameLayer->LockEach(x, y);
+            result_pos.push_back(ccp(x, y));
         }
+    }
+    
+    FT_callbackCnt = 0;
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        int x = result_pos[i].x;
+        int y = result_pos[i].y;
+        
+        CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.15f, 1.5f), CCFadeOut::create(0.15f), NULL), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::FT_Callback), this), NULL);
+        m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
+    }
+}
+bool PuzzleSkill::IsFTBombing()
+{
+    return isFTBombing;
+}
+
+void PuzzleSkill::FT_Bomb(std::vector<CCPoint> p)
+{
+    isFTBombing = true;
+    
+    int x, y;
+    int minx, maxx;
+    
+    x = p[0].x;
+    if (0 <= x && x <= 2)
+    {
+        minx = 0;
+        maxx = 2;
+        FT_pos = 0;
+    }
+    else
+    {
+        minx = 4;
+        maxx = 6;
+        FT_pos = 1;
+    }
+    
+    sound->PlayBomb();
+    
+    FT_callbackCnt = 0;
+    result_pos.clear();
+    for (int x = minx ; x <= maxx ; x++)
+    {
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+        {
+            // 네 모서리에 위치한 존재하지 않는 부분
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                continue;
+            
+            result_pos.push_back(ccp(x, y));
+        }
+    }
+    
+    // 피버타임 끝났으면 하지마!
+//    if (!m_pGameLayer->IsFeverTime())
+//        return;
+    
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        x = result_pos[i].x;
+        y = result_pos[i].y;
+        
+        CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.15f, 1.5f), CCFadeOut::create(0.15f), NULL), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::FT_Callback), this), NULL);
+        m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
     }
 }
 
-void PuzzleSkill::FT_Create_Left()
+void PuzzleSkill::FT_Callback(CCNode* sender, void* pointer)
 {
+    PuzzleSkill* pss = (PuzzleSkill*)pointer;
     
+    pss->FT_callbackCnt++;
+    if (pss->FT_callbackCnt == pss->result_pos.size())
+    {
+        // 피버타임 처음/끝 폭발 시
+        int x, y;
+        for (int i = 0 ; i < pss->result_pos.size() ; i++)
+        {
+            x = pss->result_pos[i].x;
+            y = pss->result_pos[i].y;
+            pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+            pss->m_pGameLayer->SetSpriteP8Null(x, y);
+        }
+        pss->result_pos.clear();
+        
+        if (!pss->m_pGameLayer->IsFeverTime())
+            pss->FT_pos = -1;
+        CCLog("%d", pss->FT_pos);
+        pss->m_pGameLayer->Falling(pss->queuePos, pss->FT_pos);
+    }
 }
 
-void PuzzleSkill::FT_Create_Right()
+void PuzzleSkill::FT_CreatePiece(int pos)
 {
+    if (m_pGameLayer->IsFeverTime() && m_pGameLayer->GetFeverRemainTime() <= 0)
+    {
+        isFTBombing = false;
+        m_pGameLayer->EndFeverTime();
+    }
     
+    int minx = 0, maxx = COLUMN_COUNT-1;
+    if (pos == 0)
+        maxx = 2;
+    else if (pos == 1)
+        minx = 4;
+    
+    // 안전을 위한 lock 걸기
+    for (int x = minx ; x <= maxx ; x++)
+    {
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+        {
+            // 네 모서리에 위치한 존재하지 않는 부분
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                continue;
+            
+            m_pGameLayer->LockEach(x, y);
+        }
+    }
+    
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+            FT_check[x][y] = false;
+    FT_check[0][0] = FT_check[0][ROW_COUNT-1] = FT_check[COLUMN_COUNT-1][0] = FT_check[COLUMN_COUNT-1][ROW_COUNT-1] = true;
+ 
+    result_pos.clear();
+    
+    if (pos == 0 || pos == 2) // 보드판의 왼쪽에 생성
+    {
+        FT_createCnt = rand()%13 + 3; // 3 ~ 15
+        int x = rand() % 3; // 0 ~ 2
+        int y = rand() % ROW_COUNT;
+        if (x == 0 && (y == 0 || y == ROW_COUNT-1))
+            x++;
+        
+        FT_Create_Recur(x, y, 0, 0, 2);
+    }
+    if (pos == 1 || pos == 2) // 보드판의 오른쪽에 생성
+    {
+        FT_createCnt = rand()%13 + 3; // 3 ~ 15
+        int x = rand() % 3 + 4; // 4 ~ 6
+        int y = rand() % ROW_COUNT;
+        if (x == COLUMN_COUNT-1 && (y == 0 || y == ROW_COUNT-1))
+            x--;
+        
+        FT_Create_Recur(x, y, 0, 4, 6);
+    }
+    
+    // 실제 생성
+    int type = rand() % 3; // red, blue, green 중 하나
+    for (int i = 0 ; i < result_pos.size() ; i++)
+    {
+        int x = result_pos[i].x;
+        int y = result_pos[i].y;
+        m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+        m_pGameLayer->SetSpriteP8Null(x, y);
+        
+        m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, type);
+        m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
+        m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition( m_pGameLayer->SetPiece8Position(x, y) );
+        
+        m_pGameLayer->UnLockEach(x, y);
+    }
+    
+    // diamond들을 다시 검사해서 적절히 바꿔준다.
+    for (int x = 1 ; x < COLUMN_COUNT ; x++)
+    {
+        for (int y = 1 ; y < ROW_COUNT ; y++)
+        {
+            if (m_pGameLayer->GetPuzzleP4Set()->GetType(x, y) != BLOCKED)
+            {
+                if (m_pGameLayer->GetPuzzleP4Set()->GetObject(x, y) != NULL)
+                    m_pGameLayer->GetPuzzleP4Set()->RemoveChild(x, y);
+                m_pGameLayer->GetPuzzleP4Set()->CreatePiece(x, y, m_pGameLayer->GetPuzzleP4Set()->GetType(x, y));
+                m_pGameLayer->GetPuzzleP4Set()->AddChild(x, y);
+            }
+        }
+    }
+    
+    isFTBombing = false;
 }
 
-void PuzzleSkill::FT_End()
+void PuzzleSkill::FT_Create_Recur(int x, int y, int cnt, int minx, int maxx)
 {
+    FT_check[x][y] = true;
+    if (result_pos.size() >= FT_createCnt)
+        return;
+    result_pos.push_back(ccp(x, y));
+        
+    if ((x-1 >= minx && x-1 <= maxx) && y > 0 && !FT_check[x-1][y-1] && m_pGameLayer->IsConnected(x, y))
+        FT_Create_Recur(x-1, y-1, cnt+1, minx, maxx);
+    if ((x-1 >= minx && x-1 <= maxx) && y+1 < ROW_COUNT && !FT_check[x-1][y+1] && m_pGameLayer->IsConnected(x, y+1))
+        FT_Create_Recur(x-1, y+1, cnt+1, minx, maxx);
+    if ((x+1 >= minx && x+1 <= maxx) && y > 0 && !FT_check[x+1][y-1] && m_pGameLayer->IsConnected(x+1, y))
+        FT_Create_Recur(x+1, y-1, cnt+1, minx, maxx);
+    if ((x+1 >= minx && x+1 <= maxx) && y+1 < ROW_COUNT && !FT_check[x+1][y+1] && m_pGameLayer->IsConnected(x+1, y+1))
+        FT_Create_Recur(x+1, y+1, cnt+1, minx, maxx);
     
+    if (y+1 < ROW_COUNT && !FT_check[x][y+1])
+        FT_Create_Recur(x, y+1, cnt+1, minx, maxx);
+    if (y > 0 && !FT_check[x][y-1])
+        FT_Create_Recur(x, y-1, cnt+1, minx, maxx);
+    if ((x-1 >= minx && x-1 <= maxx) && !FT_check[x-1][y])
+        FT_Create_Recur(x-1, y, cnt+1, minx, maxx);
+    if ((x+1 >= minx && x+1 <= maxx) && !FT_check[x+1][y])
+        FT_Create_Recur(x+1, y, cnt+1, minx, maxx);
 }
 
 

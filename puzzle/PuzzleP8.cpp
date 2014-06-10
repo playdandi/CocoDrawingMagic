@@ -10,11 +10,7 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, 
     if (type == -1)
     {
         if (clear)
-        {
-            
             puzzleP8->type = rand() % (TYPE_COUNT-1);
-            CCLog("here %d", puzzleP8->type);
-        }
         else
             puzzleP8->type = rand() % TYPE_COUNT;
     }

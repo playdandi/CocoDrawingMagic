@@ -45,6 +45,8 @@ public:
     void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
     void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
+    void TryLogin();
+    
     void XMLParseGameData();
     void WriteResFile(char* data, int size);
     void XmlParseVersion(char* data, int size);
@@ -62,7 +64,6 @@ public:
     std::string SubstrNickname(std::string nickname);
     void EndScene();
     
-//    RSA* createRSA(unsigned char * key, int pub);
     RSA* createRSA(unsigned char * key, int pub);
     int public_encrypt(unsigned char * data,int data_len, unsigned char * key, unsigned char *encrypted);
     
@@ -82,6 +83,7 @@ protected:
     int profileCnt;
     
     std::string sessionId;
+    char regId[1000]; // 유저의 안드로이드 기기 고유 id
     
 private:
     CCSprite* m_pBackground;

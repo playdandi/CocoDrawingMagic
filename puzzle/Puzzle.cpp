@@ -857,6 +857,7 @@ void Puzzle::SetCombo()
 {
     iCombo = 0;
     maxCombo = 0;
+    forFeverTimeCnt = 0;
     //pComboLayer = NULL;
     /*
     pComboLabel = CCLabelTTF::create("", fontList[2].c_str(), 50);
@@ -881,11 +882,12 @@ void Puzzle::UpdateCombo()
     iCombo++;
     maxCombo = std::max(maxCombo, iCombo);
     
+    if (!isFeverTime)
+        forFeverTimeCnt++;
+    
     char temp[11];
     sprintf(temp, "%d Combo!", iCombo);
-    //pComboLabel->setString(temp);
     
-
     if (iCombo == 1)
     {
         // 처음 콤보가 적용될 때만 타이머 적용을 하면 된다.
@@ -942,6 +944,7 @@ void Puzzle::ComboTimer(float f)
     {
         maxCombo = std::max(maxCombo, iCombo);
         iCombo = 0;
+        forFeverTimeCnt = 0;
         
         this->unschedule(schedule_selector(Puzzle::ComboTimer));
     }
@@ -1030,6 +1033,8 @@ void Puzzle::SetTimer()
 void Puzzle::UpdateTimer(float f)
 {
     feverRemainTime -= 100;
+    if (isFeverTime && feverRemainTime == 0)
+        EndFeverTime();
     
     //////////////////////////////////////// 시간을 정지해야 하는 상황들 ////////////////////////////////////
     // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중
@@ -1226,13 +1231,32 @@ void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
     sound->PlayVoice(VOICE_BONUS);
 }
 
-void Puzzle::SetFeverTime()
+void Puzzle::StartFeverTime()
 {
-    isFeverTime = true;
     feverRemainTime = 1000 * 5;
-    skill->FT_Start();
+    isFeverTime = true;
+    forFeverTimeCnt = 0;
+    skill->FT_StartEnd(touch_cnt%QUEUE_CNT);
 }
-
+void Puzzle::EndFeverTime()
+{
+    if (!skill->IsFTBombing())
+    {
+    isFeverTime = false;
+    CancelDrawing();
+    skill->FT_StartEnd(touch_cnt%QUEUE_CNT);
+    feverRemainTime = 0;
+    forFeverTimeCnt = 0;
+    }
+}
+bool Puzzle::IsFeverTime()
+{
+    return isFeverTime;
+}
+int Puzzle::GetFeverRemainTime()
+{
+    return feverRemainTime;
+}
 
 /*
 CCPoint Puzzle::SetPiece8Position(int x, int y)
@@ -1514,7 +1538,7 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     // 3가지 정령 중 하나를 터치할 때 동작한다. (좌표 기준인데, 정령이 없으면 아예 시도하지 않는다)
     if ((x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == 0))
     {
-        if (m_iSpiritSP == 0 && !skill->W8_IsActive()) // '여신의 은총' 실행 중이면 중지.
+        if (m_iSpiritSP == 0 && !isFeverTime && !skill->W8_IsActive()) // '여신의 은총' 실행 중이면 중지.
         {
             // 정령이 살아있지 않다면 터치 종료.
             if (x == 0 && y == ROW_COUNT-1 && !skill->IsSpiritAlive(2)) // 땅의 정령 (왼쪽 위)
@@ -1770,6 +1794,15 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             ////////////////////////////////////////////////////////////////////////////////
             
             
+            // 피버타임 발동!
+            if (!isFeverTime && forFeverTimeCnt == 10-1)
+            {
+                StartFeverTime();
+                m_iSpiritSP--;
+                m_bTouchStarted = false;
+                return;
+            }
+            
             if (!isFeverTime)
             {
                 // 스킬 발동 try (발동되는 스킬들 조사)
@@ -1806,7 +1839,9 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             else
             {
                 // 피버타임용 진행
-                InvokeFeverTime((touch_cnt-1)%QUEUE_CNT);
+                m_iSpiritSP--;
+                skill->FT_Bomb(piece8xy[(touch_cnt-1)%QUEUE_CNT]);
+                //InvokeFeverTime((touch_cnt-1)%QUEUE_CNT);
             }
             m_bIsCycle[(touch_cnt-1)%QUEUE_CNT] = false; // cycle 푼다.
         }
@@ -1857,11 +1892,7 @@ void Puzzle::CancelDrawing()
     isCancelling = false;
 }
 
-void Puzzle::InvokeFeverTime(int queue_pos)
-{
-    Lock(queue_pos);
-    Bomb(queue_pos, piece8xy[queue_pos]);
-}
+
 
 void Puzzle::InvokeSkills(int queue_pos)
 {
@@ -2266,12 +2297,17 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos, int F8_idx)
     //if (m_iState[queue_pos] == SKILL_FINAL && globalType[queue_pos] == PIECE_RED)
     //    return;
     
-    // update score
-    UpdateScore(0, bomb_pos.size());
-    // update starcandy
-    UpdateStarCandy(0, bomb_pos.size());
-    // update combo
-    UpdateCombo();
+    
+    // 점수, 별사탕, 콤보 업데이트 시, 피버타임 시작/끝 (전부폭발) 에는 적용하지 말 것!
+    //if (!(isFeverTime && bomb_pos.size() == COLUMN_COUNT*ROW_COUNT-4))
+    //{
+        // update score
+        UpdateScore(0, bomb_pos.size());
+        // update starcandy
+        UpdateStarCandy(0, bomb_pos.size());
+        // update combo
+        UpdateCombo();
+    //}
     
     // 터지는 게 없다면 바로 Falling을 시작한다.
     if (bomb_pos.size() == 0)
@@ -2289,7 +2325,35 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
     
     if (m_iBombCallbackCnt[(int)queue_pos] == m_iBombCallbackCntMax[(int)queue_pos])
     {
-        if (m_iState[(int)queue_pos] == SKILL_CYCLE) // cycle 주변부 폭발 완료
+        if (isFeverTime)
+        {
+            if (skill->GetResult().size() == COLUMN_COUNT*ROW_COUNT-4)
+            {
+                // 피버타임 처음/끝 폭발 시
+                for (int i = 0 ; i < skill->GetResult().size() ; i++)
+                {
+                    int x = skill->GetResult()[i].x;
+                    int y = skill->GetResult()[i].y;
+                    puzzleP8set->RemoveChild(x, y);
+                    spriteP8[x][y] = NULL;
+                }
+                skill->ResultClear();
+            }
+            else
+            {
+                // 그 외
+                for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
+                {
+                    int x = (int)piece8xy[(int)queue_pos][i].x;
+                    int y = (int)piece8xy[(int)queue_pos][i].y;
+                    puzzleP8set->RemoveChild(x, y);
+                    spriteP8[x][y] = NULL;
+                }
+            }
+            // 피버타임 때는 falling의 queue가 필요없으니, falling 바로 시작해도 된다.
+            Falling((int)queue_pos);
+        }
+        else if (m_iState[(int)queue_pos] == SKILL_CYCLE) // cycle 주변부 폭발 완료
         {
             CCLog("bomb callback (%d) CYCLE", (int)queue_pos);
             std::vector<CCPoint> temp = skill->A2GetPos();
@@ -2378,6 +2442,7 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
             piece8xy[(int)queue_pos].clear();
         }
         
+        
         // falling queue insertion
         fallingQueue.push((int)queue_pos);
         if (!isFalling)
@@ -2459,7 +2524,10 @@ void Puzzle::Falling(int queue_pos, int xx)
                 if (pos >= end)
                 {
                     // 더 이상 내려야 할 8각형이 없는 경우 (새로 만들어서 drop시킨다)
-                    puzzleP8set->CreatePiece(x, y);
+                    if (isFeverTime)
+                        puzzleP8set->CreatePiece(x, y, PIECE_WHITE);
+                    else
+                        puzzleP8set->CreatePiece(x, y);
                     puzzleP8set->GetObject(x, y)->SetPosition(SetPiece8Position(x, end));
                     puzzleP8set->AddChild(x, y);
                     spriteP8[x][y] = puzzleP8set->GetSprite(x, y);
@@ -2518,20 +2586,35 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         //}
         
         /************ LOCK print ****************/
-        /*
         for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
         {
             CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
                   m_bLockP8[3][y], m_bLockP8[4][y], m_bLockP8[5][y], m_bLockP8[6][y]);
         }
-        */
         /*****************************************/
 
         
-        // '고대나무' 스킬의 한 line falling이 끝나면, Restart 여부를 확인하고, 끝났다면 라운드 전체를 종료한다.
-        //if (m_iState[(int)queue_pos] == SKILL_FINAL && globalType[(int)queue_pos] == PIECE_GREEN)
-        if (xx != -1)
+        if (isFeverTime)
         {
+            // 모든 피스에 lock 걸기
+            for (int x = 0 ; x < COLUMN_COUNT ; x++)
+            {
+                for (int y = 0 ; y < ROW_COUNT ; y++)
+                {
+                    // 네 모서리에 위치한 존재하지 않는 부분
+                    if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                        (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                        continue;
+                    
+                    m_bLockP8[x][y] = 0;
+                }
+            }
+            
+            skill->FT_CreatePiece(xx);
+        }
+        else if (xx != -1)
+        {
+            // '고대나무' 스킬의 한 line falling이 끝나면, Restart 여부를 확인하고, 끝났다면 라운드 전체를 종료한다.
             skill->E8_DecideRestart(xx);
             if (skill->E8_IsFinished())
             {
