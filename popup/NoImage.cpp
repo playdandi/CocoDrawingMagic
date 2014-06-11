@@ -648,6 +648,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (type == BUY_TOPAZ_TRY)
                 {
+                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
                     // 토파즈 구입하기. (미결제 버전)
                     std::string url = "http://14.63.225.203/cogma/game/purchase_topaz.php?";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
@@ -656,6 +657,23 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     url += temp;
                     
                     HttpRequest(url);
+                    #endif
+                    
+                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                    JniMethodInfo t;
+                    
+                    //JniHelper::getMethodInfo(t, "com/playDANDi/CocoMagic/InAppBilling", "Buy", <#const char *paramCode#>)
+                    if (JniHelper::getMethodInfo(t,
+                                                       "com/playDANDi/CocoMagic/CocoMagic",
+                                                       "StartIAB",
+                                                       "()V"))
+                    {
+                        // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+                        t.env->CallStaticObjectMethod(t.classID, t.methodID);
+                        // Release
+                        t.env->DeleteLocalRef(t.classID);
+                    }
+                    #endif
                 }
                 else if (type == BUY_STARCANDY_TRY)
                 {

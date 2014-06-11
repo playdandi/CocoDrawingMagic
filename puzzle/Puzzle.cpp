@@ -1033,8 +1033,8 @@ void Puzzle::SetTimer()
 void Puzzle::UpdateTimer(float f)
 {
     feverRemainTime -= 100;
-    if (isFeverTime && feverRemainTime == 0)
-        EndFeverTime();
+    //if (isFeverTime && feverRemainTime == 0)
+    //    EndFeverTime();
     
     //////////////////////////////////////// 시간을 정지해야 하는 상황들 ////////////////////////////////////
     // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중
@@ -1793,7 +1793,7 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             }
             ////////////////////////////////////////////////////////////////////////////////
             
-            
+            /*
             // 피버타임 발동!
             if (!isFeverTime && forFeverTimeCnt == 10-1)
             {
@@ -1802,6 +1802,7 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 m_bTouchStarted = false;
                 return;
             }
+            */
             
             if (!isFeverTime)
             {
@@ -2005,8 +2006,8 @@ void Puzzle::InvokeSkills(int queue_pos)
         // 모든 스킬이 끝났다. 원상태로 되돌리자.
         
         // 피스판 갱신 필요성 검사
-        while (skill->IsRenewNeeded())
-            skill->RenewPuzzle(queue_pos);
+        //while (skill->IsRenewNeeded())
+        //    skill->RenewPuzzle(queue_pos);
         
         // skill Lock을 푼다.
         if (m_bSkillLock[queue_pos])
@@ -2251,7 +2252,7 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos, int F8_idx)
         UpdatePieceBombCnt(puzzleP8set->GetType(x, y), 1);
 
         float bombTime = 0.15f;
-        if (m_iState[queue_pos] == SKILL_CYCLE)
+        if (m_iState[queue_pos] == SKILL_CYCLE && (globalType[queue_pos] == PIECE_RED || globalType[queue_pos] == PIECE_BLUE))
             bombTime = 0.60f;
         else if (F8_idx != -1)
         //else if (m_iState[queue_pos] == SKILL_FINAL && globalType[queue_pos] == PIECE_RED)
@@ -2646,8 +2647,8 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
                 if (skill->W8_IsActive())
                 {
                     // 피스판 갱신 필요성 검사
-                    while (skill->IsRenewNeeded())
-                        skill->RenewPuzzle((int)queue_pos);
+                    //while (skill->IsRenewNeeded())
+                    //    skill->RenewPuzzle((int)queue_pos);
                     
                     skill->W8_BombDone();
                 }
@@ -3394,8 +3395,8 @@ void PuzzleP8Set::MoveObject(int x, int y, int fromX, int fromY)
 
 void PuzzleP8Set::SwapObject(int x1, int y1, int x2, int y2)
 {
-    PuzzleP8* p1 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x1, y1), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1076, object[x2][y2]->GetType());
-    PuzzleP8* p2 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x2, y2), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1076, object[x1][y1]->GetType());
+    PuzzleP8* p1 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x1, y1), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1076, gameLayer->IsItemClear(), object[x2][y2]->GetType());
+    PuzzleP8* p2 = PuzzleP8::CreateP8(ccp(0.5, 0.5), gameLayer->SetPiece8Position(x2, y2), gameLayer, zGameObject, gameLayer->GetBoardSize()/(float)1076, gameLayer->IsItemClear(), object[x1][y1]->GetType());
     
     RemoveChild(x1, y1);
     RemoveChild(x2, y2);
