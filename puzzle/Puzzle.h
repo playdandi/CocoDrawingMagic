@@ -95,7 +95,8 @@ public:
     
     void GoNextState(int queue_pos);
     
-    //void WaitOrder(int queue_pos);
+    void CheckUselessDiaPieces();
+    
     
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
     int GetGlobalType();

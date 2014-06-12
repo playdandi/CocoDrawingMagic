@@ -25,8 +25,7 @@ public:
     CCSprite* GetSpirit(int type);
     void RemoveSpirit(int type);
     void RemoveSpirit_Callback(CCNode* sender, void* pointer);
-    //CCParticleSystemQuad* GetSpirit(int type);
-    //void ReleaseSpirit(int type);
+    void SpiritEffect(int type);
     
     void PlayEffect_0(std::vector<CCPoint> pos);
     void PlayEffect_8(std::vector<CCPoint> pos);

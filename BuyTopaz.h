@@ -27,11 +27,18 @@ public:
     void InitSprites();
     void MakeScroll();
     
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseDeveloperPayload(char* data, int size, const char* productId);
+    
+    void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
+    void XmlParseVerifyPurchaseResult(char* data, int size);
+    
     void EndScene();
     
 protected:
     CCSize winSize;
     bool isTouched;
+    int httpStatus;
     
 private: // 해제해야 하는 변수들은 여기에 넣자.
     CCSprite* pBlack;

@@ -55,7 +55,6 @@ void Effect::PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos)
         //case 5: PlayEffect_5(pos); break;
         case 13: PlayEffect_13(pos); break;
         case 21: PlayEffect_21(pos); break;
-            
         case 2: PlayEffect_2(pos, queue_pos); break; // 10개이상 추가점수
         case 19: PlayEffect_19(pos, queue_pos); break; // 10개이상 추가별사탕
             
@@ -287,44 +286,51 @@ void Effect::RemoveSpirit(int type)
 }
 void Effect::RemoveSpirit_Callback(CCNode* sender, void* pointer)
 {
-    //int type = sender->getTag();
     sender->removeFromParentAndCleanup(true);
     sender = NULL;
-    /*
-    if (type == 0) spirit_fire = NULL;
-    else if (type == 1) spirit_water = NULL;
-    else if (type == 2) spirit_land = NULL;
-    */
 }
-
-/*
-CCParticleSystemQuad* Effect::GetSpirit(int type)
+void Effect::SpiritEffect(int type)
 {
+    // 정령을 터치할 때 나타나는 이펙트
+    
+    //CCParticleSystemQuad* m_emitter;
     if (type == 0)
-        return fire;
-    else if (type == 1)
-        return water;
-    return land;
-}
-void Effect::ReleaseSpirit(int type)
-{
-    switch (type)
     {
-        case 0:
-            fire->removeFromParentAndCleanup(true);
-            fire = NULL;
-            break;
-        case 1:
-            water->removeFromParentAndCleanup(true);
-            water = NULL;
-            break;
-        case 2:
-            land->removeFromParentAndCleanup(true);
-            land = NULL;
-            break;
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_fire.plist");
+        m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        //m_emitter->setScale(2.0f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        gameLayer->addChild(m_emitter, 100);
+    }
+    else if (type == 1)
+    {
+        int x, y;
+        for (int i = 0 ; i < gameLayer->GetSkill()->GetResult().size() ; i++)
+        {
+            x = gameLayer->GetSkill()->GetResult()[i].x;
+            y = gameLayer->GetSkill()->GetResult()[i].y;
+            
+            CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_water.plist");
+            m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+            //m_emitter->setScale(2.0f);
+            m_emitter->setAutoRemoveOnFinish(true);
+            gameLayer->addChild(m_emitter, 100);
+        }
+        
+    }
+    else
+    {
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_land.plist");
+        m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        //m_emitter->setScale(2.0f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        gameLayer->addChild(m_emitter, 100);
     }
 }
-*/
+
 
 void Effect::PlayEffect_0(std::vector<CCPoint> pos)
 {
@@ -817,8 +823,15 @@ void Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector
     A8_icon = CCSprite::createWithSpriteFrameName("icon/dragon.png");
     A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
-    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+
+    int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    if (scaled_H < 350.0f)
+        scaled_H = 350.0f;
+    A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
+    
+    //int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    //A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
     A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
     
@@ -1014,8 +1027,15 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     A8_icon = CCSprite::createWithSpriteFrameName("icon/goddess.png");
     A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
-    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+    
+    int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    if (scaled_H < 300.0f)
+        scaled_H = 300.0f;
+    A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
+    
+    //int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    //A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
     A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
 
@@ -1025,7 +1045,7 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     // orb 출현
     m_orb = CCParticleSystemQuad::create("particles/water8_orb.plist");
     m_orb->setAnchorPoint(ccp(0.5, 0));
-    orb_pos = ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+A8_icon_height);
+    orb_pos = ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120+scaled_H);
     m_orb->setPosition(orb_pos);
     m_orb->setScale(1.0f);
     m_orb->setStartSize(100);
@@ -1096,14 +1116,22 @@ void Effect::Effect15_Clear()
 
 void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // '고대나무'
 {
-    // 나무
     // 나무 나타나는 소리
     gameLayer->GetSound()->PlayDesignatedSound(230);
+    
+    // 나무 출현
     A8_icon = CCSprite::createWithSpriteFrameName("icon/tree.png");
     A8_icon->setAnchorPoint(ccp(0.5, 0));
     A8_icon->setOpacity(0);
-    int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
+    
+    int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    if (scaled_H < 350.0f)
+        scaled_H = 350.0f;
+    A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
+    
+    //int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
+    //A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
     A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
     
@@ -1182,6 +1210,8 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
         ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
     }
     
+    CCLog("리뉴 콜백 %d", pThis->callbackCnt);
+    
     if (pThis->callbackCnt < pThis->gameLayer->GetSkill()->GetResultDouble().size() &&
         pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt].size() > 0)
     {
@@ -1233,6 +1263,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
     }
     else
     {
+        CCLog("리뉴 콜백 끝");
         // 콜백 끝
         pThis->gameLayer->GetSkill()->RenewPuzzle_End(pThis->gameLayer->GetSkill(), pThis->queuePos);
     }

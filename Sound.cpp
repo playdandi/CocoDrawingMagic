@@ -155,9 +155,11 @@ void Sound::PreLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/timelimit.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/bonus.mp3");
-    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/eit.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/stoptime.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/missionsuccess.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/eit.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/eit2.mp3");
+    SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/voice/eit3.mp3");
     
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/clock.mp3");
     SimpleAudioEngine::sharedEngine()->preloadEffect("sounds/game_result.mp3");
@@ -266,6 +268,8 @@ void Sound::PlayVoice(int type)
         case VOICE_BONUS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/bonus.mp3"); break;
         case VOICE_STOPTIME: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/stoptime.mp3"); break;
         case VOICE_MISSIONSUCCESS: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/missionsuccess.mp3"); break;
+        case VOICE_EIT2: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/eit2.mp3"); break;
+        case VOICE_EIT3: SimpleAudioEngine::sharedEngine()->playEffect("sounds/voice/eit3.mp3"); break;
     }
 }
 
@@ -317,9 +321,11 @@ void Sound::UnLoadInGameSound()
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/timelimit.np3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/gameover2.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/bonus.mp3");
-    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/eit.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/stoptime.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/missionsuccess.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/eit.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/eit2.mp3");
+    SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/voice/eit3.mp3");
     
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/clock.mp3");
     SimpleAudioEngine::sharedEngine()->unloadEffect("sounds/game_result.mp3");

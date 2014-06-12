@@ -11,6 +11,7 @@
 #define HTTP_REWARDWEELYRANK 3
 #define HTTP_FRIENDS 4
 #define HTTP_PROFILE_IMAGE 5
+#define HTTP_NONCONSUMEDITEMS -100
 
 using namespace cocos2d::extension;
 
@@ -56,6 +57,10 @@ public:
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
+    void GetNonConsumedItems();
+    void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
+    void XmlParseVerifyPurchaseResult(char* data, int size);
+    
     void GetTodayCandyFriend();
     void LastActionStart();
     void LastActionCallback(CCNode* sender, void *data);
@@ -88,7 +93,7 @@ protected:
 private:
     CCSprite* m_pBackground;
     CCSprite* m_pTitle;
-    //CCSprite* m_pForKakao;
+    CCSprite* m_pForKakao;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;

@@ -1,7 +1,6 @@
 #include "Splash.h"
 #include "pugixml/pugixml.hpp"
 
-
 using namespace pugi;
 
 Splash::~Splash(void)
@@ -111,13 +110,12 @@ void Splash::LogoLoadingCompleted()
     m_pTitle = CCSprite::createWithSpriteFrameName("background/Title.png");
     m_pTitle->setPosition(ccp(winSize.width/2, 1350+1000));
     this->addChild(m_pTitle, 5);
-    /*
+
     m_pForKakao = CCSprite::createWithSpriteFrameName("letter/letter_forkakao.png");
     m_pForKakao->setAnchorPoint(ccp(0, 1));
     m_pForKakao->setScale(0.8f);
     m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
     m_pTitle->addChild(m_pForKakao, 6);
-    */
     
     CCActionInterval* action = CCSequence::create(CCEaseBounceOut::create(CCMoveTo::create(0.5f, ccp(winSize.width/2, 1350))), CCCallFuncND::create(this, callfuncND_selector(Splash::SoundCallback), NULL), CCDelayTime::create(0.0f), CCCallFunc::create(this, callfunc_selector(Splash::Button_Callback)), NULL);
     m_pTitle->runAction(action);
@@ -398,10 +396,19 @@ void Splash::XmlParseVersion(char* data, int size)
         //xml_node setting = nodeResult.child("setting");
         gameVersion = nodeResult.child("game-version").text().as_int();
         int binaryVersion = nodeResult.child("binary-version").text().as_int();
+        
+        CCLog("바이너리 버전 = %d", binaryVersion);
+        CCLog("게임 버전 = %d", gameVersion);
         std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
         // 나중에 마켓버전도 받자.
         
-        if (binaryVersion != iBinaryVersion)
+        if (iBinaryVersion == -1)
+        {
+            // 최초 실행했을 때
+            iBinaryVersion = binaryVersion;
+            CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
+        }
+        else if (binaryVersion != iBinaryVersion)
         {
             CCLog("바이너리 버전 다름");
             // 마켓/스토어에서 다시 앱을 받으라는 팝업창을 띄우자.
@@ -409,7 +416,9 @@ void Splash::XmlParseVersion(char* data, int size)
             iBinaryVersion = binaryVersion;
             CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
         }
-        else if (gameVersion != iGameVersion)
+        
+        
+        if (gameVersion != iGameVersion)
         {
             CCLog("게임 버전 다름");
             m_pMsgLabel->setString("못생긴 리소스 설득 중...");
@@ -1176,6 +1185,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     httpStatus++;
     switch (httpStatus-1)
     {
+        case HTTP_NONCONSUMEDITEMS:
+            XmlParseVerifyPurchaseResult(dumpData, buffer->size()); break;
         case HTTP_VERSION:
             XmlParseVersion(dumpData, buffer->size()); break;
         case HTTP_LOGIN:
@@ -1200,13 +1211,135 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             profileCnt++;
             if (profileCnt == (int)profiles.size())
             {
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                //GetNonConsumedItems();
+                LastActionStart();
+                #endif
+                
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
                 // 1) 로고랑 글자를 없앤다.
                 // 2) 배경화면 축소하면서 Ranking 시작.
                 LastActionStart();
+                #endif
             }
             break;
     }
 }
+
+void Splash::GetNonConsumedItems()
+{
+    httpStatus = HTTP_NONCONSUMEDITEMS;
+
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    JniMethodInfo t;
+    if (JniHelper::getStaticMethodInfo(t,
+                                       "com/playDANDi/CocoMagic/CocoMagic",
+                                       "StartIAB",
+                                       "(ILjava/lang/String;Ljava/lang/String;)V"))
+    { // 파라미터 (int, String, String), 리턴타입은 Void
+        // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, t.env->NewStringUTF(""), t.env->NewStringUTF(""));
+        // Release
+        t.env->DeleteLocalRef(t.classID);
+    }
+    #endif
+}
+
+void Splash::verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id)
+{
+    CCLog("data = %s", data);
+    CCLog("sign = %s", signature);
+    CCLog("topaz_id = %d", topaz_id);
+    
+    const char* data2 = "{\"orderId\":\"12999763169054705758.136161536899983\",\"packageName\":\"com.playDANDi.CocoMagic\",\"productId\":\"test\",\"purchaseTime\":1402512283566,\"purchaseState\":0,\"developerPayload\":\"developerpayload\",\"purchaseToken\":\"lbfdjpphihmngleiknmbecni.AO-J1OzmKhYV99B9Lg1zXbMdKALR2XLd_VISF9UFdkYp7PantN39u-BzT4DvT31pgmZwCGk-Ct1btWiUyY6Zj1kuy1_RskOseVPPPIAiMkU3EmbUDPIOZ24\"}";
+    const char* sign2 = "QPlZ/2aHyWhnOqewE3GDx85yhMLL0Cqd0kMWWQWQMW9EVNB6DbE1FzbzSRZw7ruWmCaqQwkHuNjRbw0VXyf7jIVoKtvSu5y5rWXTLtNrNLb8ylnGReNQZro2HIIykEyNE5Gnn3bBlmX8qkgh0wvYUU24bgXvmv4ZyTnufSJlo4l-XfeQEtpgquMZjljtxbANPHhuwHxb7W-du3ji9p5YATfPEHgadotNW/cGNvD49s06k0bQ8zcJ0dcSTbCa3K70Z5XYXqtRFrVqfGacAXmV4XiaMQyHfI/t-dlt38nbfE6DXg77b4wS3jXteMRR57kWLoJ/j4sKe5/kE6zbnsFtXw==";
+
+    char temp[1024];
+    std::string postData = "";
+    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    postData += temp;
+    sprintf(temp, "topaz_id=%d&", topaz_id);
+    postData += temp;
+    //sprintf(temp, "purchase_data=%s&", data);
+    sprintf(temp, "purchase_data=%s&", data2);
+    postData += temp;
+    //sprintf(temp, "signature=%s", signature);
+    sprintf(temp, "signature=%s", sign2);
+    postData += temp;
+    CCLog("%s", postData.c_str());
+    
+    httpStatus = 1;
+    
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl("http://14.63.225.203/cogma/game/purchase_topaz_google.php");
+    req->setRequestData(postData.c_str(), postData.size());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
+}
+
+void Splash::XmlParseVerifyPurchaseResult(char* data, int size)
+{
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    if (code == 0)
+    {
+        CCLog("토파즈 구매 성공!");
+        /*
+         // 토파즈, 별사탕을 갱신한다.
+         int topaz = nodeResult.child("money").attribute("topaz").as_int();
+         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+         myInfo->SetMoney(topaz, starcandy);
+         
+         // 부모 scene에 갱신
+         CCString* param = CCString::create("2");
+         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+         
+         // 성공한 팝업창으로 넘어간다.
+         ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
+         */
+    }
+    else
+    {
+        CCLog("failed code = %d", code);
+        if (code == 10) CCLog("서버인증실패");
+        else if (code == 11) CCLog("payload 다름");
+        else if (code == 12) CCLog("이미 지급한 토파즈");
+        else if (code == 13) CCLog("토파즈 id 이상함");
+        
+        //ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+    
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    JniMethodInfo t;
+    if (JniHelper::getStaticMethodInfo(t,
+                                       "com/playDANDi/CocoMagic/InAppBilling",
+                                       "Consume",
+                                       "()V"))
+    {
+        CCLog("hihihi");
+		t.env->CallStaticVoidMethod(t.classID, t.methodID);
+		// Release
+		t.env->DeleteLocalRef(t.classID);
+    }
+#endif
+}
+
 
 void Splash::GetTodayCandyFriend()
 {
@@ -1289,7 +1422,7 @@ std::string Splash::SubstrNickname(std::string nickname)
 void Splash::EndScene()
 {
     m_pBackground->removeFromParentAndCleanup(true);
-    //m_pForKakao->removeFromParentAndCleanup(true);
+    m_pForKakao->removeFromParentAndCleanup(true);
     m_pTitle->removeFromParentAndCleanup(true);
     m_pMsgLabel->removeFromParentAndCleanup(true);
     m_pStartBtn->removeFromParentAndCleanup(true);

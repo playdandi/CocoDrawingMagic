@@ -13,6 +13,8 @@
 #define VOICE_GODDESS 6
 #define VOICE_STOPTIME 7
 #define VOICE_MISSIONSUCCESS 8
+#define VOICE_EIT2 9
+#define VOICE_EIT3 10
 
 
 using namespace cocos2d;

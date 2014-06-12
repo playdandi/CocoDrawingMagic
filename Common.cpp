@@ -1057,6 +1057,14 @@ std::string Common::base64_encode(unsigned char const* bytes_to_encode, unsigned
     return ret;
 }
 
+/*
+// 안드로이드 결제 직후 검증 & 상품지급 프로토콜을 호출하기 위한 함수 (java에서 넘어온다)
+void Common::verifyPayloadAndProvideItem(const char* data, const char* signature)
+{
+    Network* net = new Network();
+    net->verifyPayloadAndProvideItem(data, signature);
+}
+*/
 
 
 
