@@ -289,17 +289,16 @@ void Effect::RemoveSpirit_Callback(CCNode* sender, void* pointer)
     sender->removeFromParentAndCleanup(true);
     sender = NULL;
 }
-void Effect::SpiritEffect(int type)
+void Effect::SpiritEffect(int type, int centerX, int centerY)
 {
     // 정령을 터치할 때 나타나는 이펙트
     
-    //CCParticleSystemQuad* m_emitter;
     if (type == 0)
     {
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_fire.plist");
-        m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
+        //m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(centerX, centerY));
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        //m_emitter->setScale(2.0f);
         m_emitter->setAutoRemoveOnFinish(true);
         gameLayer->addChild(m_emitter, 100);
     }
@@ -314,7 +313,6 @@ void Effect::SpiritEffect(int type)
             CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_water.plist");
             m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
             m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-            //m_emitter->setScale(2.0f);
             m_emitter->setAutoRemoveOnFinish(true);
             gameLayer->addChild(m_emitter, 100);
         }
@@ -325,7 +323,6 @@ void Effect::SpiritEffect(int type)
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_land.plist");
         m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        //m_emitter->setScale(2.0f);
         m_emitter->setAutoRemoveOnFinish(true);
         gameLayer->addChild(m_emitter, 100);
     }
@@ -825,7 +822,7 @@ void Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector
     A8_icon->setOpacity(0);
 
     int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    float scaled_H = (float)total_H * 7.0f / 11.0f;
     if (scaled_H < 350.0f)
         scaled_H = 350.0f;
     A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
@@ -1029,7 +1026,7 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     A8_icon->setOpacity(0);
     
     int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    float scaled_H = (float)total_H * 7.0f / 11.0f;
     if (scaled_H < 300.0f)
         scaled_H = 300.0f;
     A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
@@ -1125,7 +1122,7 @@ void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // 
     A8_icon->setOpacity(0);
     
     int total_H = (gameLayer->vs.height-7-120) - (gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    float scaled_H = (float)total_H * 6.0f / 11.0f;
+    float scaled_H = (float)total_H * 7.0f / 11.0f;
     if (scaled_H < 350.0f)
         scaled_H = 350.0f;
     A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );

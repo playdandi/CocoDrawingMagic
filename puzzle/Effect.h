@@ -25,7 +25,7 @@ public:
     CCSprite* GetSpirit(int type);
     void RemoveSpirit(int type);
     void RemoveSpirit_Callback(CCNode* sender, void* pointer);
-    void SpiritEffect(int type);
+    void SpiritEffect(int type, int centerX = -1, int centerY = -1);
     
     void PlayEffect_0(std::vector<CCPoint> pos);
     void PlayEffect_8(std::vector<CCPoint> pos);

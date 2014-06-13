@@ -43,9 +43,10 @@ int missionRefVal;
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
 
-//char* publicKey = "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKP5Lsq9tblK50ghhot8gT3xc8tlae71\nUUpRjkB2aNyvAgMBAAE=\n-----END PUBLIC KEY-----";
-
 RSA* rsa;
+
+//
+cocos2d::CCNode* verifyStatusScene;
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority, void* pointer)

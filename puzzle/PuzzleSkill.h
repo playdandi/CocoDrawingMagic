@@ -57,6 +57,7 @@ public:
     void F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx);
     void F8_FinishCountUp();
     bool F8_IsFinished();
+    bool F8_IsActive();
     
     void W3(int num);
     int W3GetScore();
@@ -88,12 +89,15 @@ public:
     void E8_Bomb(CCNode* sender, void* data);
     void E8_BombCallback(CCNode* sender, void* data);
     void E8_DecideRestart(int x);
-    void E8_FindLine(int xx);
     bool E8_IsFinished();
     void E8_Start();
+    bool E8_IsActive();
 
     std::vector<CCPoint> A8GetPos();
     void A8Clear();
+    
+    
+    void GiveHint();
     
     bool IsRenewNeeded();
     void IsRenewNeeded_Recur(int x, int y, int type, int cnt);
@@ -156,6 +160,7 @@ private:
     int F7_callbackCnt;
     int F7_callbackCntMini;
     
+    bool F8_isActive;
     int F8_check[COLUMN_COUNT][ROW_COUNT];
     int F8_bombCallbackCnt[20];
     
@@ -219,6 +224,8 @@ private:
     int FT_createCnt;
     bool isFTBombing;
     bool FT_check[COLUMN_COUNT][ROW_COUNT];
+    
+    bool hintCheck[COLUMN_COUNT][ROW_COUNT];
     
     int renewCheck_maxCnt;
     bool renewCheck[COLUMN_COUNT][ROW_COUNT];

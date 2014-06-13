@@ -57,6 +57,11 @@ public:
     void SetTimer();
     void UpdateTimer(float f);
     
+    void HintTimer(float f);
+    void FeverTimer(float f);
+    
+    void AddPiecesByFeverTime(std::vector<CCPoint> &p, int queue_pos);
+    
     CCLayer* GetPieceLayer();
     
     CCPoint BoardStartPosition(CCPoint point);
@@ -70,6 +75,8 @@ public:
     
     bool IsPaused();
     void PauseGame();
+    
+    void StopAllActionsAtPieces();
     
 	virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
@@ -99,6 +106,8 @@ public:
     
     
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
+    std::vector<CCPoint> GetPosForFeverTime(bool afterCast);
+    
     int GetGlobalType();
     PuzzleP8* GetP8(int x, int y);
     void SetSkillLock(int queue_pos, bool flag);
@@ -162,6 +171,7 @@ public:
     void EndFeverTime();
     bool IsFeverTime();
     int GetFeverRemainTime();
+    bool IsRoundInFeverTime(bool afterCast);
     
     bool IsItemClear();
     bool IsItemTime();
@@ -203,6 +213,9 @@ protected:
     int m_iNextState[QUEUE_CNT];
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
+    bool isFeverRound[QUEUE_CNT]; // 이 queue_cnt에 대한 폭발이 feverTime용인가?
+    
+    std::vector< std::vector<CCPoint> > posForFeverTime;
     
     bool isCancelling;
     
@@ -253,6 +266,10 @@ protected:
     int readyCnt;
     bool isRenewing;
     
+    int feverStartCnt; // 피버타임에 들어가기 위해 필요한 마법발동횟수
+    int magicCnt; // 마법발동 횟수 (피버타임 끝나면 0으로 초기화)
+    int iFeverTime; // 피버타임 발동중 남은 시간
+    
     bool item_clear;
     bool item_time;
     bool item_paint;
@@ -281,6 +298,14 @@ private:
     CCLayer* timerLayer;
     CCDrawNode* timerStencil;
     CCClippingNode* timerClip;
+    
+    CCLayer* gaugeLayer;
+    CCDrawNode* gaugeStencil;
+    CCClippingNode* gaugeClip;
+    
+    //int cancelledComboTime;
+    bool isHintShown;
+    int iHintTime;
     
     SpriteClass* spriteClassInfo;
     SpriteClass* spriteClass;
@@ -346,6 +371,8 @@ public:
     void SetOpacity(int x, int y, int alpha);
     void AddChild(int x, int y);
     void RemoveChild(int x, int y);
+    void SetAction(int x, int y, CCActionInterval* action);
+    void StopAllActions(int x, int y);
     PuzzleP4* GetObject(int x, int y);
     void RemoveAllObjects();
     

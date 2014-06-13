@@ -29,6 +29,7 @@ USING_NS_CC;
 #define TYPE_SP_COUNT 3
 
 #define PUZZLE_TIME 60
+#define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
@@ -175,6 +176,9 @@ public:
     static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
     
     //static void verifyPayloadAndProvideItem(const char* data, const char* signature);
+    static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
+    static void XmlParseVerifyPurchaseResult(const char* data, int size);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
 };
 
 

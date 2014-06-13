@@ -64,6 +64,9 @@ extern class MyGameResult* myGameResult;
 extern std::string publicKey[50];
 extern RSA* rsa;
 
+//
+extern cocos2d::CCNode* verifyStatusScene;
+
 
 using namespace cocos2d;
 

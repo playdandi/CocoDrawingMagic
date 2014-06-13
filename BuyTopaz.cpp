@@ -8,6 +8,7 @@ CCScene* BuyTopaz::scene(int parent)
 {
     CCScene* pScene = CCScene::create();
     BuyTopaz* pLayer = BuyTopaz::create();
+    
     pScene->addChild(pLayer);
     
 	return pScene;
@@ -247,8 +248,12 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(25).c_str());
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                char productId[15];
-                sprintf(productId, "topaz%d", priceTopaz[number]->GetCount());
+                //char productId[15];
+                //sprintf(productId, "topaz%d", priceTopaz[number]->GetCount());
+                //char topazId[10];
+                //sprintf(topazId, "%d", priceTopaz[number]->GetId());
+                char num[10];
+                sprintf(num, "%d", number);
                 
                 std::string postData = "kakao_id=";
                 char temp[10];
@@ -262,8 +267,10 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 req->setUrl("http://14.63.225.203/cogma/game/get_payload_google.php");
                 req->setRequestData(postData.c_str(), postData.size());
                 req->setRequestType(CCHttpRequest::kHttpPost);
+                verifyStatusScene = this;
                 req->setResponseCallback(this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted));
-                req->setTag(productId);
+                //req->setTag(productId);
+                req->setTag(num);
                 CCHttpClient::getInstance()->send(req);
                 req->release();
                 #endif
@@ -304,6 +311,8 @@ void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    CCLog("httpStatus = %d", httpStatus);
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
     
     if (!res || !res->isSucceed())
@@ -318,16 +327,14 @@ void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-    
-    CCLog("httpStatus = %d", httpStatus);
 
     if (httpStatus == 0)
-        XmlParseDeveloperPayload(dumpData, buffer->size(), res->getHttpRequest()->getTag());
+        XmlParseDeveloperPayload(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag()));
     else if (httpStatus == 1)
         XmlParseVerifyPurchaseResult(dumpData, buffer->size());
 }
 
-void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, const char* productId)
+void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx)
 {
     // xml parsing
     xml_document xmlDoc;
@@ -346,15 +353,20 @@ void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, const char* produc
     if (code == 0)
     {
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        char productId[15];
+        sprintf(productId, "topaz%d", priceTopaz[priceTopazIdx]->GetCount());
+        int topazId = priceTopaz[priceTopazIdx]->GetId();
+        
         const char* payload = nodeResult.child("payload").attribute("string").as_string();
+        
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                      "com/playDANDi/CocoMagic/CocoMagic",
                                      "StartIAB",
-                                     "(ILjava/lang/String;Ljava/lang/String;)V"))
+                                     "(IIILjava/lang/String;Ljava/lang/String;)V"))
         {  // 파라미터 (int, String, String), 리턴타입은 Void
             // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-            t.env->CallStaticVoidMethod(t.classID, t.methodID, 1, t.env->NewStringUTF(productId), t.env->NewStringUTF(payload));
+            t.env->CallStaticVoidMethod(t.classID, t.methodID, 1, myInfo->GetKakaoId(), topazId, t.env->NewStringUTF(productId), t.env->NewStringUTF(payload));
             // Release
             t.env->DeleteLocalRef(t.classID);
         }
@@ -435,7 +447,7 @@ http://14.63.225.203/cogma/game/purchase_topaz_google.php?kakao_id=1001&topaz_id
     req->setUrl("http://14.63.225.203/cogma/game/purchase_topaz_google.php");
     req->setRequestData(postData.c_str(), postData.size());
     req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted));
+    req->setResponseCallback(haha, httpresponse_selector(BuyTopaz::onHttpRequestCompleted));
     CCHttpClient::getInstance()->send(req);
     req->release();
 }

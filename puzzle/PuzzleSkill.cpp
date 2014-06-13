@@ -297,10 +297,14 @@ void PuzzleSkill::A2(int num, int queue_pos)
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
         for (int y = 0 ; y < ROW_COUNT ; y++)
             xy[x][y] = 0;
-    std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
+    
+    std::vector<CCPoint> pos;
+    if (m_pGameLayer->IsRoundInFeverTime(true))
+        pos = m_pGameLayer->GetPosForFeverTime(true);
+    else
+        pos = m_pGameLayer->GetPiece8xy(true);
     for (int i = 0 ; i < pos.size() ; i++)
         xy[(int)pos[i].x][(int)pos[i].y] = -1;
-    
     
     // 주변부 위치 구하기
     if (num == 1) // 불2 (태양열)
@@ -577,6 +581,9 @@ void PuzzleSkill::F5(int num)
             break;
     }
     
+    int centerX = x;
+    int centerY = y;
+    
     F5_callbackCnt = 0;
     result_pos = pos;
     pos.clear();
@@ -594,7 +601,7 @@ void PuzzleSkill::F5(int num)
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     
     // 이펙트 출현 + 정령을 화면에서 없애기
-    GetEffect()->SpiritEffect(0);
+    GetEffect()->SpiritEffect(0, centerX, centerY);
     GetEffect()->RemoveSpirit(0);
     isSpiritAlive[0] = false;
     
@@ -749,6 +756,7 @@ static PuzzleSkill* psF8;
 void PuzzleSkill::F8(int num, int queue_pos)
 {
     // 붉은 용의 숨결
+    F8_isActive = true;
     
     UpdateAppliedSkillCount(num);
     
@@ -886,18 +894,22 @@ void PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
     }
 }
 
-
-
-
 void PuzzleSkill::F8_FinishCountUp()
 {
     F8_finishCnt++;
     CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
+    if (F8_finishCnt >= (int)A8_pos.size())
+        F8_isActive = false;
 }
 bool PuzzleSkill::F8_IsFinished()
 {
     return (F8_finishCnt >= (int)A8_pos.size());
 }
+bool PuzzleSkill::F8_IsActive()
+{
+    return F8_isActive;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1147,6 +1159,8 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
             return;
         W8_bombFirst = true;
         //W8_remainTime += 2*1000; // 2초 추가
+        //if (m_pGameLayer->IsFeverTime())
+        //    m_pGameLayer->AddPiecesByFeverTime(pos, queue_pos);
         W8_remainTime += (int)pos.size() * 500; // 개수*0.5초 만큼 추가
         W8_remainTime = std::min(W8_remainTime, 10*1000);
         
@@ -1653,80 +1667,8 @@ void PuzzleSkill::E8_DecideRestart(int x)
         ps->E8_isActive = false;
         ps->m_pGameLayer->GetEffect()->Effect23_Clear();
     }
-    /*
-    if (ps->E8_cnt < ps->skillLevel[23]*2) //&& ps->E8_maxScheduleCnt < ps->skillLevel[23]*2)
-    {
-        ps->E8_check[x] = false;
-        ps->E8_FindLine(x);
-        if (ps->E8_check[x]) // 그 줄(x-th line)에 초록 피스가 있다면
-        {
-            CCLog("E8 : restart line = %d", x);
-            // 흔들리기 + 폭파
-            ps->E8_Bomb(NULL, (void*)x);
-        }
-        else
-        {
-            ps->E8_activeCnt--;
-            // 끝나는지 검사
-            if (ps->E8_activeCnt == 0)
-            {
-                ps->E8_isActive = false;
-                ps->m_pGameLayer->GetEffect()->Effect23_Clear();
-            }
-            CCLog("end line = %d , (남아있는 라인 수 : %d) 1st", x, ps->E8_activeCnt);
-        }
-    }
-    else
-    {
-        ps->E8_activeCnt--;
-        // 끝나는지 검사
-        if (ps->E8_activeCnt == 0)
-        {
-            ps->E8_isActive = false;
-            ps->m_pGameLayer->GetEffect()->Effect23_Clear();
-        }
-        CCLog("end line = %d , (남아있는 라인 수 : %d) 2nd", x, ps->E8_activeCnt);
-    }
-    */
 }
 
-void PuzzleSkill::E8_FindLine(int xx)
-{
-    /*
-    for (int x = 0 ; x < COLUMN_COUNT ; x++)
-    {
-        if (xx != -1 && xx != x)
-            continue;
-        if (ps->E8_cnt >= ps->skillLevel[23]*2)
-            continue;
-        if (!ps->E8_check[x])
-        {
-            for (int y = 0 ; y < ROW_COUNT ; y++)
-            {
-                // 네 모서리에 위치한 존재하지 않는 부분
-                if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
-                    (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
-                    continue;
-                // 밑에서부터 검사하다 초록 피스가 나오면, 맨 위부터 그 부분까지 흔들리기+폭파를 실행한다.
-                if (ps->m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_GREEN)
-                {
-                    ps->E8_cnt++;
-                    if (xx == -1) // 초기 검사에만 큐에 저장한다.
-                        ps->E8_lineIdx.push(x);
-                    
-                    ps->E8_check[x] = true;
-                    ps->E8_bottomY[x] = y;
-                    ps->E8_curY[x] = ROW_COUNT-1;
-                    if (x == 0 || x == COLUMN_COUNT-1)
-                        ps->E8_curY[x]--;
-                    
-                    break;
-                }
-            }
-        }
-    }
-     */
-}
 bool PuzzleSkill::E8_IsFinished()
 {
     return !E8_isActive;
@@ -1745,13 +1687,7 @@ void PuzzleSkill::E8(int num, int queue_pos)
     E8_endCnt = 0;
     E8_lineIdx.clear();
     E8_lineDepth.clear();
-    
-    //E8_maxScheduleCnt = 0;
-    //while(!E8_lineIdx.empty())
-    //    E8_lineIdx.pop();
-    //for (int i = 0 ; i < COLUMN_COUNT ; i++)
-    //    E8_check[i] = false;
-    
+  
     SetQueuePos(queue_pos);
     ps = this;
     
@@ -1831,6 +1767,10 @@ void PuzzleSkill::E8_Start()
     CCLog("실행 라인 수 = %d", ps->skillLevel[23]+7);
     ps->m_pGameLayer->schedule(schedule_selector(PuzzleSkill::E8_Timer), 0.3f);
 }
+bool PuzzleSkill::E8_IsActive()
+{
+    return E8_isActive;
+}
 
 std::vector<CCPoint> PuzzleSkill::A8GetPos()
 {
@@ -1903,6 +1843,93 @@ void PuzzleSkill::RemoveAllObjects()
 
 
 
+
+void PuzzleSkill::GiveHint()
+{
+    int x, y, sx, sy, type;
+    std::vector<CCPoint> pos8, pos4;
+    std::queue<CCPoint> qpos;
+    CCPoint p;
+    
+    int cnt = 10; // test로 최대 10번만 검사함
+    while (cnt-- > 0)
+    {
+        sx = rand() % COLUMN_COUNT;
+        sy = rand() % ROW_COUNT;
+        // 네 모서리에 위치한 존재하지 않는 부분
+        if ((sx == 0 && sy == 0) || (sx == 0 && sy == ROW_COUNT-1) ||
+            (sx == COLUMN_COUNT-1 && sy == 0) || (sx == COLUMN_COUNT-1 && sy == ROW_COUNT-1))
+            continue;
+        
+        // check 초기화
+        for (x = 0 ; x < COLUMN_COUNT ; x++)
+            for (y = 0 ; y < ROW_COUNT ; y++)
+                hintCheck[x][y] = false;
+        hintCheck[0][0] = hintCheck[0][ROW_COUNT-1] = hintCheck[COLUMN_COUNT-1][0] = hintCheck[COLUMN_COUNT-1][ROW_COUNT-1] = true;
+        
+        // 큐에 시작점 넣기
+        pos8.clear();
+        pos4.clear();
+        qpos.push(ccp(sx, sy));
+        type = m_pGameLayer->GetPuzzleP8Set()->GetType(sx, sy);
+        hintCheck[sx][sy] = true;
+        
+        // BFS로, 연결된 같은색 피스 찾기
+        while (!qpos.empty())
+        {
+            p = qpos.front();
+            qpos.pop();
+            
+            pos8.push_back(p);
+            
+            x = p.x;
+            y = p.y;
+            //CCLog("hint = %d %d", x, y);
+            
+            if (x > 0 && y > 0 && !hintCheck[x-1][y-1] && m_pGameLayer->IsConnected(x, y) && m_pGameLayer->GetPuzzleP8Set()->GetType(x-1, y-1) == type)
+            {   qpos.push(ccp(x-1, y-1)); hintCheck[x-1][y-1] = true; pos4.push_back(ccp(x, y)); }
+            if (x > 0 && y+1 < ROW_COUNT && !hintCheck[x-1][y+1] && m_pGameLayer->IsConnected(x, y+1) && m_pGameLayer->GetPuzzleP8Set()->GetType(x-1, y+1) == type)
+            {   qpos.push(ccp(x-1, y+1)); hintCheck[x-1][y+1] = true; pos4.push_back(ccp(x, y+1)); }
+            if (x+1 < COLUMN_COUNT && y > 0 && !hintCheck[x+1][y-1] && m_pGameLayer->IsConnected(x+1, y) && m_pGameLayer->GetPuzzleP8Set()->GetType(x+1, y-1) == type)
+            {   qpos.push(ccp(x+1, y-1)); hintCheck[x+1][y-1] = true; pos4.push_back(ccp(x+1, y)); }
+            if (x+1 < COLUMN_COUNT && y+1 < ROW_COUNT && !hintCheck[x+1][y+1] && m_pGameLayer->IsConnected(x+1, y+1) && m_pGameLayer->GetPuzzleP8Set()->GetType(x+1, y+1) == type)
+            {   qpos.push(ccp(x+1, y+1)); hintCheck[x+1][y+1] = true; pos4.push_back(ccp(x+1, y+1)); }
+            
+            if (y+1 < ROW_COUNT && !hintCheck[x][y+1] && m_pGameLayer->GetPuzzleP8Set()->GetType(x, y+1) == type)
+            {   qpos.push(ccp(x, y+1)); hintCheck[x][y+1] = true; }
+            if (y > 0 && !hintCheck[x][y-1] && m_pGameLayer->GetPuzzleP8Set()->GetType(x, y-1) == type)
+            {   qpos.push(ccp(x, y-1)); hintCheck[x][y-1] = true; }
+            if (x > 0 && !hintCheck[x-1][y] && m_pGameLayer->GetPuzzleP8Set()->GetType(x-1, y) == type)
+            {   qpos.push(ccp(x-1, y)); hintCheck[x-1][y] = true; }
+            if (x+1 < COLUMN_COUNT && !hintCheck[x+1][y] && m_pGameLayer->GetPuzzleP8Set()->GetType(x+1, y) == type)
+            {   qpos.push(ccp(x+1, y)); hintCheck[x+1][y] = true; }
+        }
+        
+        // 피스 3개 이상인 덩어리를 찾으면 알려주기
+        if (pos8.size() >= 3)
+            break;
+    }
+    
+    CCLog("find hint? %d", cnt);
+    
+    // hint action
+    for (int i = 0 ; i < pos8.size() ; i++)
+    {
+        x = pos8[i].x;
+        y = pos8[i].y;
+        
+        CCActionInterval* action = CCSequence::create(CCTintTo::create(0.5f, 100, 100, 100), CCTintTo::create(0.5f, 255, 255, 255), CCDelayTime::create(0.5f), NULL);
+        m_pGameLayer->GetSpriteP8(x, y)->runAction(CCRepeatForever::create(action));
+    }
+    for (int i = 0 ; i < pos4.size() ; i++)
+    {
+        x = pos4[i].x;
+        y = pos4[i].y;
+        
+        CCActionInterval* action = CCSequence::create(CCTintTo::create(0.5f, 100, 100, 100), CCTintTo::create(0.5f, 255, 255, 255), CCDelayTime::create(0.5f), NULL);
+        m_pGameLayer->GetPuzzleP4Set()->SetAction(x, y, CCRepeatForever::create(action));
+    }
+}
 
 
 
