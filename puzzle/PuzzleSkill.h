@@ -57,6 +57,7 @@ public:
     void F8_Timer();
     void F8_BombCallback(CCNode* sender, void* pointer);
     void F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx);
+    void F8_Bomb_Real();
     void F8_FinishCountUp();
     bool F8_IsFinished();
     bool F8_IsActive();
@@ -178,6 +179,8 @@ private:
     int A8_callbackCnt;
     int F8_finishCnt;
     std::vector<CCPoint> A8_pos;
+    std::queue<int> F8_bombQueueIdx;
+    std::queue< std::vector<CCPoint> > F8_bombQueuePos;
     
     ////////////////////////////////////////////////////////////////////////////////////
     

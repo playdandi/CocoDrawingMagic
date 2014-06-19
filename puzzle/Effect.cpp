@@ -856,7 +856,6 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
     
     // fountain effect 출현
     ef->m_F8_fountain = CCParticleSystemQuad::create("particles/fire8_fountain.plist");
-    //ef->m_F8_fountain->retain();
     ef->m_F8_fountain->setAnchorPoint(ccp(0.5, 0.5));
     ef->m_F8_fountain->setPosition(ccp(ef->gameLayer->m_winSize.width/2, ef->gameLayer->vo.y+ef->gameLayer->tbSize.height+ef->gameLayer->boardSize.height+120));
     ef->m_F8_fountain->setScale(2.0f);
@@ -865,8 +864,6 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
     // 혜성 시작
     ef->callbackCnt = 0;
     ef->F8_finishCnt = 0;
-    
-    //ef->gameLayer->schedule(schedule_selector(Effect::Effect7_Comet), 0.2f, (int)ef->skillPos.size()-1, 0);
     
     ef->gameLayer->GetSkill()->F8_Timer();
 }
@@ -885,7 +882,6 @@ void Effect::Effect7_Callback_2(int idx, void* pointer) // 혜성 떨구기
 {
     Effect* ef = (Effect*)pointer;
     
-    //CCLog("혜성 callback cnt : %d", idx);
     int x = (int)ef->skillPos[idx].x;
     int y = (int)ef->skillPos[idx].y;
     CCPoint pos = ef->gameLayer->SetTouch8Position(x, y);
@@ -916,13 +912,6 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
 
     int x = (int)ef->skillPos[idx].x;
     int y = (int)ef->skillPos[idx].y;
-    //CCLog("Effect : bomb start = %d (%d, %d)", (int)idx, x, y);
-    
-    /*if (ef->gameLayer->GetSpriteP8(x, y) == NULL)
-    {
-        CCLog("빠자! (%d, %d)", x, y);
-        return;
-    }*/
     
     if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
     {
@@ -958,14 +947,8 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         m_emitter->setAutoRemoveOnFinish(true);
         ef->gameLayer->addChild(m_emitter, 1500);
     }
-    
-    // 폭파 개수 갱신
-    //ef->gameLayer->UpdatePieceBombCnt(ef->gameLayer->GetPuzzleP8Set()->GetType(x, y), (int)ef->skillDoublePos[idx].size());
-    
-    // 폭파!
-    //CCLog("bomb (%d) : size = %d", idx, (int)ef->skillDoublePos[idx].size());
-    //CCLog("폭파! (%d)", idx);
-    //ef->gameLayer ->Bomb(ef->queuePos, ef->skillDoublePos[idx], idx);
+
+    // 실제로 폭파!
     ef->gameLayer->GetSkill()->F8_Bomb(ef->queuePos, ef->skillDoublePos[idx], idx);
 }
 std::vector<CCPoint> Effect::GetDoublePos(int idx)

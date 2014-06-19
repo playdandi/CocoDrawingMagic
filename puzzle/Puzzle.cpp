@@ -1246,8 +1246,8 @@ void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
 void Puzzle::BonusTime(CCNode* sender, void* pointer)
 {
     CCLog("%p", pointer);
-    Puzzle* pThis = (Puzzle*)pointer; //(Puzzle*)pointer;
-    //CCLog("%p", pThis);
+    Puzzle* pThis = (Puzzle*)Depth::GetCurPointer();
+    CCLog("%p", pThis);
     
     //pThis = this;
     //CCLog("%p", pThis);
@@ -2842,7 +2842,7 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         /*****************************************/
         
         // 요정에 의해 생성된 연결피스가 있다면 이제 만들어주자.
-        CCLog("요정에 의해 생성할 수 = %d", iNumOfFairySkillStart);
+        //CCLog("요정에 의해 생성할 수 = %d", iNumOfFairySkillStart);
         while (iNumOfFairySkillStart > 0)
         {
             iNumOfFairySkillStart--;
@@ -2879,11 +2879,15 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
                 skill->F8_FinishCountUp();
                 if (skill->F8_IsFinished())
                 {
-                    CCLog("폴링 남은 수 : %d", (int)fallingQueue.size());
+                    //CCLog("폴링 남은 수 : %d", (int)fallingQueue.size());
                     effect->Effect7_Clear();
                     GoNextState((int)queue_pos);
                 }
-                FallingProcess();
+                else
+                {
+                    skill->F8_Bomb_Real();
+                }
+                //FallingProcess();
             }
             else
             {

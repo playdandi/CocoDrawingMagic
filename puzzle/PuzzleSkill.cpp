@@ -835,6 +835,8 @@ void PuzzleSkill::F8(int num, int queue_pos)
             break;
     }
     
+    CCLog("원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
+    
     // 2차원 vector에 저장
     for (int i = 0 ; i < result_double_pos.size() ; i++)
         result_double_pos[i].clear();
@@ -852,6 +854,12 @@ void PuzzleSkill::F8(int num, int queue_pos)
     CCLog("용의 숨결 혜성 수 : %d", (int)A8_pos.size());
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
+    
+    for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
+    {
+        CCLog("%d %d %d %d %d %d %d", F8_check[0][y], F8_check[1][y], F8_check[2][y],
+              F8_check[3][y], F8_check[4][y], F8_check[5][y], F8_check[6][y]);
+    }
 }
 
 void PuzzleSkill::F8Check(int x, int y, int idx)
@@ -886,7 +894,6 @@ void PuzzleSkill::F8_Comet(float f)
     if (psF8->A8_callbackCnt >= (int)psF8->A8_pos.size())
         psF8->m_pGameLayer->unschedule(schedule_selector(PuzzleSkill::F8_Comet));
     
-    //CCLog("timer callback cnt : %d", psF8->A8_callbackCnt);
     Effect* ef = psF8->m_pGameLayer->GetEffect();
     ef->Effect7_Callback_2(psF8->A8_callbackCnt-1, ef);
 }
@@ -894,8 +901,24 @@ void PuzzleSkill::F8_Comet(float f)
 void PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
 {
     SetQueuePos(queue_pos);
-    F8_bombCallbackCnt[idx] = 0;
-    CCLog("F8 Bomb : (idx = %d)", idx);
+    F8_bombQueueIdx.push(idx);
+    F8_bombQueuePos.push(pos);
+    
+    if (idx == 0)
+    {
+        F8_Bomb_Real();
+    }
+}
+void PuzzleSkill::F8_Bomb_Real()
+{
+    int bombIdx = F8_bombQueueIdx.front();
+    std::vector<CCPoint> pos = F8_bombQueuePos.front();
+    F8_bombQueueIdx.pop();
+    F8_bombQueuePos.pop();
+    
+    CCLog("F8 Bomb : (idx = %d)", bombIdx);
+    F8_bombCallbackCnt[bombIdx] = 0;
+    
     int x, y;
     for (int i = 0 ; i < pos.size() ; i++)
     {
@@ -905,7 +928,7 @@ void PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
         m_pGameLayer->UpdatePieceBombCnt(m_pGameLayer->GetPuzzleP8Set()->GetType(x, y), 1);
         
         CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F8_BombCallback), this), NULL);
-        m_pGameLayer->GetSpriteP8(x, y)->setTag(idx);
+        m_pGameLayer->GetSpriteP8(x, y)->setTag(bombIdx);
         m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
     }
 }
@@ -927,10 +950,20 @@ void PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
             pss->m_pGameLayer->SetSpriteP8Null(x, y);
         }
         
-        pss->m_pGameLayer->FallingQueuePushAndFalling(pss->queuePos);
+        //pss->F8_AddQueue(idx, pss->queuePos);
+        
+        //pss->m_pGameLayer->FallingQueuePushAndFalling(pss->queuePos);
+        pss->m_pGameLayer->Falling(pss->queuePos);
     }
 }
-
+/*
+std::queue<int> F8_queue;
+void PuzzleSkill::F8_AddQueue(int idx, int queue_pos)
+{
+    F8_queue.push(queue_pos);
+    
+}
+*/
 void PuzzleSkill::F8_FinishCountUp()
 {
     F8_finishCnt++;
