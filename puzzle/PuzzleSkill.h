@@ -178,6 +178,7 @@ private:
     int A8_cnt;
     int A8_callbackCnt;
     int F8_finishCnt;
+    bool F8_isFalling;
     std::vector<CCPoint> A8_pos;
     std::queue<int> F8_bombQueueIdx;
     std::queue< std::vector<CCPoint> > F8_bombQueuePos;

@@ -794,6 +794,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
 {
     // 붉은 용의 숨결
     F8_isActive = true;
+    F8_isFalling = false;
     
     UpdateAppliedSkillCount(num);
     
@@ -801,10 +802,24 @@ void PuzzleSkill::F8(int num, int queue_pos)
     
     F8_finishCnt = 0;
     A8_pos.clear();
-    for (int x = 0 ; x < COLUMN_COUNT ; x++)
-        for (int y = 0 ; y < ROW_COUNT ; y++)
-            F8_check[x][y] = 0;
+    
+    // 배열 초기화
+    int pieceType;
     F8_check[0][0] = F8_check[0][ROW_COUNT-1] = F8_check[COLUMN_COUNT-1][0] = F8_check[COLUMN_COUNT-1][ROW_COUNT-1] = -1;
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+    {
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+        {
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                continue;
+            
+            F8_check[x][y] = 0;
+            pieceType = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+            if (!(pieceType >= PIECE_RED && pieceType <= PIECE_WHITE)) // 아이템은 선택하지 못하도록 한다.
+                F8_check[x][y] = -1;
+        }
+    }
     
     int count = skillLevel[num] + 7;
     
@@ -814,12 +829,12 @@ void PuzzleSkill::F8(int num, int queue_pos)
     {
         x = rand()%COLUMN_COUNT;
         y = rand()%ROW_COUNT;
+        
         if (F8_check[x][y] == 0)
         {
             idx++;
             A8_pos.push_back(ccp(x, y)); // 혜성이 떨어질 위치
             
-            //F8_check[x][y]++;
             if (m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
                 F8Check(x, y, idx);
             else
@@ -835,7 +850,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
             break;
     }
     
-    CCLog("원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
+    CCLog("붉은용의숨결 : 원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
     
     // 2차원 vector에 저장
     for (int i = 0 ; i < result_double_pos.size() ; i++)
@@ -851,10 +866,11 @@ void PuzzleSkill::F8(int num, int queue_pos)
         result_double_pos.push_back(temp);
     }
     
-    CCLog("용의 숨결 혜성 수 : %d", (int)A8_pos.size());
+    SetQueuePos(queue_pos);
+    
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
-    
+
     for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
     {
         CCLog("%d %d %d %d %d %d %d", F8_check[0][y], F8_check[1][y], F8_check[2][y],
@@ -903,33 +919,64 @@ void PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
     SetQueuePos(queue_pos);
     F8_bombQueueIdx.push(idx);
     F8_bombQueuePos.push(pos);
+    CCLog("F8 Bomb : (idx = %d)", idx);
     
-    if (idx == 0)
+    if (!F8_isFalling)
     {
+        F8_isFalling = true;
         F8_Bomb_Real();
     }
 }
 void PuzzleSkill::F8_Bomb_Real()
 {
+    if (F8_bombQueueIdx.empty()) // 폭발할 게 아직 없다면 정지.
+    {
+        F8_isFalling = false;
+        return;
+    }
+    
     int bombIdx = F8_bombQueueIdx.front();
     std::vector<CCPoint> pos = F8_bombQueuePos.front();
     F8_bombQueueIdx.pop();
     F8_bombQueuePos.pop();
     
-    CCLog("F8 Bomb : (idx = %d)", bombIdx);
+    CCLog("F8 Bomb Real : (idx = %d)", bombIdx);
     F8_bombCallbackCnt[bombIdx] = 0;
     
-    int x, y;
+    int itemPieceCnt = 0;
+    int x, y, pieceType;
     for (int i = 0 ; i < pos.size() ; i++)
     {
         x = (int)pos[i].x;
         y = (int)pos[i].y;
         
-        m_pGameLayer->UpdatePieceBombCnt(m_pGameLayer->GetPuzzleP8Set()->GetType(x, y), 1);
+        pieceType = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+        if (!(pieceType >= PIECE_RED && pieceType <= PIECE_WHITE)) // 일반 피스가 아니면 폭발하지 않도록 한다.
+        {
+            F8_bombCallbackCnt[bombIdx]++;
+            itemPieceCnt++;
+            continue;
+        }
+        
+        m_pGameLayer->UpdatePieceBombCnt(pieceType, 1);
         
         CCActionInterval* action = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.05f, 1.5f), CCFadeOut::create(0.05f), NULL), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::F8_BombCallback), this), NULL);
         m_pGameLayer->GetSpriteP8(x, y)->setTag(bombIdx);
         m_pGameLayer->GetSpriteP8(x, y)->runAction(action);
+    }
+    
+    // 폭발 예상 피스가 모두 일반 피스가 아니라면, callback을 호출하지 못하므로 즉시 턴을 종료한다.
+    CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
+    if (itemPieceCnt == (int)result_double_pos[bombIdx].size())
+    {
+        F8_isFalling = false;
+
+        F8_FinishCountUp();
+        if (F8_IsFinished())
+        {
+            m_pGameLayer->GetEffect()->Effect7_Clear();
+            m_pGameLayer->GoNextState(queuePos);
+        }
     }
 }
 
@@ -941,29 +988,24 @@ void PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
     pss->F8_bombCallbackCnt[idx]++;
     if (pss->F8_bombCallbackCnt[idx] >= pss->result_double_pos[idx].size())
     {
-        int x, y;
+        int x, y, pieceType;
         for (int i = 0 ; i < pss->result_double_pos[idx].size() ; i++)
         {
             x = pss->result_double_pos[idx][i].x;
             y = pss->result_double_pos[idx][i].y;
+            
+            pieceType = pss->m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+            if (!(pieceType >= PIECE_RED && pieceType <= PIECE_WHITE)) // 일반 피스가 아니면 폭발하지 않도록 한다.
+                continue;
+            
             pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
             pss->m_pGameLayer->SetSpriteP8Null(x, y);
         }
         
-        //pss->F8_AddQueue(idx, pss->queuePos);
-        
-        //pss->m_pGameLayer->FallingQueuePushAndFalling(pss->queuePos);
         pss->m_pGameLayer->Falling(pss->queuePos);
     }
 }
-/*
-std::queue<int> F8_queue;
-void PuzzleSkill::F8_AddQueue(int idx, int queue_pos)
-{
-    F8_queue.push(queue_pos);
-    
-}
-*/
+
 void PuzzleSkill::F8_FinishCountUp()
 {
     F8_finishCnt++;
@@ -975,6 +1017,10 @@ bool PuzzleSkill::F8_IsFinished()
 {
     return (F8_finishCnt >= (int)A8_pos.size());
 }
+/*void PuzzleSkill::F8_SetIsFalling(bool flag)
+{
+    F8_isFalling = flag;
+}*/
 bool PuzzleSkill::F8_IsActive()
 {
     return F8_isActive;

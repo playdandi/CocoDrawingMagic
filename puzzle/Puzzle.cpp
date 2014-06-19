@@ -2879,7 +2879,6 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
                 skill->F8_FinishCountUp();
                 if (skill->F8_IsFinished())
                 {
-                    //CCLog("폴링 남은 수 : %d", (int)fallingQueue.size());
                     effect->Effect7_Clear();
                     GoNextState((int)queue_pos);
                 }
