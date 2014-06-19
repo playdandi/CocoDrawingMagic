@@ -177,12 +177,20 @@ void Effect::PlayEffect_SkillIcon(int skillNum)
     skill->setOpacity(0);
     gameLayer->addChild(skill, z1);
     
+    callbackCnt = skillNum; // 스킬 번호 임시저장 (떡갈나무지팡이, 끈질긴생명력 스킬에 이용)
+    
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCSpawn::create(CCFadeOut::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_SkillIcon_Callback), this), NULL);
     skill->runAction(action);
 }
 void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
 {
     sender->removeFromParentAndCleanup(true);
+    
+    Effect* pThis = (Effect*)p;
+    if (pThis->callbackCnt == 18)
+        pThis->PlayEffect_18(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
+    else if (pThis->callbackCnt == 22)
+        pThis->PlayEffect_22(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
 }
 
 void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
@@ -1277,7 +1285,10 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos, int queue_pos)
         y = (int)pos[0].y;
     }
     
-    deltaPos = gameLayer->SetTouch8Position(x, y);
+    if (queue_pos == -1) // 떡갈나무지팡이 실행한 경우
+        deltaPos = ccp(x, y);
+    else
+        deltaPos = gameLayer->SetTouch8Position(x, y);
     callbackCnt = 0;
     CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
     plus->setPosition(ccp(deltaPos.x, deltaPos.y));
@@ -1311,6 +1322,56 @@ void Effect::Effect2CallbackNewSprite(CCNode* sender, void* pointer)
         pThis->gameLayer->addChild(plus, z1+1);
         CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect2CallbackNewSprite), pThis), CCFadeOut::create(0.2f), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect2Callback), pThis), NULL), NULL), NULL);
         plus->runAction(action);
+    }
+}
+
+
+void Effect::PlayEffect_18(CCPoint p)
+{
+    // E3 : 지팡이 레벨에 비례한 추가별사탕
+
+    // sound
+    gameLayer->GetSound()->PlaySkillSound(18);
+    
+    deltaPos = p;
+    callbackCnt = 0;
+    CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
+    plus->setPosition(ccp(deltaPos.x, deltaPos.y));
+    plus->setScale(0.5);
+    plus->setOpacity(0);
+    gameLayer->addChild(plus, z1+1);
+    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect18CallbackNewSprite), this), CCFadeOut::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect18Callback), this), NULL), NULL), NULL);
+    plus->runAction(action);
+}
+void Effect::Effect18Callback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
+}
+void Effect::Effect18CallbackNewSprite(CCNode* sender, void* pointer)
+{
+    Effect* pThis = (Effect*)pointer;
+    pThis->callbackCnt++;
+    if (pThis->callbackCnt < 5)
+    {
+        CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
+        if (pThis->callbackCnt == 1)
+            plus->setPosition(ccp(pThis->deltaPos.x-20, pThis->deltaPos.y+20));
+        else if (pThis->callbackCnt == 2)
+            plus->setPosition(ccp(pThis->deltaPos.x+20, pThis->deltaPos.y+5));
+        else if (pThis->callbackCnt == 3)
+            plus->setPosition(ccp(pThis->deltaPos.x-10, pThis->deltaPos.y+10));
+        else if (pThis->callbackCnt == 4)
+            plus->setPosition(ccp(pThis->deltaPos.x+10, pThis->deltaPos.y+15));
+        plus->setScale(0.5);
+        plus->setOpacity(0);
+        pThis->gameLayer->addChild(plus, z1+1);
+        CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect18CallbackNewSprite), pThis), CCFadeOut::create(0.2f), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::Effect18Callback), pThis), NULL), NULL), NULL);
+        plus->runAction(action);
+    }
+    else
+    {
+        // 끝났음. 다음 보너스 스킬로 넘어가자.
+        pThis->gameLayer->GetSkill()->E3_Done();
     }
 }
 
@@ -1365,6 +1426,27 @@ void Effect::Effect19CallbackNewSprite(CCNode* sender, void* pointer)
         plus->runAction(action);
     }
 }
+
+
+void Effect::PlayEffect_22(CCPoint p)
+{
+    // E7 : 끈질긴 생명력
+    CCSprite* potion = CCSprite::createWithSpriteFrameName("icon/icon_potion.png");
+    potion->setPosition(p);
+    potion->setScale(1.5f);
+    potion->setOpacity(0);
+    gameLayer->addChild(potion, z1+1);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(0.4f), CCMoveBy::create(0.4f, ccp(0, 50)), NULL), CCSpawn::create( CCFadeOut::create(0.4f), CCMoveBy::create(0.4f, ccp(0, 50)), NULL), CCDelayTime::create(0.5f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect22Callback), this), NULL );
+    potion->runAction(action);
+}
+void Effect::Effect22Callback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
+    
+    ((Effect*)pointer)->gameLayer->GetSkill()->E7_Done();
+}
+
 
 
 void Effect::PlayEffect_10()
@@ -1496,6 +1578,58 @@ void Effect::Effect14Callback(CCNode* sender, void* data)
 {
     sender->removeFromParentAndCleanup(true);
 }
+
+
+// 연결피스 생성 시의 요정에 나타나는 이펙트
+void Effect::FairySkill()
+{
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fairy_skill.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(ccp(gameLayer->m_winSize.width-280+100, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+160));
+    m_emitter->setScale(1.0f);
+    gameLayer->addChild(m_emitter, 99);
+    m_emitter->setAutoRemoveOnFinish(true);
+    
+    /*
+    sp_fire = CCSprite::create("particles/fire.png");
+    CCParticleSystem* par = CCParticleFlower::create();
+    par->setTexture(sp_fire->getTexture());
+    
+    par->setAnchorPoint(ccp(0.5, 0.5));
+    par->setPosition(ccp(gameLayer->m_winSize.width-280, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60));
+    par->setLife(0.5);
+    par->setSpeed(300);
+    par->setSpeedVar(150);
+    par->setScale(2.0f);
+    //par->setTotalParticles(500);
+    
+    CCLog("파티클 개수가 으아아 : %d", par->getParticleCount());
+    
+    ccColor4F startColor = par->getStartColor();
+    startColor.r = 0.95f;
+    startColor.g = 0.95f;
+    startColor.b = 0.95f;
+    par->setStartColor(startColor);
+    
+    par->setDuration(0.2f);
+    par->setAutoRemoveOnFinish(true);
+    
+    gameLayer->addChild(par, 200);
+    */
+
+}
+
+// 새로 만들어진 연결피스에 나타날 이펙트
+void Effect::NewlyMadeConnPiece(int x, int y)
+{
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(gameLayer->SetTouch4Position(x, y));
+    m_emitter->setScale(1.5f);
+    gameLayer->addChild(m_emitter, 2000);
+    m_emitter->setAutoRemoveOnFinish(true);
+}
+
 
 
 

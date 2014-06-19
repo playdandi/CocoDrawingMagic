@@ -2,7 +2,6 @@
 #include "Ranking.h"
 #include "MagicList.h"
 
-//static int priority;
 
 GameReady::~GameReady(void)
 {
@@ -658,7 +657,7 @@ void GameReady::PotionTimer(float f)
     
     if (potion <= 5)
     {
-        if (remainTime >= 719) // 719초나 720초 일 때
+        if (potion > 0 && remainTime == 720-1)
         {
             CCLog("GameReady: PotionTimer -> potion = %d", potion);
             char name[25];
@@ -869,9 +868,6 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         switch (kind)
         {
             case BTN_MENU_GAMESTART:
-                //Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
-                //spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-                //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(255,255,255));
                 isStarting = true;
                 
                 sound->playGameStart();
@@ -879,8 +875,8 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCPoint p = ccp(530+50, 1508+15);
                 if (myInfo->GetPotion() <= 5)
                     p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
+                
                 CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
-                //m_emitter->retain();
                 m_emitter->setAnchorPoint(ccp(0.5, 0.5));
                 m_emitter->setPosition(p);
                 this->addChild(m_emitter, 2000);

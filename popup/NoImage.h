@@ -26,7 +26,7 @@ public:
     void EndSceneCallback();
     void Exit();
     
-    void HttpRequest(std::string url);
+    void HttpRequest(std::string url, std::string param);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     void XmlParseBuyTopaz(char* data, int size);

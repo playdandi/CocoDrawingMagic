@@ -69,6 +69,8 @@ bool BuyTopaz::init()
     
     httpStatus = 0;
     
+    isTryingPurchase = false;
+    
     return true;
 }
 
@@ -94,6 +96,15 @@ void BuyTopaz::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        CCLog("BuyTopaz : noti 10");
+        
+        // 안드로이드 결제 과정 거친 후 돌아온 경우! (여기 왔다는 것 = 에러가 났음을 의미)
+        if (isTryingPurchase)
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurName(), "NoImage", false, ERROR_IN_APP_BILLING, BTN_1, nullData);
+        }
+        isTryingPurchase = false;
     }
 }
 
@@ -248,31 +259,18 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(25).c_str());
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                //char productId[15];
-                //sprintf(productId, "topaz%d", priceTopaz[number]->GetCount());
-                //char topazId[10];
-                //sprintf(topazId, "%d", priceTopaz[number]->GetId());
                 char num[10];
                 sprintf(num, "%d", number);
                 
-                std::string postData = "kakao_id=";
+                std::string param = "kakao_id=";
                 char temp[10];
                 sprintf(temp, "%d", myInfo->GetKakaoId());
-                postData += temp;
-                CCLog("%s", postData.c_str());
+                param += temp;
                 
                 httpStatus = 0;
-                
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl("http://14.63.225.203/cogma/game/get_payload_google.php");
-                req->setRequestData(postData.c_str(), postData.size());
-                req->setRequestType(CCHttpRequest::kHttpPost);
                 verifyStatusScene = this;
-                req->setResponseCallback(this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted));
-                //req->setTag(productId);
-                req->setTag(num);
-                CCHttpClient::getInstance()->send(req);
-                req->release();
+                
+                Network::HttpPost(param, URL_GOOGLE_PAYLOAD, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num);
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -311,10 +309,11 @@ void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    CCLog("httpStatus = %d", httpStatus);
-    
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -327,11 +326,12 @@ void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-
+     */
+    
     if (httpStatus == 0)
-        XmlParseDeveloperPayload(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag()));
-    else if (httpStatus == 1)
-        XmlParseVerifyPurchaseResult(dumpData, buffer->size());
+        XmlParseDeveloperPayload(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag()));
+    //else if (httpStatus == 1)
+    //    XmlParseVerifyPurchaseResult(dumpData, buffer->size());
 }
 
 void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx)
@@ -352,6 +352,8 @@ void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx)
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
+        isTryingPurchase = true; // 안드로이드 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
+        
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         char productId[15];
         sprintf(productId, "topaz%d", priceTopaz[priceTopazIdx]->GetCount());
@@ -404,115 +406,11 @@ void BuyTopaz::EndScene()
     this->removeFromParentAndCleanup(true);
 }
 
-
-
-void BuyTopaz::verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount)
+void BuyTopaz::SetErrorFlag(bool flag)
 {
-    CCLog("data = %s", data);
-    CCLog("sign = %s", signature);
-    
-    int topazId;
-    for (int i = 0 ; i < priceTopaz.size() ; i++)
-    {
-        if (priceTopaz[i]->GetCount() == topazCount)
-            topazId = priceTopaz[i]->GetId();
-    }
-    
-    CCLog("topaz_id = %d", topazId);
-
-    /*
-    const char* data2 = "{\"orderId\":\"12999763169054705758.136161536899983\",\"packageName\":\"com.playDANDi.CocoMagic\",\"productId\":\"test\",\"purchaseTime\":1402512283566,\"purchaseState\":0,\"developerPayload\":\"developerpayload\",\"purchaseToken\":\"lbfdjpphihmngleiknmbecni.AO-J1OzmKhYV99B9Lg1zXbMdKALR2XLd_VISF9UFdkYp7PantN39u-BzT4DvT31pgmZwCGk-Ct1btWiUyY6Zj1kuy1_RskOseVPPPIAiMkU3EmbUDPIOZ24\"}";
-    const char* sign2 = "QPlZ/2aHyWhnOqewE3GDx85yhMLL0Cqd0kMWWQWQMW9EVNB6DbE1FzbzSRZw7ruWmCaqQwkHuNjRbw0VXyf7jIVoKtvSu5y5rWXTLtNrNLb8ylnGReNQZro2HIIykEyNE5Gnn3bBlmX8qkgh0wvYUU24bgXvmv4ZyTnufSJlo4l-XfeQEtpgquMZjljtxbANPHhuwHxb7W-du3ji9p5YATfPEHgadotNW/cGNvD49s06k0bQ8zcJ0dcSTbCa3K70Z5XYXqtRFrVqfGacAXmV4XiaMQyHfI/t-dlt38nbfE6DXg77b4wS3jXteMRR57kWLoJ/j4sKe5/kE6zbnsFtXw==";
-
-http://14.63.225.203/cogma/game/purchase_topaz_google.php?kakao_id=1001&topaz_id=120&purchase_data={"orderId":"12999763169054705758.136161536899983","packageName":"com.playDANDi.CocoMagic","productId":"test","purchaseTime":1402512283566,"purchaseState":0,"developerPayload":"developerpayload","purchaseToken":"lbfdjpphihmngleiknmbecni.AO-J1OzmKhYV99B9Lg1zXbMdKALR2XLd_VISF9UFdkYp7PantN39u-BzT4DvT31pgmZwCGk-Ct1btWiUyY6Zj1kuy1_RskOseVPPPIAiMkU3EmbUDPIOZ24"}&signature=QPlZ/2aHyWhnOqewE3GDx85yhMLL0Cqd0kMWWQWQMW9EVNB6DbE1FzbzSRZw7ruWmCaqQwkHuNjRbw0VXyf7jIVoKtvSu5y5rWXTLtNrNLb8ylnGReNQZro2HIIykEyNE5Gnn3bBlmX8qkgh0wvYUU24bgXvmv4ZyTnufSJlo4l-XfeQEtpgquMZjljtxbANPHhuwHxb7W-du3ji9p5YATfPEHgadotNW/cGNvD49s06k0bQ8zcJ0dcSTbCa3K70Z5XYXqtRFrVqfGacAXmV4XiaMQyHfI/t-dlt38nbfE6DXg77b4wS3jXteMRR57kWLoJ/j4sKe5/kE6zbnsFtXw==
-
-  */
-    char temp[1024];
-    std::string postData = "";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-    postData += temp;
-    sprintf(temp, "topaz_id=%d&", topazId);
-    postData += temp;
-    sprintf(temp, "purchase_data=%s&", data);
-    //sprintf(temp, "purchase_data=%s&", data2);
-    postData += temp;
-    sprintf(temp, "signature=%s", signature);
-    //sprintf(temp, "signature=%s", sign2);
-    postData += temp;
-    CCLog("%s", postData.c_str());
-    
-    httpStatus = 1;
-    
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl("http://14.63.225.203/cogma/game/purchase_topaz_google.php");
-    req->setRequestData(postData.c_str(), postData.size());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(haha, httpresponse_selector(BuyTopaz::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    CCLog("BuyTopaz : error flag to FALSE");
+    isTryingPurchase = flag;
 }
 
-void BuyTopaz::XmlParseVerifyPurchaseResult(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        CCLog("토파즈 구매 성공!");
-        /*
-         // 토파즈, 별사탕을 갱신한다.
-         int topaz = nodeResult.child("money").attribute("topaz").as_int();
-         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-         myInfo->SetMoney(topaz, starcandy);
-         
-         // 부모 scene에 갱신
-         CCString* param = CCString::create("2");
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-         
-         // 성공한 팝업창으로 넘어간다.
-         ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
-         */
-    }
-    else
-    {
-        CCLog("failed code = %d", code);
-        if (code == 10) CCLog("서버인증실패");
-        else if (code == 11) CCLog("payload 다름");
-        else if (code == 12) CCLog("이미 지급한 토파즈");
-        else if (code == 13) CCLog("토파즈 id 이상함");
-        
-        //ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-    }
-    
-    
-     #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-     JniMethodInfo t;
-     if (JniHelper::getStaticMethodInfo(t,
-                                        "com/playDANDi/CocoMagic/InAppBilling",
-                                        "Consume",
-                                        "()V"))
-     {
-     CCLog("hihihi");
-     t.env->CallStaticVoidMethod(t.classID, t.methodID);
-     // Release
-     t.env->DeleteLocalRef(t.classID);
-     }
-     #endif
-    
-}
 
 

@@ -55,6 +55,8 @@ public:
     void StopBackgroundInGameSound();
     
     void PlayClock();
+    void StopClock();
+    
     void PlayGameResult();
     
     void PlayPieceClick(int idx);
@@ -63,9 +65,8 @@ public:
     void PlayDesignatedSound(int idx);
     void UnLoadInGameSound();
     
-private:
-    std::string ext;
-    int cnt;
+protected:
+    int nClockSoundId;
 };
 
 #endif /* defined(__CocoMagic__Sound__) */

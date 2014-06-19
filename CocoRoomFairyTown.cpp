@@ -84,15 +84,11 @@ bool CocoRoomFairyTown::init()
     
     // 네트워크로 메시지들을 받아온다.
     char temp[50];
-    std::string url = "http://14.63.225.203/cogma/game/get_purchase_fairy_list.php?";
+    std::string params = "";
     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    url += temp;
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    params += temp;
+    
+    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
 
     return true;
 }
@@ -377,6 +373,13 @@ void CocoRoomFairyTown::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
     
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -392,8 +395,9 @@ void CocoRoomFairyTown::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
-    XmlParseFairyList(dumpData, buffer->size());
+    XmlParseFairyList(dumpData, bufferSize);
 }
 
 void CocoRoomFairyTown::XmlParseFairyList(char* data, int size)

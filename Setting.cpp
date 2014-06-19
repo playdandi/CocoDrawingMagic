@@ -247,23 +247,17 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
                     
                     char temp[50];
-                    std::string url = "http://14.63.225.203/cogma/game/setting.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "push_notification=%d&", pushNotiReserved);
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "potion_message=%d", potionMsgReserved);
-                    url += temp;
-                    CCLog("url : %s", url.c_str());
-                    
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    req->setResponseCallback(this, httpresponse_selector(Setting::onHttpRequestCompleted));
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    param += temp;
+                  
+                    Network::HttpPost(param, URL_SETTING, this, httpresponse_selector(Setting::onHttpRequestCompleted));
                 }
                 else
                 {
@@ -375,7 +369,10 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -388,8 +385,9 @@ void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
-    XmlParseResult(dumpData, buffer->size());
+    XmlParseResult(dumpData, bufferSize);
 }
 
 void Setting::XmlParseResult(char* data, int size)

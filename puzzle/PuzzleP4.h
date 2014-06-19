@@ -11,7 +11,7 @@
 class PuzzleP4
 {
 public:
-    static PuzzleP4* CreateP4(void* parent, int zOrder, int type = -100);
+    static PuzzleP4* CreateP4(void* parent, int zOrder, int type = -100, int designatedType = -1);
     void CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint ap, CCPoint pos, float half_width);
     void SetType(int type);
     int GetType();

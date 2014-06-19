@@ -105,6 +105,7 @@ public:
     void CheckUselessDiaPieces();
     
     
+    void SetPiece8xy(int queue_pos, std::vector<CCPoint> pos);
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
     std::vector<CCPoint> GetPosForFeverTime(bool afterCast);
     
@@ -172,6 +173,10 @@ public:
     bool IsFeverTime();
     int GetFeverRemainTime();
     bool IsRoundInFeverTime(bool afterCast);
+    
+    void BonusTime(CCNode* sender, void* pointer);
+    
+    void FairySkillAction();
     
     bool IsItemClear();
     bool IsItemTime();
@@ -270,10 +275,19 @@ protected:
     int magicCnt; // 마법발동 횟수 (피버타임 끝나면 0으로 초기화)
     int iFeverTime; // 피버타임 발동중 남은 시간
     
+    int iNumOfFairySkillStart; // 요정 스킬 발동해야 하는 횟수 (falling callback에서 수행하자)
+    
+    int bonusTimeState; // 보너스타임 순서 상태
+    
     bool item_clear;
     bool item_time;
     bool item_paint;
     bool item_staff;
+    int iNumOfPaintItemNeeded;
+    int iNumOfStaffItemNeeded;
+    bool m_bIsItemTouched;
+    int item_dx;
+    int item_dy;
     
 private:
     Sound* sound;
@@ -365,7 +379,7 @@ class PuzzleP4Set
 public:
     void SetGameLayer(Puzzle* layer);
     void SetPuzzleLayer(CCLayer* layer);
-    void CreatePiece(int x, int y, int type = -100);
+    void CreatePiece(int x, int y, int type = -100, int designatedType = -1);
     int GetType(int x, int y);
     void SetType(int x, int y, int type);
     void SetOpacity(int x, int y, int alpha);

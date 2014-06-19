@@ -238,6 +238,7 @@ void Profile::InitFairy()
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
+    CCLog("%d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림

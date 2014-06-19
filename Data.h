@@ -60,9 +60,9 @@ extern int missionRefVal;
 // 게임결과에 필요한 값들
 extern class MyGameResult* myGameResult;
 
-//extern char* publicKey;
 extern std::string publicKey[50];
 extern RSA* rsa;
+extern std::string obfuscationKey[30];
 
 //
 extern cocos2d::CCNode* verifyStatusScene;

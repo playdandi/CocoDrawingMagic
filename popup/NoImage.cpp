@@ -223,6 +223,10 @@ void NoImage::InitSprites()
         case NETWORK_FAIL:
             title = "오류";
             sprintf(text, "[오류] 다시 시도해 주세요."); break;
+        case ERROR_IN_APP_BILLING:
+            title = "결제 오류";
+            sprintf(text, "결제 도중 문제가 발생하여 게임을 재부팅합니다.\n(재부팅 후 문제가 있으면 고객센터로 연락주세요)"); break;
+        
         case BUY_TOPAZ_TRY:
             title = "토파즈 구매하기";
             sprintf(text, "토파즈 %d개를 구매하시겠습니까?", priceTopaz[d[0]]->GetCount()); break;
@@ -583,7 +587,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     {
                         Exit();
                     }
-                    else if (type == NEED_TO_REBOOT)
+                    else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
                     {
                         Common::RebootSystem(this); // 재부팅.
                     }
@@ -649,14 +653,15 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 else if (type == BUY_TOPAZ_TRY)
                 {
                     //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                    // 토파즈 구입하기. (미결제 버전)
+                    // 토파즈 구입하기. (미결제 버전) -> 건드리지 말자
                     std::string url = "http://14.63.225.203/cogma/game/purchase_topaz.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
-                    sprintf(temp, "topaz_id=%d&", priceTopaz[d[0]]->GetId());
-                    url += temp;
+                    param += temp;
+                    sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
+                    param += temp;
                     
-                    HttpRequest(url);
+                    HttpRequest(url, param);
                     //#endif
                     
                     //#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -669,15 +674,16 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
                     else
                     {
-                        std::string url = "http://14.63.225.203/cogma/game/purchase_starcandy.php?";
+                        std::string url = URL_PURCHASE_STARCANDY;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "starcandy_id=%d&", priceStarCandy[d[0]]->GetId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
-                        url += temp;
+                        param += temp;
                         CCLog("url : %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -688,48 +694,52 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 포션 구매 프로토콜을 요청한다.
-                        std::string url = "http://14.63.225.203/cogma/game/purchase_potion.php?";
+                        std::string url = URL_PURCHASE_POTION;
                         sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-                        url += temp;
+                        std::string param = "";
+                        param += temp;
                         CCLog("url : %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
                 else if (type == POTION_SEND_TRY)
                 {
                     // 포션 보내기 (랭킹 화면에서)
-                    std::string url = "http://14.63.225.203/cogma/game/send_potion.php?";
+                    std::string url = URL_SEND_POTION;
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "friend_kakao_id=%d", friendList[d[0]]->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     CCLog("url : %s", url.c_str());
-                    HttpRequest(url);
+                    HttpRequest(url, param);
                     return true;
                 }
                 else if (type == MESSAGE_ALL_TRY)
                 {
                     // 포션 모두 받기 프로토콜 요청.
-                    std::string url = "http://14.63.225.203/cogma/game/receive_message_all_potion.php?";
+                    std::string url = URL_MESSAGE_ALL;
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     CCLog("url : %s", url.c_str());
-                    HttpRequest(url);
+                    HttpRequest(url, param);
                     return true;
                 }
                 else if (type == SEND_TOPAZ_TRY)
                 {
-                    // 토파즈 선물하기. (미결제 버전)
+                    // 토파즈 선물하기. (미결제 버전) -> 건드리지말자
                     std::string url = "http://14.63.225.203/cogma/game/send_topaz.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "friend_kakao_id=%d&", friendList[d[0]]->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
-                    url += temp;
+                    param += temp;
                     CCLog("url : %s", url.c_str());
-                    HttpRequest(url);
+                    HttpRequest(url, param);
                     return true;
                 }
                 else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
@@ -748,15 +758,16 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
-                        std::string url = "http://14.63.225.203/cogma/game/upgrade_staff.php?";
+                        std::string url = URL_UPGRADE_STAFF;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_type=%d&", costType);
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", cost);
-                        url += temp;
+                        param += temp;
                         CCLog("url = %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -774,17 +785,18 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 요정 강화 (by 별사탕, by 토파즈 모두 통용됨)
-                        std::string url = "http://14.63.225.203/cogma/game/upgrade_fairy.php?";
+                        std::string url = URL_UPGRADE_FAIRY;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "user_fairy_id=%d&",  myInfo->GetActiveFairyUserId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_type=%d&", costType);
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", cost);
-                        url += temp;
+                        param += temp;
                         CCLog("url = %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -806,17 +818,18 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
-                        std::string url = "http://14.63.225.203/cogma/game/purchase_fairy.php?";
+                        std::string url = URL_PURCHASE_FAIRY;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "fairy_id=%d&", fi->GetId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_type=%d&", costType);
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", cost);
-                        url += temp;
+                        param += temp;
                         CCLog("url = %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -829,17 +842,17 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 스킬 슬롯 구매
-                        //http://14.63.225.203/cogma/game/upgrade_skill_slot.php?kakao_id=1000&slot_id=1&cost_value=1000
                         char temp[255];
-                        std::string url = "http://14.63.225.203/cogma/game/upgrade_skill_slot.php?";
+                        std::string url = URL_UPGRADE_SKILLSLOT;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "slot_id=%d&", d[0]);
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", d[1]);
-                        url += temp;
+                        param += temp;
                         CCLog("url = %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -850,21 +863,21 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                     {
                         // 스킬 새 속성 열기
-                        //http://14.63.225.203/cogma/game/purchase_skill_type.php?kakao_id=1000&skill_type=2&cost_value=0
                         char temp[255];
-                        std::string url = "http://14.63.225.203/cogma/game/purchase_skill_type.php?";
+                        std::string url = URL_PURCHASE_SKILL_PROPERTY;
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
                         if (d[0] == 1) newSkillType = 2;
                         else if (d[0] == 2) newSkillType = 1;
                         else newSkillType = d[0];
                         sprintf(temp, "skill_type=%d&", newSkillType);
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", d[1]);
-                        url += temp;
+                        param += temp;
                         CCLog("url = %s", url.c_str());
-                        HttpRequest(url);
+                        HttpRequest(url, param);
                     }
                     return true;
                 }
@@ -951,72 +964,55 @@ void NoImage::Exit()
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void NoImage::HttpRequest(std::string url)
+void NoImage::HttpRequest(std::string url, std::string param)
 {
     // Loading 화면으로 MESSAGE request 넘기기
     Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-    
-    // post request
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(NoImage::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+
+    Network::HttpPost(param, url, this, httpresponse_selector(NoImage::onHttpRequestCompleted));
 }
 
 void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
     
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1); // network fail로 간주
-        return;
-    }
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
     
     // parse xml data
     switch (type)
     {
         case BUY_TOPAZ_TRY:
-            XmlParseBuyTopaz(dumpData, buffer->size()); break;
+            XmlParseBuyTopaz(dumpData, bufferSize); break;
         case BUY_STARCANDY_TRY:
-            XmlParseBuyStarCandy(dumpData, buffer->size()); break;
+            XmlParseBuyStarCandy(dumpData, bufferSize); break;
         case BUYPOTION_1:
-            XmlParseBuyPotion(dumpData, buffer->size()); break;
+            XmlParseBuyPotion(dumpData, bufferSize); break;
         case POTION_SEND_TRY:
-            XmlParseSendPotion(dumpData, buffer->size()); break;
+            XmlParseSendPotion(dumpData, bufferSize); break;
         case MESSAGE_ALL_TRY:
-            XmlParseMsg(dumpData, buffer->size()); break;
+            XmlParseMsg(dumpData, bufferSize); break;
         case SEND_TOPAZ_TRY:
-            XmlParseSendTopaz(dumpData, buffer->size()); break;
+            XmlParseSendTopaz(dumpData, bufferSize); break;
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
-            XmlParseUpgradeStaff(dumpData, buffer->size()); break;
+            XmlParseUpgradeStaff(dumpData, bufferSize); break;
         case UPGRADE_FAIRY_BY_TOPAZ_TRY:
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
-            XmlParseUpgradeFairy(dumpData, buffer->size()); break;
+            XmlParseUpgradeFairy(dumpData, bufferSize); break;
         case BUY_FAIRY_BY_TOPAZ_TRY:
         case BUY_FAIRY_BY_STARCANDY_TRY:
-            XmlParseBuyFairy(dumpData, buffer->size()); break;
+            XmlParseBuyFairy(dumpData, bufferSize); break;
         case USING_FAIRY:
-            XmlParseUsingFairy(dumpData, buffer->size()); break;
+            XmlParseUsingFairy(dumpData, bufferSize); break;
         case BUY_SKILLSLOT_BY_STARCANDY_TRY:
         case BUY_SKILLSLOT_BY_TOPAZ_TRY:
-            XmlParseBuySkillSlot(dumpData, buffer->size()); break;
+            XmlParseBuySkillSlot(dumpData, bufferSize); break;
         case BUY_PROPERTY_TRY:
-            XmlParseBuySkillProperty(dumpData, buffer->size()); break;
+            XmlParseBuySkillProperty(dumpData, bufferSize); break;
     }
 }
 
@@ -1323,7 +1319,10 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
     }
     else
     {
-        if (code == 3) // 잔액 부족
+        if (code == -3) // 세션 종료
+            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
+            
+        else if (code == 3) // 잔액 부족
         {
             if (type == UPGRADE_STAFF_BY_TOPAZ_TRY)
                 ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
@@ -1464,16 +1463,17 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
             // 요정을 사고 난 뒤 갱신된 요정리스트에 요정이 1개다? => 처음 구입한 요정이다.
             // 따라서, 자동으로 그 요정이 착용되도록 using_fairy.php를 호출해 준다.
             char temp[150];
-            std::string url = "http://14.63.225.203/cogma/game/using_fairy.php?";
+            std::string url = URL_USING_FAIRY;
+            std::string param = "";
             sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-            url += temp;
+            param += temp;
             sprintf(temp, "user_fairy_id=%d", myInfo->GetFairyList()[0]->GetUserId());
-            url += temp;
+            param += temp;
             CCLog("url = %s", url.c_str());
             
             type = USING_FAIRY;
             
-            HttpRequest(url);
+            HttpRequest(url, param);
         }
         else
         {

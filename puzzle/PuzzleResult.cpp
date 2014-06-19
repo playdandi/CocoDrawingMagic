@@ -159,15 +159,7 @@ void PuzzleResult::InitSprites()
     sprintf(number, "%d", myGameResult->combo);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 42, ccp(0, 0.5), ccp(500+2, 958+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 42, ccp(0, 0.5), ccp(500, 958+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
-    
-    /*
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png", ccp(0, 0), ccp(524, 800), CCSize(350, 100), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(524, 920), CCSize(350, 100), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_1.png", ccp(0, 0), ccp(524, 1040), CCSize(350, 100), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_dontknow_2.png", ccp(0, 0), ccp(100, 500), CCSize(350, 100), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_my_profile.png", ccp(0, 0), ccp(100, 620), CCSize(350, 100), "", "PuzzleResult", this, 1002) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png", ccp(0, 0), ccp(100, 740), CCSize(200, 100), "", "PuzzleResult", this, 1002) );
-    */
+ 
     
     int offset;
     
@@ -189,16 +181,16 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265+2, 840-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(265, 840), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     
-    /*
-    // 포션 빈칸
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_empty.png", ccp(0, 0), ccp(430, 825+7), CCSize(0,0), "", "PuzzleResult", this, 1005) );
-    // 포션
     if (myGameResult->getPotion > 0)
     {
+        // 포션 빈칸
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_empty.png", ccp(0, 0), ccp(380, 825), CCSize(0,0), "", "PuzzleResult", this, 1005) );
+        // 포션
         CCPoint p = spriteClass->FindParentCenterPos("icon/icon_potion_empty.png");
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion.png", ccp(0.5, 0.5), p, CCSize(0,0), "icon/icon_potion_empty.png", "0", NULL, 1005, 1) );
     }
     
+     /*
     // 토파즈 빈칸
     // (차후 받아서 쓰자)
     // 토파즈

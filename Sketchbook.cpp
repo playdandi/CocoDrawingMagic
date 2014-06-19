@@ -3,9 +3,7 @@
 
 using namespace pugi;
 
-//static int tabNumber;
 static int from; // 0 : from Ranking , 1 : from GameReady
-//static int priority;
 
 CCScene* Sketchbook::scene(int tab, int fromWhere, int prio)
 {
@@ -544,6 +542,17 @@ void Sketchbook::MakeScrollBook(int idx)
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -ms[i]->GetUserId()) ); // 태그에 user_id를 음수로 둔다.
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                
+                // 연습중인 스킬임을 표시하자.
+                if (ms[i]->GetCommonId() == myInfo->GetPracticeSkillId())
+                {
+                    CCLog("연습 스킬? %d , %d", ms[i]->GetCommonId(), myInfo->GetPracticeSkillId());
+                    ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setColor(ccc3(140,140,140));
+                    ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setColor(ccc3(140,140,140));
+                    
+                    ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setTag(0); // 클릭하지 못하도록 함
+                }
+                
             }
         }
         else
@@ -783,19 +792,18 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     Common::ShowNextScene(this, "Sketchbook", "Loading", false, LOADING_MESSAGE);
                     
                     char temp[255];
-                    std::string url = "http://14.63.225.203/cogma/game/practice_skill.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "user_skill_id=%d", -id); // 양수로 고치자.
-                    url += temp;
-                    CCLog("url = %s", url.c_str());
-                    
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    req->setResponseCallback(this, httpresponse_selector(Sketchbook::onHttpRequestCompleted));
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    param += temp;
+
+                    Network::HttpPost(param, URL_PRACTICE_SKILL, this, httpresponse_selector(Sketchbook::onHttpRequestCompleted));
+                }
+                // '연습중' 버튼이면 동작하지 않도록 한다.
+                else if (id == 0)
+                {
+                    break;
                 }
                 // 연습량이 다 차서 레벨업을 해야 하는 경우 (강화)
                 else // 이때 id는 common_id
@@ -885,6 +893,10 @@ void Sketchbook::EndSceneCallback()
 void Sketchbook::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -900,8 +912,12 @@ void Sketchbook::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
-    XmlParsePracticeSkill(dumpData, (int)buffer->size());
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    XmlParsePracticeSkill(dumpData, bufferSize);
 }
 void Sketchbook::XmlParsePracticeSkill(char* data, int size)
 {

@@ -26,6 +26,8 @@ public:
     
     bool IsApplied(int skillNum, int queue_pos);
     
+    bool IsSkillNumberExists(int skillNum);
+    
     void SetQueuePos(int queue_pos);
     
     void UpdateAppliedSkillCount(int skillNum);
@@ -80,10 +82,12 @@ public:
     void W8_BombDone();
     
     void E3(int num);
+    void E3_Done();
     //void E4(int num, int queue_pos);
     void E5(int num);
     void E5_Callback(CCNode* sender, void* data);
     void E7(int num);
+    void E7_Done();
     void E8(int num, int queue_pos);
     void E8_Timer(float f);
     void E8_Bomb(CCNode* sender, void* data);
@@ -117,6 +121,12 @@ public:
     void FT_CreatePiece(int pos);
     void FT_Create_Recur(int x, int y, int cnt, int minx, int maxx);
     bool IsFTBombing();
+    
+    void ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos);
+    void ApplyItemPaint_Callback(CCNode* sender, void* pointer);
+    void ApplyItemStaff(int x, int y, int dx, int dy, int queue_pos);
+    std::vector<CCPoint> GetPieces(int x, int y, int dx, int dy);
+    
     
     std::vector<CCPoint> GetResult();
     std::vector< std::vector<CCPoint> > GetResultDouble();
@@ -229,6 +239,9 @@ private:
     
     int renewCheck_maxCnt;
     bool renewCheck[COLUMN_COUNT][ROW_COUNT];
+    
+    int itemPaint_callbackCnt;
+    int itemPaint_type;
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;

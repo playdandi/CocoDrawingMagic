@@ -1,14 +1,19 @@
 #include "PuzzleP4.h"
 #include "Puzzle.h"
 
-PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type)
+PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type, int designatedType)
 {
     PuzzleP4* puzzleP4 = new PuzzleP4();
     
     if (type != -100)
         puzzleP4->type = type;
     else
-        puzzleP4->type = (rand()%100 < 30) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+    {
+        if (designatedType != -1) // 게임중 요정에 의해 새로 만들어졌을 떄 (보통 designatedType == CONNECTED)
+            puzzleP4->type = designatedType;
+        else
+            puzzleP4->type = (rand()%100 < 30) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+    }
 
     puzzleP4->parent = parent;
     puzzleP4->zOrder = zOrder;
@@ -31,7 +36,7 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         InitChild();
         char name[25];
 
-        if (lu == rd)
+        if (lu == rd && (lu >= PIECE_RED && lu <= PIECE_WHITE))
         {
             sprintf(name, "pieces/%d_link_lu.png", lu);
             leftup = CCSprite::createWithSpriteFrameName(name);
@@ -46,7 +51,7 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
                 leftdown = CCSprite::createWithSpriteFrameName(name);
             }
         }
-        if (ru == ld)
+        if (ru == ld && (ru >= PIECE_RED && ru <= PIECE_WHITE))
         {
             sprintf(name, "pieces/%d_link_ru.png", ru);
             rightup = CCSprite::createWithSpriteFrameName(name);

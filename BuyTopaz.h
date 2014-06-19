@@ -30,8 +30,10 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx);
     
-    void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
-    void XmlParseVerifyPurchaseResult(char* data, int size);
+    //void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
+    //void XmlParseVerifyPurchaseResult(char* data, int size);
+    
+    void SetErrorFlag(bool flag);
     
     void EndScene();
     
@@ -40,7 +42,7 @@ protected:
     bool isTouched;
     int httpStatus;
     
-    BuyTopaz* haha;
+    bool isTryingPurchase;
     
 private: // 해제해야 하는 변수들은 여기에 넣자.
     CCSprite* pBlack;

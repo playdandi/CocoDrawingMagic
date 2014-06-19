@@ -1,11 +1,8 @@
 #include "BuyPotion.h"
 
-//static int parent_id;
 
 CCScene* BuyPotion::scene(int parent)
 {
-    //parent_id = parent;
-    
     CCScene* pScene = CCScene::create();
     BuyPotion* pLayer = BuyPotion::create();
     pScene->addChild(pLayer);

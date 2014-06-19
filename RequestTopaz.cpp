@@ -273,24 +273,19 @@ void RequestTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // Loading 화면으로 MESSAGE request 넘기기
                 Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
 
-                //http://14.63.225.203/cogma/game/request_topaz.php?kakao_id=1000&friend_kakao_id=1001
                 int friendkakaoId = spriteClassScroll->spriteObj[i]->sprite->getTag();
                 char temp[255];
-                std::string url = "http://14.63.225.203/cogma/game/request_topaz.php?";
+                std::string param = "";
                 sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                url += temp;
+                param += temp;
                 sprintf(temp, "friend_kakao_id=%d", friendkakaoId);
-                url += temp;
-                CCLog("url = %s", url.c_str());
+                param += temp;
                 
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(url.c_str());
-                req->setRequestType(CCHttpRequest::kHttpPost);
-                req->setResponseCallback(this, httpresponse_selector(RequestTopaz::onHttpRequestCompleted));
-                CCHttpClient::getInstance()->send(req);
+                // tag
                 sprintf(temp, "%d", friendkakaoId);
-                req->setTag(temp);
-                req->release();
+                
+                Network::HttpPost(param, URL_REQUEST_TOPAZ, this, httpresponse_selector(RequestTopaz::onHttpRequestCompleted), temp);
+                
                 break;
             }
         }
@@ -345,7 +340,13 @@ void RequestTopaz::EndScene()
 void RequestTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -361,9 +362,10 @@ void RequestTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
     int friendKakaoId = atoi(res->getHttpRequest()->getTag());
-    XmlParseResult(dumpData, (int)buffer->size(), friendKakaoId);
+    XmlParseResult(dumpData, bufferSize, friendKakaoId);
 }
 
 void RequestTopaz::XmlParseResult(char* data, int size, int friendKakaoId)

@@ -436,12 +436,11 @@ void MagicList::TryEnd()
 {
     // Loading 화면으로 MESSAGE request 넘기기
     Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-    
-    // http://14.63.225.203/cogma/game/using_skill.php?kakao_id=1000&slot_id_list[0]=1&user_skill_id_list[0]=1&slot_id_list[1]=2&user_skill_id_list[1]=3
+
     char temp[255];
-    std::string url = "http://14.63.225.203/cogma/game/using_skill.php?";
+    std::string param = "";
     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-    url += temp;
+    param += temp;
     int cnt = 0;
     for (int i = 0 ; i < myInfo->GetSlot().size() ; i++)
     {
@@ -450,24 +449,21 @@ void MagicList::TryEnd()
             sprintf(temp, "slot_id_list[%d]=%d&user_skill_id_list[%d]=%d", cnt, cnt+1, cnt, mss->GetUserId());
         else
             sprintf(temp, "slot_id_list[%d]=%d&user_skill_id_list[%d]=%d&", cnt, cnt+1, cnt, mss->GetUserId());
-        url += temp;
+        param += temp;
         cnt++;
     }
-    CCLog("url = %s", url.c_str());
     
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(MagicList::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    Network::HttpPost(param, URL_USING_SKILL, this, httpresponse_selector(MagicList::onHttpRequestCompleted));
 }
 
 
 void MagicList::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -480,8 +476,9 @@ void MagicList::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+     */
     
-    XmlParseSkillSlot(dumpData, (int)buffer->size());
+    XmlParseSkillSlot(dumpData, bufferSize);
 }
 
 void MagicList::XmlParseSkillSlot(char* data, int size)

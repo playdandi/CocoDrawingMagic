@@ -47,27 +47,19 @@ bool Loading::init()
         
         LoadingSprites();
         
-        // gameStart protocol
-        // http://14.63.225.203/cogma/game/game_start.php?kakao_id=1000&item_a=0&item_b=0&item_c=0&item_d=0&item_e=0
         char temp[255];
-        std::string url = "http://14.63.225.203/cogma/game/game_start.php?";
+        std::string param = "";
         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-        url += temp;
+        param += temp;
         int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
         int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
         int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
         int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
         int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
         sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
-        url += temp;
-        CCLog("url = %s", url.c_str());
-        
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Loading::onHttpRequestCompleted));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
+        param += temp;
+
+        Network::HttpPost(param, URL_GAMESTART, this, httpresponse_selector(Loading::onHttpRequestCompleted));
     }
     else if (status == LOADING_PUZZLEEND)
     {
@@ -76,7 +68,7 @@ bool Loading::init()
         
         LoadingSprites();
     }
-    
+
     else
     {
         // make depth tree
@@ -136,7 +128,9 @@ void Loading::Callback(CCNode* sender, void* pointer)
 void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
     
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -149,8 +143,11 @@ void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
-    XmlParseGameStart(dumpData, (int)buffer->size());
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    
+    XmlParseGameStart(dumpData, bufferSize);
 }
 
 void Loading::XmlParseGameStart(char* data, int size)

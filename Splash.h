@@ -58,8 +58,8 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     void GetNonConsumedItems();
-    void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
-    void XmlParseVerifyPurchaseResult(char* data, int size);
+    //void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
+    //void XmlParseVerifyPurchaseResult(char* data, int size);
     
     void GetTodayCandyFriend();
     void LastActionStart();
@@ -70,7 +70,6 @@ public:
     void EndScene();
     
     RSA* createRSA(unsigned char * key, int pub);
-    int public_encrypt(unsigned char * data,int data_len, unsigned char * key, unsigned char *encrypted);
     
     
 protected:

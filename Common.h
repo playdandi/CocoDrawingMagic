@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "CCPlatformConfig.h"
+#include "Network.h"
 #include "Sound.h"
 #include "Data.h"
 #include "Fairy.h"
@@ -11,9 +12,6 @@
 #include "platform/android/jni/JniHelper.h"
 
 USING_NS_CC;
-
-#define DESIGN_WIDTH 768.0f
-#define DESIGN_HEIGHT 1024.0f
 
 #define ROW_COUNT 7
 #define COLUMN_COUNT 7
@@ -25,24 +23,22 @@ USING_NS_CC;
 #define PIECE_YELLOW 3
 #define PIECE_WHITE 4
 
-#define TYPE_DIA_COUNT 3
-#define TYPE_SP_COUNT 3
+// 피스의 아이템
+#define ITEM_PAINT_RED 10
+#define ITEM_PAINT_BLUE 11
+#define ITEM_PAINT_GREEN 12
+#define ITEM_PAINT_YELLOW 13
+#define ITEM_PAINT_WHITE 14
+#define ITEM_STAFF 20
+
+
 
 #define PUZZLE_TIME 60
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
 
-/*#define PIECE8_WIDTH  128//152
-#define PIECE8_HEIGHT 128//152
-#define PIECE8_FRAME_WIDTH 130//154
-#define PIECE8_FRAME_HEIGHT 130//154
-#define PIECE4_WIDTH 39  //64/2
-#define PIECE4_HEIGHT 39 //64/2
-*/
 #define QUEUE_CNT 5
-
-#define LARGEST_MASS_LOWER_BOUND 7
 
 #define BUFFER_SIZE 80000
 #define IMAGE_BUFFER_SIZE 120*120*8
@@ -54,6 +50,7 @@ USING_NS_CC;
 #define BTN_2 1
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
+#define ERROR_IN_APP_BILLING -5
 #define NEED_TO_REBOOT -4
 #define NEED_TO_BUY_POTION -3
 #define NEED_TO_BUY_TOPAZ -2
@@ -87,8 +84,6 @@ USING_NS_CC;
 #define UPGRADE_STAFF_BY_STARCANDY_TRY 26
 #define UPGRADE_STAFF_OK 27
 #define UPGRADE_STAFF_FAIL 28
-//#define UPGRADE_STAFF_BY_TOPAZ_NOMONEY 29
-//#define UPGRADE_STAFF_BY_STARCANDY_NOMONEY 30
 #define UPGRADE_STAFF_FULL_LEVEL 31
 #define BUY_FAIRY_BY_TOPAZ_TRY 32
 #define BUY_FAIRY_BY_STARCANDY_TRY 33
@@ -101,8 +96,6 @@ USING_NS_CC;
 #define UPGRADE_FAIRY_OK 40
 #define UPGRADE_FAIRY_FAIL 41
 #define UPGRADE_FAIRY_FULL_LEVEL 42
-//#define UPGRADE_FAIRY_BY_TOPAZ_NOMONEY 42
-//#define UPGRADE_FAIRY_BY_STARCANDY_NOMONEY 43
 #define UPGRADE_SKILL_OK 44
 #define UPGRADE_SKILL_FAIL 45
 #define PURCHASE_SKILL_OK 46
@@ -140,21 +133,21 @@ USING_NS_CC;
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
 
-
+// 터치 관련
 #define BTN_MENU_GAMEREADY 0
 #define BTN_MENU_GAMESTART 1
 
+
+
 using namespace cocos2d;
 using namespace cocos2d::extension;
-
-
-extern std::string fontList[];
 
 class Sound;
 class Ranking;
 class BuyTopaz;
 
 extern Sound* sound;
+extern std::string fontList[];
 
 
 class Common
@@ -174,11 +167,12 @@ public:
     
     static std::string GetMissionContent(int type, int val, int refVal);
     static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
+    static std::string base64_decode(std::string const& encoded_string);
     
     //static void verifyPayloadAndProvideItem(const char* data, const char* signature);
-    static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
-    static void XmlParseVerifyPurchaseResult(const char* data, int size);
-    void onHttpRequestCompleted(CCNode *sender, void *data);
+    //static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
+    static void XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx);
+    //void onHttpRequestCompleted(CCNode *sender, void *data);
 };
 
 

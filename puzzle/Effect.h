@@ -50,6 +50,10 @@ public:
     void Effect19Callback(CCNode* sender, void* pointer);
     void Effect19CallbackNewSprite(CCNode* sender, void* pointer);
     
+    void PlayEffect_18(CCPoint p); // E3 : 지팡이 레벨에 비례한 추가별사탕
+    void Effect18Callback(CCNode* sender, void* pointer);
+    void Effect18CallbackNewSprite(CCNode* sender, void* pointer);
+    
     void PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos);
     void Effect7_Comet(float f);
     void Effect7_Callback_1(CCNode* sender, void* pointer);
@@ -64,6 +68,9 @@ public:
     void Effect15_Last(std::vector<CCPoint> pos, void* pointer);
     void AddOrbMaxParticle(int v);
     void Effect15_Clear();
+    
+    void Effect22Callback(CCNode* sender, void* pointer); // E7 : 끈질긴 생명력
+    void PlayEffect_22(CCPoint p);
     
     void PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos); // 8번 스킬 (땅)
     void Effect23_Callback(CCNode* sender, void* pointer);
@@ -81,7 +88,9 @@ public:
     void PlayEffect_14();
     void Effect14Callback(CCNode* sender, void* data);
     
-    //void PlayEffect_Spirit();
+    
+    void NewlyMadeConnPiece(int x, int y);
+    void FairySkill();
     
     std::vector<CCPoint> GetDoublePos(int idx);
     

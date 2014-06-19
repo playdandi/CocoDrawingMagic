@@ -82,16 +82,11 @@ bool InviteFriend::init()
     // 네트워크로 초대할 친구 리스트를 받아온다.
     httpStatus = 0;
     char temp[50];
-    std::string url = "http://14.63.225.203/cogma/game/friend_invite_list.php?";
+    std::string params = "";
     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    url += temp;
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
-    CCLog("url = %s", url.c_str());
+    params += temp;
+    
+    Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
     
     isTouched = false;
     isScrolling = false;
@@ -320,20 +315,17 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 친구를 초대한다.
                 httpStatus = 1;
                 char temp[50];
-                std::string url = "http://14.63.225.203/cogma/game/friend_invite.php?";
+                std::string param = "";
                 sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                url += temp;
+                param += temp;
                 sprintf(temp, "friend_kakao_id=%d", kakaoIds[idx]);
-                url += temp;
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(url.c_str());
-                req->setRequestType(CCHttpRequest::kHttpPost);
-                req->setResponseCallback(this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
-                CCHttpClient::getInstance()->send(req);
-                req->release();
+                param += temp;
+                
+                // tag
                 sprintf(temp, "%d", idx);
-                req->setTag(temp);
-                CCLog("url = %s", url.c_str());
+                
+                Network::HttpPost(param, URL_INVITE_FRIEND, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted), temp);
+
                 break;
             }
         }
@@ -412,7 +404,13 @@ void InviteFriend::RenewData()
 void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -428,11 +426,12 @@ void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
     
     switch (httpStatus)
     {
-        case 0: XmlParseList(dumpData, buffer->size()); break;
-        case 1: XmlParseInviteFriend(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag())); break;
+        case 0: XmlParseList(dumpData, bufferSize); break;
+        case 1: XmlParseInviteFriend(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 

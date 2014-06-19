@@ -34,7 +34,7 @@ void Splash::onExit()
 
 void Splash::keyBackClicked()
 {
-    if (isKeyBackClicked)
+    if (isLoading || isKeyBackClicked) // 백버튼 팝업창이 떠 있거나, 데이터 로딩중에는 못 누르게 함.
         return;
     isKeyBackClicked = true;
     
@@ -182,6 +182,7 @@ RSA* Splash::createRSA(unsigned char * key, int pub)
     }
     
     rsa = PEM_read_bio_RSA_PUBKEY(keybio, NULL, NULL, NULL);
+    
     /*
     if(pub)
     {
@@ -202,13 +203,6 @@ RSA* Splash::createRSA(unsigned char * key, int pub)
     return rsa;
 }
 
-int Splash::public_encrypt(unsigned char* data,int data_len, unsigned char * key, unsigned char *encrypted)
-{
-//    int padding = RSA_PKCS1_PADDING;
-    RSA * rsa = createRSA(key,1);
-    int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
-    return result;
-}
 
 void Splash::Button_Callback()
 {
@@ -354,9 +348,8 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
         
         // 게임 버전 체크
-        std::string url = "http://14.63.225.203/cogma/game/get_version.php";
         CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
+        req->setUrl(URL_VERSION);
         req->setRequestType(CCHttpRequest::kHttpPost);
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
         CCHttpClient::getInstance()->send(req);
@@ -450,34 +443,35 @@ void Splash::XmlParseVersion(char* data, int size)
 void Splash::TryLogin()
 {
     m_pMsgLabel->setString("로그인 중...");
+    
+    // required parameter values
     char temp[255];
-    std::string url = "";
+    std::string param = "";
     sprintf(temp, "game_version=%d&", iGameVersion);
-    url += temp;
+    param += temp;
     sprintf(temp, "kakao_id=%d&", mKakaoId);
-    url += temp;
+    param += temp;
     if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) // 안드로이드는 기기 고유 id를,
         sprintf(temp, "push_token=%s&", regId);
     else                                            // iPhone은 아이폰에서 기기 고유 id를 받아넣는다.
         sprintf(temp, "push_token=TEST_PUSH_VALUE&");
-    url += temp;
+    param += temp;
     sprintf(temp, "device_type=%d&", mDeviceType);
-    url += temp;
+    param += temp;
     if (mKakaoId == 1000) sprintf(temp, "nick_name=ijpark&");
     else if (mKakaoId == 1001) sprintf(temp, "nick_name=yjjung&");
     else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
     else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
-    url += temp;
+    param += temp;
     if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
     else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
     else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
     else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
-    url += temp;
-    CCLog("url = %s", url.c_str());
+    param += temp;
     
     CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl("http://14.63.225.203/cogma/game/login.php?");
-    req->setRequestData(url.c_str(), url.size());
+    req->setUrl(URL_LOGIN);
+    req->setRequestData(param.c_str(), param.size());
     req->setRequestType(CCHttpRequest::kHttpPost);
     req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
     CCHttpClient::getInstance()->send(req);
@@ -753,48 +747,18 @@ void Splash::XmlParseLogin(char* data, int size)
         
         // 내 모든 정보 요청
         m_pMsgLabel->setString("나의 정보를 요청 중...");
-        char temp[255];
-
-        std::string url = "";
-        sprintf(temp, "kakao_id=%d", mKakaoId);
-        url += temp;
-        CCLog("url = %s", url.c_str());
         
-//        reinterpret_cast<const unsigned char*>(url.c_str())
+        // rsa 만들기 (초기 1회만 만들면 됨)
         rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
-        unsigned char encrypted[4096];
-        int result = RSA_public_encrypt((int)url.size(), (unsigned char*)(url.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
-        if(result == -1)
-        {
-            exit(0);
-        }
+    
         
-        std::string postData = "";
-        sprintf(temp, "PS=%d|%d|%d|%d", myInfo->GetKeyValue(), myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
-        CCLog("%s", temp);
-        postData += temp;
-        postData += "&";
+        // required parameter values
+        char temp[255];
+        std::string param = "";
+        sprintf(temp, "kakao_id=%d", mKakaoId);
+        param += temp;
         
-        std::string encoded = Common::base64_encode(encrypted, result);
-        for (int i = 0 ; i < encoded.size() ; i++)
-            if (encoded[i] == '+')
-                encoded[i] = '-';
-        CCLog("%s", encrypted);
-        CCLog("Encoded = %s", encoded.c_str());
-        
-        sprintf(temp, "a=%s", encoded.c_str());
-        postData += temp;
-        
-        CCLog("%s", postData.c_str());
-
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl("http://14.63.225.203/cogma/game/test_user_info.php?");
-        req->setRequestData(postData.c_str(), postData.size());
-        //req->setRequestData(url.c_str(), url.size());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
+        Network::HttpPost(param, URL_USERINFO, this, httpresponse_selector(Splash::onHttpRequestCompleted));
     }
     else
     {
@@ -923,33 +887,28 @@ void Splash::XmlParseMyInfo(char *data, int size)
         myInfo->SetTodayCandy(todayCandyType, todayCandyValueChoice, todayCandyValueMiss, istodayCandyUsed);
         
         char temp[50];
-        std::string url;
+        std::string param;
         if (isWeeklyRankReward == 0 && lastWeeklyHighScore != -1)
         {
             // 저번주 주간랭킹 결과 불러온다.
             m_pMsgLabel->setString("지난 주 상이 있는지 힐끔 바라보는 중...");
-            url = "http://14.63.225.203/cogma/game/reward_weekly_rank.php?";
+            
             sprintf(temp, "kakao_id=%d", mKakaoId);
-            url += temp;
+            param += temp;
+            
+            Network::HttpPost(param, URL_WEEKLYRANK, this, httpresponse_selector(Splash::onHttpRequestCompleted));
         }
         else
         {
             // 친구 리스트 정보를 받는다.
             m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
-            url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+            
             sprintf(temp, "kakao_id=%d", mKakaoId);
-            url += temp;
+            param += temp;
             
             httpStatus++;
+            Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Splash::onHttpRequestCompleted));
         }
-        
-        CCLog("url = %s", url.c_str());
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
     }
     else
     {
@@ -1004,19 +963,17 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
                 profiles.push_back( new ProfileSprite(profileUrl) );
         }
         
-        char temp[50];
+        
+        
         // 친구 리스트 정보를 받는다.
         m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
-        std::string url = "http://14.63.225.203/cogma/game/get_friendslist.php?";
+        
+        char temp[50];
+        std::string param;
         sprintf(temp, "kakao_id=%d", mKakaoId);
-        url += temp;
-        CCLog("url = %s", url.c_str());
-        CCHttpRequest* req = new CCHttpRequest();
-        req->setUrl(url.c_str());
-        req->setRequestType(CCHttpRequest::kHttpPost);
-        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-        CCHttpClient::getInstance()->send(req);
-        req->release();
+        param += temp;
+
+        Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Splash::onHttpRequestCompleted));
     }
     else
     {
@@ -1126,7 +1083,7 @@ void Splash::XmlParseFriends(char* data, int size)
                 // get profile image sprite from URL
                 CCHttpRequest* req = new CCHttpRequest();
                 req->setUrl(profiles[i]->GetProfileUrl().c_str());
-                req->setRequestType(CCHttpRequest::kHttpGet);
+                req->setRequestType(CCHttpRequest::kHttpPost);
                 req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
                 sprintf(tag, "%d", i);
                 req->setTag(tag);
@@ -1146,24 +1103,34 @@ void Splash::XmlParseFriends(char* data, int size)
 void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
     char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    
+
+    int bufferSize;
+    if (httpStatus <= HTTP_FRIENDS && atoi(res->getHttpRequest()->getTag()) != 999)
+    {
+        bufferSize = Network::GetHttpResponseData(res, dumpData);
+    }
+    else
+    {
+        // 프로필 사진 or resource.xml 받아올 때
+        if (!res || !res->isSucceed())
+        {
+            CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+            return;
+        }
+        
+        // dump data
+        std::vector<char> *buffer = res->getResponseData();
+        for (unsigned int i = 0 ; i < buffer->size() ; i++)
+            dumpData[i] = (*buffer)[i];
+        dumpData[buffer->size()] = NULL;
+        bufferSize = (int)buffer->size();
+    }
+
     // gameVersion 변경으로 resource XML 파일 받았을 경우
     if (atoi(res->getHttpRequest()->getTag()) == 999)
     {
-        WriteResFile(dumpData, (int)buffer->size());
+        WriteResFile(dumpData, bufferSize);
         return;
     }
     
@@ -1180,27 +1147,27 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
         sessionId = ss;
         CCLog("session ID = %s", sessionId.c_str());
     }
-    
+
     // parse xml data
     httpStatus++;
     switch (httpStatus-1)
     {
-        case HTTP_NONCONSUMEDITEMS:
-            XmlParseVerifyPurchaseResult(dumpData, buffer->size()); break;
+        //case HTTP_NONCONSUMEDITEMS:
+        //    XmlParseVerifyPurchaseResult(dumpData, buffer->size()); break;
         case HTTP_VERSION:
-            XmlParseVersion(dumpData, buffer->size()); break;
+            XmlParseVersion(dumpData, bufferSize); break;
         case HTTP_LOGIN:
-            XmlParseLogin(dumpData, buffer->size()); break;
+            XmlParseLogin(dumpData, bufferSize); break;
         case HTTP_MYINFO:
-            XmlParseMyInfo(dumpData, buffer->size()); break;
+            XmlParseMyInfo(dumpData, bufferSize); break;
         case HTTP_REWARDWEELYRANK:
-            XmlParseRewardWeeklyRank(dumpData, buffer->size()); break;
+            XmlParseRewardWeeklyRank(dumpData, bufferSize); break;
         case HTTP_FRIENDS:
-            XmlParseFriends(dumpData, buffer->size()); break;
+            XmlParseFriends(dumpData, bufferSize); break;
         default:
             // make texture2D
             CCImage* img = new CCImage;
-            img->initWithImageData(dumpData, buffer->size());
+            img->initWithImageData(dumpData, bufferSize);
             CCTexture2D* texture = new CCTexture2D();
             texture->initWithImage(img);
             
@@ -1212,8 +1179,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             if (profileCnt == (int)profiles.size())
             {
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                //GetNonConsumedItems();
-                LastActionStart();
+                GetNonConsumedItems();
+                //LastActionStart();
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -1228,6 +1195,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 
 void Splash::GetNonConsumedItems()
 {
+    m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
     httpStatus = HTTP_NONCONSUMEDITEMS;
 
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -1235,112 +1203,15 @@ void Splash::GetNonConsumedItems()
     if (JniHelper::getStaticMethodInfo(t,
                                        "com/playDANDi/CocoMagic/CocoMagic",
                                        "StartIAB",
-                                       "(ILjava/lang/String;Ljava/lang/String;)V"))
-    { // 파라미터 (int, String, String), 리턴타입은 Void
+                                       "(IIILjava/lang/String;Ljava/lang/String;)V"))
+    {  // 파라미터 (int, int, int, String, String), 리턴타입은 Void
         // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, t.env->NewStringUTF(""), t.env->NewStringUTF(""));
+        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, myInfo->GetKakaoId(), -1, t.env->NewStringUTF(""), t.env->NewStringUTF(""));
         // Release
         t.env->DeleteLocalRef(t.classID);
     }
     #endif
 }
-
-void Splash::verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id)
-{
-    CCLog("data = %s", data);
-    CCLog("sign = %s", signature);
-    CCLog("topaz_id = %d", topaz_id);
-    
-    const char* data2 = "{\"orderId\":\"12999763169054705758.136161536899983\",\"packageName\":\"com.playDANDi.CocoMagic\",\"productId\":\"test\",\"purchaseTime\":1402512283566,\"purchaseState\":0,\"developerPayload\":\"developerpayload\",\"purchaseToken\":\"lbfdjpphihmngleiknmbecni.AO-J1OzmKhYV99B9Lg1zXbMdKALR2XLd_VISF9UFdkYp7PantN39u-BzT4DvT31pgmZwCGk-Ct1btWiUyY6Zj1kuy1_RskOseVPPPIAiMkU3EmbUDPIOZ24\"}";
-    const char* sign2 = "QPlZ/2aHyWhnOqewE3GDx85yhMLL0Cqd0kMWWQWQMW9EVNB6DbE1FzbzSRZw7ruWmCaqQwkHuNjRbw0VXyf7jIVoKtvSu5y5rWXTLtNrNLb8ylnGReNQZro2HIIykEyNE5Gnn3bBlmX8qkgh0wvYUU24bgXvmv4ZyTnufSJlo4l-XfeQEtpgquMZjljtxbANPHhuwHxb7W-du3ji9p5YATfPEHgadotNW/cGNvD49s06k0bQ8zcJ0dcSTbCa3K70Z5XYXqtRFrVqfGacAXmV4XiaMQyHfI/t-dlt38nbfE6DXg77b4wS3jXteMRR57kWLoJ/j4sKe5/kE6zbnsFtXw==";
-
-    char temp[1024];
-    std::string postData = "";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-    postData += temp;
-    sprintf(temp, "topaz_id=%d&", topaz_id);
-    postData += temp;
-    //sprintf(temp, "purchase_data=%s&", data);
-    sprintf(temp, "purchase_data=%s&", data2);
-    postData += temp;
-    //sprintf(temp, "signature=%s", signature);
-    sprintf(temp, "signature=%s", sign2);
-    postData += temp;
-    CCLog("%s", postData.c_str());
-    
-    httpStatus = 1;
-    
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl("http://14.63.225.203/cogma/game/purchase_topaz_google.php");
-    req->setRequestData(postData.c_str(), postData.size());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
-}
-
-void Splash::XmlParseVerifyPurchaseResult(char* data, int size)
-{
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
-    {
-        CCLog("토파즈 구매 성공!");
-        /*
-         // 토파즈, 별사탕을 갱신한다.
-         int topaz = nodeResult.child("money").attribute("topaz").as_int();
-         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-         myInfo->SetMoney(topaz, starcandy);
-         
-         // 부모 scene에 갱신
-         CCString* param = CCString::create("2");
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-         
-         // 성공한 팝업창으로 넘어간다.
-         ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
-         */
-    }
-    else
-    {
-        CCLog("failed code = %d", code);
-        if (code == 10) CCLog("서버인증실패");
-        else if (code == 11) CCLog("payload 다름");
-        else if (code == 12) CCLog("이미 지급한 토파즈");
-        else if (code == 13) CCLog("토파즈 id 이상함");
-        
-        //ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-    }
-    
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-    JniMethodInfo t;
-    if (JniHelper::getStaticMethodInfo(t,
-                                       "com/playDANDi/CocoMagic/InAppBilling",
-                                       "Consume",
-                                       "()V"))
-    {
-        CCLog("hihihi");
-		t.env->CallStaticVoidMethod(t.classID, t.methodID);
-		// Release
-		t.env->DeleteLocalRef(t.classID);
-    }
-#endif
-}
-
-
 void Splash::GetTodayCandyFriend()
 {
     m_pMsgLabel->setString("오늘의 별사탕 그룹 구성 중...");
@@ -1375,16 +1246,18 @@ void Splash::GetTodayCandyFriend()
 
 void Splash::LastActionStart()
 {
+    Splash* pThis = (Splash*)Depth::GetCurPointer();
+
     // 오늘의 별사탕 친구 목록 받아오기
-    GetTodayCandyFriend();
-    
+    pThis->GetTodayCandyFriend();
+
     // 이제 시작
     CCActionInterval* action = CCSequence::create(CCEaseBounceIn::create( CCMoveBy::create(0.5f, ccp(0, 900)) ),
                                                //   CCDelayTime::create(0.5f),
-                        CCCallFuncND::create(this, callfuncND_selector(Splash::LastActionCallback), NULL), NULL);
-    m_pTitle->runAction(action);
-    
-    m_pMsgLabel->setOpacity(0);
+                        CCCallFuncND::create(pThis, callfuncND_selector(Splash::LastActionCallback), NULL), NULL);
+    pThis->m_pTitle->runAction(action);
+
+    pThis->m_pMsgLabel->setOpacity(0);
 }
 
 void Splash::LastActionCallback(CCNode* sender, void* data)

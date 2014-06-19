@@ -86,16 +86,12 @@ bool Message::init()
     msgData.clear();
     // 네트워크로 메시지들을 받아온다.
     char temp[50];
-    std::string url = "http://14.63.225.203/cogma/game/get_messagelist.php?";
+    std::string params = "";
     sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    url += temp;
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl(url.c_str());
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
-    CCHttpClient::getInstance()->send(req);
-    req->release();
+    params += temp;
     
+    Network::HttpPost(params, URL_MESSAGE_LIST, this, httpresponse_selector(Message::onHttpRequestCompleted));
+
     return true;
 }
 
@@ -396,34 +392,25 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 httpStatus = 1;
                 // 메시지에 대한 처리 서버 통신
                 char temp[50];
-                std::string url = "http://14.63.225.203/cogma/game/receive_message_one.php?";
+                std::string param = "";
                 sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                url += temp;
+                param += temp;
                 sprintf(temp, "message_id=%d", msgData[httpMsgIdx]->GetId());
-                url += temp;
-                CCLog("url : %s", url.c_str());
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(url.c_str());
-                req->setRequestType(CCHttpRequest::kHttpPost);
-                req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
-                CCHttpClient::getInstance()->send(req);
-                req->release();
+                param += temp;
+                
+                Network::HttpPost(param, URL_MESSAGE_ONE, this, httpresponse_selector(Message::onHttpRequestCompleted));
                 
                 // 포션 요청에 대한 메시지이므로 send_potion protocol을 호출한다. 결과는 전혀 신경쓰지 않는다.
                 if (msgData[httpMsgIdx]->GetType() == 5 &&
                     Friend::GetRemainPotionTime(msgData[httpMsgIdx]->GetFriendKakaoId()) <= 0)
                 {
-                    std::string url = "http://14.63.225.203/cogma/game/send_potion.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "friend_kakao_id=%d", msgData[httpMsgIdx]->GetFriendKakaoId());
-                    url += temp;
-                    CCLog("url : %s", url.c_str());
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    param += temp;
+                    
+                    Network::HttpPost(param, URL_SEND_POTION, this, httpresponse_selector(Message::onHttpRequestCompleted));
                 }
                 
                 break;
@@ -507,7 +494,13 @@ void Message::EndSceneCallback()
 void Message::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -523,12 +516,12 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-    
+    */
     switch (httpStatus)
     {
-        case 0: XmlParseMsg(dumpData, buffer->size()); break;
-        case 1: XmlParseMsgReceiveOne(dumpData, buffer->size()); break;
-        case 2: ParseProfileImage(dumpData, buffer->size(), atoi(res->getHttpRequest()->getTag())); break;
+        case 0: XmlParseMsg(dumpData, bufferSize); break;
+        case 1: XmlParseMsgReceiveOne(dumpData, bufferSize); break;
+        case 2: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 

@@ -249,6 +249,9 @@ void Ranking::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
+        CCLog("Ranking Noti(2) : 토파즈 = %d", myInfo->GetTopaz());
+        CCLog("토파즈 string = %s", Common::MakeComma(myInfo->GetTopaz()).c_str());
+        
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());

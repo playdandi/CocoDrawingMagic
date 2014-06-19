@@ -446,22 +446,15 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         
                         // upgrade skill
                         char temp[255];
-                        std::string url = "http://14.63.225.203/cogma/game/upgrade_skill.php?";
+                        std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "user_skill_id=%d&", ms->GetUserId());
-                        url += temp;
+                        param += temp;
                         sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1)); // 레벨+1
-                        url += temp;
-                        CCLog("url = %s", url.c_str());
-                        
-                        CCHttpRequest* req = new CCHttpRequest();
-                        req->setUrl(url.c_str());
-                        req->setRequestType(CCHttpRequest::kHttpPost);
-                        req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
-                        req->setTag("0");
-                        CCHttpClient::getInstance()->send(req);
-                        req->release();
+                        param += temp;
+
+                        Network::HttpPost(param, URL_UPGRADE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "0");
                     }
                     break;
                 }
@@ -479,22 +472,15 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
                     
                     char temp[255];
-                    std::string url = "http://14.63.225.203/cogma/game/purchase_skill.php?";
+                    std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "skill_id=%d&", skill_common_id);
-                    url += temp;
+                    param += temp;
                     sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, 1)); // 새로 배우니 당연히 레벨 1
-                    url += temp;
-                    CCLog("url = %s", url.c_str());
-                    
-                    CCHttpRequest* req = new CCHttpRequest();
-                    req->setUrl(url.c_str());
-                    req->setRequestType(CCHttpRequest::kHttpPost);
-                    req->setResponseCallback(this, httpresponse_selector(SketchDetail::onHttpRequestCompleted));
-                    req->setTag("1");
-                    CCHttpClient::getInstance()->send(req);
-                    req->release();
+                    param += temp;
+
+                    Network::HttpPost(param, URL_PURCHASE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "1");
                     break;
                 }
             }
@@ -546,6 +532,9 @@ void SketchDetail::EndScene(bool isNoti)
 void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    /*
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -561,10 +550,14 @@ void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
+    */
+    
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
     int tag = atoi(res->getHttpRequest()->getTag());
     if (tag == 0 || tag == 1)
-        XmlParseUpgradeOrPurchaseSkill(dumpData, (int)buffer->size(), tag);
+        XmlParseUpgradeOrPurchaseSkill(dumpData, bufferSize, tag);
 }
 void SketchDetail::XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag)
 {
