@@ -4,7 +4,9 @@
 #include "Common.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -28,11 +30,8 @@ public:
     void MakeScroll();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx);
-    
-    //void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
-    //void XmlParseVerifyPurchaseResult(char* data, int size);
-    
+    void XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx);
+
     void SetErrorFlag(bool flag);
     
     void EndScene();

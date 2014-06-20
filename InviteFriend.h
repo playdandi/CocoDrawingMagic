@@ -4,7 +4,9 @@
 #include "Common.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -31,8 +33,8 @@ public:
     void Notification(CCObject* obj);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseList(char* data, int size);
-    void XmlParseInviteFriend(char* data, int size, int idx);
+    void XmlParseList(xml_document *xmlDoc);
+    void XmlParseInviteFriend(xml_document *xmlDoc, int idx);
     
     void InitSprites();
     void MakeScroll();

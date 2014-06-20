@@ -2,7 +2,9 @@
 #define __CocoMagic__Loading__
 
 #include "Common.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d::extension;
 
 class Loading : public CCLayer
@@ -21,7 +23,7 @@ public:
     void Callback(CCNode* sender, void* pointer);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseGameStart(char* data, int size);
+    void XmlParseGameStart(xml_document *xmlDoc);
     
     void EndScene();
     

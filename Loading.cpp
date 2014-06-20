@@ -1,7 +1,4 @@
 #include "Loading.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 static int status;
 
@@ -128,30 +125,31 @@ void Loading::Callback(CCNode* sender, void* pointer)
 void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
     
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
-    XmlParseGameStart(dumpData, bufferSize);
+    XmlParseGameStart(&xmlDoc);
 }
 
-void Loading::XmlParseGameStart(char* data, int size)
+void Loading::XmlParseGameStart(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
+    xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 포션 부족함.
+            Common::ShowPopup(this, "Loading", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+        else
+            Common::ShowPopup(this, "Loading", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+
+    else if (code == 0)
     {
         xml_node gameInfo = nodeResult.child("game-info");
         
@@ -241,11 +239,6 @@ void Loading::XmlParseGameStart(char* data, int size)
         
         // 게임 시작!
         Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
-    }
-    else
-    {
-        if (code == 10) CCLog("Loading : 포션 부족함. 재부팅.");
-        CCLog("failed code = %d", code);
     }
 }
 

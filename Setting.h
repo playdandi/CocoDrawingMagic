@@ -2,6 +2,9 @@
 #define __CocoMagic__Setting__
 
 #include "Common.h"
+#include "pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 class Setting : public CCLayer
 {
@@ -22,7 +25,7 @@ public:
     void Notification(CCObject* obj);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseResult(char* data, int size);
+    void XmlParseResult(xml_document *xmlDoc);
     
     void EndScene();
     

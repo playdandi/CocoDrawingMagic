@@ -1,7 +1,4 @@
 #include "InviteFriend.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 static std::vector<int> kakaoIds;
 static std::vector<int> remainTimes;
@@ -403,55 +400,38 @@ void InviteFriend::RenewData()
 
 void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
-    
+    CCLog("http status = %d", httpStatus);
     switch (httpStatus)
     {
-        case 0: XmlParseList(dumpData, bufferSize); break;
-        case 1: XmlParseInviteFriend(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
+        case 0: XmlParseList(&xmlDoc); break;
+        case 1: XmlParseInviteFriend(&xmlDoc, atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 
-void InviteFriend::XmlParseList(char* data, int size)
+void InviteFriend::XmlParseList(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "InviteFriend", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         kakaoIds.clear();
         remainTimes.clear();
@@ -481,29 +461,30 @@ void InviteFriend::XmlParseList(char* data, int size)
         // scroll을 생성 후 데이터 보여주기
         MakeScroll();
     }
-    else
-    {
-        CCLog("FAILED : code = %d", code);
-    }
 }
 
-void InviteFriend::XmlParseInviteFriend(char* data, int size, int idx)
+void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc, int idx)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10)
+            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_MONTH_OVER_30, BTN_1, nullData);
+        else if (code == 11)
+            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_DAY_OVER_20, BTN_1, nullData);
+        else if (code == 12)
+            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_ALREADY_DID, BTN_1, nullData);
+        else
+            Common::ShowPopup(this, "InviteFriend", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -533,13 +514,5 @@ void InviteFriend::XmlParseInviteFriend(char* data, int size, int idx)
         std::vector<int> data;
         data.push_back(reward);
         Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_OK, BTN_1, data);
-    }
-    else
-    {
-        std::vector<int> nullData;
-        if (code == 10) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_MONTH_OVER_30, BTN_1, nullData);
-        else if (code == 11) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_DAY_OVER_20, BTN_1, nullData);
-        else if (code == 12) Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_ALREADY_DID, BTN_1, nullData);
-        else Common::ShowPopup(this, "InviteFriend", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
 }

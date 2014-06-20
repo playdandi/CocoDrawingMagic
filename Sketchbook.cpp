@@ -1,7 +1,4 @@
 #include "Sketchbook.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 static int from; // 0 : from Ranking , 1 : from GameReady
 
@@ -892,50 +889,33 @@ void Sketchbook::EndSceneCallback()
 
 void Sketchbook::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    XmlParsePracticeSkill(dumpData, bufferSize);
-}
-void Sketchbook::XmlParsePracticeSkill(char* data, int size)
-{
-    // xml parsing
     xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
-    if (!result)
+    XmlParsePracticeSkill(&xmlDoc);
+}
+
+void Sketchbook::XmlParsePracticeSkill(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Sketchbook", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int puid = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
         
@@ -961,9 +941,5 @@ void Sketchbook::XmlParsePracticeSkill(char* data, int size)
             CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
             EndScene();
         }
-    }
-    else
-    {
-        CCLog("failed code = %d", code);
     }
 }

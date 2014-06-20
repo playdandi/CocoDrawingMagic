@@ -32,7 +32,7 @@ public:
     void RenewSlot(bool isAutoMove);
     void SendToParent();
     
-    void XmlParseSkillSlot(char* data, int size);
+    void XmlParseSkillSlot(xml_document *xmlDoc);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     CREATE_FUNC(MagicList);

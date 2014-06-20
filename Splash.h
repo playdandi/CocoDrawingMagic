@@ -50,11 +50,13 @@ public:
     
     void XMLParseGameData();
     void WriteResFile(char* data, int size);
-    void XmlParseVersion(char* data, int size);
-    void XmlParseLogin(char* data, int size);
-    void XmlParseMyInfo(char* data, int size);
-    void XmlParseRewardWeeklyRank(char* data, int size);
-    void XmlParseFriends(char* data, int size);
+    
+    void XmlParseVersion(xml_document *xmlDoc);
+    void XmlParseLogin(xml_document *xmlDoc);
+    void XmlParseMyInfo(xml_document *xmlDoc);
+    void XmlParseRewardWeeklyRank(xml_document *xmlDoc);
+    void XmlParseFriends(xml_document *xmlDoc);
+    
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     

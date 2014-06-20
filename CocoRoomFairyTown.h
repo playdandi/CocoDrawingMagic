@@ -5,7 +5,9 @@
 #include "Fairy.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -37,7 +39,7 @@ public:
     void EndSceneCallback();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseFairyList(char* data, int size);
+    void XmlParseFairyList(xml_document *xmlDoc);
     
 protected:
     CCSize winSize;

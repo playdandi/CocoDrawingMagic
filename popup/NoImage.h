@@ -2,6 +2,9 @@
 #define __CocoMagic__NoImage__
 
 #include "Common.h"
+#include "../pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 class NoImage : public CCLayer
 {
@@ -29,19 +32,19 @@ public:
     void HttpRequest(std::string url, std::string param);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
-    void XmlParseBuyTopaz(char* data, int size);
-    void XmlParseBuyStarCandy(char* data, int size);
-    void XmlParseBuyPotion(char* data, int size);
-    void XmlParseSendPotion(char* data, int size);
-    void XmlParseMsg(char* data, int size);
-    void XmlParseSendTopaz(char* data, int size);
-    void XmlParseUpgradeStaff(char* data, int size);
-    void XmlParseUpgradeFairy(char* data, int size);
-    void XmlParseBuyFairy(char* data, int size);
-    void XmlParseUsingFairy(char* data, int size);
-    void XmlParseBuySkillSlot(char* data, int size);
-    void XmlParseBuySkillProperty(char* data, int size);
-    void XmlParseGetFirstSkill(char* data, int size);
+    void XmlParseBuyTopaz(xml_document *xmlDoc);
+    void XmlParseBuyStarCandy(xml_document *xmlDoc);
+    void XmlParseBuyPotion(xml_document *xmlDoc);
+    void XmlParseSendPotion(xml_document *xmlDoc);
+    void XmlParseMsg(xml_document *xmlDoc);
+    void XmlParseSendTopaz(xml_document *xmlDoc);
+    void XmlParseUpgradeStaff(xml_document *xmlDoc);
+    void XmlParseUpgradeFairy(xml_document *xmlDoc);
+    void XmlParseBuyFairy(xml_document *xmlDoc);
+    void XmlParseUsingFairy(xml_document *xmlDoc);
+    void XmlParseBuySkillSlot(xml_document *xmlDoc);
+    void XmlParseBuySkillProperty(xml_document *xmlDoc);
+    void XmlParseGetFirstSkill(xml_document *xmlDoc);
     
 protected:
     CCSize winSize;

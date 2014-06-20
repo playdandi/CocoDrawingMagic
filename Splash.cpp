@@ -367,26 +367,24 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 }
 
 
-void Splash::XmlParseVersion(char* data, int size)
+void Splash::XmlParseVersion(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 버전 정보를 받는다.
-        //xml_node setting = nodeResult.child("setting");
         gameVersion = nodeResult.child("game-version").text().as_int();
         int binaryVersion = nodeResult.child("binary-version").text().as_int();
         
@@ -433,10 +431,6 @@ void Splash::XmlParseVersion(char* data, int size)
             // 로그인 시도
             TryLogin();
         }
-    }
-    else
-    {
-        CCLog("failed code = %d", code);
     }
 }
 
@@ -715,23 +709,24 @@ void Splash::WriteResFile(char* data, int size)
     TryLogin();
 }
 
-void Splash::XmlParseLogin(char* data, int size)
+void Splash::XmlParseLogin(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 11) // 블록당한 유저
+            Common::ShowPopup(this, "Splash", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 로그인 기본 정보를 받는다.
         xml_node setting = nodeResult.child("setting");
@@ -760,36 +755,24 @@ void Splash::XmlParseLogin(char* data, int size)
         
         Network::HttpPost(param, URL_USERINFO, this, httpresponse_selector(Splash::onHttpRequestCompleted));
     }
-    else
-    {
-        if (code == 11) // 블록당한 유저
-        {
-            std::vector<int> nullData;
-            Common::ShowPopup(this, "Splash", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
-        }
-            
-        // failed msg
-        CCLog("failed code = %d", code);
-    }
 }
 
-void Splash::XmlParseMyInfo(char* data, int size)
+void Splash::XmlParseMyInfo(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 내 모든 정보를 받는다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -910,30 +893,32 @@ void Splash::XmlParseMyInfo(char* data, int size)
             Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Splash::onHttpRequestCompleted));
         }
     }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
-    }
 }
 
-void Splash::XmlParseRewardWeeklyRank(char* data, int size)
+void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10 || code == 11)
+        {
+            // code 10 : 지난 주 게임 전혀 하지 않음.
+            // code 11 : 지난 주 점수 업데이트가 되어있지 않음.
+            Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_REBOOT, BTN_1, nullData);
+        }
+        else if (code == 12)
+            CCLog("Splash : 이미 보상을 받은 경우");
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         myRank = nodeResult.child("my-rank").attribute("rank").as_int();
         myLastWeekHighScore = nodeResult.child("my-rank").attribute("last-week-high-score").as_int();
@@ -973,33 +958,24 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
 
         Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Splash::onHttpRequestCompleted));
     }
-    else
-    {
-        if (code == 10) CCLog("Splash : 지난 주 게임 전혀 하지 않음.");
-        else if (code == 11) CCLog("Splash : 지난 주 점수 업데이트가 되어있지 않음.");
-        // 10, 11은 재부팅합시다.
-        else if (code == 12) CCLog("Splash : 이미 보상을 받은 경우");
-        else CCLog("failed code = %d", code);
-    }
 }
 
-void Splash::XmlParseFriends(char* data, int size)
+void Splash::XmlParseFriends(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int kakaoId;
         std::string nickname;
@@ -1090,20 +1066,15 @@ void Splash::XmlParseFriends(char* data, int size)
             }
         }
     }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
-    }
 }
 
 
 void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
     // LOGIN 프로토콜 응답의 경우, response header에 있는 set-cookie의 session 값을 들고온다.
     if (httpStatus == HTTP_LOGIN)
@@ -1124,15 +1095,15 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     switch (httpStatus-1)
     {
         case HTTP_VERSION:
-            XmlParseVersion(dumpData, bufferSize); break;
+            XmlParseVersion(&xmlDoc); break;
         case HTTP_LOGIN:
-            XmlParseLogin(dumpData, bufferSize); break;
+            XmlParseLogin(&xmlDoc); break;
         case HTTP_MYINFO:
-            XmlParseMyInfo(dumpData, bufferSize); break;
+            XmlParseMyInfo(&xmlDoc); break;
         case HTTP_REWARDWEELYRANK:
-            XmlParseRewardWeeklyRank(dumpData, bufferSize); break;
+            XmlParseRewardWeeklyRank(&xmlDoc); break;
         case HTTP_FRIENDS:
-            XmlParseFriends(dumpData, bufferSize); break;
+            XmlParseFriends(&xmlDoc); break;
     }
 }
 
@@ -1154,6 +1125,7 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
 
+    
     // gameVersion 변경으로 resource XML 파일 받았을 경우
     if (atoi(res->getHttpRequest()->getTag()) == 999)
     {
@@ -1265,6 +1237,7 @@ void Splash::LastActionCallback(CCNode* sender, void* data)
 
 void Splash::LastActionCallback2(CCNode* sender, void *data)
 {
+    EndScene();
     Common::ShowNextScene(this, "Splash", "Ranking", true);
 }
 
@@ -1283,13 +1256,15 @@ std::string Splash::SubstrNickname(std::string nickname)
         }
         nickname = nickname.substr(0, i);
         nickname += "...";
-        //CCLog("%s", nickname.c_str());
     }
     return nickname;
 }
 
 void Splash::EndScene()
 {
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
     m_pBackground->removeFromParentAndCleanup(true);
     m_pForKakao->removeFromParentAndCleanup(true);
     m_pTitle->removeFromParentAndCleanup(true);

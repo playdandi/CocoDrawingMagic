@@ -7,6 +7,9 @@
 #include "PuzzleSkill.h"
 #include "Effect.h"
 #include "Sound.h"
+#include "../pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 #define SKILL_STOPTIME 0
 #define SKILL_BASIC 1
@@ -185,10 +188,12 @@ public:
     
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
+    
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseFriends(char* data, int size);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    void XmlParseFriends(xml_document *xmlDoc);
+    void XmlParseGameEnd(xml_document *xmlDoc);
     void ParseProfileImage(char* data, int size, int idx);
-    void XmlParseGameEnd(char* data, int size);
     
 protected:
     float PIECE8_WIDTH;

@@ -1,5 +1,4 @@
 #include "Common.h"
-#include "pugixml/pugixml.hpp"
 #include "Loading.h"
 #include "Ranking.h"
 #include "GameReady.h"
@@ -31,7 +30,6 @@
 #include "Splash.h"
 #include "RankUp.h"
 
-using namespace pugi;
 Sound* sound;
 
 std::string fontList[] = {
@@ -420,7 +418,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         if (isReplaced)
         {
             CCDirector::sharedDirector()->replaceScene(nextScene);
-            ((Splash*)obj)->EndScene();
+            //((Splash*)obj)->EndScene();
         }
     }
     else if (from == "Ranking")
@@ -901,6 +899,7 @@ void Common::RebootSystem(void* p)
     while (depth.size() > 0)
     {
         cur = Depth::GetCurPointer();
+        CCLog("%s", Depth::GetCurNameString().c_str());
         
         if (Depth::GetCurNameString() == "Splash") ((Splash*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Ranking") ((Ranking*)cur)->EndScene();

@@ -1,8 +1,5 @@
 #include "NoImage.h"
 #include "BuyPotion.h"
-#include "../pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 static int type;
 static int btn;
@@ -19,7 +16,6 @@ CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int e
     d = data;
     
     fromWhere = etc;
-    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     NoImage* pLayer = NoImage::create();
@@ -681,10 +677,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                         param += temp;
-                        sprintf(temp, "starcandy_id=%d&", priceStarCandy[d[0]]->GetId());
+                        sprintf(temp, "starcandy_id=%d", priceStarCandy[d[0]]->GetId());
                         param += temp;
-                        sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
+                        //param += temp;
                         CCLog("url : %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -765,10 +761,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                         param += temp;
-                        sprintf(temp, "cost_type=%d&", costType);
+                        sprintf(temp, "cost_type=%d", costType);
                         param += temp;
-                        sprintf(temp, "cost_value=%d", cost);
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", cost);
+                        //param += temp;
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -794,10 +790,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         param += temp;
                         sprintf(temp, "user_fairy_id=%d&",  myInfo->GetActiveFairyUserId());
                         param += temp;
-                        sprintf(temp, "cost_type=%d&", costType);
+                        sprintf(temp, "cost_type=%d", costType);
                         param += temp;
-                        sprintf(temp, "cost_value=%d", cost);
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", cost);
+                        //param += temp;
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -827,10 +823,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         param += temp;
                         sprintf(temp, "fairy_id=%d&", fi->GetId());
                         param += temp;
-                        sprintf(temp, "cost_type=%d&", costType);
+                        sprintf(temp, "cost_type=%d", costType);
                         param += temp;
-                        sprintf(temp, "cost_value=%d", cost);
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", cost);
+                        //param += temp;
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -850,10 +846,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         std::string param = "";
                         sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                         param += temp;
-                        sprintf(temp, "slot_id=%d&", d[0]);
+                        sprintf(temp, "slot_id=%d", d[0]);
                         param += temp;
-                        sprintf(temp, "cost_value=%d", d[1]);
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", d[1]);
+                        //param += temp;
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -875,10 +871,10 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         if (d[0] == 1) newSkillType = 2;
                         else if (d[0] == 2) newSkillType = 1;
                         else newSkillType = d[0];
-                        sprintf(temp, "skill_type=%d&", newSkillType);
+                        sprintf(temp, "skill_type=%d", newSkillType);
                         param += temp;
-                        sprintf(temp, "cost_value=%d", d[1]);
-                        param += temp;
+                        //sprintf(temp, "cost_value=%d", d[1]);
+                        //param += temp;
                         CCLog("url = %s", url.c_str());
                         HttpRequest(url, param);
                     }
@@ -977,65 +973,64 @@ void NoImage::HttpRequest(std::string url, std::string param)
 
 void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
-    
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
     
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+
     // parse xml data
     switch (type)
     {
         case BUY_TOPAZ_TRY:
-            XmlParseBuyTopaz(dumpData, bufferSize); break;
+            XmlParseBuyTopaz(&xmlDoc); break;
         case BUY_STARCANDY_TRY:
-            XmlParseBuyStarCandy(dumpData, bufferSize); break;
+            XmlParseBuyStarCandy(&xmlDoc); break;
         case BUYPOTION_1:
-            XmlParseBuyPotion(dumpData, bufferSize); break;
+            XmlParseBuyPotion(&xmlDoc); break;
         case POTION_SEND_TRY:
-            XmlParseSendPotion(dumpData, bufferSize); break;
+            XmlParseSendPotion(&xmlDoc); break;
         case MESSAGE_ALL_TRY:
-            XmlParseMsg(dumpData, bufferSize); break;
+            XmlParseMsg(&xmlDoc); break;
         case SEND_TOPAZ_TRY:
-            XmlParseSendTopaz(dumpData, bufferSize); break;
+            XmlParseSendTopaz(&xmlDoc); break;
         case UPGRADE_STAFF_BY_TOPAZ_TRY:
         case UPGRADE_STAFF_BY_STARCANDY_TRY:
-            XmlParseUpgradeStaff(dumpData, bufferSize); break;
+            XmlParseUpgradeStaff(&xmlDoc); break;
         case UPGRADE_FAIRY_BY_TOPAZ_TRY:
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
-            XmlParseUpgradeFairy(dumpData, bufferSize); break;
+            XmlParseUpgradeFairy(&xmlDoc); break;
         case BUY_FAIRY_BY_TOPAZ_TRY:
         case BUY_FAIRY_BY_STARCANDY_TRY:
-            XmlParseBuyFairy(dumpData, bufferSize); break;
+            XmlParseBuyFairy(&xmlDoc); break;
         case USING_FAIRY:
-            XmlParseUsingFairy(dumpData, bufferSize); break;
+            XmlParseUsingFairy(&xmlDoc); break;
         case BUY_SKILLSLOT_BY_STARCANDY_TRY:
         case BUY_SKILLSLOT_BY_TOPAZ_TRY:
-            XmlParseBuySkillSlot(dumpData, bufferSize); break;
+            XmlParseBuySkillSlot(&xmlDoc); break;
         case BUY_PROPERTY_TRY:
-            XmlParseBuySkillProperty(dumpData, bufferSize); break;
+            XmlParseBuySkillProperty(&xmlDoc); break;
     }
 }
 
-void NoImage::XmlParseBuyTopaz(char* data, int size)
+void NoImage::XmlParseBuyTopaz(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else // 10 : // 잘못된 토파즈 id
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 토파즈, 별사탕을 갱신한다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1051,30 +1046,26 @@ void NoImage::XmlParseBuyTopaz(char* data, int size)
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUY_TOPAZ_OK, BTN_1);
     }
-    else if (code == 10)
-    {
-        // 잘못된 토파즈 id
-        ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-    }
 }
 
-void NoImage::XmlParseBuyStarCandy(char* data, int size)
+void NoImage::XmlParseBuyStarCandy(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3)
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else // 10 : 잘못된 별사탕 id
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 토파즈, 별사탕을 갱신한다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1090,30 +1081,26 @@ void NoImage::XmlParseBuyStarCandy(char* data, int size)
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUY_STARCANDY_OK, BTN_1);
     }
-    else
-    {
-        if (code == 3) ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-        if (code == 10) ; // 잘못된 별사탕 id
-    }
 }
 
-void NoImage::XmlParseBuyPotion(char* data, int size)
+void NoImage::XmlParseBuyPotion(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3) // 금액 부족 (토파즈)
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 로그인 기본 정보를 받는다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1131,72 +1118,66 @@ void NoImage::XmlParseBuyPotion(char* data, int size)
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", BUYPOTION_OK, BTN_1);
     }
-    else
-    {
-        if (code == 3) ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-    }
 }
 
-void NoImage::XmlParseSendPotion(char* data, int size)
+void NoImage::XmlParseSendPotion(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
+    xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
-    switch (code)
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        case 0: // 포션 보내기 성공
-            friendList[d[0]]->SetRemainPotionTime(3600);
-            friendList[d[0]]->SetPotionSprite();
-            ReplaceScene("NoImage", POTION_SEND_OK, BTN_1);
-            break;
-        case 10: // 포션 수신 거부 상태
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 포션 수신 거부 상태
+        {
             friendList[d[0]]->SetPotionMsgStatus(0);
-            //friendList[d[0]]->SetRemainPotionTime(0);
             friendList[d[0]]->SetPotionSprite();
             ReplaceScene("NoImage", POTION_SEND_REJECT, BTN_1);
-            break;
-        case 11: // 친구가 아님
+        }
+        else if (code == 11) // 친구가 아님
+        {
             friendList[d[0]]->SetPotionMsgStatus(0);
             friendList[d[0]]->SetRemainPotionTime(0);
             friendList[d[0]]->SetPotionSprite();
             ReplaceScene("NoImage", POTION_SEND_NO_FRIEND, BTN_1);
-            break;
-        case 12: // 포션을 보낸지 1시간 경과하지 않음
+        }
+        else if (code == 12) // 포션을 보낸 지 1시간 경과하지 않음
+        {
             friendList[d[0]]->SetRemainPotionTime(3600);
             friendList[d[0]]->SetPotionSprite();
             ReplaceScene("NoImage", POTION_SEND_EARLY, BTN_1);
-            break;
+        }
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+    
+    else if (code == 0)
+    {
+        friendList[d[0]]->SetRemainPotionTime(3600);
+        friendList[d[0]]->SetPotionSprite();
+        ReplaceScene("NoImage", POTION_SEND_OK, BTN_1);
     }
 }
 
-void NoImage::XmlParseMsg(char* data, int size)
+void NoImage::XmlParseMsg(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 포션 정보 갱신
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
@@ -1242,61 +1223,59 @@ void NoImage::XmlParseMsg(char* data, int size)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Message", param);
         ReplaceScene("NoImage", MESSAGE_ALL_OK, BTN_1);
     }
-    else
-    {
-        CCLog("FAILED : code = %d", code);
-    }
 }
 
-void NoImage::XmlParseSendTopaz(char* data, int size)
+void NoImage::XmlParseSendTopaz(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 없는 토파즈 아이디
+            ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
+        else if (code == 11) // 친구가 아님
+            ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 성공한 팝업창으로 넘어간다.
         ReplaceScene("NoImage", SEND_TOPAZ_OK, BTN_1);
     }
-    else if (code == 10)
-    {
-        // 없는 토파즈 아이디
-        ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
-    }
-    else if (code == 11)
-    {
-        // 친구가 아님
-        ReplaceScene("NoImage", SEND_TOPAZ_FAIL, BTN_1);
-    }
 }
 
-void NoImage::XmlParseUpgradeStaff(char* data, int size)
+void NoImage::XmlParseUpgradeStaff(xml_document *xmlDoc)
 {
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3) // 잔액 부족
+        {
+            if (type == UPGRADE_STAFF_BY_TOPAZ_TRY)
+                ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+            else
+                ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        }
+        else if (code == 11) // 이미 지팡이 만렙
+            ReplaceScene("NoImage", UPGRADE_STAFF_FULL_LEVEL, BTN_1);
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
@@ -1320,43 +1299,33 @@ void NoImage::XmlParseUpgradeStaff(char* data, int size)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     }
-    else
+}
+
+void NoImage::XmlParseUpgradeFairy(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        if (code == -3) // 세션 종료
-            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
-            
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
         else if (code == 3) // 잔액 부족
         {
-            if (type == UPGRADE_STAFF_BY_TOPAZ_TRY)
+            if (type == UPGRADE_FAIRY_BY_TOPAZ_TRY)
                 ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
             else
                 ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
         }
-        else if (code == 4)
-            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
-        else if (code == 11) // 이미 지팡이 만렙
-            ReplaceScene("NoImage", UPGRADE_STAFF_FULL_LEVEL, BTN_1);
-        else
+        else if (code == 12) // 이미 요정 만렙
+            ReplaceScene("NoImage", UPGRADE_FAIRY_FULL_LEVEL, BTN_1);
+        else // 10 (잘못된 업그레이드 타입) , 11 (요정 정보가 없을 때)
             ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
-}
-
-void NoImage::XmlParseUpgradeFairy(char* data, int size)
-{
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
     
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-    
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1392,41 +1361,33 @@ void NoImage::XmlParseUpgradeFairy(char* data, int size)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
     }
-    else
+}
+
+void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("failed code = %d", code);
-        if (code == 3) // 잔액 부족
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3) // 잔액 부족
         {
-            if (type == UPGRADE_FAIRY_BY_TOPAZ_TRY)
+            if (type == BUY_FAIRY_BY_TOPAZ_TRY)
                 ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
             else
                 ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
         }
-        else if (code == 4)
-            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
-        else if (code == 12) // 이미 요정 만렙
-            ReplaceScene("NoImage", UPGRADE_FAIRY_FULL_LEVEL, BTN_1);
-        else // 10 (잘못된 업그레이드 타입) , 11 (요정 정보가 없을 때)
+        else if (code >= 10 && code <= 12) // 10 : 없는 요정 ID , 11 : 이미 보유하고 있는 요정 ID , 12 : 결제 방법 틀림 (활성화 조건 미충족)
             ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-    }
-}
-
-void NoImage::XmlParseBuyFairy(char* data, int size)
-{
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        else // 재부팅 시키기
+            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
@@ -1484,46 +1445,24 @@ void NoImage::XmlParseBuyFairy(char* data, int size)
             ReplaceScene("NoImage", BUY_FAIRY_OK, BTN_1);
         }
     }
-    else
-    {
-        CCLog("failed code = %d", code);
-        if (code == 3) // 잔액 부족
-        {
-            if (type == BUY_FAIRY_BY_TOPAZ_TRY)
-                ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-            else
-                ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-        }
-        else if (code == 4) // 서버와 결제 내용 값이 다름 (재부팅)
-            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
-        else if (code == 10) // 없는 요정 ID
-            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-        else if (code == 11) // 이미 보유하고 있는 요정 ID
-            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-        else if (code == 12) // 결제 방법 틀림 (활성화 조건 미충족)
-            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
-        else // 재부팅 시키기
-            ReplaceScene("NoImage", NEED_TO_REBOOT, BTN_1);
-    }
 }
 
-void NoImage::XmlParseUsingFairy(char* data, int size)
+void NoImage::XmlParseUsingFairy(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // init
         myInfo->ClearFairyList();
@@ -1552,29 +1491,31 @@ void NoImage::XmlParseUsingFairy(char* data, int size)
         
         ReplaceScene("NoImage", BUY_FAIRY_OK, BTN_1);
     }
-    else
-    {
-        CCLog("XmlParseFairyList : failed code = %d", code);
-    }
 }
 
-void NoImage::XmlParseBuySkillSlot(char* data, int size)
+void NoImage::XmlParseBuySkillSlot(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3) // 금액 부족
+        {
+            if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
+                ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+            else
+                ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        }
+        else // 10 : 이미 구매한 슬롯 or 이전 단계 구매하지 않음 , 11 : 슬롯 개수 MAX
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1602,51 +1543,29 @@ void NoImage::XmlParseBuySkillSlot(char* data, int size)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
         CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-        /*
-        if (fromWhere == 1)
-            CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-        else if (fromWhere == 2)
-            CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        else if (fromWhere == 3)
-            CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-        */
+
         ReplaceScene("NoImage", BUY_SKILLSLOT_OK, BTN_1);
-    }
-    else
-    {
-        if (code == 3) {
-            CCLog("슬롯구매 : 금액 부족");
-            if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
-                ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-            else
-                ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-        }
-        else if (code == 4) CCLog("슬롯구매 : 금액이 맞지 않음. 재부팅.");
-        else if (code == 10) CCLog("슬롯구매 : 이미 구매한 슬롯 or 이전 단계 구매하지 않음");
-        else if (code == 11) CCLog("슬롯구매 : 슬롯 개수 MAX");
-        else CCLog("슬롯구매 : (code = %d) 기타 에러", code);
-        
-        //ReplaceScene("NoImage", BUY_SKILLSLOT_FAIL, BTN_1);
     }
 }
 
-void NoImage::XmlParseBuySkillProperty(char* data, int size)
+void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3)
+            Network::ShowCommonError(code);
+        else if (code == 3) // 금액 부족 (토파즈)
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else // 10 : 해당 속성 이미 보유 , 11 : 마스터 타입은 구매 불가
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -1694,18 +1613,5 @@ void NoImage::XmlParseBuySkillProperty(char* data, int size)
 
         // OK 창으로 넘어가자. 
         ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
-    }
-    else
-    {
-        if (code == 3) {
-            CCLog("스킬속성구매 : 금액 부족");
-            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-        }
-        else if (code == 4) CCLog("스킬속성구매 : 금액이 맞지 않음. 재부팅.");
-        else if (code == 10) CCLog("스킬속성구매 : 해당 속성 이미 보유");
-        else if (code == 11) CCLog("스킬속성구매 : 마스터 타입은 구매불가");
-        else CCLog("스킬속성구매 : (code = %d) 기타 에러", code);
-        
-        //ReplaceScene("NoImage", BUY_PROPERTY_FAIL, BTN_1);
     }
 }

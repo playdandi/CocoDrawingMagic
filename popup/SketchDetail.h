@@ -2,6 +2,9 @@
 #define __CocoMagic__SketchDetail__
 
 #include "Common.h"
+#include "../pugixml/pugixml.hpp"
+
+using namespace pugi;
 
 class SketchDetail : public CCLayer
 {
@@ -29,7 +32,7 @@ public:
     
     void EndScene(bool isNoti);
     
-    void XmlParseUpgradeOrPurchaseSkill(char* data, int size, int tag);
+    void XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     CREATE_FUNC(SketchDetail);

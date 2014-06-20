@@ -9,6 +9,7 @@
 #include "Data.h"
 #include "Fairy.h"
 #include "Loading.h"
+#include "pugixml/pugixml.hpp"
 #include "platform/android/jni/JniHelper.h"
 
 USING_NS_CC;
@@ -139,7 +140,7 @@ USING_NS_CC;
 #define BTN_MENU_GAMESTART 1
 
 
-
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 

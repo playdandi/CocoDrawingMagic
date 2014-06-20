@@ -1,7 +1,4 @@
 #include "Puzzle.h"
-#include "../pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 enum
 {
@@ -3005,10 +3002,9 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     param += temp;
     sprintf(temp, "starcandy=%d", iStarCandy);
     param += temp;
-    //CCLog("url = %s", url.c_str());
     
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_PUZZLEEND);
+    //// Loading 화면으로 MESSAGE request 넘기기
+    //Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_PUZZLEEND);
     
     Network::HttpPost(param, URL_GAMEEND, this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
 }
@@ -3016,9 +3012,25 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
 void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+    
+    switch (XMLStatus)
+    {
+        case 0: XmlParseGameEnd(&xmlDoc); break;
+        case 1: XmlParseFriends(&xmlDoc); break;
+        //default: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
+    }
+    XMLStatus++;
+}
+
+void Puzzle::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
     char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
-    /*
+    
+    // 프로필 사진 받아올 때
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
@@ -3027,37 +3039,32 @@ void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-    */
-    switch (XMLStatus)
-    {
-        case 0: XmlParseGameEnd(dumpData, bufferSize); break;
-        case 1: XmlParseFriends(dumpData, bufferSize); break;
-        default: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
-    }
+    
+    
+    ParseProfileImage(dumpData, (int)buffer->size(), atoi(res->getHttpRequest()->getTag()));
+    
     XMLStatus++;
 }
 
-void Puzzle::XmlParseFriends(char* data, int size)
+void Puzzle::XmlParseFriends(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Puzzle", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int kakaoId;
         std::string nickname;
@@ -3135,7 +3142,7 @@ void Puzzle::XmlParseFriends(char* data, int size)
                 CCHttpRequest* req = new CCHttpRequest();
                 req->setUrl(profiles[i]->GetProfileUrl().c_str());
                 req->setRequestType(CCHttpRequest::kHttpGet);
-                req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+                req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompletedNoEncrypt));
                 sprintf(tag, "%d", i);
                 req->setTag(tag);
                 CCHttpClient::getInstance()->send(req);
@@ -3159,16 +3166,8 @@ void Puzzle::XmlParseFriends(char* data, int size)
         // 새로 받을 프로필 이미지가 없다면, 바로 게임결과 화면으로 넘어가자.
         if (flag)
         {
-            // Loading 창 끄기
-            ((Loading*)Depth::GetCurPointer())->EndScene();
-            
             Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
         }
-    }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
     }
 }
 
@@ -3187,29 +3186,26 @@ void Puzzle::ParseProfileImage(char* data, int size, int idx)
     profileCnt++;
     if (profileCnt == (int)profiles.size())
     {
-        // Loading 창 끄기
-        ((Loading*)Depth::GetCurPointer())->EndScene();
-        
         Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
     }
 }
 
-void Puzzle::XmlParseGameEnd(char* data, int size)
+void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    if (!result)
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Puzzle", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // new record 인가?
         int isNewRecord = nodeResult.child("new-record").text().as_int();
@@ -3318,17 +3314,11 @@ void Puzzle::XmlParseGameEnd(char* data, int size)
         // 친구리스트 새로 호출하지 않는다면, 바로 게임결과 화면으로 넘어가자.
         if (flag)
         {
-            // Loading 창 끄기
-            ((Loading*)Depth::GetCurPointer())->EndScene();
+            //// Loading 창 끄기
+            //((Loading*)Depth::GetCurPointer())->EndScene();
             
             Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
         }
-    }
-    else
-    {
-        CCLog("Puzzle : failed code = %d", code);
-        if (code == -3) // 게임 실행하고 10분 지나 세션 종료됨. 재부팅.
-            Common::RebootSystem(Depth::GetCurPointer());
     }
 }
 

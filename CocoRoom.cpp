@@ -1,15 +1,10 @@
 #include "CocoRoom.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 static int tabNumber;
-//static int priority;
 
 CCScene* CocoRoom::scene(int tab, int prio)
 {
     tabNumber = tab;
-    //priority = prio;
     
     CCScene* pScene = CCScene::create();
     CocoRoom* pLayer = CocoRoom::create();
@@ -1415,56 +1410,36 @@ void CocoRoom::EndSceneCallback()
 
 void CocoRoom::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
-
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
     
-    /*
-    CCLog("on http request");
-    
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
 
     if (curState == 2)
-        XmlParseFairyList(dumpData, bufferSize);
+        XmlParseFairyList(&xmlDoc);
     else if (curState == 3)
-        XmlParseTodayCandy(dumpData, bufferSize);
+        XmlParseTodayCandy(&xmlDoc);
 }
 
-void CocoRoom::XmlParseFairyList(char* data, int size)
+void CocoRoom::XmlParseFairyList(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // init
         myInfo->ClearFairyList();
@@ -1490,40 +1465,30 @@ void CocoRoom::XmlParseFairyList(char* data, int size)
         Friend::ChangeMyFairyInfo();
         MakeSprites(-curState);
     }
-    else
-    {
-        CCLog("XmlParseFairyList : failed code = %d", code);
-    }
 }
 
-void CocoRoom::XmlParseTodayCandy(char* data, int size)
+void CocoRoom::XmlParseTodayCandy(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 오늘 이미 오.별 이용했음.
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_ALREADY_DONE, BTN_1, nullData);
+        else
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         // 오늘의 별사탕 액션 시작
         int selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_int();
         myInfo->SetTodayCandy(1);
         DecideUser(selectedKakaoId);
-    }
-    else
-    {
-        CCLog("XmlParseTodayCandy : failed code = %d", code);
-        std::vector<int> nullData;
-        Common::ShowPopup(this, "CocoRoom", "NoImage", false, TODAYCANDY_ALREADY_DONE, BTN_1, nullData);
-        // code = 10 : 오늘 이미 오.별 이용했음. (팝업창 띄우기)
     }
 }

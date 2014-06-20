@@ -1,7 +1,4 @@
 #include "CocoRoomFairyTown.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
@@ -371,52 +368,33 @@ void CocoRoomFairyTown::EndSceneCallback()
 
 void CocoRoomFairyTown::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
     
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
-    
-    XmlParseFairyList(dumpData, bufferSize);
+    XmlParseFairyList(&xmlDoc);
 }
 
-void CocoRoomFairyTown::XmlParseFairyList(char* data, int size)
+void CocoRoomFairyTown::XmlParseFairyList(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "CocoRoomFairyTown", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int cfi, costType, costValue;
         std::string name;
@@ -441,11 +419,9 @@ void CocoRoomFairyTown::XmlParseFairyList(char* data, int size)
         // 스크롤에 정보 표시
         MakeScroll();
     }
-    else
-    {
-        CCLog("FAILED : code = %d", code);
-    }
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////

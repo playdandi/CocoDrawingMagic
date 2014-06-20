@@ -1,8 +1,4 @@
 #include "BuyTopaz.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
-
 
 CCScene* BuyTopaz::scene(int parent)
 {
@@ -310,47 +306,30 @@ void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
-    
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-     */
-    
+
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+  
     if (httpStatus == 0)
-        XmlParseDeveloperPayload(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag()));
-    //else if (httpStatus == 1)
-    //    XmlParseVerifyPurchaseResult(dumpData, buffer->size());
+        XmlParseDeveloperPayload(&xmlDoc, atoi(res->getHttpRequest()->getTag()));
 }
 
-void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx)
+void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "BuyTopaz", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         isTryingPurchase = true; // 안드로이드 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
         
@@ -373,10 +352,6 @@ void BuyTopaz::XmlParseDeveloperPayload(char* data, int size, int priceTopazIdx)
             t.env->DeleteLocalRef(t.classID);
         }
         #endif
-    }
-    else
-    {
-        CCLog("failed code = %d", code);
     }
 }
 

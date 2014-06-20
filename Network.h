@@ -4,7 +4,9 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "Common.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d::extension;
 
 #define RSA_BIT 512
@@ -51,6 +53,9 @@ public:
     
     static int GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfuscate = true);
     static int DeObfuscation(std::string obfuscatedStr, char* data);
+    
+    static void GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc);
+    static void ShowCommonError(int code);
 };
 
 #endif /* defined(__CocoMagic__Network__) */

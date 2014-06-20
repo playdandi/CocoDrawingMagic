@@ -4,7 +4,9 @@
 #include "Common.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -35,9 +37,11 @@ public:
     void EndSceneCallback();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseMsg(char* data, int size);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    
+    void XmlParseMsg(xml_document *xmlDoc);
+    void XmlParseMsgReceiveOne(xml_document *xmlDoc);
     void ParseProfileImage(char* data, int size, int idx);
-    void XmlParseMsgReceiveOne(char* data, int size);
     
 protected:
     CCSize winSize;

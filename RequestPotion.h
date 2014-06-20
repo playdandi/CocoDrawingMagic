@@ -4,7 +4,9 @@
 #include "Common.h"
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "pugixml/pugixml.hpp"
 
+using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
 
@@ -32,7 +34,7 @@ public:
     void EndScene();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseResult(char* data, int size, int friendKakaoId);
+    void XmlParseResult(xml_document *xmlDoc, int friendKakaoId);
     
     CREATE_FUNC(RequestPotion);
     

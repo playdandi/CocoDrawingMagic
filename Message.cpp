@@ -1,7 +1,4 @@
 #include "Message.h"
-#include "pugixml/pugixml.hpp"
-
-using namespace pugi;
 
 CCScene* Message::scene()
 {
@@ -493,38 +490,62 @@ void Message::EndSceneCallback()
 
 void Message::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
-    
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
-
+    
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+    
     switch (httpStatus)
     {
-        case 0: XmlParseMsg(dumpData, bufferSize); break;
-        case 1: XmlParseMsgReceiveOne(dumpData, bufferSize); break;
-        case 2: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
+        case 0: XmlParseMsg(&xmlDoc); break;
+        case 1: XmlParseMsgReceiveOne(&xmlDoc); break;
+        //case 2: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
     }
 }
-
-void Message::XmlParseMsg(char* data, int size)
+void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
     
-    if (!result)
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    
+    // 프로필 사진 or resource.xml 받아올 때
+    if (!res || !res->isSucceed())
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    
+    ParseProfileImage(dumpData, (int)buffer->size(), atoi(res->getHttpRequest()->getTag()));
+}
+
+void Message::XmlParseMsg(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Message", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+    
+    else if (code == 0)
     {
         int id, type;
         int rewardCount, friendKakaoId;
@@ -575,7 +596,7 @@ void Message::XmlParseMsg(char* data, int size)
                 CCHttpRequest* req = new CCHttpRequest();
                 req->setUrl(msgData[i]->GetProfileUrl().c_str());
                 req->setRequestType(CCHttpRequest::kHttpGet);
-                req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompleted));
+                req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompletedNoEncrypt));
                 sprintf(tag, "%d", (int)profiles.size()-1);
                 req->setTag(tag);
                 CCHttpClient::getInstance()->send(req);
@@ -591,10 +612,6 @@ void Message::XmlParseMsg(char* data, int size)
         myInfo->SetMsgCnt((int)msgData.size());
         CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    }
-    else
-    {
-        CCLog("FAILED : code = %d", code);
     }
 }
 
@@ -615,23 +632,27 @@ void Message::ParseProfileImage(char* data, int size, int idx)
         MakeScroll();
 }
 
-void Message::XmlParseMsgReceiveOne(char* data, int size)
+void Message::XmlParseMsgReceiveOne(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
     
-    if (!result)
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 없는 메시지 (삭제하자)
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_EMPTY, BTN_1, nullData);
+        }
+        else
+            Common::ShowPopup(this, "Message", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
     
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    int code = nodeResult.child("code").text().as_int();
-    if (code == 0)
+    else if (code == 0)
     {
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
@@ -664,12 +685,6 @@ void Message::XmlParseMsgReceiveOne(char* data, int size)
             case 6: // 토파즈 요청에 응하기
                 Common::ShowNextScene(this, "Message", "BuyTopaz", false); break;
         }
-    }
-    else if (code == 10)
-    {
-        // 없는 메시지 (삭제하자)
-        std::vector<int> nullData;
-        Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_EMPTY, BTN_1, nullData);
     }
 }
 

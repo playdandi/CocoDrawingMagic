@@ -460,48 +460,32 @@ void MagicList::TryEnd()
 void MagicList::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
-    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
     
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-     */
-    
-    XmlParseSkillSlot(dumpData, bufferSize);
+    XmlParseSkillSlot(&xmlDoc);
 }
 
-void MagicList::XmlParseSkillSlot(char* data, int size)
+void MagicList::XmlParseSkillSlot(xml_document *xmlDoc)
 {
-    // xml parsing
-    xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size);
-    
-    if (!result)
-    {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
-        return;
-    }
-
-    // get data
-    xml_node nodeResult = xmlDoc.child("response");
-    code = nodeResult.child("code").text().as_int();
-    
     // Loading 창 끄기 (EndScene이 바로 뒤에 실행된다면 여기서 해야 함 [code 확인 때문에])
     ((Loading*)Depth::GetCurPointer())->EndScene();
     
-    if (code == 0)
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "MagicList", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+    
+    else if (code == 0)
     {
         // skill-slot 갱신
         myInfo->ClearSkillSlot();
@@ -523,11 +507,6 @@ void MagicList::XmlParseSkillSlot(char* data, int size)
         
         SendToParent();
         EndScene();
-    }
-    else
-    {
-        // failed msg
-        CCLog("failed code = %d", code);
     }
 }
 
