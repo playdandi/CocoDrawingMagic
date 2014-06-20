@@ -499,24 +499,7 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
     
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
+
     switch (httpStatus)
     {
         case 0: XmlParseMsg(dumpData, bufferSize); break;

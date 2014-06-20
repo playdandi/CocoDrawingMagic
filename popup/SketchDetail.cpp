@@ -534,23 +534,6 @@ void SketchDetail::onHttpRequestCompleted(CCNode *sender, void *data)
     CCHttpResponse* res = (CCHttpResponse*) data;
     char dumpData[BUFFER_SIZE];
     int bufferSize = Network::GetHttpResponseData(res, dumpData);
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
     
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();

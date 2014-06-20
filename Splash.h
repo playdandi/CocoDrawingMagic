@@ -56,10 +56,9 @@ public:
     void XmlParseRewardWeeklyRank(char* data, int size);
     void XmlParseFriends(char* data, int size);
     void onHttpRequestCompleted(CCNode *sender, void *data);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     
     void GetNonConsumedItems();
-    //void verifyPayloadAndProvideItem(const char* data, const char* signature, int topaz_id);
-    //void XmlParseVerifyPurchaseResult(char* data, int size);
     
     void GetTodayCandyFriend();
     void LastActionStart();

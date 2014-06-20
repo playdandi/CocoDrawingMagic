@@ -32,7 +32,6 @@ USING_NS_CC;
 #define ITEM_STAFF 20
 
 
-
 #define PUZZLE_TIME 60
 #define MAX_COMBO_TIME 2000
 
@@ -45,12 +44,14 @@ USING_NS_CC;
 
 #define NUMOFSKILL 32
 
+#define MAX_COMMON_ERROR_CODE 9
 // 팝업창에서 버튼 개수를 구분하기 위한 predefined type
 #define BTN_1 0
 #define BTN_2 1
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
-#define ERROR_IN_APP_BILLING -5
+#define ERROR_IN_APP_BILLING -6
+#define NEED_TO_UPDATE -5
 #define NEED_TO_REBOOT -4
 #define NEED_TO_BUY_POTION -3
 #define NEED_TO_BUY_TOPAZ -2

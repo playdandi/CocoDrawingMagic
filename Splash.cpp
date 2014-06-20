@@ -419,7 +419,7 @@ void Splash::XmlParseVersion(char* data, int size)
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl(balanceFileUrl.c_str());
             req->setRequestType(CCHttpRequest::kHttpPost);
-            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
             req->setTag("999");
             CCHttpClient::getInstance()->send(req);
             req->release();
@@ -773,7 +773,7 @@ void Splash::XmlParseLogin(char* data, int size)
     }
 }
 
-void Splash::XmlParseMyInfo(char *data, int size)
+void Splash::XmlParseMyInfo(char* data, int size)
 {
     // xml parsing
     xml_document xmlDoc;
@@ -933,7 +933,6 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
     // get data
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
-    CCLog("code = %d", code);
     if (code == 0)
     {
         myRank = nodeResult.child("my-rank").attribute("rank").as_int();
@@ -963,8 +962,7 @@ void Splash::XmlParseRewardWeeklyRank(char* data, int size)
                 profiles.push_back( new ProfileSprite(profileUrl) );
         }
         
-        
-        
+
         // 친구 리스트 정보를 받는다.
         m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
         
@@ -1084,7 +1082,7 @@ void Splash::XmlParseFriends(char* data, int size)
                 CCHttpRequest* req = new CCHttpRequest();
                 req->setUrl(profiles[i]->GetProfileUrl().c_str());
                 req->setRequestType(CCHttpRequest::kHttpPost);
-                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
                 sprintf(tag, "%d", i);
                 req->setTag(tag);
                 CCHttpClient::getInstance()->send(req);
@@ -1103,36 +1101,9 @@ void Splash::XmlParseFriends(char* data, int size)
 void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
+
     char dumpData[BUFFER_SIZE];
-
-    int bufferSize;
-    if (httpStatus <= HTTP_FRIENDS && atoi(res->getHttpRequest()->getTag()) != 999)
-    {
-        bufferSize = Network::GetHttpResponseData(res, dumpData);
-    }
-    else
-    {
-        // 프로필 사진 or resource.xml 받아올 때
-        if (!res || !res->isSucceed())
-        {
-            CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-            return;
-        }
-        
-        // dump data
-        std::vector<char> *buffer = res->getResponseData();
-        for (unsigned int i = 0 ; i < buffer->size() ; i++)
-            dumpData[i] = (*buffer)[i];
-        dumpData[buffer->size()] = NULL;
-        bufferSize = (int)buffer->size();
-    }
-
-    // gameVersion 변경으로 resource XML 파일 받았을 경우
-    if (atoi(res->getHttpRequest()->getTag()) == 999)
-    {
-        WriteResFile(dumpData, bufferSize);
-        return;
-    }
+    int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
     // LOGIN 프로토콜 응답의 경우, response header에 있는 set-cookie의 session 값을 들고온다.
     if (httpStatus == HTTP_LOGIN)
@@ -1152,8 +1123,6 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     httpStatus++;
     switch (httpStatus-1)
     {
-        //case HTTP_NONCONSUMEDITEMS:
-        //    XmlParseVerifyPurchaseResult(dumpData, buffer->size()); break;
         case HTTP_VERSION:
             XmlParseVersion(dumpData, bufferSize); break;
         case HTTP_LOGIN:
@@ -1164,32 +1133,59 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseRewardWeeklyRank(dumpData, bufferSize); break;
         case HTTP_FRIENDS:
             XmlParseFriends(dumpData, bufferSize); break;
-        default:
-            // make texture2D
-            CCImage* img = new CCImage;
-            img->initWithImageData(dumpData, bufferSize);
-            CCTexture2D* texture = new CCTexture2D();
-            texture->initWithImage(img);
+    }
+}
+
+void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[BUFFER_SIZE];
+    
+    // 프로필 사진 or resource.xml 받아올 때
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+
+    // gameVersion 변경으로 resource XML 파일 받았을 경우
+    if (atoi(res->getHttpRequest()->getTag()) == 999)
+    {
+        WriteResFile(dumpData, (int)buffer->size());
+    }
+    // 프로필 이미지 받아오기
+    else
+    {
+        // make texture2D
+        CCImage* img = new CCImage;
+        img->initWithImageData(dumpData, (int)buffer->size());
+        CCTexture2D* texture = new CCTexture2D();
+        texture->initWithImage(img);
+        
+        // set CCSprite
+        int index = atoi(res->getHttpRequest()->getTag());
+        profiles[index]->SetSprite(texture);
+        
+        profileCnt++;
+        if (profileCnt == (int)profiles.size())
+        {
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+            GetNonConsumedItems();
+            //LastActionStart();
+            #endif
             
-            // set CCSprite
-            int index = atoi(res->getHttpRequest()->getTag());
-            profiles[index]->SetSprite(texture);
-            
-            profileCnt++;
-            if (profileCnt == (int)profiles.size())
-            {
-                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                GetNonConsumedItems();
-                //LastActionStart();
-                #endif
-                
-                #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                // 1) 로고랑 글자를 없앤다.
-                // 2) 배경화면 축소하면서 Ranking 시작.
-                LastActionStart();
-                #endif
-            }
-            break;
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            // 1) 로고랑 글자를 없앤다.
+            // 2) 배경화면 축소하면서 Ranking 시작.
+            LastActionStart();
+            #endif
+        }
     }
 }
 

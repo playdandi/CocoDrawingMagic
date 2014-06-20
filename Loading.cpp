@@ -130,21 +130,6 @@ void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
     CCHttpResponse* res = (CCHttpResponse*) data;
     char dumpData[BUFFER_SIZE];
     
-    /*
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    */
-    
     int bufferSize = Network::GetHttpResponseData(res, dumpData);
     
     XmlParseGameStart(dumpData, bufferSize);

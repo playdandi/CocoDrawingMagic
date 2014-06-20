@@ -208,6 +208,9 @@ void NoImage::InitSprites()
         case YOU_WERE_BLOCKED:
             title = "오류";
             sprintf(text, "블록된 계정입니다. 문의사항은 help@playdandi.com 으로 이메일을 보내주세요."); break;
+        case NEED_TO_UPDATE:
+            title = "앱 업데이트";
+            sprintf(text, "업데이트된 버전이 출시되었습니다. 마켓으로 이동합니다."); break;
         case NEED_TO_REBOOT:
             title = "다시 시작하기";
             sprintf(text, "세션 종료 혹은 업데이트로 인해 게임을 재부팅합니다."); break;
