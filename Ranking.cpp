@@ -33,7 +33,7 @@ void Ranking::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
     
-    if (fromWhere != -1)
+    if (fromWhere == 1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
@@ -191,7 +191,16 @@ void Ranking::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        scrollView->setTouchEnabled(true);
+        CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -292,6 +301,7 @@ void Ranking::Notification(CCObject* obj)
     }
     else if (param->intValue() == 4)
     {
+        // 인게임 시작
         EndScene();
     }
     else if (param->intValue() == 5)
@@ -731,7 +741,12 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
+                if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+                    Common::ShowNextScene(this, "Ranking", "SelectProperty", false, 0);
+                else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false)) // 튜토리얼 시작한다.
+                    Common::ShowNextScene(this, "Ranking", "T_Sketchbook", false, 0);
+                else
+                    Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
                 break;
             }
         }
@@ -859,7 +874,17 @@ void Ranking::EndScene()
     isInGame = true;
     
     if (!isRebooting)
-        Common::ShowNextScene(this, "Ranking", "Loading", true);
+    {
+        // 인게임 튜토리얼을 한 적이 없다면, 튜토리얼로 들어간다.
+        if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_done", false) ||
+            menuInSetting == 0)
+        {
+            isInGameTutorial = true;
+            Common::ShowNextScene(this, "Ranking", "T_Puzzle", true);
+        }
+        else
+            Common::ShowNextScene(this, "Ranking", "Loading", true);
+    }
 }
 
 CCScrollView* Ranking::GetScrollView()

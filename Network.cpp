@@ -73,7 +73,8 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     char temp[1024*40];
     
     // PS
-    sprintf(temp, "PS=%d|%d|%d|%d&", myInfo->GetKeyValue(), myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
+    sprintf(temp, "PS=%d|%d|%d|%d&", publicKeyIndex, myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
+    //sprintf(temp, "PS=%d|%d|%d|%d&", myInfo->GetKeyValue(), myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
     postData += temp;
     
     // a (encrypted data)

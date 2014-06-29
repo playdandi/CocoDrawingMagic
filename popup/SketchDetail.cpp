@@ -69,6 +69,25 @@ bool SketchDetail::init()
     InitSprites();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
+    
+    if (isTutorial)
+    {
+        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+        ttrPos = CCSprite::create("images/tutorial_position.png");
+
+        // 760, 673 (0, 0)
+        ttrArrow->setAnchorPoint(ccp(0.5, 0));
+        ttrArrow->setPosition(ccp(760+233/2, 673+115+10));
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+        ttrArrow->runAction(CCRepeatForever::create(action));
+        this->addChild(ttrArrow, 101);
+        
+        ttrPos->setAnchorPoint(ccp(0, 0));
+        ttrPos->setPosition(ccp(760, 673));
+        ttrPos->setScaleX( (float)233 / (float)162 );
+        ttrPos->setScaleY( (float)115 / (float)89 );
+        this->addChild(ttrPos, 101);
+    }
 
     return true;
 }
@@ -236,51 +255,7 @@ void SketchDetail::MakeOpenedSkillSprites()
     descLayer->setPosition(140, 700);
     this->addChild(descLayer, 5);
     spriteClass->layers.push_back(descLayer);
-    
-    /*
-    // 640 1136
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    char name[50];
-    CCArray* animFrames = CCArray::createWithCapacity(4);
-    for (int i = 0 ; i < 4; i++)
-    {
-        sprintf(name, "a%d.png", i+1);
-        CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
-        animFrames->addObject(frame);
-    }
-    
-    CCSprite* first = CCSprite::createWithSpriteFrameName("a1.png");
-    first->setAnchorPoint(ccp(0, 0));
-    first->setPosition(ccp(120, 680));
-    first->setScale((float)390/(float)640);
-    this->addChild(first, 10);
-    
-    CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.1f);
-    CCAnimate* animate = CCAnimate::create(animation);
-    CCFiniteTimeAction* action = animate;
-    
-    first->runAction(CCRepeatForever::create((CCActionInterval*)action));
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    */
-    
-    //int p11[25] = {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,0, 0,0,0,1,0, 0,0,0,0,0};
-    //char temp[50];
-    /*
-    for (int i = 0 ; i < 5 ; i++)
-    {
-        for (int j = 0 ; j < 5 ; j++)
-        {
-            if (p11[i*5+j] == 0) sprintf(temp, "icon/3.png%d", i*5+j);
-            else if (p11[i*5+j] == 1) sprintf(temp, "icon/0.png%d", i*5+j);
-            else if (p11[i*5+j] == 2) sprintf(temp, "icon/1.png%d", i*5+j);
-            else if (p11[i*5+j] == 3) sprintf(temp, "icon/2.png%d", i*5+j);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0, 0), ccp(i*65+10*(i-1), j*65+10*(j-1)), CCSize(0,0), "", "Layer", descLayer, 5) );
-            ((CCSprite*)spriteClass->FindSpriteByName(temp))->setScale((float)65/(float)138);
-        }
-    }
-    */
-    //sprintf(temp, "icon/0.png");
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0, 0), ccp(150, 150), CCSize(0,0), "", "Layer", descLayer, 5) );
+   
     
     // 스킬 설명
     std::string desc = SkillDescription(scid);
@@ -412,7 +387,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
+        if (!isTutorial && spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -465,9 +440,6 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     // Loading 화면으로 MESSAGE request 넘기기
                     Common::ShowNextScene(this, "SketchDetail", "Loading", false, LOADING_MESSAGE);
                     
-                    // purchase skill
-                    //http://14.63.225.203/cogma/game/purchase_skill.php?kakao_id=1000&skill_id=22&cost_value=0
-                    
                     char temp[255];
                     std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
@@ -504,7 +476,11 @@ void SketchDetail::EndScene(bool isNoti)
     // release depth tree
     Depth::RemoveCurDepth();
     
-    Depth::DumpDepth();
+    if (isTutorial)
+    {
+        ttrArrow->removeFromParentAndCleanup(true);
+        ttrPos->removeFromParentAndCleanup(true);
+    }
     
     if (isNoti)
     {        

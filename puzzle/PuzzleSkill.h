@@ -21,7 +21,7 @@ public:
     
     int GetSkillAppliedCount(int skillNum);
     
-    void TrySkills(int pieceColor, int queue_pos);
+    void TrySkills(int pieceColor, int queue_pos, bool isFeverTime);
     void Try(int skillNum, int queue_pos);
     
     bool IsApplied(int skillNum, int queue_pos);
@@ -83,6 +83,7 @@ public:
     void W8_BombDone();
     
     void E3(int num);
+    int E3_Get_AddedCandy();
     void E3_Done();
     //void E4(int num, int queue_pos);
     void E5(int num);
@@ -105,10 +106,9 @@ public:
     void GiveHint();
     
     bool IsRenewNeeded();
-    void IsRenewNeeded_Recur(int x, int y, int type, int cnt);
     void RenewPuzzle(int queue_pos);
-    void RenewPuzzle_Recur(int x, int y, int type, std::vector<CCPoint>& v);
     void RenewPuzzle_End(void* pointer, int queue_pos);
+    void Renew_Bomb(int idx);
     
     void M1(int num);
     void M2(int num);
@@ -124,9 +124,14 @@ public:
     bool IsFTBombing();
     
     void ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos);
+    void ApplyItemPaint_Change(CCNode* sender, void* pointer);
     void ApplyItemPaint_Callback(CCNode* sender, void* pointer);
+    void ApplyItemPaint_Done();
     void ApplyItemStaff(int x, int y, int dx, int dy, int queue_pos);
+    void SequenceBomb(CCNode* sender, void* pointer);
     std::vector<CCPoint> GetPieces(int x, int y, int dx, int dy);
+    
+    void LastItems();
     
     
     std::vector<CCPoint> GetResult();
@@ -246,6 +251,10 @@ private:
     
     int itemPaint_callbackCnt;
     int itemPaint_type;
+    std::vector<CCPoint> item_pos;
+    int item_callbackCnt;
+    int item_dx;
+    int item_dy;
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;

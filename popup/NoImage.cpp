@@ -74,6 +74,25 @@ bool NoImage::init()
     
     InitSprites();
     
+    if (isTutorial)
+    {
+        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+        ttrPos = CCSprite::create("images/tutorial_position.png");
+        
+        // ccp(717+5, 711+offset) (offset = 0)
+        ttrArrow->setAnchorPoint(ccp(0.5, 0));
+        ttrArrow->setPosition(ccp(722+233/2, 711+115+10));
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+        ttrArrow->runAction(CCRepeatForever::create(action));
+        this->addChild(ttrArrow, 101);
+        
+        ttrPos->setAnchorPoint(ccp(0, 0));
+        ttrPos->setPosition(ccp(722, 711));
+        ttrPos->setScaleX( (float)233 / (float)162 );
+        ttrPos->setScaleY( (float)115 / (float)89 );
+        this->addChild(ttrPos, 101);
+    }
+    
     isEnded = false;
     isTouched = false;
     isTouchDone = false;
@@ -86,7 +105,21 @@ void NoImage::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
 
-    if (param->intValue() == 10)
+    if (param->intValue() <= 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("NoImage : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("NoImage : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
@@ -125,7 +158,8 @@ void NoImage::InitSprites()
         type == UPGRADE_FAIRY_OK || type == UPGRADE_FAIRY_BY_STARCANDY_TRY || type == UPGRADE_FAIRY_BY_TOPAZ_TRY ||
         type == BUY_PROPERTY_TRY || type == BUY_PROPERTY_OK ||
         type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_OK ||
-        type == TODAYCANDY_RESULT_LOSE || type == TODAYCANDY_RESULT_WIN)
+        type == TODAYCANDY_RESULT_LOSE || type == TODAYCANDY_RESULT_WIN ||
+        type == SELECT_PROPERTY_TRY || type == SELECT_PROPERTY_OK)
     {
         hasImage = true;
         
@@ -179,7 +213,8 @@ void NoImage::InitSprites()
                 break;
             case TODAYCANDY_RESULT_WIN:
             case TODAYCANDY_RESULT_LOSE:
-                CCSprite* profile = ProfileSprite::GetProfile(friendList[d[1]]->GetImageUrl());
+                CCSprite* profile;
+                profile = ProfileSprite::GetProfile(friendList[d[1]]->GetImageUrl());
                 if (friendList[d[1]]->GetImageUrl() != "")
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2, 0, 255, 1.5f) );
@@ -190,6 +225,17 @@ void NoImage::InitSprites()
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "NoImage", this, 2, 0, 255, 1.65f) );
                 }
+                break;
+            case SELECT_PROPERTY_TRY:
+            case SELECT_PROPERTY_OK:
+                char temp[40];
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0.5, 0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "NoImage", this, 2) );
+                CCPoint p;
+                p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png");
+                if (d[0] == 1) sprintf(temp, "icon/icon_property_fire.png");
+                else if (d[0] == 2) sprintf(temp, "icon/icon_property_water.png");
+                else if (d[0] == 3) sprintf(temp, "icon/icon_property_land.png");
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0.5, 0.5), p, CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 2, 1) );
                 break;
         }
     }
@@ -456,6 +502,19 @@ void NoImage::InitSprites()
             title = "스킬 연습 완료";
             sprintf(text, "'%s'\n스킬의 연습이 완료되었습니다.\n스케치북에서 LEVEL UP 하세요!", SkillInfo::GetSkillInfo(myInfo->GetPracticeSkillId())->GetName().c_str());
             break;
+        
+        case SELECT_PROPERTY_TRY:
+            title = "속성 선택하기";
+            if (d[0] == 1) sprintf(text, "불 속성을 선택하시겠습니까?\n(한 번 선택하면 바꿀 수 없습니다.");
+            else if (d[0] == 2) sprintf(text, "물 속성을 선택하시겠습니까?\n(한 번 선택하면 바꿀 수 없습니다.");
+            else if (d[0] == 3) sprintf(text, "땅 속성을 선택하시겠습니까?\n(한 번 선택하면 바꿀 수 없습니다.");
+            break;
+        case SELECT_PROPERTY_OK:
+            title = "속성 선택하기";
+            if (d[0] == 1) sprintf(text, "불 속성을 새로 배웠습니다.");
+            else if (d[0] == 2) sprintf(text, "물 속성을 새로 배웠습니다.");
+            else if (d[0] == 3) sprintf(text, "땅 속성을 새로 배웠습니다.");
+            break;
     }
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
 
@@ -546,8 +605,8 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         // 'x'나 '취소'를 누를 경우
-        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
-            spriteClass->spriteObj[i]->name == "button/btn_system.png")
+        if (!isTutorial && (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
+                            spriteClass->spriteObj[i]->name == "button/btn_system.png") )
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -607,6 +666,16 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     {
                         EndScene();
                         Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "Sketchbook", false, 0);
+                    }
+                    else if (type == SELECT_PROPERTY_OK)
+                    {
+                        EndScene();
+                        CCString* param;
+                        if (d[1] == 1) // 인게임 튜토리얼 시작
+                            param = CCString::create("3");
+                        else // 스케치북 튜토리얼 시작
+                            param = CCString::create("2");
+                        CCNotificationCenter::sharedNotificationCenter()->postNotification("SelectProperty", param);
                     }
                     else
                     {
@@ -855,9 +924,9 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     }
                     return true;
                 }
-                else if (type == BUY_PROPERTY_TRY)
+                else if (type == BUY_PROPERTY_TRY || type == SELECT_PROPERTY_TRY)
                 {
-                    if (myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
+                    if (type == BUY_PROPERTY_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
                         ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
                     else
                     {
@@ -940,6 +1009,12 @@ void NoImage::EndScene()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
+    if (isTutorial)
+    {
+        ttrArrow->removeFromParentAndCleanup(true);
+        ttrPos->removeFromParentAndCleanup(true);
+    }
+    
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
@@ -1011,6 +1086,7 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
         case BUY_SKILLSLOT_BY_TOPAZ_TRY:
             XmlParseBuySkillSlot(&xmlDoc); break;
         case BUY_PROPERTY_TRY:
+        case SELECT_PROPERTY_TRY:
             XmlParseBuySkillProperty(&xmlDoc); break;
     }
 }
@@ -1610,8 +1686,30 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
             myInfo->AddSkill(csi, usi, level, exp);
         }
         myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
+        
+        // 스킬 슬롯 갱신
+        myInfo->ClearSkillSlot();
+        its = nodeResult.child("skill-slot").children("slot");
+        int id;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "id") id = ait->as_int();
+                else if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+            }
+            myInfo->AddSkillSlot(id, csi, usi);
+        }
+        // 부모의 스킬 슬롯 UI 갱신
+        param = CCString::create("9");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
 
-        // OK 창으로 넘어가자. 
-        ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
+        // OK 창으로 넘어가자.
+        if (type == BUY_PROPERTY_TRY)
+            ReplaceScene("NoImage", BUY_PROPERTY_OK, BTN_1);
+        else
+            ReplaceScene("NoImage", SELECT_PROPERTY_OK, BTN_1);
     }
 }

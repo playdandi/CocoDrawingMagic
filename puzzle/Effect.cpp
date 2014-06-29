@@ -1221,7 +1221,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
                 m_emitter = CCParticleSystemQuad::create("particles/fire7_2.plist");
             else
                 m_emitter = CCParticleSystemQuad::create("particles/fire7_3.plist");
-            //m_emitter->retain();
+
             m_emitter->setAnchorPoint(ccp(0.5, 0.5));
             m_emitter->setPosition(pThis->gameLayer->SetTouch8Position(x, y));
             m_emitter->setScale(1.5f);
@@ -1230,7 +1230,8 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
         }
         
         // 폭발 액션
-        pThis->gameLayer->Bomb(pThis->queuePos, pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt]);
+        //pThis->gameLayer->Bomb(pThis->queuePos, pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt]);
+        pThis->gameLayer->GetSkill()->Renew_Bomb(pThis->callbackCnt);
         pThis->gameLayer->GetSound()->PlayBomb();
         
         pThis->callbackCnt++;
@@ -1315,6 +1316,9 @@ void Effect::PlayEffect_18(CCPoint p)
 
     // sound
     gameLayer->GetSound()->PlaySkillSound(18);
+    
+    // 추가별사탕 개수를 실제로 증가시킴
+    gameLayer->UpdateStarCandy(1, gameLayer->GetSkill()->E3_Get_AddedCandy());
     
     deltaPos = p;
     callbackCnt = 0;
@@ -1684,7 +1688,21 @@ void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
 }
 */
 
-
+void Effect::PlayEffect_FeverCircle(CCPoint p, int size)
+{
+    CCSprite* fc = CCSprite::createWithSpriteFrameName("fever_circle.png");
+    fc->setPosition(gameLayer->SetTouch8Position(p.x, p.y));
+    fc->setOpacity(0);
+    fc->setScale((float)(size*2+1)/(float)3);
+    gameLayer->addChild(fc, 2000);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.15f), CCRotateBy::create(0.15f, 20), NULL), CCFadeOut::create(0.15f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
+    fc->runAction(action);
+}
+void Effect::PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer)
+{
+    sender->removeFromParentAndCleanup(true);
+}
 
 void Effect::RemoveAllObjects()
 {

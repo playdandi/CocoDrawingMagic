@@ -115,6 +115,15 @@ void CocoRoom::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        scrollView->setTouchEnabled(true);
+        CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
     if (param->intValue() == 0)
     {
         // 터치 활성

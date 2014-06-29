@@ -48,13 +48,13 @@ void AppDelegate::applicationDidEnterBackground()
     CCDirector::sharedDirector()->stopAnimation();
     CCDirector::sharedDirector()->pause();
     
-    
-//    ((Ranking*)Depth::GetCurPointer())->GetScrollView()->stopAllActions();
+    if (isInGameTutorial)
+        ;
     
     // (인게임 중일 때 pause된 경우는 실행하면 안 된다)
     // PotionTimer scheduler가 딱 정지된 시점에서 현재 시간을 저장해 둔다.
     // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.
-    if (!isInGame)
+    else if (!isInGame)
         savedTime = time(0);
     // 인게임 중에는 '일시정지' flag를 세운다.
     else
@@ -86,20 +86,30 @@ void AppDelegate::applicationWillEnterForeground()
     CCDirector::sharedDirector()->resume(); //
     CCDirector::sharedDirector()->startAnimation();
     
-    // 시간 갱신 (인게임 중일 때는 할 필요 없다)
-    if (!isInGame)
+    if (isInGameTutorial)
     {
-        //CCLog("not in game");
-        CCString* param = CCString::create("5");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-        
-        // 터치 풀기
-        param = CCString::create("10");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-        
-        // if you use SimpleAudioEngine, it must resume here
-        SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
+    }
+    
+    // 시간 갱신 (인게임 중일 때는 할 필요 없다)
+    else if (!isInGame)
+    {
+        if (Depth::GetCurNameString() == "Splash")
+            Resume();
+        
+        else
+        {
+            //CCLog("not in game : %s", Depth::GetCurNameString().c_str());
+            // Loading 화면으로 MESSAGE request 넘기기
+            Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+            
+            std::string param = "";
+            char temp[40];
+            sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+            param += temp;
+            
+            Network::HttpPost(param, URL_SESSION_CHECK, Depth::GetParentPointer(), httpresponse_selector(AppDelegate::onHttpRequestCompleted));
+        }
     }
     else
     {
@@ -114,4 +124,51 @@ void AppDelegate::applicationWillEnterForeground()
         
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
+}
+
+void AppDelegate::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+    
+    XmlParseSessionCheck(&xmlDoc);
+}
+
+void AppDelegate::XmlParseSessionCheck(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+    }
+    
+    else if (code == 0)
+    {
+        //CCLog("session check : SUCCESS");
+        //CCLog("%s", Depth::GetCurNameString().c_str());
+        Resume();
+    }
+}
+
+void AppDelegate::Resume()
+{
+    CCString* param = CCString::create("5");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    
+    // 터치 풀기
+    param = CCString::create("10");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    // if you use SimpleAudioEngine, it must resume here
+    SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+    SimpleAudioEngine::sharedEngine()->resumeAllEffects();
 }

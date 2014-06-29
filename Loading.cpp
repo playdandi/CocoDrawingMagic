@@ -36,6 +36,8 @@ bool Loading::init()
 		return false;
 	}
     
+    Depth::DumpDepth();
+    
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     
     if (status == -1)

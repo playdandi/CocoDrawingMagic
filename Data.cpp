@@ -28,7 +28,11 @@ std::vector<int> todayCandyKakaoId;
 bool isRebooting; // 시스템 재부팅 중일 시 true
 bool isInGamePause; // 인게임 중에 pause되었는지 여부
 bool isInGame; // 인게임 중이면 true
+bool isInGameTutorial; // 인게임의 튜토리얼 중이면 true
 int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
+
+// 환경설정 메뉴
+int menuInSetting = -1;
 
 // 주간랭킹 보상 관련 변수
 int myRank;
@@ -43,10 +47,20 @@ int missionRefVal;
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
 
+// rsa 관련
 RSA* rsa;
+std::string publicKey;
+int publicKeyIndex;
+
+// 결제용 key
+std::string gcmKey;
 
 //
 cocos2d::CCNode* verifyStatusScene;
+
+// 튜토리얼에 필요한 값들
+bool isTutorial = false;
+int tutorialState = -1;
 
 ////////////////////////////////////////////////////////////////////////////////
 Depth::Depth(std::string name, int priority, void* pointer)
@@ -390,6 +404,10 @@ bool MyInfo::IsLand()
 bool MyInfo::IsMaster()
 {
     return propertyMaster;
+}
+bool MyInfo::HasNoProperty()
+{
+    return (!IsFire() && !IsWater() && !IsLand() && !IsMaster());
 }
 
 void MyInfo::SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved)
@@ -1483,6 +1501,7 @@ int SkillPropertyInfo::GetCost(int id)
     return -1;
 }
 
+/*
 // RSA public keys
 std::string publicKey[50] = {
     "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANTPl77S5NRHJlyVXiZIv36bpkX8m+5A\na0NM3S+BliP3l8LntujYQtT/uelabrfDGwgbbhcaqfU06AwbYA7R4jECAwEAAQ==\n-----END PUBLIC KEY-----",
@@ -1536,6 +1555,7 @@ std::string publicKey[50] = {
     "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKExHXj75NktWJa/24Ey5yuq10GAQFJJ\n6iXfce7LQHUVukWn5s7IKS5GBQCwg62mDT+1R1E3vtsr8eD3R8p3TzUCAwEAAQ==\n-----END PUBLIC KEY-----",
     "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAO5IZeAyIoaZv1XhdXDhIpBU/CW8rwdu\nAGdpb/5beXE34VlCIhhb4KLw4oWrJTw7TNLTNuomPi+mfFPo+Ea/BpUCAwEAAQ==\n-----END PUBLIC KEY-----",
 };
+*/
 
 // 난독화 public keys
 std::string obfuscationKey[30] = {

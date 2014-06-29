@@ -75,6 +75,7 @@ bool Splash::init()
     isLoading = false;
     
     isInGame = false;
+    isInGameTutorial = false;
     isRebooting = false;
     
     httpStatus = 0;
@@ -740,12 +741,23 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         myInfo = new MyInfo();
         myInfo->Init(mKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId);
         
-        // 내 모든 정보 요청
-        m_pMsgLabel->setString("나의 정보를 요청 중...");
+        // get GCM key
+        gcmKey = nodeResult.child("gcm-key").text().as_string();
+        
+        // get public-key for RSA
+        publicKey = nodeResult.child("public-key").text().as_string();
+        publicKeyIndex = nodeResult.child("public-key-index").text().as_int();
+        CCLog("gcm key = %s", gcmKey.c_str());
+        CCLog("public key = %s", publicKey.c_str());
+        CCLog("public key idx = %d", publicKeyIndex);
         
         // rsa 만들기 (초기 1회만 만들면 됨)
-        rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
+        //rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
+        rsa = createRSA((unsigned char*)(publicKey.c_str()), 1);
     
+        
+        // 내 모든 정보 요청
+        m_pMsgLabel->setString("나의 정보를 요청 중...");
         
         // required parameter values
         char temp[255];
@@ -1076,6 +1088,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
     xml_document xmlDoc;
     Network::GetXMLFromResponseData(res, xmlDoc);
     
+    /*
     // LOGIN 프로토콜 응답의 경우, response header에 있는 set-cookie의 session 값을 들고온다.
     if (httpStatus == HTTP_LOGIN)
     {
@@ -1089,6 +1102,7 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
         sessionId = ss;
         CCLog("session ID = %s", sessionId.c_str());
     }
+    */
 
     // parse xml data
     httpStatus++;
@@ -1171,10 +1185,10 @@ void Splash::GetNonConsumedItems()
     if (JniHelper::getStaticMethodInfo(t,
                                        "com/playDANDi/CocoMagic/CocoMagic",
                                        "StartIAB",
-                                       "(IIILjava/lang/String;Ljava/lang/String;)V"))
+                                       "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
     {  // 파라미터 (int, int, int, String, String), 리턴타입은 Void
         // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, myInfo->GetKakaoId(), -1, t.env->NewStringUTF(""), t.env->NewStringUTF(""));
+        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, myInfo->GetKakaoId(), -1, t.env->NewStringUTF(""), t.env->NewStringUTF(""), t.env->NewStringUTF(gcmKey.c_str()));
         // Release
         t.env->DeleteLocalRef(t.classID);
     }

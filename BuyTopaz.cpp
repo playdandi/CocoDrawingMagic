@@ -74,7 +74,7 @@ void BuyTopaz::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() <= 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -344,10 +344,10 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx)
         if (JniHelper::getStaticMethodInfo(t,
                                      "com/playDANDi/CocoMagic/CocoMagic",
                                      "StartIAB",
-                                     "(IIILjava/lang/String;Ljava/lang/String;)V"))
+                                     "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
         {  // 파라미터 (int, String, String), 리턴타입은 Void
             // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-            t.env->CallStaticVoidMethod(t.classID, t.methodID, 1, myInfo->GetKakaoId(), topazId, t.env->NewStringUTF(productId), t.env->NewStringUTF(payload));
+            t.env->CallStaticVoidMethod(t.classID, t.methodID, 1, myInfo->GetKakaoId(), topazId, t.env->NewStringUTF(productId), t.env->NewStringUTF(payload), t.env->NewStringUTF(gcmKey.c_str()));
             // Release
             t.env->DeleteLocalRef(t.classID);
         }

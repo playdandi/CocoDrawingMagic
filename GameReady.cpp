@@ -134,7 +134,16 @@ void GameReady::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() == -1)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        scrollViewSlot->setTouchEnabled(true);
+        CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -226,6 +235,11 @@ void GameReady::Notification(CCObject* obj)
         isTouched = false;
         ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"))->setColor(ccc3(255,255,255));
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(255,255,255));
+    }
+    else if (param->intValue() == 7)
+    {
+        // 속성을 처음 새로 배우고 인게임 튜토리얼 시작하는 경우
+        StartGame();
     }
 }
 
@@ -838,7 +852,12 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     else if (skillLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
+        if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+            Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 0);
+        else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false)) // 튜토리얼 시작한다.
+            Common::ShowNextScene(this, "GameReady", "T_Sketchbook", false, 1);
+        else
+            Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
     }
  
     return true;
@@ -868,48 +887,10 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         switch (kind)
         {
             case BTN_MENU_GAMESTART:
-                isStarting = true;
-                
-                sound->playGameStart();
-                
-                CCPoint p = ccp(530+50, 1508+15);
-                if (myInfo->GetPotion() <= 5)
-                    p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
-                
-                CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
-                m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-                m_emitter->setPosition(p);
-                this->addChild(m_emitter, 2000);
-                m_emitter->setAutoRemoveOnFinish(true);
-                
-                if (myInfo->GetPotion() > 5)
-                    myInfo->SetPotion(myInfo->GetPotion()-1, 0);
-                else if (myInfo->GetPotion() == 5)
-                    myInfo->SetPotion(myInfo->GetPotion()-1, 720);
+                if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+                    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 1);
                 else
-                    myInfo->SetPotion(myInfo->GetPotion()-1, -1);
-                
-                CCString* param = CCString::create("2");
-                CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-                
-                if (myInfo->GetPotion() < 5)
-                {
-                    char name[25];
-                    sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion());
-                    CCActionInterval* action = CCFadeOut::create(0.2f);
-                    ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
-                }
-                
-                pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
-                pBlackClose->setPosition(ccp(0, 0));
-                pBlackClose->setAnchorPoint(ccp(0, 0));
-                pBlackClose->setColor(ccc3(0, 0, 0));
-                pBlackClose->setOpacity(0);
-                this->addChild(pBlackClose, 1000);
-                
-                callbackType = 1;
-                CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.8f), CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
-                pBlackClose->runAction(action);
+                    StartGame();
                 break;
         }
     }
@@ -922,6 +903,52 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
     isTouched = false;
+}
+
+void GameReady::StartGame()
+{
+    isStarting = true;
+    
+    sound->playGameStart();
+    
+    CCPoint p = ccp(530+50, 1508+15);
+    if (myInfo->GetPotion() <= 5)
+        p = ccp(89+83*(myInfo->GetPotion()-1)+60/2, 1480+82/2);
+    
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gamestart.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(p);
+    this->addChild(m_emitter, 2000);
+    m_emitter->setAutoRemoveOnFinish(true);
+    
+    if (myInfo->GetPotion() > 5)
+        myInfo->SetPotion(myInfo->GetPotion()-1, 0);
+    else if (myInfo->GetPotion() == 5)
+        myInfo->SetPotion(myInfo->GetPotion()-1, 720);
+    else
+        myInfo->SetPotion(myInfo->GetPotion()-1, -1);
+    
+    CCString* param = CCString::create("2");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    if (myInfo->GetPotion() < 5)
+    {
+        char name[25];
+        sprintf(name, "icon/icon_potion.png%d", myInfo->GetPotion());
+        CCActionInterval* action = CCFadeOut::create(0.2f);
+        ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(action);
+    }
+    
+    pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+    pBlackClose->setPosition(ccp(0, 0));
+    pBlackClose->setAnchorPoint(ccp(0, 0));
+    pBlackClose->setColor(ccc3(0, 0, 0));
+    pBlackClose->setOpacity(0);
+    this->addChild(pBlackClose, 1000);
+    
+    callbackType = 1;
+    CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.8f), CCCallFuncND::create(this, callfuncND_selector(GameReady::EndSceneCallback), this), NULL);
+    pBlackClose->runAction(action);
 }
 
 void GameReady::EndScene()

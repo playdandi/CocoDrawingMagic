@@ -170,15 +170,6 @@ void PuzzlePause::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     //CCPoint point = pTouch->getLocation();
 }
 
-void PuzzlePause::ResumeGame()
-{
-    EndScene();
-    
-    CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
-    
-    isInGamePause = false;
-}
 
 void PuzzlePause::EndGame()
 {
@@ -187,8 +178,20 @@ void PuzzlePause::EndGame()
     // 이걸 끝내면서, Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
     CCString* param = CCString::create("2");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
+}
+
+
+void PuzzlePause::ResumeGame()
+{
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, "PuzzlePause", "Loading", false, LOADING_MESSAGE);
     
-    //isInGamePause = false;
+    std::string param = "";
+    char temp[40];
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    param += temp;
+    
+    Network::HttpPost(param, URL_SESSION_CHECK, this, httpresponse_selector(PuzzlePause::onHttpRequestCompleted));
 }
 
 void PuzzlePause::EndScene()
@@ -204,6 +207,44 @@ void PuzzlePause::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
+}
+
+
+
+void PuzzlePause::onHttpRequestCompleted(CCNode *sender, void *data)
+{
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    
+    xml_document xmlDoc;
+    Network::GetXMLFromResponseData(res, xmlDoc);
+ 
+    XmlParseSessionCheck(&xmlDoc);
+}
+
+void PuzzlePause::XmlParseSessionCheck(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+    }
+    
+    else if (code == 0)
+    {
+        EndScene();
+        
+        CCString* param = CCString::create("0");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
+        
+        isInGamePause = false;
+    }
 }
 
 

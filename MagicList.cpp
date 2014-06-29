@@ -87,6 +87,14 @@ bool MagicList::init()
     scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollViewSlot, 5);
     
+    if (isTutorial)
+    {
+        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+        ttrArrow->retain();
+        ttrPos = CCSprite::create("images/tutorial_position.png");
+        ttrPos->retain();
+    }
+    
     InitSprites();
     InitBtn();
     MakeScrollSlot(false);
@@ -151,7 +159,7 @@ void MagicList::InitSprites()
     
     layer = CCLayer::create();
     layer->setPosition(0, winSize.height);
-    this->addChild(layer, 0);
+    this->addChild(layer, 5);
 
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
                         ccp(0, 0), ccp(49, 688+offset), CCSize(982, 1066), "", "Layer", layer, 10) );
@@ -208,6 +216,21 @@ void MagicList::InitSprites()
                 
                 sprintf(name2, "skill_%d.png", si->GetId());
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229+12, 1451-i*160+offset+12), CCSize(0, 0), "", "Layer", layer, 20, 0, 255, si->GetId()) );
+                
+                if (isTutorial)
+                {
+                    ttrArrow->setAnchorPoint(ccp(0.5, 0));
+                    ttrArrow->setPosition(ccp(127+j*229+12+146/2-5, 1451-i*160+offset+12+146));
+                    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+                    ttrArrow->runAction(CCRepeatForever::create(action));
+                    layer->addChild(ttrArrow, 5005);
+                    
+                    ttrPos->setAnchorPoint(ccp(0, 0));
+                    ttrPos->setPosition(ccp(127+j*229+12-10, 1451-i*160+offset+12-10));
+                    ttrPos->setScaleX( (float)156 / (float)162 );
+                    ttrPos->setScaleY( (float)156 / (float)89 );
+                    layer->addChild(ttrPos, 5005);
+                }
             }
         }
     }
@@ -302,6 +325,13 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
+    CCLog("BEGAN tutorial = %d", tutorialState);
+    if (isTutorial && tutorialState == 10)
+    {
+        isTouched = false;
+        return true;
+    }
+    
     // '게임시작' 버튼 터치 (게임준비 화면에서 왔을 때만 존재함)
     for (int i = 0 ; i < spriteClassBtn->spriteObj.size() ; i++)
     {
@@ -319,7 +349,7 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (!isTutorial && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 TryEnd();
                 return true;
@@ -383,13 +413,33 @@ bool MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             break;
                         }
                     }
+                    if (isTutorial)
+                    { // 9 -> 10 상태 이동
+                        CCString* param = CCString::create("2");
+                        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
+                        
+                        ttrPos->setAnchorPoint(ccp(0, 0));
+                        ttrPos->setPosition(ccp(77, 228));
+                        ttrPos->setScaleX( (float)792 / (float)162 );
+                        ttrPos->setScaleY( (float)187 / (float)89 );
+                        
+                        ttrArrow->removeFromParent();
+                        ttrArrow->setAnchorPoint(ccp(0.5, 0));
+                        ttrArrow->setPosition(ccp(77+782-100, 228+187+10));
+                        //CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+                        //ttrArrow->runAction(CCRepeatForever::create(action));
+                        this->addChild(ttrArrow, 5005);
+                        
+                        //ttrArrow->setAnchorPoint(ccp(0.5, 0));
+                        //ttrArrow->setPosition(ccp(77+782-100, 228+187+10));
+                    }
                 }
                 return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (!isTutorial && spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
                 // 슬롯 구매
@@ -422,9 +472,19 @@ void MagicList::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
     
+    CCLog("ENDED tutorial = %d", tutorialState);
     if (isScrollViewTouched && !isScrolling && scrollViewSlot->boundingBox().containsPoint(point))
     {
-        TryEnd();
+        if (isTutorial)
+        {
+            if (tutorialState == 10)
+            {
+                CCUserDefault::sharedUserDefault()->setBoolForKey("tutorial_sketchbook", true); // 튜토리얼 완료를 클라이언트에 저장.
+                TryEnd();
+            }
+        }
+        else
+            TryEnd();
     }
     
     isTouched = false;
@@ -546,6 +606,14 @@ void MagicList::EndSceneCallback()
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+    
+    if (isTutorial)
+    {
+        ttrArrow->release();
+        ttrPos->release();
+        ttrArrow->removeFromParentAndCleanup(true);
+        ttrPos->removeFromParentAndCleanup(true);
+    }
     
     // remove all objects
     spriteClass->RemoveAllObjects();

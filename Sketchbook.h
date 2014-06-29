@@ -47,6 +47,8 @@ public:
     
     int FromWhere();
     
+    void TutorialNextState();
+    
     CREATE_FUNC(Sketchbook);
     
 protected:
@@ -54,6 +56,11 @@ protected:
     bool isTouched;
      
     int curState;
+    int tabNumber;
+
+    CCPoint vo;
+    //bool isTutorial;
+    //int tutorialState;
     
     bool isScrolling;
     bool isSlotTouched;
@@ -71,6 +78,15 @@ private:
     
     CCLayer* containerBook;
     CCLayer* containerSlot;
+    
+    CCLayer* ttr;
+    //CCSprite* pBlackttr;
+    CCSprite* ttrCoco;
+    CCSprite* ttrPos;
+    CCSprite* ttrArrow;
+    CCSprite* ttrBg;
+    CCLabelTTF* ttrMsg;
+    
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

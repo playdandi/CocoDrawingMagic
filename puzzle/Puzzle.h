@@ -185,6 +185,7 @@ public:
     bool IsItemTime();
     bool IsItemPaint();
     bool IsItemStaff();
+    void SetItemPossible(bool flag);
     
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
@@ -224,6 +225,10 @@ protected:
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
     bool isFeverRound[QUEUE_CNT]; // 이 queue_cnt에 대한 폭발이 feverTime용인가?
+    
+    int feverBombOrderCnt[QUEUE_CNT];
+    int feverBombOrderMax[QUEUE_CNT];
+    int feverBombOrder[QUEUE_CNT][COLUMN_COUNT][ROW_COUNT]; // 피버타임 때 폭발하는 순서
     
     std::vector< std::vector<CCPoint> > posForFeverTime;
     
@@ -284,6 +289,7 @@ protected:
     
     int bonusTimeState; // 보너스타임 순서 상태
     
+    bool m_bIsItemPossible;
     bool item_clear;
     bool item_time;
     bool item_paint;

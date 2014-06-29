@@ -216,6 +216,10 @@ void Setting::InitSprites()
 
 
 
+static CCRect rect;
+static int kind;
+static int idx;
+
 bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     if (isTouched)
@@ -223,6 +227,10 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
+    
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -277,6 +285,18 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png3") // 튜토리얼 버튼
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_TUTORIAL;
+                idx = i;
+            }
+        }
     }
     
     return true;
@@ -300,6 +320,8 @@ void Setting::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     isTouched = false;
+    
+    CCPoint point = pTouch->getLocation();
     
     if (selectedBtn != -1)
     {
@@ -361,6 +383,23 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     }
     
     selectedBtn = -1;
+    
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_TUTORIAL:
+                menuInSetting = 0;
+                EndScene();
+                break;
+        }
+    }
 }
 
 void Setting::onHttpRequestCompleted(CCNode *sender, void *data)
@@ -419,6 +458,17 @@ void Setting::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
+    
+    // 특정 메뉴를 누른 경우
+    switch (menuInSetting)
+    {
+        case 0: // 튜토리얼 시작
+            param = CCString::create("3");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+            param = CCString::create("4");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+            break;
+    }
 }
 
 

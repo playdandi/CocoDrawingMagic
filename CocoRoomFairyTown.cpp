@@ -94,16 +94,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == -1)
-    {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setTouchPriority(Depth::GetCurPriority());
-        isTouched = false;
-        scrollView->setTouchEnabled(true);
-        CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
-    }
-    else if (param->intValue() == 0)
+    if (param->intValue() <= 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);

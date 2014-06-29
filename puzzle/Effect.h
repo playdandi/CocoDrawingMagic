@@ -88,6 +88,8 @@ public:
     void PlayEffect_14();
     void Effect14Callback(CCNode* sender, void* data);
     
+    void PlayEffect_FeverCircle(CCPoint p, int size);
+    void PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer);
     
     void NewlyMadeConnPiece(int x, int y);
     void FairySkill();

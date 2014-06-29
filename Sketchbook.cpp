@@ -27,6 +27,11 @@ void Sketchbook::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    if (myInfo->HasNoProperty())
+    {
+        Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false);
+    }
 }
 void Sketchbook::onExit()
 {
@@ -106,7 +111,6 @@ bool Sketchbook::init()
     MakeScrollSlot();
     
     // 연습 중인 스킬이 속한 속성을 우선적으로 보여주는데, 만약 없다면 불/물/땅/궁극 순서대로 연 것 먼저 보여준다.
-    int tabNumber;
     int pcsi = myInfo->GetPracticeSkillId();
     if (21 <= pcsi && pcsi <= 28) tabNumber = 0;
     else if (11 <= pcsi && pcsi <= 18) tabNumber = 1;
@@ -126,14 +130,150 @@ bool Sketchbook::init()
     isScrolling = false;
     isScrollViewTouched = false;
     
+    // 튜토리얼을 한 번도 실행하지 않았다면, 실행하자.
+    isTutorial = !CCUserDefault::sharedUserDefault()->getBoolForKey("tutorial_sketchbook", false);
+    if (isTutorial && !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 1)
+    {
+        vo = CCDirector::sharedDirector()->getVisibleOrigin();
+        
+        ttr = new CCLayer();
+        this->addChild(ttr, 1000);
+        /*
+        pBlackttr = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
+        pBlackttr->setPosition(ccp(0, 0));
+        pBlackttr->setAnchorPoint(ccp(0, 0));
+        pBlackttr->setColor(ccc3(0, 0, 0));
+        pBlackttr->setOpacity(200);
+        ttr->addChild(pBlackttr, 0);*/
+        
+        ttrBg = CCSprite::create("images/tutorial_explain.png");
+        ttrBg->setAnchorPoint(ccp(0, 0));
+        ttrBg->setPosition(ccp(vo.x, vo.y));
+        ttrBg->setScaleX(winSize.width / (float)637);
+        ttrBg->setScaleY((float)206 / (float)130);
+        ttr->addChild(ttrBg, 100);
+        
+        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+        ttrArrow->retain();
+        
+        ttrPos = CCSprite::create("images/tutorial_position.png");
+        ttrPos->retain();
+        
+        ttrCoco = CCSprite::createWithSpriteFrameName("image/coco_ready.png");
+        ttrCoco->setAnchorPoint(ccp(0, 0));
+        ttrCoco->setPosition(ccp(vo.x, vo.y+5));
+        ttr->addChild(ttrCoco, 101);
+        
+        ttrMsg = CCLabelTTF::create("", fontList[0].c_str(), 32, CCSize(700, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
+        ttrMsg->setAnchorPoint(ccp(0, 0.5));
+        ttrMsg->setPosition(ccp(vo.x+320, vo.y+103));
+        ttrMsg->setColor(ccc3(78,47,8));
+        ttr->addChild(ttrMsg, 101);
+        
+        tutorialState = -1;
+        TutorialNextState();
+    }
+    else
+        isTutorial = false;
+    
     return true;
+}
+
+void Sketchbook::TutorialNextState()
+{
+    char temp[200];
+    tutorialState++;
+    
+    // 붙어있는 sprite 미리 제거
+    if ((tutorialState-1 >= 1 && tutorialState-1 <= 3) || tutorialState-1 == 6 || tutorialState-1 == 8 || tutorialState-1 == 10)
+        ttrPos->removeFromParent();
+    if (tutorialState-1 == 3 || tutorialState-1 == 10)
+        ttrArrow->removeFromParent();
+    
+    int sNum;
+    std::string prop;
+    if (tabNumber == 0) { sNum = 21; prop = "불"; }
+    else if (tabNumber == 1) { sNum = 11; prop = "물"; }
+    else if (tabNumber == 2) { sNum = 31; prop = "땅"; }
+    
+    
+    switch (tutorialState)
+    {
+        case 0:
+            ttrMsg->setString("여기는 내가 그릴 줄 아는 마법을 모아 놓은 스케치북이야.");
+            break;
+        case 1:
+            sprintf(temp, "나는 %s 속성 마법사이고 '%s'을 그릴 수 있어.", prop.c_str(), SkillInfo::GetSkillInfo(sNum)->GetName().c_str());
+            ttrMsg->setString(temp);
+            MakeScroll(curState);
+            break;
+        case 2:
+            sprintf(temp, "새로운 마법인 '%s' 스킬을 배워볼까?", SkillInfo::GetSkillInfo(sNum+1)->GetName().c_str());
+            ttrMsg->setString(temp);
+            MakeScroll(curState);
+            break;
+        case 3:
+            ttrMsg->setString("오른쪽에 있는 습득 버튼을 눌러봐!");
+            MakeScroll(curState);
+            break;
+        case 4:
+            ttrMsg->setString("조건이 충족되었으니까 습득 버튼을 눌러!"); // SketchDetail
+            break;
+        case 5:
+            ttrMsg->setString("새로운 마법을 배웠어!"); // NoImage
+            break;
+        case 6:
+            sprintf(temp, "'%s' 스킬에는 자동효과라고 되어있지?\n이것은 장착하지 않아도 자동으로 발동해.", SkillInfo::GetSkillInfo(sNum)->GetName().c_str());
+            ttrMsg->setString(temp);
+            ttrArrow->setRotation(0);
+            MakeScroll(curState);
+            break;
+        case 7:
+            sprintf(temp, "하지만 새로 배운 '%s' 스킬은 슬롯에 장착해야 쓸 수 있어.", SkillInfo::GetSkillInfo(sNum+1)->GetName().c_str());
+            ttrMsg->setString(temp);
+            break;
+        case 8:
+            ttrMsg->setString("아래쪽에 있는 바를 눌러봐.");
+            
+            ttrBg->setPosition(ccp(vo.x, 458));
+            ttrCoco->setPosition(ccp(vo.x, 458+5));
+            ttrMsg->setPosition(ccp(vo.x+320, 458+103));
+            
+            ttrPos->setAnchorPoint(ccp(0, 0));
+            ttrPos->setPosition(ccp(77, 228));
+            ttrPos->setScaleX( (float)792 / (float)162 );
+            ttrPos->setScaleY( (float)187 / (float)89 );
+            this->addChild(ttrPos, 101);
+            ttrArrow->setAnchorPoint(ccp(0.5, 0));
+            ttrArrow->setPosition(ccp(77+782-100, 228+187+10));
+            CCActionInterval* action;
+            action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
+            ttrArrow->runAction(CCRepeatForever::create(action));
+            this->addChild(ttrArrow, 1000);
+            break;
+        case 9:
+            ttrMsg->setString("여기를 누르면 장착할 수 있어.");
+            ttrPos->removeFromParent();
+            ttrArrow->removeFromParent();
+            break;
+        case 10:
+            ttrMsg->setString("장착이 완료되었어! 다시 스케치북으로 돌아갈까? 아래쪽의 바를 눌러봐.");
+            break;
+        case 11:
+            ttrMsg->setString("이제 강화하고 싶은 마법을 선택해서 마음껏 마법을 그려보자!");
+            ttrBg->setPosition(ccp(vo.x, vo.y));
+            ttrCoco->setPosition(ccp(vo.x, vo.y+5));
+            ttrMsg->setPosition(ccp(vo.x+320, vo.y+103));
+            MakeScroll(curState);
+            break;
+    }
 }
 
 void Sketchbook::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 0)
+    if (param->intValue() <= 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -143,18 +283,18 @@ void Sketchbook::Notification(CCObject* obj)
         scrollViewSlot->setTouchEnabled(true);
         CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
-        
         // 토파즈, 별사탕, MP 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        
+        if (isTutorial) // 튜토리얼 상태 5 -> 6 이동 , 10 -> 11 이동
+            TutorialNextState();
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("Sketchbook : 터치 비활성");
-        //this->setKeypadEnabled(false);
-        //this->setTouchEnabled(false);
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -162,6 +302,9 @@ void Sketchbook::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
+        if (isTutorial) // 튜토리얼 상태 4 -> 5 이동 , 9 -> 10 이동
+            TutorialNextState();
+        
         // 스킬 정보 갱신
         MakeScroll(curState, true);
     }
@@ -185,6 +328,15 @@ void Sketchbook::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+    }
+    else if (param->intValue() == 4)
+    {
+        // 스케치북 재시작 (속성을 새로 배우고 와서, 튜토리얼을 시작하기 위해)
+        //CCNode* parent = this->getParent();
+        //((Sketchbook*)obj)->EndScene();
+        //parent->addChild(nextScene, 200, 200);
+        //EndScene();
+        //Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "T_Sketchbook", false);
     }
     
     else if (param->intValue() == -1)
@@ -302,9 +454,9 @@ void Sketchbook::CheckProperties()
 void Sketchbook::MakeScroll(int state, bool isFromPopup)
 {
     // select button을 눌렀을 때 이 함수를 통해 어떤 layer를 보여줄 지 결정한다.
-    if (curState == state && !isFromPopup)
+    if (!isTutorial && curState == state && !isFromPopup)
         return;
-    
+
     // sprites init
     spriteClassBook->RemoveAllObjects();
     
@@ -414,7 +566,7 @@ void Sketchbook::MakeScrollBook(int idx)
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setPosition(ccp(27, (std::min(numOfList, numOfMaxSkill)-i-1)*206));
-        containerBook->addChild(itemLayer, 5);
+        containerBook->addChild(itemLayer, 5*10-i);
         spriteClassBook->layers.push_back(itemLayer);
         
         
@@ -424,6 +576,15 @@ void Sketchbook::MakeScrollBook(int idx)
             id = ms[i]->GetCommonId();
         sprintf(name, "background/bg_board_brown.png%d", i+3);
         spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
+        // 튜토리얼에 따라 영역표시를 해 준다.
+        if ( (tutorialState == 1 && i == 0) || (tutorialState == 2 && i == 1) )
+        {
+            ttrPos->setAnchorPoint(ccp(0, 0));
+            ttrPos->setPosition(ccp(0, 0));
+            ttrPos->setScaleX( (float)892 / (float)162 );
+            ttrPos->setScaleY( (float)216 / (float)89 );
+            itemLayer->addChild(ttrPos, 101);
+        }
         
         // 스킬 배경
         sprintf(name, "icon/icon_skill_division_red.png%d", i+3);
@@ -475,6 +636,16 @@ void Sketchbook::MakeScrollBook(int idx)
         {
             sprintf(name2, "icon/icon_auto_effect.png%d", i+3);
             spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(114, 163), CCSize(0, 0), "", "Layer", itemLayer, 6) );
+            
+            // 튜토리얼에 따라 영역표시를 한다. ('자동효과'에 영역표시 (첫 스킬에만))
+            if ( (tutorialState == 6 && i == 0) )
+            {
+                ttrPos->setAnchorPoint(ccp(0, 0));
+                ttrPos->setPosition(ccp(104, 153));
+                ttrPos->setScaleX( (float)122 / (float)162 );
+                ttrPos->setScaleY( (float)48 / (float)89 );
+                itemLayer->addChild(ttrPos, 101);
+            }
         }
         
         // 연습량 프로그레스바
@@ -565,14 +736,6 @@ void Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_get.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setScale(0.95f);
-                
-                /*
-                sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
-                
-                CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
-                ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCRepeatForever::create(action) );
-                 */
             }
             // 아닌 경우
             else
@@ -583,6 +746,27 @@ void Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_require.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
             }
+        }
+        
+        // 튜토리얼에 따라 화살표 + 영역표시를 표시한다.
+        if ( (tutorialState == 3 && i == 1) || (tutorialState == 11 && i == 0) )
+        {
+            ttrArrow->setAnchorPoint(ccp(0.5, 0));
+            //ttrArrow->setPosition(ccp(633+233/2, 51+115+10));
+            //if (tutorialState == 11 && i == 0) // 마지막 상태에서는 화살표를 정반대로.
+            //{
+                ttrArrow->setRotation(180);
+                ttrArrow->setPosition(ccp(633+233/2, 51-10));
+            //}
+            CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, 5)), CCMoveBy::create(0.5f, ccp(0, -5)), NULL);
+            ttrArrow->runAction(CCRepeatForever::create(action));
+            itemLayer->addChild(ttrArrow, 5001);
+            
+            ttrPos->setAnchorPoint(ccp(0, 0));
+            ttrPos->setPosition(ccp(633, 51));
+            ttrPos->setScaleX( (float)233 / (float)162 );
+            ttrPos->setScaleY( (float)115 / (float)89 );
+            itemLayer->addChild(ttrPos, 5001);
         }
     }
 
@@ -648,12 +832,29 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
     
+    CCLog("touch began");
+    
     CCPoint point = pTouch->getLocation();
     
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isSlotTouched = true;
     if (scrollView->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
+    
+    if (isTutorial)
+    {
+        CCLog("tutorial = %d", tutorialState);
+        if (tutorialState <= 2 || tutorialState == 6 || tutorialState == 7)
+        {
+            TutorialNextState();
+            isTouched = false;
+            isSlotTouched = false;
+            isScrolling = false;
+            isScrollViewTouched = false;
+            return false;
+        }
+        return true;
+    }
     
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -717,7 +918,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
+                Common::ShowNextScene(this, "Sketchbook", "BuyTopaz", false, 0);
                 break;
             }
         }
@@ -726,7 +927,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
             {
                 sound->playClickboard();
-                Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
+                Common::ShowNextScene(this, "Sketchbook", "BuyStarCandy", false, 0);
                 break;
             }
         }
@@ -747,10 +948,26 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isTouched)
         return;
     
+    CCLog("touch ended");
+    
     CCPoint point = pTouch->getLocation();
     
     if (!isScrolling && isSlotTouched && scrollViewSlot->boundingBox().containsPoint(point))
     {
+        if (isTutorial)
+        {
+            if (tutorialState == 8)
+                TutorialNextState();
+            else
+            {
+                isTouched = false;
+                isScrolling = false;
+                isSlotTouched = false;
+                isScrollViewTouched = false;
+                return;
+            }
+        }
+
         sound->playBoardMove(); // 이 scene만 사운드가 다르다.
         Common::ShowNextScene(this, "Sketchbook", "MagicList", false, 1);
     }
@@ -760,6 +977,9 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (spriteClassBook->spriteObj[i]->name.substr(0, 29) == "background/bg_board_brown.png")
         {
+            if (isTutorial)
+                continue;
+            
             // 스케치북에서 버튼 외의 영역을 눌렀을 때 스킬상세 팝업창이 뜨게 하자.
             p = spriteClassBook->spriteObj[i]->sprite9->convertToNodeSpace(point);
             CCSize size = spriteClassBook->spriteObj[i]->sprite9->getContentSize();
@@ -779,6 +999,24 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
+                if (isTutorial) // 튜토리얼 진행중일 경우, 적절한 체크 후 state를 넘긴다.
+                {
+                    if (tutorialState == 3 && atoi(spriteClassBook->spriteObj[i]->name.substr(23).c_str()) == 1+3)
+                        TutorialNextState();
+                    
+                    else if (tutorialState == 11 && atoi(spriteClassBook->spriteObj[i]->name.substr(23).c_str()) == 0+3)
+                        ;
+                    else
+                        continue;
+                    /*
+                    if (tutorialState != 3)
+                        continue;
+                    if (atoi(spriteClassBook->spriteObj[i]->name.substr(23).c_str()) != 1+3)
+                        continue;
+                    TutorialNextState();
+                    */
+                }
+                
                 sound->playClick();
                 int id = spriteClassBook->spriteObj[i]->sprite->getTag();
                 
@@ -812,6 +1050,9 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClassBook->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
         {
+            if (isTutorial)
+                continue;
+            
             p = spriteClassBook->spriteObj[i]->sprite->convertToNodeSpace(point);
             CCSize size = spriteClassBook->spriteObj[i]->sprite->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
@@ -862,6 +1103,21 @@ void Sketchbook::EndScene()
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+
+    if (isTutorial) // 튜토리얼 끝났음!
+    {
+        ttrArrow->release();
+        ttrArrow->removeFromParentAndCleanup(true);
+        ttrPos->release();
+        ttrPos->removeFromParentAndCleanup(true);
+        ttrCoco->removeFromParentAndCleanup(true);
+        ttrMsg->removeFromParentAndCleanup(true);
+        ttrBg->removeFromParentAndCleanup(true);
+        ttr->removeAllChildren();
+        ttr->removeFromParentAndCleanup(true);
+        tutorialState = -100;
+        isTutorial = false;
+    }
 
     // remove all objects
     spriteClass->RemoveAllObjects();

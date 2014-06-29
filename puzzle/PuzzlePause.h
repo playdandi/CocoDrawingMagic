@@ -29,6 +29,9 @@ public:
     void EndGame();
     void EndScene();
     
+    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void XmlParseSessionCheck(xml_document *xmlDoc);
+    
 protected:
     CCSize m_winSize;
     bool isKeybackTouched;

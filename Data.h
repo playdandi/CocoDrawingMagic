@@ -45,7 +45,11 @@ extern std::vector<int> todayCandyKakaoId;
 extern bool isRebooting;
 extern bool isInGame;
 extern bool isInGamePause;
+extern bool isInGameTutorial;
 extern int savedTime;
+
+// 환경설정 메뉴
+extern int menuInSetting;
 
 // 주간랭킹 보상 관련 변수
 extern int myRank;
@@ -60,12 +64,21 @@ extern int missionRefVal;
 // 게임결과에 필요한 값들
 extern class MyGameResult* myGameResult;
 
-extern std::string publicKey[50];
+//extern std::string publicKey[50];
+// rsa 관련
 extern RSA* rsa;
+extern std::string publicKey;
+extern int publicKeyIndex;
 extern std::string obfuscationKey[30];
+
+// 결제용 key
+extern std::string gcmKey;
 
 //
 extern cocos2d::CCNode* verifyStatusScene;
+
+extern bool isTutorial;
+extern int tutorialState;
 
 
 using namespace cocos2d;
@@ -168,6 +181,7 @@ public:
     bool IsWater();
     bool IsLand();
     bool IsMaster();
+    bool HasNoProperty();
     
     void SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved);
     void SetMoney(int topaz, int starcandy);

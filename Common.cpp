@@ -24,9 +24,16 @@
 #include "popup/Profile.h"
 #include "popup/FairyOneInfo.h"
 #include "popup/NoImage.h"
+#include "popup/SelectProperty.h"
 #include "puzzle/Puzzle.h"
 #include "puzzle/PuzzleResult.h"
 #include "puzzle/PuzzlePause.h"
+#include "tutorial/T_Sketchbook.h"
+#include "tutorial/T_MagicList.h"
+#include "tutorial/T_NoImage.h"
+#include "tutorial/T_SketchDetail.h"
+#include "tutorial/puzzle/T_Puzzle.h"
+#include "tutorial/puzzle/T_Skip.h"
 #include "Splash.h"
 #include "RankUp.h"
 
@@ -394,8 +401,15 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "Setting") nextScene = Setting::scene();
     else if (to == "Sketchbook")
     {
-        if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
-        else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
+        std::string fromWhere = Depth::GetCurNameString();
+        if (fromWhere != "Ranking" && fromWhere != "GameReady")
+            fromWhere = Depth::GetParentNameString();
+        
+        if (fromWhere == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
+        else if (fromWhere == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
+        
+        //if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
+        //else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
     }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
@@ -404,6 +418,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     
     else if (to == "WeeklyRankResult") nextScene = WeeklyRankResult::scene();
     else if (to == "GetDegree") nextScene = GetDegree::scene();
+    else if (to == "SelectProperty") nextScene = SelectProperty::scene(etc);
     
     else if (to == "Loading") nextScene = Loading::scene(etc);
     else if (to == "RankUp") nextScene = RankUp::scene();
@@ -412,14 +427,18 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
     else if (to == "PuzzlePause") nextScene = PuzzlePause::scene(etc);
     
+    else if (to == "T_Sketchbook") nextScene = T_Sketchbook::scene(etc);
+    else if (to == "T_SketchDetail") nextScene = T_SketchDetail::scene(etc);
+    else if (to == "T_MagicList") nextScene = T_MagicList::scene();
+    else if (to == "T_Puzzle") nextScene = T_Puzzle::scene();
+    else if (to == "T_Skip") nextScene = T_Skip::scene(etc);
+    
+    
     // go
     if (from == "Splash")
     {
         if (isReplaced)
-        {
             CCDirector::sharedDirector()->replaceScene(nextScene);
-            //((Splash*)obj)->EndScene();
-        }
     }
     else if (from == "Ranking")
     {
@@ -444,6 +463,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Message") ((Message*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(nextScene, 200, 200);
     else if (from == "SketchDetail") ((SketchDetail*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "SelectProperty") ((SelectProperty*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
     else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(nextScene, 200, 200);
@@ -469,7 +489,20 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         else
             ((Puzzle*)obj)->addChild(nextScene, 200, 200);
     }
+    else if (from == "PuzzlePause") ((PuzzlePause*)obj)->addChild(nextScene, 200, 200);
     else if (from == "NoImage") ((NoImage*)obj)->addChild(nextScene, 200, 200);
+    
+    else if (from == "T_Sketchbook") ((T_Sketchbook*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "T_MagicList") ((T_MagicList*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "T_SketchDetail") ((T_SketchDetail*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "T_NoImage") ((T_NoImage*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "T_Puzzle")
+    {
+        if (isReplaced)
+            CCDirector::sharedDirector()->replaceScene(nextScene);
+        else
+            ((T_Puzzle*)obj)->addChild(nextScene, 200, 200);
+    }
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
@@ -477,17 +510,23 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
 {
     if (from == "Sketchbook")
         ((Sketchbook*)obj)->SetTouchLock(false);
-    
+    else if (from == "T_Sketchbook")
+        ((T_Sketchbook*)obj)->SetTouchLock(false);
+
     CCNode* parent;
     // replace = true 면, 순서상 EndScene을 먼저 해 줘야한다... (나중에 다시 리팩토링 해야 함)
     if (from == "SketchDetail") {
         parent = ((SketchDetail*)obj)->getParent();
         ((SketchDetail*)obj)->EndScene(false);
     }
-
+    else if (from == "T_SketchDetail") {
+        parent = ((T_SketchDetail*)obj)->getParent();
+        ((T_SketchDetail*)obj)->EndScene(false);
+    }
     
     CCScene* popup;
     if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
+    else if (to == "T_NoImage") popup = T_NoImage::scene(popupType, btnType, data, etc);
     
     if (from == "Splash") ((Splash*)obj)->addChild(popup, 200, 200);
     else if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
@@ -508,22 +547,21 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "RankUp") ((RankUp*)obj)->addChild(popup, 200, 200);
     else if (from == "Setting") ((Setting*)obj)->addChild(popup, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
+    else if (from == "SelectProperty") ((SelectProperty*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {
-        if(isReplaced) {
-            //CCNode* parent = ((SketchDetail*)obj)->getParent();
-            //((SketchDetail*)obj)->EndScene(false);
+        if(isReplaced)
             parent->addChild(popup, 200, 200);
-        }
-        else ((SketchDetail*)obj)->addChild(popup, 200, 200);
+        else
+            ((SketchDetail*)obj)->addChild(popup, 200, 200);
     }
-    else if (from == "NoImage") {
-        //if (isReplaced) {
-            ((NoImage*)obj)->addChild(popup, 200, 200);
-        /*}
-        else {
-            ((NoImage*)obj)->addChild(popup, 200, 200);
-        }*/
+    else if (from == "T_SketchDetail") {
+        if(isReplaced)
+            parent->addChild(popup, 200, 200);
+        else
+            ((T_SketchDetail*)obj)->addChild(popup, 200, 200);
     }
+    else if (from == "NoImage")
+        ((NoImage*)obj)->addChild(popup, 200, 200);
 }
 
 
@@ -751,12 +789,19 @@ void SpriteClass::AddChild(int idx)
         else if (obj->parentType == "Setting") p = ((Setting*)obj->parent);
         else if (obj->parentType == "Sketchbook") p = ((Sketchbook*)obj->parent);
         else if (obj->parentType == "SketchDetail") p = ((SketchDetail*)obj->parent);
+        else if (obj->parentType == "SelectProperty") p = ((SelectProperty*)obj->parent);
         else if (obj->parentType == "FairyOneInfo") p = ((FairyOneInfo*)obj->parent);
         else if (obj->parentType == "NoImage") p = ((NoImage*)obj->parent);
         else if (obj->parentType == "Puzzle") p = ((Puzzle*)obj->parent);
         else if (obj->parentType == "PuzzleResult") p = ((PuzzleResult*)obj->parent);
         else if (obj->parentType == "PuzzlePause") p = ((PuzzlePause*)obj->parent);
         else if (obj->parentType == "RankUp") p = ((RankUp*)obj->parent);
+        else if (obj->parentType == "T_Sketchbook") p = ((T_Sketchbook*)obj->parent);
+        else if (obj->parentType == "T_SketchDetail") p = ((T_SketchDetail*)obj->parent);
+        else if (obj->parentType == "T_MagicList") p = ((T_MagicList*)obj->parent);
+        else if (obj->parentType == "T_NoImage") p = ((T_NoImage*)obj->parent);
+        else if (obj->parentType == "T_Puzzle") p = ((T_Puzzle*)obj->parent);
+        else if (obj->parentType == "T_Skip") p = ((T_Skip*)obj->parent);
         
         if (obj->type == 0)      p->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) p->addChild(obj->sprite9, obj->zOrder);
@@ -923,12 +968,19 @@ void Common::RebootSystem(void* p)
         else if (Depth::GetCurNameString() == "Setting") ((Setting*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Sketchbook") ((Sketchbook*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "SketchDetail") ((SketchDetail*)cur)->EndScene(true);
+        else if (Depth::GetCurNameString() == "SelectProperty") ((SelectProperty*)cur)->EndScene(false);
         else if (Depth::GetCurNameString() == "FairyOneInfo") ((FairyOneInfo*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "NoImage") ((NoImage*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Puzzle") ((Puzzle*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "PuzzleResult") ((PuzzleResult*)cur)->EndSceneCallback(NULL, cur);
         else if (Depth::GetCurNameString() == "PuzzlePause") ((PuzzlePause*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "RankUp") ((RankUp*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "T_Sketchbook") ((T_Sketchbook*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "T_SketchDetail") ((T_SketchDetail*)cur)->EndScene(true);
+        else if (Depth::GetCurNameString() == "T_MagicList") ((T_MagicList*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "T_NoImage") ((T_NoImage*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "T_Skip") ((T_Skip*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "T_Puzzle") ((T_Puzzle*)cur)->EndScene();
     }
     
     // 모든 전역변수 초기화 (profiles만 제외하고)
@@ -1002,12 +1054,6 @@ std::string Common::GetMissionContent(int type, int val, int refVal)
 static const std::string base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-/*
-static inline bool is_base64(unsigned char c)
-{
-    return (isalnum(c) || (c == '+') || (c == '/'));
-}
-*/
 std::string Common::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
     std::string ret;
     int i = 0;
@@ -1164,29 +1210,4 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
         else if (code == 13) CCLog("토파즈 id 이상함");
     }
 }
-
-/*
-void Common::onHttpRequestCompleted(CCNode *sender, void *data)
-{
-    CCLog("Common : onHttpRequestCompleted");
-    
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    if (!res || !res->isSucceed())
-    {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        return;
-    }
-    
-    // dump data
-    std::vector<char> *buffer = res->getResponseData();
-    char dumpData[BUFFER_SIZE];
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
-    
-    XmlParseVerifyPurchaseResult(dumpData, buffer->size(), -1);
-}
-*/
-
 

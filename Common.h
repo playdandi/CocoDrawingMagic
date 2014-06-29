@@ -130,6 +130,8 @@ USING_NS_CC;
 #define TODAYCANDY_NOTENOUGH_FRIENDS 73
 #define PRACTICE_SKILL_FULL_EXP 74
 #define USING_FAIRY 75
+#define SELECT_PROPERTY_TRY 76
+#define SELECT_PROPERTY_OK 77
 
 
 #define LOADING_PUZZLEEND -2
@@ -138,7 +140,7 @@ USING_NS_CC;
 // 터치 관련
 #define BTN_MENU_GAMEREADY 0
 #define BTN_MENU_GAMESTART 1
-
+#define BTN_MENU_TUTORIAL 2
 
 using namespace pugi;
 using namespace cocos2d;

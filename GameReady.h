@@ -37,6 +37,8 @@ public:
     
     void PotionTimer(float f);
     
+    void StartGame();
+    
     void EndScene();
     void EndSceneCallback(CCNode* sender, void* data);
     

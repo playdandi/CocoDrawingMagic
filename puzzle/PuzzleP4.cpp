@@ -12,7 +12,7 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type, int designatedT
         if (designatedType != -1) // 게임중 요정에 의해 새로 만들어졌을 떄 (보통 designatedType == CONNECTED)
             puzzleP4->type = designatedType;
         else
-            puzzleP4->type = (rand()%100 < 30) ? BLOCKED : CONNECTED; // 연결 diamond 확률은 50%
+            puzzleP4->type = (rand()%100 < 70) ? CONNECTED : BLOCKED;
     }
 
     puzzleP4->parent = parent;
