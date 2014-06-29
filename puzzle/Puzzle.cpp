@@ -84,6 +84,9 @@ bool Puzzle::init()
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
     // game3.plist는 loading화면에서 preload했음.
     
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_flower.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_cloud.plist");
+    
     
     // item 사용 여부
     item_clear = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
@@ -664,6 +667,7 @@ void Puzzle::CocoAnim(float f)
 
 void Puzzle::InitFairy()
 {
+    /*
     fairyLayer = CCLayer::create();
     
     CCSprite* face = CCSprite::createWithSpriteFrameName("sun/sun_face.png");
@@ -713,20 +717,87 @@ void Puzzle::InitFairy()
         fairy_sp.push_back(temp);
         fairyLayer->addChild(temp, 1000);
     }
+    */
     
-    fairyLayer->setScale(0.8f);
-    fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60));
+    fairyTimer = 0; // 요정 액션 타이머
+    
+    //fairyLayer = Fairy::MakeFlowerNew();
+    //fairyLayer = Fairy::MakeCloud();
+    fairyLayer = Fairy::MakeSun();
+    
+    fairyLayer->setPosition(ccp(m_winSize.width-280+100, vo.y+tbSize.height+boardSize.height+60+135)); // sun
+    //fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60)); // flower
+    //fairyLayer->setPosition(ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30)); // cloud일 때
     this->addChild(fairyLayer, 100);
     
     // action
     CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
     CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
     fairyLayer->runAction(rep);
+    
+}
+
+void Puzzle::AnimFairy_Callback(CCNode* sender, void* pointer)
+{
+    sender->removeAllChildrenWithCleanup(true);
+    sender->removeFromParentAndCleanup(true);
+    fairyLayer->setVisible(true);
 }
 
 void Puzzle::ChangeAnimFairy(float f)
 {
+    // Pause 상태, 액티브 스킬 발동 중 -> 시간을 정지시킨다.
+    if (isInGamePause || m_iSkillSP > 0)
+        return;
     
+    // 요정 액션 관련 (2초마다 액션 실행)
+    fairyTimer += 100;
+    if (fairyTimer % 2000 == 0)
+    {
+        /*
+        int n = rand() % 4;
+        if (n == 0 || n == 1)
+        {
+            // 기존 요정 잠시 안 보이게 한다.
+            fairyLayer->setVisible(false);
+            
+            // anim action
+            CCSize s = fairyLayer->getContentSize();
+            float w = s.width * 0.5f;
+            float h = s.height * 0.5f;
+            CCPoint pos = ccp(m_winSize.width-280 + w-18, vo.y+tbSize.height+boardSize.height+60 + h-5);
+            
+            // 꽃 접었다 펴기
+            if (n == 0)
+                Fairy::Anim_Flower_Hide(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
+            // 초록잎 파닥파닥
+            else
+                Fairy::Anim_Flower_Padac(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
+        }
+        
+        // 얼굴 왔다갔다하기
+        else if (n == 2)
+            Fairy::Anim_Flower_MoveFace(fairyLayer);
+        
+        // 눈썹 씰룩씰룩
+        else
+            Fairy::Anim_Flower_MoveEyebrow(fairyLayer);
+        */
+        
+        /* 구름 애니메이션
+        fairyLayer->setVisible(false);
+        CCPoint pos = ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30);
+        Fairy::Anim_Cloud_Curl(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
+        */
+        
+        /* 은근해 애니메이션 */
+        // 한숨
+        //Fairy::Anim_Sun_Sigh(fairyLayer, this, callfuncND_selector(Puzzle::AnimFairy_Callback));
+        // 눈 움직이기
+        //Fairy::Anim_Sun_MoveEye(fairyLayer);
+        // 꼬리 회전
+        Fairy::Anim_Sun_RotateTails(fairyLayer);
+    }
 }
 
 void Puzzle::InitBoard()
@@ -1044,6 +1115,7 @@ void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
     m_bTouchStarted = false;
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::HintTimer), 0.1f);
+    ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::ChangeAnimFairy), 0.1f);
 }
 
 void Puzzle::SetTimer()
@@ -1057,9 +1129,6 @@ void Puzzle::SetTimer()
     iTimer = 1000 * PUZZLE_TIME;
     if (item_time)
         iTimer += (1000 * 5);
-    
-    // 콤보 끊김 시간 언제인지 저장하는 변수
-    //cancelledComboTime = iTimer;
 
     char n[5];
     sprintf(n, "%d", PUZZLE_TIME + (item_time * 5));
@@ -1166,6 +1235,7 @@ void Puzzle::UpdateTimer(float f)
             
             this->unschedule(schedule_selector(Puzzle::UpdateTimer));
             this->unschedule(schedule_selector(Puzzle::HintTimer));
+            this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
             this->setTouchEnabled(false);
             this->setKeypadEnabled(false);
             sound->StopBackgroundSound();
@@ -3520,7 +3590,11 @@ void Puzzle::EndScene()
     
     // 일시정지 화면에서 바로 종료하는 상황일 경우
     if (isInGamePause)
+    {
         this->unschedule(schedule_selector(Puzzle::UpdateTimer));
+        this->unschedule(schedule_selector(Puzzle::HintTimer));
+        this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
+    }
     isInGamePause = false;
     
     this->setKeypadEnabled(false);

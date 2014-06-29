@@ -1,5 +1,108 @@
 #include "Fairy.h"
 
+CCLayer* Fairy::MakeFlowerNew()
+{
+    CCLayer* layer = CCLayer::create();
+    
+    CCSprite* leaf = CCSprite::createWithSpriteFrameName("flower_leaf.png");
+    leaf->setAnchorPoint(ccp(0, 0));
+    leaf->setPosition(ccp(0, 0));
+    layer->addChild(leaf, 99);
+    
+    float p = leaf->getContentSize().width / 2 - 7;
+    
+    CCLayer* face = CCLayer::create();
+    face->setAnchorPoint(ccp(0, 0));
+    face->setPosition(ccp(p, 0));
+    face->setTag(0);
+    layer->addChild(face, 100);
+    
+    CCSprite* f = CCSprite::createWithSpriteFrameName("flower_face.png");
+    f->setAnchorPoint(ccp(0.5, 0));
+    f->setPosition(ccp(0, 30));
+    face->addChild(f, 101);
+    CCSprite* eyebrow = CCSprite::createWithSpriteFrameName("flower_eyebrow.png");
+    eyebrow->setPosition(ccp(0, 190));
+    eyebrow->setTag(1);
+    face->addChild(eyebrow, 102);
+    
+    layer->setContentSize(CCSize(f->getContentSize().width, f->getContentSize().height+30));
+    
+    return layer;
+}
+
+void Fairy::Anim_Flower_Hide(CCLayer* gameLayer, SEL_CallFuncND cf, CCPoint pos)
+{
+    CCArray* animFrames = CCArray::createWithCapacity(9);
+    
+    char name[20];
+    int c = -1;
+    for (int j = 0 ; j < 9 ; j++)
+    {
+        if (j >= 5)
+        {
+            c += 2;
+            sprintf(name, "flower_hide_%d.png", j-c);
+        }
+        else
+            sprintf(name, "flower_hide_%d.png", j+1);
+        CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
+        animFrames->addObject(frame);
+    }
+
+    CCSprite* first = CCSprite::createWithSpriteFrameName("flower_hide_1.png");
+    first->setAnchorPoint(ccp(0.50, 0.50));
+    first->setPosition(pos);
+    gameLayer->addChild(first, 105);
+    
+    CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.07f);
+    CCAnimate* animate = CCAnimate::create(animation);
+    CCFiniteTimeAction* action = CCSequence::create(animate, CCCallFuncND::create(gameLayer, cf, NULL), NULL);
+    first->runAction(action);
+
+    animFrames->removeAllObjects();
+}
+
+void Fairy::Anim_Flower_MoveFace(CCLayer* layer)
+{
+    CCActionInterval* action = CCSequence::create( CCRotateBy::create(0.15f, 15), CCRotateBy::create(0.3f, -30), CCRotateBy::create(0.15f, 15), NULL);
+    layer->getChildByTag(0)->runAction(action);
+}
+
+void Fairy::Anim_Flower_MoveEyebrow(CCLayer* layer)
+{
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.1f, ccp(0, 10)), CCMoveBy::create(0.1f, ccp(0, -10)), CCMoveBy::create(0.1f, ccp(0, 10)), CCMoveBy::create(0.1f, ccp(0, -10)), NULL);
+    layer->getChildByTag(0)->getChildByTag(1)->runAction(action);
+}
+
+void Fairy::Anim_Flower_Padac(CCLayer* gameLayer, SEL_CallFuncND cf, CCPoint pos)
+{
+    CCArray* animFrames = CCArray::createWithCapacity(9);
+    
+    char name[20];
+    for (int j = 0 ; j < 5 ; j++)
+    {
+        if (j % 2 == 0)
+            sprintf(name, "flower_hide_1.png");
+        else
+            sprintf(name, "flower_padac.png");
+        CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
+        animFrames->addObject(frame);
+    }
+    
+    CCSprite* first = CCSprite::createWithSpriteFrameName("flower_hide_1.png");
+    first->setAnchorPoint(ccp(0.50, 0.50));
+    first->setPosition(pos);
+    gameLayer->addChild(first, 105);
+    
+    CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.1f);
+    CCAnimate* animate = CCAnimate::create(animation);
+    CCFiniteTimeAction* action = CCSequence::create(animate, CCCallFuncND::create(gameLayer, cf, NULL), NULL);
+    first->runAction(action);
+    
+    animFrames->removeAllObjects();
+}
+
 CCLayer* Fairy::MakeFlower()
 {
     CCLayer* fairyLayer = CCLayer::create();
@@ -90,16 +193,17 @@ CCLayer* Fairy::MakeFlower()
 
 CCLayer* Fairy::MakeSun()
 {
-    CCLayer* fairyLayer = CCLayer::create();
+    CCLayer* layer = CCLayer::create();
     
     CCSprite* face = CCSprite::createWithSpriteFrameName("sun/sun_face.png");
     face->setAnchorPoint(ccp(0.5, 0.5));
     face->setPosition(ccp(0, 0));
-    fairyLayer->addChild(face, 50);
+    layer->addChild(face, 50);
     CCSprite* mouth = CCSprite::createWithSpriteFrameName("sun/sun_mouth.png");
     mouth->setAnchorPoint(ccp(0.5, 0.5));
     mouth->setPosition(ccp(0, -30));
-    fairyLayer->addChild(mouth, 50);
+    mouth->setTag(0); // tag
+    layer->addChild(mouth, 100);
     
     CCLayer* eyeLayer = CCLayer::create();
     CCSprite* eye1 = CCSprite::createWithSpriteFrameName("sun/sun_eye.png");
@@ -111,12 +215,14 @@ CCLayer* Fairy::MakeSun()
     eye2->setPosition(ccp(70, 0));
     eyeLayer->addChild(eye2, 50);
     eyeLayer->setPosition(ccp(-50, 0));
-    eyeLayer->setTag(0);
-    fairyLayer->addChild(eyeLayer, 50);
+    eyeLayer->setTag(1); // tag
+    layer->addChild(eyeLayer, 50);
     
     CCLayer* tails = CCLayer::create(); // 태양 주위 8개에 대한 layer
+    tails->setAnchorPoint(ccp(0, 0));
     tails->setPosition(ccp(0, 0));
-    fairyLayer->addChild(tails, 50);
+    tails->setTag(2); // tag
+    layer->addChild(tails, 50);
     
     float r = 110.0;
     float x, y;
@@ -137,8 +243,83 @@ CCLayer* Fairy::MakeSun()
         tails->addChild(temp, 50);
     }
     
-    return fairyLayer;
+    return layer;
 }
+
+void Fairy::Anim_Sun_Sigh(CCLayer* layer, CCLayer* gameLayer, SEL_CallFuncND cf)
+{
+    CCSprite* sigh = CCSprite::createWithSpriteFrameName("sun/sun_sigh.png");
+    sigh->setPosition(ccp(30, 0));
+    sigh->setOpacity(0);
+    layer->getChildByTag(0)->addChild(sigh, 3005);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.4f), CCMoveBy::create(0.4f, ccp(20, -20)), NULL), CCSpawn::create(CCFadeOut::create(0.4f), CCMoveBy::create(0.4f, ccp(20, -20)), NULL), CCCallFuncND::create(gameLayer, cf, NULL), NULL);
+    sigh->runAction(action);
+}
+
+void Fairy::Anim_Sun_MoveEye(CCLayer* layer)
+{
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.4f, ccp(40, 0)), CCMoveBy::create(0.4f, ccp(-40, 0)), NULL);
+    layer->getChildByTag(1)->runAction(action);
+}
+
+void Fairy::Anim_Sun_RotateTails(CCLayer* layer)
+{
+    CCActionInterval* action = CCSequence::create( CCRotateBy::create(0.2f, 90), CCRotateBy::create(0.2f, 90), CCRotateBy::create(0.2f, 90), CCRotateBy::create(0.2f, 90), NULL);
+    layer->getChildByTag(2)->runAction(action);
+}
+
+CCLayer* Fairy::MakeCloud()
+{
+    CCLayer* layer = CCLayer::create();
+    
+    CCSprite* cloud = CCSprite::createWithSpriteFrameName("cloud_1.png");
+    cloud->setAnchorPoint(ccp(0, 0));
+    cloud->setPosition(ccp(0, 0));
+    cloud->setScale(0.9f);
+    layer->addChild(cloud, 99);
+    
+    CCSize c = cloud->getContentSize();
+    CCSprite* face = CCSprite::createWithSpriteFrameName("cloud_face.png");
+    face->setAnchorPoint(ccp(0.5, 0.5));
+    face->setPosition(ccp(c.width/2-20, 100));
+    face->setScale(0.9f);
+    layer->addChild(face, 100);
+    
+    layer->setContentSize(cloud->getContentSize());
+    
+    return layer;
+}
+
+void Fairy::Anim_Cloud_Curl(CCLayer* gameLayer, SEL_CallFuncND cf, CCPoint pos)
+{
+    CCArray* animFrames = CCArray::createWithCapacity(8);
+    
+    char name[20];
+    for (int i = 0 ; i < 2 ; i++)
+    {
+        for (int j = 0 ; j < 4 ; j++)
+        {
+            sprintf(name, "cloud_%d.png", j+1);
+            CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
+            animFrames->addObject(frame);
+        }
+    }
+    
+    CCSprite* first = CCSprite::createWithSpriteFrameName("cloud_1.png");
+    first->setAnchorPoint(ccp(0, 0));
+    first->setScale(0.9f);
+    first->setPosition(pos);
+    gameLayer->addChild(first, 105);
+    
+    CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.07f);
+    CCAnimate* animate = CCAnimate::create(animation);
+    CCFiniteTimeAction* action = CCSequence::create(animate, CCCallFuncND::create(gameLayer, cf, NULL), NULL);
+    first->runAction(action);
+    
+    animFrames->removeAllObjects();
+}
+
 
 CCLayer* Fairy::MakeEmpty()
 {

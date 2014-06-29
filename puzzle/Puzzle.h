@@ -46,6 +46,8 @@ public:
     void ChangeAnimCoco(float f);
     void ChangeAnimFairy(float f);
     
+    void AnimFairy_Callback(CCNode* sender, void* pointer);
+    
     void SetScoreAndStarCandy();
     void UpdateScore(int type, int data);
     void UpdateStarCandy(int type, int data);
@@ -299,6 +301,9 @@ protected:
     bool m_bIsItemTouched;
     int item_dx;
     int item_dy;
+    
+    CCArray* animFairyFrames;
+    int fairyTimer; // 요정 액션 타이머
     
 private:
     Sound* sound;

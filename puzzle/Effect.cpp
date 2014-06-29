@@ -673,7 +673,6 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
         //// particle ////
         sp_fire = CCSprite::create("particles/fire.png");
         CCParticleSystem* par = CCParticleFlower::create();
-        //par->retain();
         par->setTexture(sp_fire->getTexture());
         
         par->setAnchorPoint(ccp(0.5, 0.5));
@@ -694,6 +693,8 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
         
         gameLayer->addChild(par, z1);
     }
+    
+    animFrames->removeAllObjects();
 }
 
 
