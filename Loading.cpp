@@ -22,7 +22,35 @@ void Loading::onEnter()
 {
     CCLog("Loading :: onEnter");
     CCLayer::onEnter();
+    
+    
+    if (loadingSprites)
+    {
+        spriteStatus = 0;
+        timerStop = false;
+        CCLog("start schedule");
+        this->schedule(schedule_selector(Loading::LoadingSpriteTimer), 0.05f);
+    }
+    
+    if (status == -1)
+    {
+        char temp[255];
+        std::string param = "";
+        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+        param += temp;
+        int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
+        int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
+        int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
+        int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
+        int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
+        sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
+        param += temp;
+        
+        Network::HttpPost(param, URL_GAMESTART, this, httpresponse_selector(Loading::onHttpRequestCompleted));
+
+    }
 }
+
 void Loading::onExit()
 {
     CCLog("Loading :: onExit");
@@ -39,26 +67,13 @@ bool Loading::init()
     Depth::DumpDepth();
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
+    loadingSprites = false;
     
     if (status == -1)
     {
         CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
         
         LoadingSprites();
-        
-        char temp[255];
-        std::string param = "";
-        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-        param += temp;
-        int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
-        int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
-        int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
-        int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
-        int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
-        sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
-        param += temp;
-
-        Network::HttpPost(param, URL_GAMESTART, this, httpresponse_selector(Loading::onHttpRequestCompleted));
     }
     else if (status == LOADING_PUZZLEEND)
     {
@@ -88,25 +103,68 @@ bool Loading::init()
 
 void Loading::LoadingSprites()
 {
+    loadingSprites = true;
+    
     pCoco = CCSprite::createWithSpriteFrameName("loading/coco_loading.png");
     pCoco->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
     pCoco->setScale(1.0f);
     this->addChild(pCoco, 5);
     
+    // tip
+    CCPoint vo = CCDirector::sharedDirector()->getVisibleOrigin();
+    pTip = CCSprite::createWithSpriteFrameName("loading/tip.png");
+    pTip->setAnchorPoint(ccp(0.5, 0));
+    pTip->setPosition(ccp(m_winSize.width/2, vo.y+100));
+    this->addChild(pTip, 5);
+    
+    CCSize t = pTip->getContentSize();
+    
+    // tip message
+    pTipMsg = CCLabelTTF::create(Common::GetTip().c_str(), fontList[0].c_str(), 32, CCSize(774, 126), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
+    pTipMsg->setColor(ccc3(255,255,255));
+    pTipMsg->setAnchorPoint(ccp(0, 0.5));
+    pTipMsg->setPosition(ccp(m_winSize.width/2-t.width/2+170, vo.y+100+t.height/2-10));
+    this->addChild(pTipMsg, 6);
+    
     pLoading = CCSprite::createWithSpriteFrameName("loading/loading1.png");
     pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
-    pLoading->setTag(1);
+    //pLoading->setTag(1);
     this->addChild(pLoading, 5);
     pLoading2 = CCSprite::createWithSpriteFrameName("loading/loading2.png");
     pLoading2->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
-    pLoading2->setTag(2);
+    //pLoading2->setTag(2);
     pLoading2->setOpacity(0);
     this->addChild(pLoading2, 5);
     
-    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
-    pLoading->runAction(action);
+    //spriteStatus = 0;
+    //timerStop = false;
+    //this->schedule(schedule_selector(Loading::LoadingSpriteTimer), 0.1f);
+    
+    //CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
+    //pLoading->runAction(action);
 }
 
+void Loading::LoadingSpriteTimer(float f)
+{
+    CCLog("hahaha = %d", spriteStatus);
+    if (spriteStatus % 2 == 0)
+    {
+        if (timerStop)
+            return;
+        pLoading->setOpacity(0);
+        pLoading2->setOpacity(255);
+    }
+    else
+    {
+        if (timerStop)
+            return;
+        pLoading->setOpacity(255);
+        pLoading2->setOpacity(0);
+    }
+    spriteStatus++;
+}
+
+/*
 void Loading::Callback(CCNode* sender, void* pointer)
 {
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
@@ -123,6 +181,7 @@ void Loading::Callback(CCNode* sender, void* pointer)
         pLoading2->runAction(action);
     }
 }
+*/
 
 void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
 {
@@ -240,6 +299,7 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
         pLoading2->removeFromParentAndCleanup(true);
         
         // 게임 시작!
+        this->unschedule(schedule_selector(Loading::LoadingSpriteTimer));
         Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
     }
 }
@@ -253,12 +313,21 @@ void Loading::EndScene()
     CCString* param = CCString::create("-1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
-    pLoading->removeFromParentAndCleanup(true);
-    if (status == LOADING_PUZZLEEND)
+    //if (status == LOADING_PUZZLEEND)
+    CCLog("Loading : EndScene");
+    if (loadingSprites)
     {
+        timerStop = true;
+        CCLog("timerStop : %d", timerStop);
+        this->unschedule(schedule_selector(Loading::LoadingSpriteTimer));
         pCoco->removeFromParentAndCleanup(true);
+        pLoading->removeFromParentAndCleanup(true);
         pLoading2->removeFromParentAndCleanup(true);
+        pTip->removeFromParentAndCleanup(true);
+        pTipMsg->removeFromParentAndCleanup(true);
     }
+    else
+        pLoading->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

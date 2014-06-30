@@ -142,8 +142,10 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
 
 int Network::DeObfuscation(std::string obfuscatedStr, char* data)
 {
+    //CCLog("%s", obfuscatedStr.c_str());
     int obfKey = atoi(obfuscatedStr.substr(0, 2).c_str()) - 10; // 앞 두자리는 key값이므로 분리한다.
     obfuscatedStr = obfuscatedStr.substr(2);
+    //CCLog("obf key value = %d", obfKey);
     
     // replacing '-' to '+'
     Network::replaceAll(obfuscatedStr, "-", "+");
@@ -177,9 +179,9 @@ void Network::ShowCommonError(int code)
         case 1:
         case 2:
         case 4:
-            popupType = NEED_TO_REBOOT; break;
-        case 5:
             popupType = NEED_TO_UPDATE; break;
+        case 5:
+            popupType = NEED_TO_REBOOT; break;
         default:
             popupType = NEED_TO_REBOOT; break;
     }
@@ -194,8 +196,8 @@ void Network::ShowCommonError(int code)
      코드 1 : 파라미터 에러
      코드 2 : userId 없음
      코드 3 : 돈이 모지람.
-     코드 4 : 게임버전 업데이트로 인한 재부팅 필요
-     코드 5 : 바이너리 업데이트로 인한 앱 업데이트 필요
+     코드 4 : 바이너리 업데이트로 인한 앱 업데이트 필요
+     코드 5 : 게임버전 업데이트로 인한 재부팅 필요
     */
 }
 

@@ -12,7 +12,7 @@ class Fairy
 public:
     static CCLayer* MakeEmpty();
     static CCLayer* MakeSun();
-    static CCLayer* MakeCloud();
+    static CCLayer* MakeCloud(bool isUI = false);
     static CCLayer* MakeFlower();
     static CCLayer* MakeFlowerNew();
     static CCLayer* GetFairy(int id);

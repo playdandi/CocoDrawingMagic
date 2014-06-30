@@ -124,7 +124,7 @@ void CocoRoom::Notification(CCObject* obj)
         scrollView->setTouchEnabled(true);
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
-    if (param->intValue() == 0)
+    else if (param->intValue() == 0)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -227,16 +227,6 @@ void CocoRoom::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
-    }
-
-    else if (param->intValue() == -1)
-    {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setTouchPriority(Depth::GetCurPriority());
-        isTouched = false;
-        scrollView->setTouchEnabled(true);
-        CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
 }
 
@@ -616,6 +606,7 @@ void CocoRoom::MakeSpritesFairy()
     {
         case 1: picture->setScale(1.2f); break;
         case 2: picture->setScale(1.2f); break;
+        case 3: picture->setScale(1.0f); break;
         default: picture->setScale(2.0f); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
@@ -623,6 +614,7 @@ void CocoRoom::MakeSpritesFairy()
     {
         case 1: picture->setPosition(ccp(300, 1186+offset-50)); break;
         case 2: picture->setPosition(ccp(310, 1156+offset-50)); break;
+        case 3: picture->setPosition(ccp(310, 1136+offset-50)); break;
         default: picture->setPosition(ccp(310, 1136+offset-50)); break;
     }
     picture->setTag(99999);
@@ -939,6 +931,7 @@ void CocoRoom::MakeScrollFairy()
         {
             case 1: sprintf(fname, "icon/icon_fairyslot_flower.png"); break;
             case 2: sprintf(fname, "icon/icon_fairyslot_sun.png"); break;
+            case 3: sprintf(fname, "icon/icon_fairyslot_cloud.png"); break;
         }
         //sprintf(fname, "background/bg_skill_yellow.png%d", i);
         spriteClassFairySlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerFairy, 3, 0, 255, fuid) );

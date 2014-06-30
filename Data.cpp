@@ -1186,6 +1186,7 @@ std::string FairyInfo::MakeName(int id)
     {
         case 1: return "꽃등신"; break;
         case 2: return "은근해"; break;
+        case 3: return "구르미"; break;
     }
     return "노네임";
 }
@@ -1227,6 +1228,7 @@ std::string FairyInfo::GetDescription()
     {
         case 1: return "나같이 꽃같은 등신봤어~?"; break;
         case 2: return "(은근은근) (은근은근)"; break;
+        case 3: return "뭉게뭉게 무웅게무웅게"; break;
     }
     return "할 말이 없네요";
 }

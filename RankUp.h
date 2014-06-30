@@ -17,6 +17,8 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
     void InitSprites();
+
+    void Callback(CCNode* sender, void* p);
     
     void EndScene();
     void EndSceneCallback(CCNode* sender, void* pointer);
@@ -30,6 +32,7 @@ protected:
 private:
     CCSprite* pBackground;
     CCSprite* pBlackClose;
+    CCSprite* pBlackOpen;
     SpriteClass* spriteClass;
 };
 

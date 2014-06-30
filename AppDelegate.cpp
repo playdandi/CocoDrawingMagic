@@ -34,6 +34,11 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     // create a scene. it's an autorelease object
     CCScene *pScene = Splash::scene();
+    
+    // sound 강제 들고오기
+    // if you use SimpleAudioEngine, it must be pause
+    SimpleAudioEngine::sharedEngine()->pauseAllEffects();
+    SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
 
     // run
     pDirector->runWithScene(pScene);

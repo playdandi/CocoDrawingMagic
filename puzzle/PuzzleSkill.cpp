@@ -136,7 +136,7 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos, bool isFeverTime)
     
             // 10개 이상 제거 시 추가점수/추가별사탕 - F3, E4
             else if (i == 2) {
-                if (pieceColor == PIECE_RED && m_pGameLayer->GetPiece8xy(false).size() >= 8)
+                if (pieceColor == PIECE_RED && m_pGameLayer->GetPiece8xy(false).size() >= 10)
                     Try(i, queue_pos);
             }
             /*else if (i == 19) {
@@ -289,7 +289,10 @@ void PuzzleSkill::A1(int num, int queue_pos)
     UpdateAppliedSkillCount(num);
 
     // 추가점수 = 스킬레벨 * 한붓그리기 개수 * 30 (점)
-    A1_addedScore = 30*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
+    //A1_addedScore = 30*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
+    
+    // 재웅 -> 500 + (lv*500)
+    A1_addedScore = 500 * (skillLevel[num]+1);
     m_pGameLayer->UpdateScore(1, A1_addedScore);
     
     // 이펙트
@@ -447,6 +450,9 @@ void PuzzleSkill::A2(int num, int queue_pos)
     m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
     m_pGameLayer->PlayEffect(num, queue_pos);
     
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 3000+skillLevel[num]*1500);
+    
     // 폭파 실행
     if (num != 9) // 물 사이클 스킬은 이펙트와 함께 발동시켜야 하므로, 여기서 Bomb을 실행하지 않는다.
         m_pGameLayer->Bomb(queue_pos, A2_pos);
@@ -467,7 +473,8 @@ void PuzzleSkill::F3(int num, int queue_pos)
     
     UpdateAppliedSkillCount(num);
     
-    F3_addedScore = skillLevel[num]*7000; // 나중에 보고 밸런스 조정
+    //F3_addedScore = skillLevel[num]*7000;
+    F3_addedScore = 15000 + skillLevel[num]*2000;
     m_pGameLayer->UpdateScore(1, F3_addedScore);
     
     // 이펙트 ('+' 그림)
@@ -642,6 +649,9 @@ void PuzzleSkill::F5(int num)
     GetEffect()->SpiritEffect(0, centerX, centerY);
     GetEffect()->RemoveSpirit(0);
     isSpiritAlive[0] = false;
+   
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
     
     UpdateAppliedSkillCount(num);
 }
@@ -755,6 +765,9 @@ void PuzzleSkill::A6(int num, int queue_pos)
         // 사운드
         m_pGameLayer->GetSound()->PlaySkillSound(num);
     }
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 5000+skillLevel[num]*1500);
 }
 void PuzzleSkill::F6_Callback(CCNode* sender, void *p)
 {
@@ -887,12 +900,15 @@ void PuzzleSkill::F8(int num, int queue_pos)
     
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
 
-    for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
+    /*for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
     {
         CCLog("%d %d %d %d %d %d %d", F8_check[0][y], F8_check[1][y], F8_check[2][y],
               F8_check[3][y], F8_check[4][y], F8_check[5][y], F8_check[6][y]);
-    }
+    }*/
 }
 
 void PuzzleSkill::F8Check(int x, int y, int idx)
@@ -1053,7 +1069,10 @@ void PuzzleSkill::W3(int num)
     
     UpdateAppliedSkillCount(num);
     
-    W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
+    //W3_addedScore = pow(m_pGameLayer->GetCombo(), 0.9f) * (skillLevel[num]*100 + 550);
+    W3_addedScore = 15000+skillLevel[num]*2000;
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, W3_addedScore);
     
     // sound
     m_pGameLayer->GetSound()->PlaySkillSound(num);
@@ -1163,6 +1182,9 @@ void PuzzleSkill::W5(int num)
     GetEffect()->RemoveSpirit(1);
     isSpiritAlive[1] = false;
     
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
+    
     UpdateAppliedSkillCount(num);
 }
 void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
@@ -1261,6 +1283,9 @@ void PuzzleSkill::W8(int num, int queue_pos)
         return;
     
     UpdateAppliedSkillCount(num);
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
     
     ps = this;
     
@@ -1513,11 +1538,14 @@ void PuzzleSkill::E3(int num)
     
     //E3_addedCandy = myInfo->GetStaffLv() * 10 * skillLevel[num];
     E3_addedCandy = pow((myInfo->GetStaffLv())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
-    CCLog("떡갈나무지팡이 : 별사탕 %d개 증가", E3_addedCandy);
+    //CCLog("떡갈나무지팡이 : 별사탕 %d개 증가", E3_addedCandy);
     
     // 이펙트 ('+' 그림)
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
     m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 15000+skillLevel[num]*2000);
 }
 int PuzzleSkill::E3_Get_AddedCandy()
 {
@@ -1670,6 +1698,9 @@ void PuzzleSkill::E5(int num)
     GetEffect()->SpiritEffect(2);
     GetEffect()->RemoveSpirit(2);
     isSpiritAlive[2] = false;
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
     
     UpdateAppliedSkillCount(num);
 }
@@ -1836,6 +1867,9 @@ void PuzzleSkill::E8(int num, int queue_pos)
     // 정해진 회수만큼 라인을 잡아서, 터뜨린다. (초록 피스가 있는 라인)
     
     UpdateAppliedSkillCount(num);
+    
+    // 스킬 발동점수
+    m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
     
     // 변수 초기화
     E8_isActive = false;
@@ -2496,8 +2530,8 @@ void PuzzleSkill::ApplyItemPaint(int x, int y, int dx, int dy, int type, int que
     
     itemPaint_callbackCnt = 0;
     itemPaint_type = type - 10; // ITEM_PAINT류와 일반 PIECE류의 숫자는 정확히 10차이 (그렇게 정의함)
-    item_dx = dx * 10;
-    item_dy = dy * 10;
+    item_dx = dx * 20;
+    item_dy = dy * 20;
     ApplyItemPaint_Change(NULL, this);
     
     /*

@@ -2,9 +2,12 @@
 #define __CocoMagic__Loading__
 
 #include "Common.h"
+#include "cocos2d.h"
+#include "cocos-ext.h"
 #include "pugixml/pugixml.hpp"
 
 using namespace pugi;
+using namespace cocos2d;
 using namespace cocos2d::extension;
 
 class Loading : public CCLayer
@@ -17,9 +20,8 @@ public:
     virtual void onEnter();
     virtual void onExit();
     
-	CREATE_FUNC(Loading);
-    
     void LoadingSprites();
+    void LoadingSpriteTimer(float f);
     void Callback(CCNode* sender, void* pointer);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
@@ -27,14 +29,20 @@ public:
     
     void EndScene();
     
+    CREATE_FUNC(Loading);
+    
 protected:
     CCSize m_winSize;
+    int spriteStatus;
+    bool loadingSprites;
+    bool timerStop;
 
 private:
-    CCSprite* pBlack;
     CCSprite* pCoco;
     CCSprite* pLoading;
     CCSprite* pLoading2;
+    CCSprite* pTip;
+    CCLabelTTF* pTipMsg;
 };
 
 #endif /* defined(__CocoMagic__Loading__) */

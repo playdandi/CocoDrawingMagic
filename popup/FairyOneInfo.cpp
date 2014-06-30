@@ -126,6 +126,7 @@ void FairyOneInfo::InitSprites()
     {
         case 1: picture = Fairy::MakeFlower(); picture->setScale(0.7f); break;
         case 2: picture = Fairy::MakeSun(); picture->setScale(0.8f); break;
+        case 3: picture = Fairy::MakeCloud(true); picture->setScale(0.8f); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
     picture->setPosition(ccp(250, 1100));

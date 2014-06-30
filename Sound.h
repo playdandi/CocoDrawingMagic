@@ -3,6 +3,11 @@
 
 #include "Common.h"
 #include "cocos2d.h"
+#include "SimpleAudioEngine.h"
+
+using namespace cocos2d;
+using namespace CocosDenshion;
+
 
 #define VOICE_TITLE 0
 #define VOICE_READY 1
@@ -16,8 +21,6 @@
 #define VOICE_EIT2 9
 #define VOICE_EIT3 10
 
-
-using namespace cocos2d;
 
 class Sound
 {
@@ -67,6 +70,9 @@ public:
     
 protected:
     int nClockSoundId;
+    
+private:
+    SimpleAudioEngine* engine;
 };
 
 #endif /* defined(__CocoMagic__Sound__) */

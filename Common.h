@@ -34,6 +34,7 @@ USING_NS_CC;
 
 
 #define PUZZLE_TIME 60
+#define FEVER_TIME 8
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
@@ -158,6 +159,8 @@ class Common
 {
 public:
     //static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
+    
+    static std::string GetTip();
     
     static std::string MakeComma(int number);
     static std::string InsertComma(std::string number);

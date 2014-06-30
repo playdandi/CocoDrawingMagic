@@ -477,10 +477,30 @@ void GameReady::InitFairy()
     // 요정 그림
     CCLayer* picture = Fairy::GetFairy(fid);
     picture->setAnchorPoint(ccp(0, 0));
+    switch (fid)
+    {
+        case 1:
+            picture->setPosition(ccp(309/2+10, 236/2+23));
+            picture->setScale(0.63f);
+            break;
+        case 2:
+            picture->setPosition(ccp(309/2, 236/2+15));
+            picture->setScale(0.7f);
+            break;
+        case 3:
+            picture->setPosition(ccp(309/2, 236/2+23));
+            picture->setScale(0.8f);
+            break;
+        default:
+            picture->setPosition(ccp(309/2, 236/2+23));
+            picture->setScale(0.9f);
+            break;
+    }
+    /*
     if (fid == 1)
     {
-        picture->setPosition(ccp(309/2+10, 236/2+23));
-        picture->setScale(0.63f);
+        
+        
     }
     else if (fid == 2)
     {
@@ -492,6 +512,7 @@ void GameReady::InitFairy()
         picture->setPosition(ccp(309/2, 236/2+23));
         picture->setScale(0.9f);
     }
+    */
     picture->setTag(99999);
     fairyLayer->addChild(picture, 5);
     

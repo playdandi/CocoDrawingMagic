@@ -269,22 +269,34 @@ void Fairy::Anim_Sun_RotateTails(CCLayer* layer)
     layer->getChildByTag(2)->runAction(action);
 }
 
-CCLayer* Fairy::MakeCloud()
+CCLayer* Fairy::MakeCloud(bool isUI)
 {
     CCLayer* layer = CCLayer::create();
     
-    CCSprite* cloud = CCSprite::createWithSpriteFrameName("cloud_1.png");
-    cloud->setAnchorPoint(ccp(0, 0));
-    cloud->setPosition(ccp(0, 0));
-    cloud->setScale(0.9f);
-    layer->addChild(cloud, 99);
-    
-    CCSize c = cloud->getContentSize();
-    CCSprite* face = CCSprite::createWithSpriteFrameName("cloud_face.png");
-    face->setAnchorPoint(ccp(0.5, 0.5));
-    face->setPosition(ccp(c.width/2-20, 100));
-    face->setScale(0.9f);
-    layer->addChild(face, 100);
+    CCSprite* cloud;
+    if (isUI)
+    {
+        cloud = CCSprite::createWithSpriteFrameName("cloud/cloud.png");
+        cloud->setAnchorPoint(ccp(0.5, 0.5));
+        cloud->setPosition(ccp(0, 0));
+        cloud->setScale(0.9f);
+        layer->addChild(cloud, 99);
+    }
+    else // in game
+    {
+        cloud = CCSprite::createWithSpriteFrameName("cloud_1.png");
+        cloud->setAnchorPoint(ccp(0, 0));
+        cloud->setPosition(ccp(0, 0));
+        cloud->setScale(0.9f);
+        layer->addChild(cloud, 99);
+        
+        CCSize c = cloud->getContentSize();
+        CCSprite* face = CCSprite::createWithSpriteFrameName("cloud_face.png");
+        face->setAnchorPoint(ccp(0.5, 0.5));
+        face->setPosition(ccp(c.width/2-20, 100));
+        face->setScale(0.9f);
+        layer->addChild(face, 100);
+    }
     
     layer->setContentSize(cloud->getContentSize());
     
@@ -340,6 +352,7 @@ CCLayer* Fairy::GetFairy(int id)
     {
         case 1: picture = MakeFlower(); picture->setScale(1.0f); break;
         case 2: picture = MakeSun(); picture->setScale(1.0f); break;
+        case 3: picture = MakeCloud(true); picture->setScale(0.8f); break;
         default: picture = MakeEmpty(); break;
     }
     return picture;

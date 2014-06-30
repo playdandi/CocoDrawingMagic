@@ -458,10 +458,10 @@ void Splash::TryLogin()
     else if (mKakaoId == 1002) sprintf(temp, "nick_name=jwmoon&");
     else if (mKakaoId == 1020) sprintf(temp, "nick_name=카카오테스트&");
     param += temp;
-    if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_ijpark.png");
-    else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_yjjung.png");
-    else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_jwmoon.png");
-    else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.225.203/resource/profile_img_kakao.png");
+    if (mKakaoId == 1000) sprintf(temp, "profile_image_url=http://14.63.212.106/resource/profile_img_ijpark.png");
+    else if (mKakaoId == 1001) sprintf(temp, "profile_image_url=http://14.63.212.106/resource/profile_img_yjjung.png");
+    else if (mKakaoId == 1002) sprintf(temp, "profile_image_url=http://14.63.212.106/resource/profile_img_jwmoon.png");
+    else if (mKakaoId == 1020) sprintf(temp, "profile_image_url=http://14.63.212.106/resource/profile_img_kakao.png");
     param += temp;
     
     CCHttpRequest* req = new CCHttpRequest();

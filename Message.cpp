@@ -491,7 +491,7 @@ void Message::EndSceneCallback()
 void Message::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
+    //((Loading*)Depth::GetCurPointer())->EndScene();
     
     CCHttpResponse* res = (CCHttpResponse*) data;
     
@@ -508,7 +508,7 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
 void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {
     // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
+    //((Loading*)Depth::GetCurPointer())->EndScene();
     
     CCHttpResponse* res = (CCHttpResponse*) data;
     char dumpData[BUFFER_SIZE];
@@ -538,6 +538,9 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)
     {
+        // Loading 창 끄기
+        ((Loading*)Depth::GetCurPointer())->EndScene();
+        
         std::vector<int> nullData;
         if (code <= MAX_COMMON_ERROR_CODE)
             Network::ShowCommonError(code);
@@ -606,7 +609,12 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
 
         // 새로 받을 프로필 이미지가 없다면, 바로 화면에 나타낸다.
         if (flag)
+        {
+            // Loading 창 끄기
+            ((Loading*)Depth::GetCurPointer())->EndScene();
+            
             MakeScroll();
+        }
         
         // Notification : Ranking 화면에 데이터 갱신
         myInfo->SetMsgCnt((int)msgData.size());
@@ -629,7 +637,12 @@ void Message::ParseProfileImage(char* data, int size, int idx)
     // 새 프로필까지 다 받으면 화면에 나타낸다.
     newProfileCnt++;
     if (newProfileCnt == (int)profiles.size())
+    {
+        // Loading 창 끄기
+        ((Loading*)Depth::GetCurPointer())->EndScene();
+        
         MakeScroll();
+    }
 }
 
 void Message::XmlParseMsgReceiveOne(xml_document *xmlDoc)

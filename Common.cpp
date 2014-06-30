@@ -120,6 +120,21 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
 }
 */
 
+std::string Common::GetTip()
+{
+    int c = rand() % 3;
+    switch (c)
+    {
+        case 0:
+            return "미션을 성공하면 연습중인 스킬의 경험치가 증가해요."; break;
+        case 1:
+            return "피스를 최소 6개 이상, 가능하다면 10개 이상 한붓그리기를 하는 게 좋아요."; break;
+        case 2:
+            return "요정을 장착하고 있으면 연결피스가 점점 많아져요."; break;
+    }
+    return "";
+}
+
 CCLayer* Common::MakeCombo(int num)
 {
     CCLayer* layer = CCLayer::create();
@@ -483,8 +498,13 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     {
         if (isReplaced)
         {
-            CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
-            CCDirector::sharedDirector()->replaceScene(transition);
+            if (to == "RankUp")
+                CCDirector::sharedDirector()->replaceScene(nextScene);
+            else
+            {
+                CCScene* transition = CCTransitionFade::create(0.5f, nextScene);
+                CCDirector::sharedDirector()->replaceScene(transition);
+            }
         }
         else
             ((Puzzle*)obj)->addChild(nextScene, 200, 200);
@@ -869,7 +889,7 @@ void* SpriteClass::FindSpriteByTag(int tag)
     {
         if (spriteObj[i]->type == 0 && spriteObj[i]->sprite->getTag() == tag)
             return (void*)spriteObj[i]->sprite;
-        else if (spriteObj[i]->type == 1 && spriteObj[i]->sprite->getTag() == tag)
+        else if (spriteObj[i]->type == 1 && spriteObj[i]->sprite9->getTag() == tag)
             return (void*)spriteObj[i]->sprite9;
     }
     return NULL;

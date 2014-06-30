@@ -201,6 +201,7 @@ void CocoRoomFairyTown::MakeScroll()
             case 0: picture->setScale(1.0f); break;
             case 1: picture->setScale(0.7f); break;
             case 2: picture->setScale(0.8f); break;
+            case 3: picture->setScale(0.8f); break;
         }
         picture->setAnchorPoint(ccp(0, 0));
         picture->setPosition(ccp(290/2, 290/2+30));
