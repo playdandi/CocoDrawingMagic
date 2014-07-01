@@ -1185,10 +1185,21 @@ void Splash::GetNonConsumedItems()
     if (JniHelper::getStaticMethodInfo(t,
                                        "com/playDANDi/CocoMagic/CocoMagic",
                                        "StartIAB",
-                                       "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
-    {  // 파라미터 (int, int, int, String, String), 리턴타입은 Void
+                                       "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
+    {
+        char myKakaoId[20];
+        sprintf(myKakaoId, "%d", myInfo->GetKakaoId());
+        
         // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-        t.env->CallStaticVoidMethod(t.classID, t.methodID, 0, myInfo->GetKakaoId(), -1, t.env->NewStringUTF(""), t.env->NewStringUTF(""), t.env->NewStringUTF(gcmKey.c_str()));
+        t.env->CallStaticVoidMethod(t.classID, t.methodID,
+                                    0,
+                                    -1, // topazid
+                                    t.env->NewStringUTF(myKakaoId), // kakaoid
+                                    t.env->NewStringUTF(""), // friendkakaoid
+                                    t.env->NewStringUTF(""), // productid
+                                    t.env->NewStringUTF(""), // payload
+                                    t.env->NewStringUTF(gcmKey.c_str())
+                                    );
         // Release
         t.env->DeleteLocalRef(t.classID);
     }

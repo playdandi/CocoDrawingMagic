@@ -1,10 +1,14 @@
 #include "SendTopaz.h"
 
 static int priceTopazIdx;
+static int friendKakaoId;
+static int topazId;
 
 CCScene* SendTopaz::scene(int idx)
 {
     priceTopazIdx = idx;
+    friendKakaoId = -1;
+    topazId = -1;
     
     CCScene* pScene = CCScene::create();
     SendTopaz* pLayer = SendTopaz::create();
@@ -100,6 +104,16 @@ void SendTopaz::Notification(CCObject* obj)
         CCLog("SendTopaz 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollView->setTouchEnabled(false);
+    }
+    else if (param->intValue() == 2)
+    {
+        // '토파즈 선물하기'에서 선물할 때 (팝업창에서 돌아왔음)
+        EndScene();
+        
+        char p[30];
+        sprintf(p, "%d/%d", friendKakaoId, topazId-1);
+        CCString* param = CCString::create(p);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
     else if (param->intValue() == 10)
     {
@@ -245,6 +259,10 @@ void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 std::vector<int> data;
                 data.push_back(number);
                 data.push_back(priceTopazIdx);
+                
+                friendKakaoId = friendList[number]->GetKakaoId();
+                topazId = priceTopaz[priceTopazIdx]->GetId();
+                
                 Common::ShowPopup(this, "SendTopaz", "NoImage", false, SEND_TOPAZ_TRY, BTN_2, data);
                 break;
             }
@@ -294,6 +312,5 @@ void SendTopaz::EndScene()
     
     this->removeFromParentAndCleanup(true);
 }
-
 
 

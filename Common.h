@@ -9,6 +9,7 @@
 #include "Data.h"
 #include "Fairy.h"
 #include "Loading.h"
+#include "Loading_GameStart.h"
 #include "pugixml/pugixml.hpp"
 #include "platform/android/jni/JniHelper.h"
 
@@ -45,6 +46,8 @@ USING_NS_CC;
 #define IMAGE_BUFFER_SIZE 120*120*8
 
 #define NUMOFSKILL 32
+
+#define COUPON_LENGTH 16
 
 #define MAX_COMMON_ERROR_CODE 9
 // 팝업창에서 버튼 개수를 구분하기 위한 predefined type
@@ -133,7 +136,11 @@ USING_NS_CC;
 #define USING_FAIRY 75
 #define SELECT_PROPERTY_TRY 76
 #define SELECT_PROPERTY_OK 77
-
+#define GET_DEGREE 78
+#define COUPON_OK 79
+#define COUPON_ALREADY_USED 80
+#define COUPON_EXPIRED 81
+#define COUPON_NOT_EXIST 82
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -142,6 +149,7 @@ USING_NS_CC;
 #define BTN_MENU_GAMEREADY 0
 #define BTN_MENU_GAMESTART 1
 #define BTN_MENU_TUTORIAL 2
+#define BTN_MENU_COUPON 3
 
 using namespace pugi;
 using namespace cocos2d;

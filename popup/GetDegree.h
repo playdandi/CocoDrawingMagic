@@ -20,14 +20,21 @@ public:
     void Notification(CCObject* obj);
     
     void InitSprites();
+    void SoundCallback(CCNode* sender, void *p);
+    void SpriteCallback(CCNode* sender, void* p);
+    void DegreeCallback(CCNode* sender, void* p);
+    void InitDegree();
     
     void EndScene();
     
 protected:
     CCSize winSize;
     bool isTouched;
+    bool isLoadingDone;
+    int callbackCnt;
     
 private:
+    CCSprite* pBackground;
     CCSprite* pBlack;
     SpriteClass* spriteClass;
 };

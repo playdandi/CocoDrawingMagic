@@ -75,6 +75,10 @@ void Sound::StopBackgroundSound()
 {
     engine->stopBackgroundMusic();
 }
+void Sound::PauseBackgroundSound()
+{
+    engine->pauseBackgroundMusic();
+}
 void Sound::ResumeBackgroundSound()
 {
     engine->resumeBackgroundMusic();

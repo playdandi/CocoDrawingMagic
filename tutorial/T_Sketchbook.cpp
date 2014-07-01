@@ -109,10 +109,6 @@ bool T_Sketchbook::init()
     isScrolling = false;
     isScrollViewTouched = false;
     
-    // 튜토리얼을 한 번도 실행하지 않았다면, 실행하자.
-    //isTutorial = !CCUserDefault::sharedUserDefault()->getBoolForKey("tutorial_sketchbook", false);
-    //if (isTutorial && !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 1)
-    //{
     vo = CCDirector::sharedDirector()->getVisibleOrigin();
     
     ttr = new CCLayer();
@@ -692,6 +688,7 @@ void T_Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
+                /*
                 // 연습중인 스킬임을 표시하자.
                 if (ms[i]->GetCommonId() == myInfo->GetPracticeSkillId())
                 {
@@ -701,7 +698,7 @@ void T_Sketchbook::MakeScrollBook(int idx)
                     
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setTag(0); // 클릭하지 못하도록 함
                 }
-                
+                */
             }
         }
         else

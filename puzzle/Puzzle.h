@@ -51,6 +51,9 @@ public:
     void SetScoreAndStarCandy();
     void UpdateScore(int type, int data);
     void UpdateStarCandy(int type, int data);
+    void ShowSkillScore(int score, int queue_pos, int etc = -1);
+    void ShowSkillScore_Callback(CCNode* sender, void* data);
+    
     void ShowStarCandy(std::vector<CCPoint> pos);
     void ShowStarCandy_Callback(CCNode* sender, void* data);
     void SetCombo();
@@ -194,6 +197,7 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    void XmlParseGameStart(xml_document *xmlDoc);
     void XmlParseFriends(xml_document *xmlDoc);
     void XmlParseGameEnd(xml_document *xmlDoc);
     void ParseProfileImage(char* data, int size, int idx);
@@ -217,6 +221,7 @@ protected:
     std::vector< std::vector<CCPoint> > piece8xy;
     std::vector< std::vector<CCPoint> > piece4xy;
     std::vector< std::vector<CCSprite*> > strap;
+    std::vector<CCPoint> lastPosition;
     int m_iBombCallbackCnt[QUEUE_CNT];
     int m_iBombCallbackCntMax[QUEUE_CNT];
     int m_iBombCallbackType[QUEUE_CNT];

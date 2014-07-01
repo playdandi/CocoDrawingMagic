@@ -65,6 +65,9 @@ bool NoImage::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("NoImage : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(NoImage::Notification), Depth::GetCurName(), NULL);
+    
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
@@ -73,25 +76,6 @@ bool NoImage::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
-    
-    if (isTutorial)
-    {
-        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-        ttrPos = CCSprite::create("images/tutorial_position.png");
-        
-        // ccp(717+5, 711+offset) (offset = 0)
-        ttrArrow->setAnchorPoint(ccp(0.5, 0));
-        ttrArrow->setPosition(ccp(722+233/2, 711+115+10));
-        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
-        ttrArrow->runAction(CCRepeatForever::create(action));
-        this->addChild(ttrArrow, 101);
-        
-        ttrPos->setAnchorPoint(ccp(0, 0));
-        ttrPos->setPosition(ccp(722, 711));
-        ttrPos->setScaleX( (float)233 / (float)162 );
-        ttrPos->setScaleY( (float)115 / (float)89 );
-        this->addChild(ttrPos, 101);
-    }
     
     isEnded = false;
     isTouched = false;
@@ -515,6 +499,29 @@ void NoImage::InitSprites()
             else if (d[0] == 2) sprintf(text, "물 속성을 새로 배웠습니다.");
             else if (d[0] == 3) sprintf(text, "땅 속성을 새로 배웠습니다.");
             break;
+        case GET_DEGREE:
+            title = "학위 취득";
+            sprintf(text, "축하합니다. 학위를 받았어요!\n학위수여식으로 이동합니다.");
+            break;
+        case COUPON_OK:
+            title = "쿠폰 등록하기";
+            // type { 1 : 별사탕, 2 : 토파즈 , 3 : 포션 }
+            if (d[0] == 1) sprintf(text, "쿠폰이 성공적으로 등록되었습니다.\n별사탕 %d개가 지급되었어요!", d[1]);
+            else if (d[0] == 2) sprintf(text, "쿠폰이 성공적으로 등록되었습니다.\n토파즈 %d개가 지급되었어요!", d[1]);
+            else if (d[0] == 3) sprintf(text, "쿠폰이 성공적으로 등록되었습니다.\n포션 %d개가 지급되었어요!", d[1]);
+            break;
+        case COUPON_ALREADY_USED:
+            title = "쿠폰 등록하기";
+            sprintf(text, "이미 사용된 쿠폰입니다.\n다른 쿠폰을 이용해 주세요.");
+            break;
+        case COUPON_EXPIRED:
+            title = "쿠폰 등록하기";
+            sprintf(text, "유효기간이 지난 쿠폰입니다.\n다른 쿠폰을 이용해 주세요.");
+            break;
+        case COUPON_NOT_EXIST:
+            title = "쿠폰 등록하기";
+            sprintf(text, "존재하지 않는 쿠폰입니다.\n다른 쿠폰을 이용해 주세요.");
+            break;
     }
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
 
@@ -605,8 +612,8 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         // 'x'나 '취소'를 누를 경우
-        if (!isTutorial && (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
-                            spriteClass->spriteObj[i]->name == "button/btn_system.png") )
+        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
+            spriteClass->spriteObj[i]->name == "button/btn_system.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -677,6 +684,19 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             param = CCString::create("2");
                         CCNotificationCenter::sharedNotificationCenter()->postNotification("SelectProperty", param);
                     }
+                    else if (type == GET_DEGREE)
+                    {
+                        // 학위수여 화면으로 이동
+                        EndScene();
+                        Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurName(), "GetDegree", false);
+                    }
+                    else if (type == COUPON_OK)
+                    {
+                        EndScene();
+                        // 쿠폰 입력창도 종료시킨다.
+                        CCString* param = CCString::create("2");
+                        CCNotificationCenter::sharedNotificationCenter()->postNotification("Coupon", param);
+                    }
                     else
                     {
                         EndScene();
@@ -722,7 +742,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
                     // 토파즈 구입하기. (미결제 버전) -> 건드리지 말자
-                    std::string url = "http://14.63.225.203/cogma/game/purchase_topaz.php?";
+                    std::string url = "http://14.63.212.106/cogma/game/purchase_topaz.php?";
                     std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     param += temp;
@@ -797,8 +817,15 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else if (type == SEND_TOPAZ_TRY)
                 {
+                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                    EndScene();
+                    CCString* param = CCString::create("2");
+                    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+                    #endif
+                    
+                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
                     // 토파즈 선물하기. (미결제 버전) -> 건드리지말자
-                    std::string url = "http://14.63.225.203/cogma/game/send_topaz.php?";
+                    std::string url = "http://14.63.212.106/cogma/game/send_topaz.php?";
                     std::string param = "";
                     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
                     param += temp;
@@ -808,6 +835,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     param += temp;
                     CCLog("url : %s", url.c_str());
                     HttpRequest(url, param);
+                    #endif
                     return true;
                 }
                 else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
@@ -975,6 +1003,8 @@ void NoImage::ReplaceScene(std::string to, int type, int btnType)
     isEnded = true;
     isTouched = true;
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -999,6 +1029,8 @@ void NoImage::EndScene()
     isEnded = true;
     isTouched = true;
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -1008,12 +1040,6 @@ void NoImage::EndScene()
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
-    
-    if (isTutorial)
-    {
-        ttrArrow->removeFromParentAndCleanup(true);
-        ttrPos->removeFromParentAndCleanup(true);
-    }
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();

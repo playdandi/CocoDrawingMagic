@@ -69,25 +69,6 @@ bool SketchDetail::init()
     InitSprites();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
-    if (isTutorial)
-    {
-        ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-        ttrPos = CCSprite::create("images/tutorial_position.png");
-
-        // 760, 673 (0, 0)
-        ttrArrow->setAnchorPoint(ccp(0.5, 0));
-        ttrArrow->setPosition(ccp(760+233/2, 673+115+10));
-        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
-        ttrArrow->runAction(CCRepeatForever::create(action));
-        this->addChild(ttrArrow, 101);
-        
-        ttrPos->setAnchorPoint(ccp(0, 0));
-        ttrPos->setPosition(ccp(760, 673));
-        ttrPos->setScaleX( (float)233 / (float)162 );
-        ttrPos->setScaleY( (float)115 / (float)89 );
-        this->addChild(ttrPos, 101);
-    }
 
     return true;
 }
@@ -387,7 +368,7 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (!isTutorial && spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
+        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
@@ -475,12 +456,6 @@ void SketchDetail::EndScene(bool isNoti)
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
-    
-    if (isTutorial)
-    {
-        ttrArrow->removeFromParentAndCleanup(true);
-        ttrPos->removeFromParentAndCleanup(true);
-    }
     
     if (isNoti)
     {        

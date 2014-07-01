@@ -14,7 +14,7 @@ void Network::replaceAll(std::string& str, const std::string& from, const std::s
     }
 }
 
-void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag)
+void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc)
 {
     CCLog("HttpPost : url = %s", url.c_str());
 
@@ -90,7 +90,12 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     req->setRequestType(CCHttpRequest::kHttpPost);
     req->setResponseCallback((CCObject*)pointer, hr);
     if (tag != "")
-        req->setTag(tag.c_str());
+    {
+        if (etc != "") // (현재는 send_topaz에 대한 내용뿐이다)
+            req->setTag((tag+"@"+etc).c_str());
+        else
+            req->setTag(tag.c_str());
+    }
     CCHttpClient::getInstance()->send(req);
     req->release();
 }

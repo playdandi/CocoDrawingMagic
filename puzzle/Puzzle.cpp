@@ -31,6 +31,28 @@ void Puzzle::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
     
+    
+    /*
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, "Puzzle", "Loading", false);
+    
+    char temp[255];
+    std::string param = "";
+    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    param += temp;
+    int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
+    int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
+    int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
+    int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
+    int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
+    sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
+    param += temp;
+    
+    Network::HttpPost(param, URL_GAMESTART, this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+    */
+    ////////
+    
+    
     // Fade Out (서서히 밝아진다) + 3/2/1/시작 액션으로 이동
     CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyAndStart), this), NULL);
     pBlackOpen->runAction(action);
@@ -76,7 +98,7 @@ bool Puzzle::init()
     
     
     sound = new Sound();
-    sound->PreLoadInGameSound();
+    //sound->PreLoadInGameSound();
     effect = new Effect();
     effect->Init(effect, this);
     
@@ -868,6 +890,8 @@ void Puzzle::InitBoard()
         piece4xy.push_back(temp4);
         strap.push_back(temp5);
         posForFeverTime.push_back(temp6);
+        
+        lastPosition.push_back(CCPointZero);
 
         feverBombOrderCnt[i] = -1;
         
@@ -930,6 +954,35 @@ void Puzzle::UpdateScore(int type, int data)
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93-7));
     this->addChild(pScoreLayer, 6);
 }
+
+void Puzzle::ShowSkillScore(int score, int queue_pos, int etc)
+{
+    char name[15];
+    sprintf(name, "+ %s", Common::MakeComma(score).c_str());
+    CCLabelTTF* label = CCLabelTTF::create(name, fontList[0].c_str(), 56);
+    label->setAnchorPoint(ccp(0.5, 0.5));
+    label->setOpacity(0);
+    label->setColor(ccc3(255,255,0));
+    this->addChild(label, 6000);
+    CCPoint pos;
+    if (etc == -1) // 기본 경우
+        pos = SetTouch8Position(lastPosition[queue_pos].x, lastPosition[queue_pos].y);
+    else if (queue_pos == -1) // W3 (콤보에따른스킬)
+        pos = ccp(150, 1600);
+    else if (queue_pos == -2) // 떡갈나무지팡이 (마법진 위 표시)
+        pos = ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120+30);
+    else // (x, y)를 직접 받은 경우
+        pos = SetTouch8Position(queue_pos, etc);
+    label->setPosition( ccp(pos.x, pos.y+10) );
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), NULL), NULL );
+    label->runAction(action);
+}
+void Puzzle::ShowSkillScore_Callback(CCNode* sender, void* data)
+{
+    sender->removeFromParentAndCleanup(true);
+}
+
 
 void Puzzle::UpdateStarCandy(int type, int data)
 {
@@ -2058,6 +2111,11 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (!skill->W8_IsActive())
                 m_iSpiritSP++;
             
+            int size = piece8xy[touch_cnt%QUEUE_CNT].size();
+            lastPosition[touch_cnt%QUEUE_CNT] = piece8xy[touch_cnt%QUEUE_CNT][size-1];
+            if (m_bIsCycle[touch_cnt%QUEUE_CNT])
+                lastPosition[touch_cnt%QUEUE_CNT] = piece8xy[touch_cnt%QUEUE_CNT][0];
+            
             // 다시 한붓그린 부분 lock을 푼다
             int x, y;
             for (int i = 0 ; i < piece8xy[touch_cnt%QUEUE_CNT].size() ; i++)
@@ -2124,10 +2182,10 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (m_bSkillLock[touch_cnt%QUEUE_CNT])
             {
                 m_iSkillSP++; // skill semaphore 증가
-                CCLog("스킬 lock 걸림 (%d)", touch_cnt%QUEUE_CNT);
+                //CCLog("스킬 lock 걸림 (%d)", touch_cnt%QUEUE_CNT);
             }
             else
-                CCLog("스킬 발동 X (%d)", touch_cnt%QUEUE_CNT);
+                //CCLog("스킬 발동 X (%d)", touch_cnt%QUEUE_CNT);
             
             m_iBombCallbackType[touch_cnt%QUEUE_CNT] = 0;
             
@@ -2465,8 +2523,9 @@ void Puzzle::UpdateMissionCountBySkill(int skillNum)
     else if (skillNum < 16) csi = skillNum+3;
     else if (skillNum < 24) csi = skillNum+15;
     
-    if (!isFeverTime)
+    if (!isFeverTime && magicCnt < feverStartCnt)
     {
+        
         magicCnt++;
         CCLog("매직 카운트 = %d", magicCnt);
     
@@ -3227,6 +3286,9 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
 
 void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
 {
+    //if (XMLStatus == -1) // Loading 창 끄기 (게임 시작하는 경우)
+    //    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     CCHttpResponse* res = (CCHttpResponse*) data;
     
     xml_document xmlDoc;
@@ -3234,12 +3296,120 @@ void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
     
     switch (XMLStatus)
     {
+        //case -1: XmlParseGameStart(&xmlDoc); break;
         case 0: XmlParseGameEnd(&xmlDoc); break;
         case 1: XmlParseFriends(&xmlDoc); break;
         //default: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
     }
     XMLStatus++;
 }
+/*
+// 게임 시작 XML parse
+void Puzzle::XmlParseGameStart(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else if (code == 10) // 포션 부족함.
+            Common::ShowPopup(this, "Puzzle", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+        else
+            Common::ShowPopup(this, "Puzzle", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+    
+    else if (code == 0)
+    {
+        xml_node gameInfo = nodeResult.child("game-info");
+        
+        // item 사용/미사용 결과 받아서 client에 저장해 두기
+        int item;
+        char name[10];
+        for (int i = 0 ; i < 5; i++)
+        {
+            sprintf(name, "item%d", i+1);
+            item = gameInfo.child("using-item").attribute(name).as_int();
+            sprintf(name, "item_%d", i);
+            CCUserDefault::sharedUserDefault()->setIntegerForKey(name, item);
+        }
+        
+        // 미션
+        missionType = gameInfo.child("mission").attribute("type").as_int();
+        missionVal = gameInfo.child("mission").attribute("value").as_int();
+        missionRefVal = gameInfo.child("mission").attribute("reference-value").as_int();
+        
+        // 사용할 active+passive 스킬 목록 (active의 경우, 슬롯 정보도 같이 갱신한다)
+        int slotSize = myInfo->GetSlot().size();
+        inGameSkill.clear();
+        myInfo->ClearSkillSlot();
+        xml_object_range<xml_named_node_iterator> its = gameInfo.child("using-skill").children("skill");
+        int id, csi, usi, isActive;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "slot-id") id = ait->as_int();
+                else if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "is-active") isActive = ait->as_int();
+            }
+            if (isActive == 1)
+                myInfo->AddSkillSlot(id, csi, usi);
+            inGameSkill.push_back(csi);
+        }
+        // 빈 슬롯 처리
+        for (int i = myInfo->GetSlot().size()+1 ; i <= slotSize ; i++)
+            myInfo->AddSkillSlot(i, 0, 0);
+        
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // potion 갱신
+        int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        myInfo->SetPotion(potion, remainTime);
+        
+        // item 개수 갱신
+        std::vector<int> items;
+        for (int i = 0; i < 5; i++)
+        {
+            sprintf(name, "count-%d", i+1);
+            items.push_back( nodeResult.child("item").attribute(name).as_int() );
+        }
+        myInfo->SetItem(items);
+        items.clear();
+        
+        // 연습 스킬 갱신
+        int practice_usi = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
+        myInfo->SetPracticeSkill(0, 0);
+        for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+        {
+            MySkill* ms = myInfo->GetSkillList()[i];
+            if (ms->GetUserId() == practice_usi)
+                myInfo->SetPracticeSkill(ms->GetCommonId(), ms->GetLevel());
+        }
+        
+        // '끈질긴 생명력' 스킬 발동 결과
+        int addedPotion = gameInfo.child("add-potion").attribute("add-number").as_int();
+        
+        // image memory 해제
+        pCoco->removeFromParentAndCleanup(true);
+        pLoading->removeFromParentAndCleanup(true);
+        //pLoading2->removeFromParentAndCleanup(true);
+        
+        // 게임 시작!
+        //this->unschedule(schedule_selector(Loading::LoadingSpriteTimer));
+        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
+    }
+}
+*/
 
 void Puzzle::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {

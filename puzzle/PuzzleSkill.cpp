@@ -24,8 +24,8 @@ Effect* PuzzleSkill::GetEffect()
 
 void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv)
 {    
-    for (int i = 0 ; i < num.size(); i++)
-        CCLog("%d번 스킬 작동할 것임", num[i]);
+    //for (int i = 0 ; i < num.size(); i++)
+    //    CCLog("%d번 스킬 작동할 것임", num[i]);
     
     // init.
     for (int i = 0 ; i < NUMOFSKILL ; i++)
@@ -294,6 +294,7 @@ void PuzzleSkill::A1(int num, int queue_pos)
     // 재웅 -> 500 + (lv*500)
     A1_addedScore = 500 * (skillLevel[num]+1);
     m_pGameLayer->UpdateScore(1, A1_addedScore);
+    m_pGameLayer->ShowSkillScore(A1_addedScore, queue_pos);
     
     // 이펙트
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -452,6 +453,7 @@ void PuzzleSkill::A2(int num, int queue_pos)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 3000+skillLevel[num]*1500);
+    m_pGameLayer->ShowSkillScore(3000+skillLevel[num]*1500, queue_pos);
     
     // 폭파 실행
     if (num != 9) // 물 사이클 스킬은 이펙트와 함께 발동시켜야 하므로, 여기서 Bomb을 실행하지 않는다.
@@ -476,6 +478,7 @@ void PuzzleSkill::F3(int num, int queue_pos)
     //F3_addedScore = skillLevel[num]*7000;
     F3_addedScore = 15000 + skillLevel[num]*2000;
     m_pGameLayer->UpdateScore(1, F3_addedScore);
+    m_pGameLayer->ShowSkillScore(F3_addedScore, queue_pos);
     
     // 이펙트 ('+' 그림)
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -652,6 +655,7 @@ void PuzzleSkill::F5(int num)
    
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
+    m_pGameLayer->ShowSkillScore(2000+skillLevel[num]*1000, centerX, centerY);
     
     UpdateAppliedSkillCount(num);
 }
@@ -768,6 +772,7 @@ void PuzzleSkill::A6(int num, int queue_pos)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 5000+skillLevel[num]*1500);
+    m_pGameLayer->ShowSkillScore(5000+skillLevel[num]*1500, queue_pos);
 }
 void PuzzleSkill::F6_Callback(CCNode* sender, void *p)
 {
@@ -903,12 +908,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
-
-    /*for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
-    {
-        CCLog("%d %d %d %d %d %d %d", F8_check[0][y], F8_check[1][y], F8_check[2][y],
-              F8_check[3][y], F8_check[4][y], F8_check[5][y], F8_check[6][y]);
-    }*/
+    m_pGameLayer->ShowSkillScore(50000+skillLevel[num]*10000, queue_pos);
 }
 
 void PuzzleSkill::F8Check(int x, int y, int idx)
@@ -1073,6 +1073,7 @@ void PuzzleSkill::W3(int num)
     W3_addedScore = 15000+skillLevel[num]*2000;
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, W3_addedScore);
+    m_pGameLayer->ShowSkillScore(W3_addedScore, -1);
     
     // sound
     m_pGameLayer->GetSound()->PlaySkillSound(num);
@@ -1184,6 +1185,7 @@ void PuzzleSkill::W5(int num)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
+    m_pGameLayer->ShowSkillScore(2000+skillLevel[num]*1000, 3, 3);
     
     UpdateAppliedSkillCount(num);
 }
@@ -1286,6 +1288,7 @@ void PuzzleSkill::W8(int num, int queue_pos)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
+    m_pGameLayer->ShowSkillScore(50000+skillLevel[num]*10000, queue_pos);
     
     ps = this;
     
@@ -1538,7 +1541,6 @@ void PuzzleSkill::E3(int num)
     
     //E3_addedCandy = myInfo->GetStaffLv() * 10 * skillLevel[num];
     E3_addedCandy = pow((myInfo->GetStaffLv())*3+65, 0.8f) * (skillLevel[num]*0.3f + 0.7f);
-    //CCLog("떡갈나무지팡이 : 별사탕 %d개 증가", E3_addedCandy);
     
     // 이펙트 ('+' 그림)
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -1546,6 +1548,7 @@ void PuzzleSkill::E3(int num)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 15000+skillLevel[num]*2000);
+    m_pGameLayer->ShowSkillScore(15000+skillLevel[num]*2000, -2);
 }
 int PuzzleSkill::E3_Get_AddedCandy()
 {
@@ -1701,6 +1704,7 @@ void PuzzleSkill::E5(int num)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 2000+skillLevel[num]*1000);
+    m_pGameLayer->ShowSkillScore(2000+skillLevel[num]*1000, 3, 3);
     
     UpdateAppliedSkillCount(num);
 }
@@ -1870,6 +1874,7 @@ void PuzzleSkill::E8(int num, int queue_pos)
     
     // 스킬 발동점수
     m_pGameLayer->UpdateScore(1, 50000+skillLevel[num]*10000);
+    m_pGameLayer->ShowSkillScore(50000+skillLevel[num]*10000, queue_pos);
     
     // 변수 초기화
     E8_isActive = false;

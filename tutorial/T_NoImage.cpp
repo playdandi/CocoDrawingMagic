@@ -58,10 +58,12 @@ bool T_NoImage::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("NoImage : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(T_NoImage::Notification), Depth::GetCurName(), NULL);
+    
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     

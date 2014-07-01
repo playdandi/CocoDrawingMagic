@@ -56,9 +56,6 @@ protected:
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
-    
-    CCSprite* ttrPos;
-    CCSprite* ttrArrow;
 };
 
 #endif /* defined(__CocoMagic__NoImage__) */

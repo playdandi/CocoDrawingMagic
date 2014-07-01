@@ -49,6 +49,9 @@ bool CocoRoomTodayCandy::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("CocoRoomTodayCandy : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomTodayCandy::Notification), Depth::GetCurName(), NULL);
+    
     // notification
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
@@ -427,6 +430,8 @@ void CocoRoomTodayCandy::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     

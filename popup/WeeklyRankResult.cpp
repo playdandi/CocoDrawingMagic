@@ -15,6 +15,10 @@ void WeeklyRankResult::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    //if (학위받았으면)
+    std::vector<int> nullData;
+    Common::ShowPopup(this, "WeeklyRankResult", "NoImage", false, GET_DEGREE, BTN_1, nullData);
 }
 void WeeklyRankResult::onExit()
 {
@@ -44,6 +48,9 @@ bool WeeklyRankResult::init()
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("WeeklyRankResult : touch prio = %d", this->getTouchPriority());
+    
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(WeeklyRankResult::Notification), Depth::GetCurName(), NULL);
     
     // notification post
     CCString* param = CCString::create("1");
@@ -260,6 +267,8 @@ void WeeklyRankResult::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -275,7 +284,7 @@ void WeeklyRankResult::EndScene()
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
     
-    Common::ShowNextScene(this->getParent(), "Ranking", "GetDegree", false);
+    //Common::ShowNextScene(this->getParent(), "Ranking", "GetDegree", false);
     
     this->removeFromParentAndCleanup(true);
 }

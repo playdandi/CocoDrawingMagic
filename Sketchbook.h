@@ -14,7 +14,7 @@ class Sketchbook : public CCLayer,
                    public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int tab, int fromWhere, int prio);
+    static CCScene* scene(int fromWhere);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -24,7 +24,7 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    virtual void registerWithTouchDispatcher(void);
+    //virtual void registerWithTouchDispatcher(void);
     
     void Notification(CCObject* obj);
     
@@ -47,7 +47,7 @@ public:
     
     int FromWhere();
     
-    void TutorialNextState();
+    //void TutorialNextState();
     
     CREATE_FUNC(Sketchbook);
     
@@ -59,8 +59,6 @@ protected:
     int tabNumber;
 
     CCPoint vo;
-    //bool isTutorial;
-    //int tutorialState;
     
     bool isScrolling;
     bool isSlotTouched;
@@ -78,15 +76,6 @@ private:
     
     CCLayer* containerBook;
     CCLayer* containerSlot;
-    
-    CCLayer* ttr;
-    //CCSprite* pBlackttr;
-    CCSprite* ttrCoco;
-    CCSprite* ttrPos;
-    CCSprite* ttrArrow;
-    CCSprite* ttrBg;
-    CCLabelTTF* ttrMsg;
-    
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

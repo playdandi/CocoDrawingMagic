@@ -102,6 +102,29 @@ void BuyTopaz::Notification(CCObject* obj)
         }
         isTryingPurchase = false;
     }
+    else
+    {
+        std::string p = param->getCString();
+        std::string friendKakaoId = p.substr(0, p.find("/"));
+        int priceTopazIdx = atoi(p.substr(p.find("/")+1).c_str());
+        
+        CCLog("%s %d", friendKakaoId.c_str(), priceTopazIdx);
+        
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        char num[10];
+        sprintf(num, "%d", priceTopazIdx);
+        
+        httpStatus = 1;
+        verifyStatusScene = this;
+        
+        std::string param = "kakao_id=";
+        char temp[10];
+        sprintf(temp, "%d", myInfo->GetKakaoId());
+        param += temp;
+        
+        Network::HttpPost(param, URL_GOOGLE_PAYLOAD, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num, friendKakaoId);
+        #endif
+    }
 }
 
 void BuyTopaz::InitSprites()
@@ -310,11 +333,24 @@ void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     xml_document xmlDoc;
     Network::GetXMLFromResponseData(res, xmlDoc);
   
-    if (httpStatus == 0)
-        XmlParseDeveloperPayload(&xmlDoc, atoi(res->getHttpRequest()->getTag()));
+    std::string tag = res->getHttpRequest()->getTag();
+    int priceTopazIdx;
+    std::string friendKakaoId = "";
+    
+    // send_topaz의 경우 "{friendKakaoId}@{priceTopazIdx}" 형태로 tag가 넘어왔기 때문에, 적절히 처리해야 한다.
+    if (httpStatus == 1)
+    {
+        priceTopazIdx = atoi(tag.substr(0, tag.find("@")).c_str());
+        friendKakaoId = tag.substr(tag.find("@")+1);
+    }
+    
+    else if (httpStatus == 0)
+        priceTopazIdx = atoi(tag.c_str());
+    
+    XmlParseDeveloperPayload(&xmlDoc, atoi(res->getHttpRequest()->getTag()), friendKakaoId);
 }
 
-void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx)
+void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId)
 {
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
@@ -333,21 +369,46 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx)
     {
         isTryingPurchase = true; // 안드로이드 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-        char productId[15];
-        sprintf(productId, "topaz%d", priceTopaz[priceTopazIdx]->GetCount());
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)        
         int topazId = priceTopaz[priceTopazIdx]->GetId();
+        char productId[15];
+        if (httpStatus == 0)
+            sprintf(productId, "topaz%d", priceTopaz[priceTopazIdx]->GetCount());
+        else if (httpStatus == 1)
+            sprintf(productId, "topaz%d_p", priceTopaz[priceTopazIdx]->GetCount());
         
         const char* payload = nodeResult.child("payload").attribute("string").as_string();
+        
+        char myKakaoId[20];
+        sprintf(myKakaoId, "%d", myInfo->GetKakaoId());
+
+        CCLog("topazId = %d", topazId);
+        CCLog("productId = %s", productId);
+        CCLog("kakaoId = %s", myKakaoId);
+        CCLog("friendKakaoId = %s", friendKakaoId.c_str());
+    /*
+        07-02 02:28:00.206: D/cocos2d-x debug info(7580): topazId = 3
+        07-02 02:28:00.206: D/cocos2d-x debug info(7580): productId = topaz120_p
+        07-02 02:28:00.206: D/cocos2d-x debug info(7580): kakaoId = 1001
+        07-02 02:28:00.206: D/cocos2d-x debug info(7580): friendKakaoId = 2
+*/
         
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                      "com/playDANDi/CocoMagic/CocoMagic",
                                      "StartIAB",
-                                     "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
+                                     "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
         {  // 파라미터 (int, String, String), 리턴타입은 Void
             // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-            t.env->CallStaticVoidMethod(t.classID, t.methodID, 1, myInfo->GetKakaoId(), topazId, t.env->NewStringUTF(productId), t.env->NewStringUTF(payload), t.env->NewStringUTF(gcmKey.c_str()));
+            t.env->CallStaticVoidMethod(t.classID, t.methodID,
+                                        1,
+                                        topazId,
+                                        t.env->NewStringUTF(myKakaoId),
+                                        t.env->NewStringUTF(friendKakaoId.c_str()),
+                                        t.env->NewStringUTF(productId),
+                                        t.env->NewStringUTF(payload),
+                                        t.env->NewStringUTF(gcmKey.c_str())
+                                        );
             // Release
             t.env->DeleteLocalRef(t.classID);
         }

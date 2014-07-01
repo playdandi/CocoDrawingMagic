@@ -49,6 +49,9 @@ bool PuzzleResult::init()
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(PuzzleResult::Notification), Depth::GetCurName(), NULL);
+    
     // notification
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
@@ -57,6 +60,8 @@ bool PuzzleResult::init()
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game_result.plist");
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    isTouched = false;
     
     spriteClass = new SpriteClass();
     spriteClassSkill = new SpriteClass();
@@ -76,6 +81,31 @@ bool PuzzleResult::init()
     return true;
 }
 
+void PuzzleResult::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() <= 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("PuzzleResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
+    }
+    else if (param->intValue() == 1)
+    {
+        // 터치 비활성
+        CCLog("PuzzleResult : 터치 비활성");
+        CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    }
+    else if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
+}
+
 void PuzzleResult::InitSprites()
 {
     pBlack = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
@@ -91,10 +121,6 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_topaz.png1", ccp(0, 0), ccp(15+10, 1656), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_starcandy.png", ccp(0, 0), ccp(317, 1660), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
-    
-    //topaz = (float)prevTopaz;
-    //starcandy = (float)prevStarCandy;
-    //mp = (float)prevMP;
     
     // topaz
     CCLog("%d %d %d", myInfo->GetTopaz(), myInfo->GetStarCandy(), myInfo->GetMPTotal());
@@ -567,6 +593,8 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game_result.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game_result.png");
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     

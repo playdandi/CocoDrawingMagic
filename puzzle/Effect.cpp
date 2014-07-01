@@ -1441,13 +1441,10 @@ void Effect::PlayEffect_10()
 {
     // W3 : 콤보 비례 추가 점수
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire3.plist");
-    //m_emitter->retain();
     m_emitter->setAnchorPoint(ccp(0.5, 0.5));
     m_emitter->setPosition(ccp(150, 1600));
-
     m_emitter->setScale(3.0f);
     gameLayer->addChild(m_emitter, 2000);
-    
     m_emitter->setDuration(0.5f);
     m_emitter->setAutoRemoveOnFinish(true);
 }
@@ -1456,13 +1453,10 @@ void Effect::PlayEffect_11()
 {
     // W4 : 콤보 비례 추가 별사탕
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/water4.plist");
-    //m_emitter->retain();
     m_emitter->setAnchorPoint(ccp(0.5, 0.5));
     m_emitter->setPosition(ccp(150, 1600));
-    
     m_emitter->setScale(3.0f);
     gameLayer->addChild(m_emitter, 4000);
-    
     m_emitter->setDuration(0.5f);
     m_emitter->setAutoRemoveOnFinish(true);
 }

@@ -46,6 +46,9 @@ bool DegreeInfo::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("DegreeInfo : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(DegreeInfo::Notification), Depth::GetCurName(), NULL);
+    
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
@@ -157,6 +160,8 @@ void DegreeInfo::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     

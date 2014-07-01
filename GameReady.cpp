@@ -9,9 +9,7 @@ GameReady::~GameReady(void)
 }
 
 CCScene* GameReady::scene(int prio)
-{
-//    priority = prio;
-    
+{   
     CCScene* pScene = CCScene::create();
     GameReady* pLayer = GameReady::create();
     pScene->addChild(pLayer);
@@ -875,7 +873,8 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         sound->playClickboard();
         if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
             Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 0);
-        else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false)) // 튜토리얼 시작한다.
+        else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
+                 !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 2) // 튜토리얼 시작한다.
             Common::ShowNextScene(this, "GameReady", "T_Sketchbook", false, 1);
         else
             Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);

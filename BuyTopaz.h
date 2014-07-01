@@ -30,7 +30,7 @@ public:
     void MakeScroll();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx);
+    void XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId);
 
     void SetErrorFlag(bool flag);
     

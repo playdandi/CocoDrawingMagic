@@ -7,7 +7,7 @@ class MagicList : public CCLayer,
                     public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int fromWhere, int prio);
+    static CCScene* scene(int fromWhere);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -53,9 +53,6 @@ private:
     
     CCLayer* containerSlot;
     CCScrollView* scrollViewSlot;
-    
-    CCSprite* ttrPos;
-    CCSprite* ttrArrow;
 };
 
 

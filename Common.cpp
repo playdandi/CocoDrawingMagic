@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Loading.h"
+//#include "Loading_GameStart.h"
 #include "Ranking.h"
 #include "GameReady.h"
 #include "Sound.h"
@@ -25,6 +26,7 @@
 #include "popup/FairyOneInfo.h"
 #include "popup/NoImage.h"
 #include "popup/SelectProperty.h"
+#include "popup/Coupon.h"
 #include "puzzle/Puzzle.h"
 #include "puzzle/PuzzleResult.h"
 #include "puzzle/PuzzlePause.h"
@@ -402,7 +404,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     if (to == "Ranking") nextScene = Ranking::scene(etc);
     else if (to == "GameReady") nextScene = GameReady::scene(priority);
     else if (to == "Message") nextScene = Message::scene();
-    else if (to == "MagicList") nextScene = MagicList::scene(etc, priority);
+    else if (to == "MagicList") nextScene = MagicList::scene(etc);
     else if (to == "CocoRoom") nextScene = CocoRoom::scene(etc, priority);
     else if (to == "CocoRoomTodayCandy") nextScene = CocoRoomTodayCandy::scene(priority);
     else if (to == "CocoRoomFairyTown") nextScene = CocoRoomFairyTown::scene();
@@ -414,17 +416,15 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "RequestTopaz") nextScene = RequestTopaz::scene();
     else if (to == "RequestPotion") nextScene = RequestPotion::scene();
     else if (to == "Setting") nextScene = Setting::scene();
+    else if (to == "Coupon") nextScene = Coupon::scene();
     else if (to == "Sketchbook")
     {
         std::string fromWhere = Depth::GetCurNameString();
         if (fromWhere != "Ranking" && fromWhere != "GameReady")
             fromWhere = Depth::GetParentNameString();
         
-        if (fromWhere == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
-        else if (fromWhere == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
-        
-        //if (from == "Ranking") nextScene = Sketchbook::scene(etc, 0, priority);
-        //else if (from == "GameReady") nextScene = Sketchbook::scene(etc, 1, priority);
+        if (fromWhere == "Ranking") nextScene = Sketchbook::scene(0);
+        else if (fromWhere == "GameReady") nextScene = Sketchbook::scene(1);
     }
     else if (to == "Profile") nextScene = Profile::scene(etc);
     else if (to == "DegreeInfo") nextScene = DegreeInfo::scene();
@@ -436,9 +436,10 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "SelectProperty") nextScene = SelectProperty::scene(etc);
     
     else if (to == "Loading") nextScene = Loading::scene(etc);
+    //else if (to == "Loading_GameStart") nextScene = Loading_GameStart::scene();
+
     else if (to == "RankUp") nextScene = RankUp::scene();
     
-    else if (to == "Puzzle") nextScene = Puzzle::scene(etc);
     else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
     else if (to == "PuzzlePause") nextScene = PuzzlePause::scene(etc);
     
@@ -465,7 +466,9 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Loading")
     {
         if (isReplaced)
-            CCDirector::sharedDirector()->replaceScene(nextScene);
+            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc));
+        else
+            ((Loading*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
@@ -485,6 +488,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "MagicList") ((MagicList*)obj)->addChild(nextScene, 200, 200);
     else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(nextScene, 200, 200);
     else if (from == "Setting") ((Setting*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "Coupon") ((Coupon*)obj)->addChild(nextScene, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(nextScene, 200, 200);
     else if (from == "RankUp")
     {
@@ -566,6 +570,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "MagicList") ((MagicList*)obj)->addChild(popup, 200, 200);
     else if (from == "RankUp") ((RankUp*)obj)->addChild(popup, 200, 200);
     else if (from == "Setting") ((Setting*)obj)->addChild(popup, 200, 200);
+    else if (from == "Coupon") ((Coupon*)obj)->addChild(popup, 200, 200);
     else if (from == "Sketchbook") ((Sketchbook*)obj)->addChild(popup, 200, 200);
     else if (from == "SelectProperty") ((SelectProperty*)obj)->addChild(popup, 200, 200);
     else if (from == "SketchDetail") {
@@ -807,6 +812,7 @@ void SpriteClass::AddChild(int idx)
         else if (obj->parentType == "RequestTopaz") p = ((RequestTopaz*)obj->parent);
         else if (obj->parentType == "RequestPotion") p = ((RequestPotion*)obj->parent);
         else if (obj->parentType == "Setting") p = ((Setting*)obj->parent);
+        else if (obj->parentType == "Coupon") p = ((Coupon*)obj->parent);
         else if (obj->parentType == "Sketchbook") p = ((Sketchbook*)obj->parent);
         else if (obj->parentType == "SketchDetail") p = ((SketchDetail*)obj->parent);
         else if (obj->parentType == "SelectProperty") p = ((SelectProperty*)obj->parent);
@@ -1223,11 +1229,16 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
     }
     else
     {
+        // purchase_topaz_google.php
         CCLog("failed code = %d", code);
         if (code == 10) CCLog("서버인증실패");
         else if (code == 11) CCLog("payload 다름");
         else if (code == 12) CCLog("이미 지급한 토파즈");
         else if (code == 13) CCLog("토파즈 id 이상함");
+        
+        // send_topaz_google.php
+        // "kakao_id", "friend_kakao_id", "topaz_id", "purchase_data", "signature"
+        // 실패코드 10:서버인증 실패, 11:페이로드다름, 12:이미지급한토파즈, 13:토파즈아이디가 이상함, 14:친구관계가아님
     }
 }
 

@@ -19,7 +19,6 @@ USING_NS_CC_EXT;
 
 class Splash : public CCLayer,
                 public CCIMEDelegate
-                //public cocos2d::extension::CCEditBoxDelegate
 {
 public:
     ~Splash(void);

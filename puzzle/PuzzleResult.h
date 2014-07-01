@@ -35,6 +35,8 @@ public:
     void Callback(CCNode* sender, void* p);
     void Callback_ProgressBar(CCNode* sender, void* p);
     
+    void Notification(CCObject* obj);
+    
     std::string GetMissionContent();
     
     void EndScene();
@@ -42,6 +44,8 @@ public:
     
 protected:
     CCSize m_winSize;
+    bool isTouched;
+    
     int varScore;
     int score;
     

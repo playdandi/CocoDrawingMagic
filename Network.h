@@ -44,12 +44,12 @@ using namespace cocos2d::extension;
 #define URL_UPGRADE_SKILLSLOT       "http://14.63.212.106/cogma/game/upgrade_skill_slot.php?"
 #define URL_PURCHASE_SKILL_PROPERTY "http://14.63.212.106/cogma/game/purchase_skill_type.php?"
 #define URL_SESSION_CHECK           "http://14.63.212.106/cogma/game/update_session.php?"
-
+#define URL_COUPON                  "http://14.63.212.106/cogma/game/receive_coupon_reward.php?"
 
 class Network
 {
 public:
-    static void HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag = "");
+    static void HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag = "", std::string etc = "");
     static void replaceAll(std::string& str, const std::string& from, const std::string& to);
     
     static int GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfuscate = true);

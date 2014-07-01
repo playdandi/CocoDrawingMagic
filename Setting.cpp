@@ -45,10 +45,12 @@ bool Setting::init()
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("Setting : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Setting::Notification), Depth::GetCurName(), NULL);
+    
     // notification post
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-    //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
@@ -80,6 +82,14 @@ void Setting::Notification(CCObject* obj)
             isTouched = false;
             CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
         }
+    }
+    else if (param->intValue() == 0)
+    {
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
@@ -127,37 +137,42 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("게임버전 : 1.0.0 ver", fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Setting", this, 4) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카카오 ID : 123456789012", fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Setting", this, 4) );
     
-    // button : credit, coupon, tutorial, cc, logout, idcopy
+    // 버튼 : 만든 사람들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png1",
                     ccp(0, 0), ccp(737, 633), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_maker.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 36), CCSize(0, 0), "button/btn_purple_mini.png1", "0", NULL, 1) );
-    
+
+    // 버튼 : 쿠폰등록
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png2",
                 ccp(0, 0), ccp(96, 492), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_coupon.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png2", "0", NULL, 1) );
     
+    // 버튼 : 튜토리얼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png3",
                 ccp(0, 0), ccp(423, 492), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_tutorial.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png3", "0", NULL, 1) );
     
+    // 버튼 : ?
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png4",
                 ccp(0, 0), ccp(737, 492), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_service.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png4", "0", NULL, 1) );
     
+    // 버튼 : 회원탈퇴
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png1",
                     ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
     
+    // 버튼 : id복사
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png2",
                     ccp(0, 0), ccp(779, 192), CCSize(0, 0), "", "Setting", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_idcopy.png",
@@ -285,6 +300,18 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             }
         }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png2") // 쿠폰등록 버튼
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_COUPON;
+                idx = i;
+            }
+        }
         else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png3") // 튜토리얼 버튼
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -384,11 +411,11 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     selectedBtn = -1;
     
-    
     if (idx > -1)
     {
         spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
     }
     if (rect.containsPoint(point))
     {
@@ -397,6 +424,9 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             case BTN_MENU_TUTORIAL:
                 menuInSetting = 0;
                 EndScene();
+                break;
+            case BTN_MENU_COUPON:
+                Common::ShowNextScene(this, "Setting", "Coupon", false);
                 break;
         }
     }
@@ -442,6 +472,8 @@ void Setting::EndScene()
 {
     sound->playClick();
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
     Depth::RemoveCurDepth();
     

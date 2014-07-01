@@ -36,6 +36,7 @@ void Ranking::onEnter()
     if (fromWhere == 1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
+    //else
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onPause()
@@ -744,7 +745,8 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
                     Common::ShowNextScene(this, "Ranking", "SelectProperty", false, 0);
-                else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false)) // 튜토리얼 시작한다.
+                else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
+                         !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 2) // 튜토리얼 시작한다.
                     Common::ShowNextScene(this, "Ranking", "T_Sketchbook", false, 0);
                 else
                     Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);

@@ -31,6 +31,7 @@ public:
     void SetBackgroundMusicVolume(float f);
     
     void PlayBackgroundSound();
+    void PauseBackgroundSound();
     void ResumeBackgroundSound();
     void StopBackgroundSound();
     
