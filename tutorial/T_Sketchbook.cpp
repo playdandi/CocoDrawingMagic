@@ -659,6 +659,7 @@ void T_Sketchbook::MakeScrollBook(int idx)
         
         if (i < numOfList-1)
         {
+            /*
             // 'MASTER' 버튼
             if (SkillBuildUpInfo::IsMastered(ms[i]->GetCommonId(), ms[i]->GetLevel()))
             {
@@ -682,31 +683,19 @@ void T_Sketchbook::MakeScrollBook(int idx)
             }
             // '연습' 버튼
             else
-            {
+            {*/
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -ms[i]->GetUserId()) ); // 태그에 user_id를 음수로 둔다.
                 sprintf(name2, "letter/letter_practice.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
-                
-                /*
-                // 연습중인 스킬임을 표시하자.
-                if (ms[i]->GetCommonId() == myInfo->GetPracticeSkillId())
-                {
-                    CCLog("연습 스킬? %d , %d", ms[i]->GetCommonId(), myInfo->GetPracticeSkillId());
-                    ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setColor(ccc3(140,140,140));
-                    ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setColor(ccc3(140,140,140));
-                    
-                    ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setTag(0); // 클릭하지 못하도록 함
-                }
-                */
-            }
+            //}
         }
         else
         {
             // '?'스킬의 요구조건을 모두 충족한 경우
-            if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() &&
-                MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-            {
+            //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() &&
+            //    MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+            //{
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
                 
@@ -714,7 +703,8 @@ void T_Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_get.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setScale(0.95f);
-            }
+            //}
+            /*
             // 아닌 경우
             else
             {
@@ -723,7 +713,7 @@ void T_Sketchbook::MakeScrollBook(int idx)
                 CCPoint p = spriteClassBook->FindParentCenterPos(name);
                 sprintf(name2, "letter/letter_require.png%d", i);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5,0.5), ccp(p.x, p.y+3), CCSize(0, 0), name, "0", NULL, 5, 1) );
-            }
+            }*/
         }
         
         // 튜토리얼에 따라 화살표 + 영역표시를 표시한다.

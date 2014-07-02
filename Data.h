@@ -64,7 +64,10 @@ extern int missionRefVal;
 // 게임결과에 필요한 값들
 extern class MyGameResult* myGameResult;
 
-//extern std::string publicKey[50];
+// 바이너리 버전
+extern int binaryVersion_current;
+
+
 // rsa 관련
 extern RSA* rsa;
 extern std::string publicKey;
@@ -139,7 +142,7 @@ class MyInfo
 {
 public:
     void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
-    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master);
+    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     
     std::string GetSessionId();
     int GetKeyValue();
@@ -181,6 +184,9 @@ public:
     bool IsWater();
     bool IsLand();
     bool IsMaster();
+    bool IsFireByTopaz();
+    bool IsWaterByTopaz();
+    bool IsLandByTopaz();
     bool HasNoProperty();
     
     void SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved);
@@ -188,7 +194,7 @@ public:
     void SetPotion(int potion, int remainPotionTime);
     void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
     void SetItem(std::vector<int> items);
-    void SetProperties(int fire, int water, int land, int master);
+    void SetProperties(int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     void SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime);
     void SetRemainWeeklyRankTime(int time);
     
@@ -254,10 +260,14 @@ private:
     int item[5];
     int potion;
     int remainPotionTime;
+    
     bool propertyFire;
     bool propertyWater;
     bool propertyLand;
     bool propertyMaster;
+    bool isPropertyFireByTopaz;
+    bool isPropertyWaterByTopaz;
+    bool isPropertyLandByTopaz;
     
     int profileSkillId;
     int profileSkillLv;

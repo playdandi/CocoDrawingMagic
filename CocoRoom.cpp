@@ -530,8 +530,24 @@ void CocoRoom::MakeSpritesCoco()
 
 void CocoRoom::SetStaffBuildUp()
 {
+    // mp 500 미만의 경우
+    if (myInfo->GetMPTotal() < 500)
+    {
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_starcandy.png"))->setOpacity(0);
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_topaz.png"))->setOpacity(0);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(5))->setOpacity(0);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(6))->setOpacity(0);
+        
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png1"))->setOpacity(255);
+        ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setString("강화 준비중");
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setString("강화 준비중");
+    }
+    
     // 일반적인 경우
-    if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
+    else if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
     {
         // 지팡이 일반/고급 다음 cost 갱신
         char val[20];
@@ -562,6 +578,8 @@ void CocoRoom::SetStaffBuildUp()
         ((CCSprite*)spriteClassCoco->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(255);
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setOpacity(255);
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setOpacity(255);
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setString("강화 완료");
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setString("강화 완료");
     }
 }
 
@@ -1149,7 +1167,16 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
+                // mp 500 미만의 경우
+                if (myInfo->GetMPTotal() < 500)
+                {
+                    sound->playClick();
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_INSUFFICIENT_MP, BTN_1, nullData);
+                    return true;
+                }
+                // 강화 가능한 경우
+                else if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
                 {
                     sound->playClick();
                     std::vector<int> data;
@@ -1164,7 +1191,15 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClassCoco->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
+                // mp 500 미만의 경우
+                if (myInfo->GetMPTotal() < 500)
+                {
+                    sound->playClick();
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_INSUFFICIENT_MP, BTN_1, nullData);
+                    return true;
+                }
+                else if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
                 {
                     sound->playClick();
                     std::vector<int> data;

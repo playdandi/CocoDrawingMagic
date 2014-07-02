@@ -81,6 +81,9 @@ bool Splash::init()
     httpStatus = 0;
     
     m_pEditName = NULL;
+    
+    sound = new Sound();
+    
 
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     JniMethodInfo t;
@@ -183,17 +186,6 @@ RSA* Splash::createRSA(unsigned char * key, int pub)
     }
     
     rsa = PEM_read_bio_RSA_PUBKEY(keybio, NULL, NULL, NULL);
-    
-    /*
-    if(pub)
-    {
-        rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
-    }
-    else
-    {
-        rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
-    }
-    */
     if(rsa == NULL)
     {
         CCLog("res null");
@@ -222,51 +214,6 @@ void Splash::Button_Callback()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     this->setKeypadEnabled(true);
 	this->setTouchEnabled(true);
-    
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    
-   // char* publicKey = "-----BEGIN PUBLIC KEY-----\nMDwwDQYJKoZIhvcNAQEBBQADKwAwKAIhAKP5Lsq9tblK50ghhot8gT3xc8tlae71\nUUpRjkB2aNyvAgMBAAE=\n-----END PUBLIC KEY-----";
-    
-    //BIO* keyBIO = NULL;
-    //RSA* rsa = NULL;
-    
-    /*
-    BIO* bp = BIO_new_mem_buf(publicKey, -1);
-    if (bp == NULL)
-    {
-        CCLog("bio  error ");
-        exit(1);
-    }
-    
-    rsa = PEM_read_bio_RSA_PUBKEY(bp, &rsa, NULL, NULL);
-    
-    // pem파일 public key 추출
-    //rsa = PEM_read_bio_RSA_PUBKEY(keyBIO, NULL, NULL, NULL);
-    
-    // 키를 로드 하는데 에러 발생
-    if(rsa == NULL) {
-        CCLog("로드 불가능");
-        BIO_printf(errBIO, "키를 로드 할 수 없습니다.");
-        ERR_print_errors(errBIO);
-        exit(1);
-    }
-    */
-    
-     /*
-    unsigned char plainText[4098] = "Hello this";
-    unsigned char  encrypted[4098]={};
-    unsigned char decrypted[4098]={};
-    
-      int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
-    int len = 11;
-    int encrypted_length= public_encrypt(plainText,len, (unsigned char*)publicKey,encrypted);
-    if(encrypted_length == -1)
-    {
-        //printLastError("Public Encrypt failed ");
-        CCLog("ak...");
-        exit(0);
-    }
-     */
 }
 
 
@@ -274,33 +221,10 @@ void Splash::Button_Callback()
 
 void Splash::keyboardWillShow(CCIMEKeyboardNotificationInfo &info)
 {
-    //CCLog("keyboard show");
 }
 void Splash::keyboardWillHide(CCIMEKeyboardNotificationInfo &info)
 {
-    //CCLog("keyboard hide");
 }
-
-/*
-void Splash::editBoxTextChanged(CCEditBox* editBox, const std::string& text)
-{
-    CCLog("changing...");
-}
-void Splash::editBoxEditingDidBegin(CCEditBox* editBox)
-{
-    CCLog("%p did begin", editBox);
-}
-void Splash::editBoxEditingDidEnd(CCEditBox* editBox)
-{
-    CCLog("%p did end", editBox);
-}
-
-void Splash::editBoxReturn(CCEditBox* editBox)
-{
-    int kakao_id = atoi(editBox->getText());
-    CCLog("editBoxReturn = %d", kakao_id);
-}
-*/
 
 bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -336,6 +260,8 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     if (isStarting && m_pStartBtn->boundingBox().containsPoint(point))
     {
+        sound->playClick();
+        
         isLoading = true;
         
         // kakao id save (처음 로그인 때만)
@@ -367,7 +293,6 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     }
 }
 
-
 void Splash::XmlParseVersion(xml_document *xmlDoc)
 {
     xml_node nodeResult = xmlDoc->child("response");
@@ -387,32 +312,53 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
     {
         // 버전 정보를 받는다.
         gameVersion = nodeResult.child("game-version").text().as_int();
-        int binaryVersion = nodeResult.child("binary-version").text().as_int();
-        
-        CCLog("바이너리 버전 = %d", binaryVersion);
-        CCLog("게임 버전 = %d", gameVersion);
         std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
-        // 나중에 마켓버전도 받자.
+        //int binaryVersion = nodeResult.child("binary-version").text().as_int();
+        CCLog("게임 버전 = %d", gameVersion);
         
-        if (iBinaryVersion == -1)
+        // 마켓 버전
+        int binaryVersion_android = nodeResult.child("market-version").child("android").text().as_int();
+        int binaryVersion_ios = nodeResult.child("market-version").child("ios").text().as_int();
+        int binaryVersion_latest;
+        //int binaryVersion_current;
+
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        binaryVersion_latest = binaryVersion_android;
+        CCLog("바이너리 버전 (android) = %d", binaryVersion_android);
+        JniMethodInfo t;
+        if (JniHelper::getStaticMethodInfo(t,
+                                           "com/playDANDi/CocoMagic/CocoMagic",
+                                           "GetBinaryVersion",
+                                           "()I"))
         {
-            // 최초 실행했을 때
-            iBinaryVersion = binaryVersion;
-            CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
+            binaryVersion_current = (jint)t.env->CallStaticObjectMethod(t.classID,t.methodID);
+            t.env->DeleteLocalRef(t.classID);
         }
-        else if (binaryVersion != iBinaryVersion)
-        {
-            CCLog("바이너리 버전 다름");
-            // 마켓/스토어에서 다시 앱을 받으라는 팝업창을 띄우자.
-            
-            iBinaryVersion = binaryVersion;
-            CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
-        }
+        #endif
         
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        binaryVersion_latest = binaryVersion_ios;
+        CCLog("바이너리 버전 (android) = %d", binaryVersion_ios);
+        binaryVersion_current = binaryVersion_latest;
+        //binaryVersion_current = 999;
+        #endif
+
+        CCLog("현재 바이너리 버전 : %d", binaryVersion_current);
+        
+        if (binaryVersion_current != binaryVersion_latest)
+        {
+            CCLog("바이너리 버전 다름 : 업데이트 해야 함.");
+
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_UPDATE, BTN_1, nullData);
+            //iBinaryVersion = binaryVersion;
+            //CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
+            return;
+        }
         
         if (gameVersion != iGameVersion)
         {
-            CCLog("게임 버전 다름");
+            CCLog("게임 버전 다름 : 리소스 업데이트 시작함.");
             m_pMsgLabel->setString("못생긴 리소스 설득 중...");
             // 밸런스 파일 업데이트 !
             CCHttpRequest* req = new CCHttpRequest();
@@ -475,7 +421,6 @@ void Splash::TryLogin()
 
 void Splash::XMLParseGameData()
 {
-    //std::string filepath = CCFileUtils::sharedFileUtils()->fullPathForFilename("gamedata.xml");
     std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
     CCLog("filepath = %s", filepath.c_str());
     
@@ -483,9 +428,28 @@ void Splash::XMLParseGameData()
     unsigned long iSize = 0;
     unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(), "rb", &iSize);
     
+    // base64_decode
+    std::string base64EncodedStr = "";
+    for (int i = 0 ; i < iSize ; i++)
+        base64EncodedStr.push_back(pBuffer[i]);
+    std::string obfuscatedStr = Common::base64_decode(base64EncodedStr);
+    
+    // deObfuscation
+    int obfKey = 36 - 10;
+    int keyLen = obfuscationKey[obfKey].size();
+    std::string decodedStr = "";
+    for (int i = 0 ; i < obfuscatedStr.size() ; i++) // xor operation
+        decodedStr += obfuscatedStr[i] ^ obfuscationKey[obfKey][i%keyLen];
+    
+    //CCLog("%s", decodedStr.c_str());
+    
     // xml parsing
     xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(pBuffer, iSize);
+    //xml_parse_result result = xmlDoc.load_buffer(decodedStr.c_str(), iSize);
+    xml_parse_result result = xmlDoc.load_buffer(decodedStr.c_str(), (int)decodedStr.size());
+    
+    base64EncodedStr.clear();
+    decodedStr.c_str();
     
     if (!result)
     {
@@ -633,14 +597,43 @@ void Splash::XMLParseGameData()
             else if (name == "charSkillName") skillName = ait->as_string();
             else if (name == "bSkillType") type = ait->as_int();
             else if (name == "nSkillMaxLevel") maxLevel = ait->as_int();
-            else if (name == "nRequireMP") mp = ait->as_int();
-            else if (name == "nRequireStaffLevel") staffLv = ait->as_int();
+            //else if (name == "nRequireMP") mp = ait->as_int();
+            //else if (name == "nRequireStaffLevel") staffLv = ait->as_int();
             else if (name == "nRequireSkillID") skillId = ait->as_int();
             else if (name == "nRequireSkillLevel") skillLv = ait->as_int();
             else if (name == "bIsActive") isActive = ait->as_int();
         }
+        mp = 0;
+        staffLv = 0;
         skillInfo.push_back( new SkillInfo(id, skillName, type, maxLevel, mp, staffLv, skillId, skillLv, isActive) );
     }
+    
+    // skill_require_mp_define info
+    /*
+     <skill_require_mp_define>
+        <Data nSkillCount="1" nRequireMP="0" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="2" nRequireMP="0" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="3" nRequireMP="50" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="4" nRequireMP="100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="5" nRequireMP="200" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="6" nRequireMP="300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="7" nRequireMP="500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="8" nRequireMP="700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="9" nRequireMP="900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="10" nRequireMP="1100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="11" nRequireMP="1300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="12" nRequireMP="1500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="13" nRequireMP="1700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="14" nRequireMP="1900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="15" nRequireMP="2300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="16" nRequireMP="2700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="17" nRequireMP="3100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="18" nRequireMP="3500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="19" nRequireMP="3900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="20" nRequireMP="4300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+        <Data nSkillCount="21" nRequireMP="4700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
+     </skill_require_mp_define>
+     */
     
     // skill buildup info
     its = nodeResult.child("skill_detail_define").children("Data");
@@ -817,7 +810,11 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
         int land = nodeResult.child("properties").attribute("land").as_int();
         int master = nodeResult.child("properties").attribute("master").as_int();
         
-        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, lastWeeklyHighScore, isWeeklyRankReward, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master);
+        int fireByTopaz = nodeResult.child("properties").attribute("fire-purchase-topaz").as_int();
+        int waterByTopaz = nodeResult.child("properties").attribute("water-purchase-topaz").as_int();
+        int landByTopaz = nodeResult.child("properties").attribute("land-purchase-topaz").as_int();
+        
+        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, lastWeeklyHighScore, isWeeklyRankReward, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master, fireByTopaz, waterByTopaz, landByTopaz);
         
         int profileSkillId = nodeResult.child("profile-skill").attribute("id").as_int();
         int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
@@ -1118,6 +1115,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseRewardWeeklyRank(&xmlDoc); break;
         case HTTP_FRIENDS:
             XmlParseFriends(&xmlDoc); break;
+        case HTTP_NONCONSUMED_GET_FRIEND_ID:
+            XmlParseGetFriendKakaoId(&xmlDoc); break;
     }
 }
 
@@ -1162,7 +1161,16 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         if (profileCnt == (int)profiles.size())
         {
             #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-            GetNonConsumedItems();
+            m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
+            httpStatus = HTTP_NONCONSUMED_GET_FRIEND_ID;
+            
+            char temp[255];
+            std::string param = "";
+            sprintf(temp, "kakao_id=%d", mKakaoId);
+            param += temp;
+            
+            Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
+            //GetNonConsumedItems();
             //LastActionStart();
             #endif
             
@@ -1175,11 +1183,8 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     }
 }
 
-void Splash::GetNonConsumedItems()
+void Splash::GetNonConsumedItems(std::string friendKakaoId)
 {
-    m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
-    httpStatus = HTTP_NONCONSUMEDITEMS;
-
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     JniMethodInfo t;
     if (JniHelper::getStaticMethodInfo(t,
@@ -1195,7 +1200,7 @@ void Splash::GetNonConsumedItems()
                                     0,
                                     -1, // topazid
                                     t.env->NewStringUTF(myKakaoId), // kakaoid
-                                    t.env->NewStringUTF(""), // friendkakaoid
+                                    t.env->NewStringUTF(friendKakaoId.c_str()), // friendkakaoid
                                     t.env->NewStringUTF(""), // productid
                                     t.env->NewStringUTF(""), // payload
                                     t.env->NewStringUTF(gcmKey.c_str())
@@ -1205,6 +1210,33 @@ void Splash::GetNonConsumedItems()
     }
     #endif
 }
+
+void Splash::XmlParseGetFriendKakaoId(xml_document *xmlDoc)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+    else
+    {
+        std::string friendKakaoId = nodeResult.child("friend").attribute("kakao-id").as_string();
+        if (friendKakaoId == "NULL")
+            friendKakaoId = "";
+     
+        // 구글에 접속해서 소진되지 않은 상품을 소진시키자.
+        GetNonConsumedItems(friendKakaoId);
+    }
+}
+
+
 void Splash::GetTodayCandyFriend()
 {
     m_pMsgLabel->setString("오늘의 별사탕 그룹 구성 중...");
@@ -1262,6 +1294,7 @@ void Splash::LastActionCallback(CCNode* sender, void* data)
 
 void Splash::LastActionCallback2(CCNode* sender, void *data)
 {
+    delete sound;
     EndScene();
     Common::ShowNextScene(this, "Splash", "Ranking", true);
 }

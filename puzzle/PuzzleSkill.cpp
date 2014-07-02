@@ -24,8 +24,8 @@ Effect* PuzzleSkill::GetEffect()
 
 void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv)
 {    
-    //for (int i = 0 ; i < num.size(); i++)
-    //    CCLog("%d번 스킬 작동할 것임", num[i]);
+    for (int i = 0 ; i < num.size(); i++)
+        CCLog("%d번 스킬 작동할 것임", num[i]);
     
     // init.
     for (int i = 0 ; i < NUMOFSKILL ; i++)

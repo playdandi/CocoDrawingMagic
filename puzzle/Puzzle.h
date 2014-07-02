@@ -167,7 +167,7 @@ public:
     CCSize floorSize;
     
     void ReadyAndStart(CCNode* sender, void* pointer);
-    void Ready(float f);
+    //void Ready(float f);
     void Ready_C(CCNode* sender, void* p);
     void ReadyCallback(CCNode* sender, void* pointer);
     
@@ -263,6 +263,7 @@ protected:
     // Bomb()에서 연결피스 지울 때 사용되는 변수
     bool P8Bombed[COLUMN_COUNT][ROW_COUNT];
     
+    bool isGameStarted;
     bool isGameOver;
     
     int iTouchRound;
@@ -309,6 +310,8 @@ protected:
     
     CCArray* animFairyFrames;
     int fairyTimer; // 요정 액션 타이머
+    
+    CCSprite* readySprite; // '레디' sprite (pause후 인게임 끝낼 때 필요해서)
     
 private:
     Sound* sound;

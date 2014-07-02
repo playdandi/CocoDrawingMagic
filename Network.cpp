@@ -40,6 +40,8 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     int result;
     std::string subs;
 
+    // a 암호화
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // 1) RSA_public_encrypt (512 bit씩 쪼개서 암호화)
     for (int i = 0 ; i < numOfSubstr ; i++)
     {
@@ -53,9 +55,7 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
             CCLog("RSA ERROR = %s", err);
             exit(0);
         }
-        //CCLog("%d번째 문자열 = %s , %d", i, subs.c_str(), size);
-        //CCLog("%d번째 암호화 길이 = %d", i, result);
-   
+        
         for (int i = 0 ; i < result ; i++)
             totalEncryptedString.push_back(encrypted[i]);
         totalEncryptedLength += result;
@@ -66,23 +66,47 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     for (int i = 0 ; i < encoded.size() ; i++)
         if (encoded[i] == '+')
             encoded[i] = '-';
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    // PS 암호화
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    char ps_param[30];
+    sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
+    std::string ps_param_s = ps_param;
+    CCLog("ps_param_str = %s", ps_param_s.c_str());
+    
+    result = RSA_public_encrypt((int)ps_param_s.size(), (unsigned char*)(ps_param_s.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
+    if (result == -1)
+    {
+        char* err;
+        ERR_load_crypto_strings();
+        ERR_error_string(ERR_get_error(), err);
+        CCLog("RSA ERROR = %s", err);
+        exit(0);
+    }
+    
+    std::string encoded_ps = Common::base64_encode(encrypted, result);
+    for (int i = 0 ; i < encoded_ps.size() ; i++)
+        if (encoded_ps[i] == '+')
+            encoded_ps[i] = '-';
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     
     
     // 이제 파라미터를 만든다. (필요 파라미터 : PS, a)
     std::string postData = "";
     char temp[1024*40];
     
-    // PS
-    sprintf(temp, "PS=%d|%d|%d|%d&", publicKeyIndex, myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
-    //sprintf(temp, "PS=%d|%d|%d|%d&", myInfo->GetKeyValue(), myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion"));
+    // PS (encrypted data)
+    sprintf(temp, "PS=%d%s&", publicKeyIndex, encoded_ps.c_str());
     postData += temp;
     
     // a (encrypted data)
     sprintf(temp, "a=%s", encoded.c_str());
     postData += temp;
     
-    CCLog("%s", postData.c_str());
-
+    //CCLog("%s", postData.c_str());
      
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
@@ -135,6 +159,8 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     
     char decryptedData[BUFFER_SIZE];
     int bufferSize = Network::DeObfuscation(dumpData, decryptedData);
+   
+    //CCLog("%s", decryptedData);
     
     // xml parsing
     xml_parse_result result = xmlDoc.load_buffer(decryptedData, bufferSize);
@@ -147,10 +173,8 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
 
 int Network::DeObfuscation(std::string obfuscatedStr, char* data)
 {
-    //CCLog("%s", obfuscatedStr.c_str());
     int obfKey = atoi(obfuscatedStr.substr(0, 2).c_str()) - 10; // 앞 두자리는 key값이므로 분리한다.
     obfuscatedStr = obfuscatedStr.substr(2);
-    //CCLog("obf key value = %d", obfKey);
     
     // replacing '-' to '+'
     Network::replaceAll(obfuscatedStr, "-", "+");
@@ -178,15 +202,18 @@ void Network::ShowCommonError(int code)
     int popupType;
     switch (code)
     {
-        case -3:
+        
         case -2:
         case -1:
         case 1:
         case 2:
-        case 4:
-            popupType = NEED_TO_UPDATE; break;
+            popupType = NETWORK_FAIL; break;
+        case -3:
         case 5:
             popupType = NEED_TO_REBOOT; break;
+        case 4:
+            popupType = NEED_TO_UPDATE; break;
+        
         default:
             popupType = NEED_TO_REBOOT; break;
     }
@@ -197,7 +224,7 @@ void Network::ShowCommonError(int code)
     /*
      코드 -1 : 디비 syntax 에러
      코드 -2 : 디비 insertion 에러
-     코드 -3 : 10분 지나 세션 종료
+     코드 -3 : 10분 지나 세션 종료 (재부팅 필요)
      코드 1 : 파라미터 에러
      코드 2 : userId 없음
      코드 3 : 돈이 모지람.

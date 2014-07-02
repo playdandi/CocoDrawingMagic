@@ -117,9 +117,11 @@ void BuyTopaz::Notification(CCObject* obj)
         httpStatus = 1;
         verifyStatusScene = this;
         
-        std::string param = "kakao_id=";
-        char temp[10];
-        sprintf(temp, "%d", myInfo->GetKakaoId());
+        std::string param = "";
+        char temp[30];
+        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+        param += temp;
+        sprintf(temp, "friend_kakao_id=%s", friendKakaoId.c_str());
         param += temp;
         
         Network::HttpPost(param, URL_GOOGLE_PAYLOAD, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num, friendKakaoId);
@@ -281,9 +283,11 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 char num[10];
                 sprintf(num, "%d", number);
                 
-                std::string param = "kakao_id=";
-                char temp[10];
-                sprintf(temp, "%d", myInfo->GetKakaoId());
+                std::string param = "";
+                char temp[30];
+                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                param += temp;
+                sprintf(temp, "friend_kakao_id=NULL");
                 param += temp;
                 
                 httpStatus = 0;
@@ -386,12 +390,6 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         CCLog("productId = %s", productId);
         CCLog("kakaoId = %s", myKakaoId);
         CCLog("friendKakaoId = %s", friendKakaoId.c_str());
-    /*
-        07-02 02:28:00.206: D/cocos2d-x debug info(7580): topazId = 3
-        07-02 02:28:00.206: D/cocos2d-x debug info(7580): productId = topaz120_p
-        07-02 02:28:00.206: D/cocos2d-x debug info(7580): kakaoId = 1001
-        07-02 02:28:00.206: D/cocos2d-x debug info(7580): friendKakaoId = 2
-*/
         
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,

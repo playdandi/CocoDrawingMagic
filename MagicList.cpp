@@ -4,7 +4,8 @@
 using namespace pugi;
 
 static int from;
-int sid[16] = {22, 25, 26, 28, 12, 15, 16, 18, 32, 35, 36, 38, 42, 43, 45, -1};
+//int sid[16] = {22, 25, 26, 28, 12, 15, 16, 18, 32, 35, 36, 38, 42, 43, 45, -1};
+int sid[16];
 
 
 CCScene* MagicList::scene(int fromWhere)
@@ -81,6 +82,17 @@ bool MagicList::init()
     scrollViewSlot->setDelegate(this);
     scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollViewSlot, 5);
+    
+    // active한 스킬의 common id 넣기
+    int n[3] = {2, 1, 3};
+    int pos = 0;
+    for (int k = 0 ; k < 3 ; k++)
+        for (int i = 0 ; i < skillInfo.size() ; i++)
+            if (skillInfo[i]->GetId() / 10 == n[k] && skillInfo[i]->IsActive())
+                sid[pos++] = skillInfo[i]->GetId();
+    while (pos < 16) // 아직 존재하지 않는 master 속성에 대해 -1로 대입.
+        sid[pos++] = -1;
+    
     
     InitSprites();
     InitBtn();

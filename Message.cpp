@@ -647,6 +647,9 @@ void Message::ParseProfileImage(char* data, int size, int idx)
 
 void Message::XmlParseMsgReceiveOne(xml_document *xmlDoc)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     

@@ -11,6 +11,7 @@
 #define HTTP_REWARDWEELYRANK 3
 #define HTTP_FRIENDS 4
 #define HTTP_PROFILE_IMAGE 5
+#define HTTP_NONCONSUMED_GET_FRIEND_ID -10
 #define HTTP_NONCONSUMEDITEMS -100
 
 using namespace cocos2d::extension;
@@ -37,11 +38,7 @@ public:
     void LogoLoadingCompleted();
     void SoundCallback(CCNode* sender, void* p);
     void Button_Callback();
-    
-    //virtual void editBoxEditingDidBegin(CCEditBox* editBox);
-    //virtual void editBoxEditingDidEnd(CCEditBox* editBox);
-    //virtual void editBoxTextChanged(CCEditBox* editBox, const std::string& text);
-    //virtual void editBoxReturn(CCEditBox* editBox);
+
     void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
     void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
@@ -55,11 +52,12 @@ public:
     void XmlParseMyInfo(xml_document *xmlDoc);
     void XmlParseRewardWeeklyRank(xml_document *xmlDoc);
     void XmlParseFriends(xml_document *xmlDoc);
+    void XmlParseGetFriendKakaoId(xml_document *xmlDoc);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     
-    void GetNonConsumedItems();
+    void GetNonConsumedItems(std::string friendKakaoId);
     
     void GetTodayCandyFriend();
     void LastActionStart();

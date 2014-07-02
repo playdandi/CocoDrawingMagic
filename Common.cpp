@@ -752,6 +752,13 @@ CCSize SpriteClass::GetContentSizeByName(std::string name)
     return CCSizeMake(0, 0);
 }
 
+void SpriteClass::SetOpacity(int idx, int alpha)
+{
+    SpriteObject* obj = spriteObj[idx];
+    if (obj->type == 0) obj->sprite->setOpacity(alpha);
+    else if (obj->type == 1) obj->sprite9->setOpacity(alpha);
+    else if (obj->type == 2) obj->label->setOpacity(alpha);
+}
 void SpriteClass::AddChild(int idx)
 {
     SpriteObject* obj = spriteObj[idx];

@@ -236,10 +236,10 @@ void NoImage::InitSprites()
             sprintf(text, "블록된 계정입니다. 문의사항은 help@playdandi.com 으로 이메일을 보내주세요."); break;
         case NEED_TO_UPDATE:
             title = "앱 업데이트";
-            sprintf(text, "업데이트된 버전이 출시되었습니다. 마켓으로 이동합니다."); break;
+            sprintf(text, "업데이트된 버전이 출시되었습니다.\n마켓으로 이동합니다."); break;
         case NEED_TO_REBOOT:
             title = "다시 시작하기";
-            sprintf(text, "세션 종료 혹은 업데이트로 인해 게임을 재부팅합니다."); break;
+            sprintf(text, "세션 종료 혹은 업데이트로 인해\n게임을 재부팅합니다."); break;
         case NEED_TO_BUY_POTION:
             title = "포션 부족";
             sprintf(text, "포션이 부족합니다. 구매 창으로 이동하시겠습니까?"); break;
@@ -338,6 +338,9 @@ void NoImage::InitSprites()
             title = "지팡이 강화하기";
             sound->playLvUpFail();
             sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
+        case UPGRADE_STAFF_INSUFFICIENT_MP:
+            title = "지팡이 강화하기";
+            sprintf(text, "MP가 500이상이 되어야 강화를 할 수 있어요."); break;
         case UPGRADE_STAFF_FULL_LEVEL:
             title = "지팡이 강화하기";
             sprintf(text, "이미 최고 레벨입니다."); break;
@@ -651,6 +654,25 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     if (type == YOU_WERE_BLOCKED)
                     {
                         Exit();
+                    }
+                    else if (type == NEED_TO_UPDATE)
+                    {
+                        EndScene();
+                        
+                        // 앱 업데이트 (마켓으로 이동)
+                        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                        JniMethodInfo t;
+                        if (JniHelper::getStaticMethodInfo(t,
+                                                           "com/playDANDi/CocoMagic/CocoMagic",
+                                                           "GoToPlayStore",
+                                                           "()V"))
+                        {
+                            // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+                            t.env->CallStaticVoidMethod(t.classID, t.methodID);
+                            // Release
+                            t.env->DeleteLocalRef(t.classID);
+                        }
+                        #endif
                     }
                     else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
                     {
@@ -1373,6 +1395,8 @@ void NoImage::XmlParseUpgradeStaff(xml_document *xmlDoc)
         }
         else if (code == 11) // 이미 지팡이 만렙
             ReplaceScene("NoImage", UPGRADE_STAFF_FULL_LEVEL, BTN_1);
+        else if (code == 12) // MP 500 미만이라 강화 불가능.
+            ReplaceScene("NoImage", UPGRADE_STAFF_INSUFFICIENT_MP, BTN_1);
         else
             ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
     }
@@ -1679,7 +1703,11 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
         int water = nodeResult.child("properties").attribute("water").as_int();
         int land = nodeResult.child("properties").attribute("land").as_int();
         int master = nodeResult.child("properties").attribute("master").as_int();
-        myInfo->SetProperties(fire, water, land, master);
+        int fireByTopaz = nodeResult.child("properties").attribute("fire-purchase-topaz").as_int();
+        int waterByTopaz = nodeResult.child("properties").attribute("water-purchase-topaz").as_int();
+        int landByTopaz = nodeResult.child("properties").attribute("land-purchase-topaz").as_int();
+        myInfo->SetProperties(fire, water, land, master, fireByTopaz, waterByTopaz, landByTopaz);
+        
         for (int i = 0 ; i < friendList.size() ; i++)
         {
             if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())

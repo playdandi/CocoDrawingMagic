@@ -44,6 +44,9 @@ int missionType;
 int missionVal;
 int missionRefVal;
 
+// 바이너리 버전
+int binaryVersion_current;
+
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
 
@@ -186,7 +189,7 @@ void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool p
     this->userId = atoi(sessionId.substr(pos+1, sessionId.size()-1).c_str());
 }
 
-void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master)
+void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
 {
     this->topaz = topaz;
     this->starcandy = starcandy;
@@ -209,10 +212,14 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->item[4] = item5;
     this->potion = potion;
     this->remainPotionTime = remainPotionTime;
+    
     this->propertyFire = (fire == 1);
     this->propertyWater = (water == 1);
     this->propertyLand = (land == 1);
     this->propertyMaster = (master == 1);
+    this->isPropertyFireByTopaz = (fireByTopaz == 1);
+    this->isPropertyWaterByTopaz = (waterByTopaz == 1);
+    this->isPropertyLandByTopaz = (landByTopaz == 1);
 }
 
 int MyInfo::GetKeyValue()
@@ -405,6 +412,18 @@ bool MyInfo::IsMaster()
 {
     return propertyMaster;
 }
+bool MyInfo::IsFireByTopaz()
+{
+    return isPropertyFireByTopaz;
+}
+bool MyInfo::IsWaterByTopaz()
+{
+    return isPropertyWaterByTopaz;
+}
+bool MyInfo::IsLandByTopaz()
+{
+    return isPropertyLandByTopaz;
+}
 bool MyInfo::HasNoProperty()
 {
     return (!IsFire() && !IsWater() && !IsLand() && !IsMaster());
@@ -441,12 +460,15 @@ void MyInfo::SetItem(std::vector<int> items)
     for (int i = 0 ; i < items.size() ; i++)
         this->item[i] = items[i];
 }
-void MyInfo::SetProperties(int fire, int water, int land, int master)
+void MyInfo::SetProperties(int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
 {
-    this->propertyFire = (fire == 1) ? true : false;
-    this->propertyWater = (water == 1) ? true : false;
-    this->propertyLand = (land == 1) ? true : false;
-    this->propertyMaster = (master == 1) ? true : false;
+    this->propertyFire = (fire == 1);
+    this->propertyWater = (water == 1);
+    this->propertyLand = (land == 1);
+    this->propertyMaster = (master == 1);
+    this->isPropertyFireByTopaz = (fireByTopaz == 1);
+    this->isPropertyWaterByTopaz = (waterByTopaz == 1);
+    this->isPropertyLandByTopaz = (landByTopaz == 1);
 }
 void MyInfo::SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime)
 {
@@ -1345,29 +1367,29 @@ std::string SkillInfo::GetShortDesc(int sid)
         case 21: return "빨간구슬을 터뜨리면 추가점수"; break;
         case 22: return "빨간구슬 사이클로 추가폭발"; break;
         case 23: return "8개 이상 제거 시 추가점수"; break;
-        case 24: return "매직타임의 마법진 폭발 2회"; break;
-        case 25: return "불의 정령 : 빨간구슬 복제"; break;
-        case 26: return "6개 이상 제거 시 두 번 폭발"; break;
-        case 27: return "코코의 자동 한붓그리기"; break;
-        case 28: return "10개 이상 제거 시 용의 출현"; break;
+        //case 24: return "매직타임의 마법진 폭발 2회"; break;
+        case 24: return "불의 정령 : 빨간구슬 복제"; break;
+        case 25: return "6개 이상 제거 시 두 번 폭발"; break;
+        case 26: return "코코의 자동 한붓그리기"; break;
+        case 27: return "10개 이상 제거 시 용의 출현"; break;
             
         case 11: return "푸른구슬을 터뜨리면 추가점수"; break;
         case 12: return "푸른구슬 사이클로 추가폭발"; break;
         case 13: return "콤보에 비례한 추가점수"; break;
-        case 14: return "콤보에 비례한 추가별사탕"; break;
-        case 15: return "물의 정령 : 푸른구슬 생성"; break;
-        case 16: return "6개 이상 제거 시 두 번 폭발"; break;
-        case 17: return "5초 동안 시간 멈추기"; break;
-        case 18: return "10개 이상 제거 시 여신 출현"; break;
+        //case 14: return "콤보에 비례한 추가별사탕"; break;
+        case 14: return "물의 정령 : 푸른구슬 생성"; break;
+        case 15: return "6개 이상 제거 시 두 번 폭발"; break;
+        case 16: return "5초 동안 시간 멈추기"; break;
+        case 17: return "10개 이상 제거 시 여신 출현"; break;
             
         case 31: return "초록구슬을 터뜨리면 추가점수"; break;
         case 32: return "초록구슬 사이클로 추가폭발"; break;
         case 33: return "지팡이 레벨에 따른 추가별사탕"; break;
-        case 34: return "10개 이상 제거 시 추가별사탕"; break;
-        case 35: return "땅의 정령 : 초록구슬 모으기"; break;
-        case 36: return "6개 이상 제거 시 두 번 폭발"; break;
-        case 37: return "확률적으로 포션 1개 획득"; break;
-        case 38: return "10개 이상 제거 시 나무 출현"; break;
+        //case 34: return "10개 이상 제거 시 추가별사탕"; break;
+        case 34: return "땅의 정령 : 초록구슬 모으기"; break;
+        case 35: return "6개 이상 제거 시 두 번 폭발"; break;
+        case 36: return "확률적으로 포션 1개 획득"; break;
+        case 37: return "10개 이상 제거 시 나무 출현"; break;
     }
     return "";
 }
@@ -1378,29 +1400,29 @@ std::string SkillInfo::GetFullDesc(int sid)
         case 21: return "빨간 피스를 그리면 추가 점수를 획득해요."; break;
         case 22: return "빨간 피스를 사이클로 그리면 주변 피스를 터뜨릴 수 있어요"; break;
         case 23: return "빨간 피스를 한 번에 8개 이상 그리면 추가 점수를 획득해요."; break;
-        case 24: return "MagicTime 때 마법진을 두 번 터뜨려요."; break;
-        case 25: return "사랑의 불꽃으로 빨간 피스를 여러 개 만들어요."; break;
-        case 26: return "빨간 피스를 한 번에 6개 이상 그리면 불꽃으로 한 번 더 터뜨려요."; break;
-        case 27: return "가끔 코코가 스스로 피스들을 터뜨려요."; break;
-        case 28: return "빨간 피스를 한 번에 10개 이상 그리면 드래곤을 소환해요!"; break;
+        //case 24: return "MagicTime 때 마법진을 두 번 터뜨려요."; break;
+        case 24: return "사랑의 불꽃으로 빨간 피스를 여러 개 만들어요."; break;
+        case 25: return "빨간 피스를 한 번에 6개 이상 그리면 불꽃으로 한 번 더 터뜨려요."; break;
+        case 26: return "가끔 코코가 스스로 피스들을 터뜨려요."; break;
+        case 27: return "빨간 피스를 한 번에 10개 이상 그리면 드래곤을 소환해요!"; break;
             
         case 11: return "파란 피스를 그리면 추가 점수를 획득해요."; break;
         case 12: return "파란 피스를 사이클로 그리면 파도가 피스를 터뜨려요."; break;
         case 13: return "10콤보마다 추가 점수를 획득해요."; break;
-        case 14: return "50콤보마다 추가 별사탕을 획득해요."; break;
-        case 15: return "파란 나비가 날아와 파란 피스를 만들어요."; break;
-        case 16: return "파란 피스를 한 번에 6개 이상 그리면 얼음비가 한 번 더 터뜨려요."; break;
-        case 17: return "코코가 시간을 얼려 잠시 동안 시간이 가지 않아요."; break;
-        case 18: return "파란 피스를 한 번에 10개 이상 그리면 여신을 소환해요!"; break;
+        //case 14: return "50콤보마다 추가 별사탕을 획득해요."; break;
+        case 14: return "파란 나비가 날아와 파란 피스를 만들어요."; break;
+        case 15: return "파란 피스를 한 번에 6개 이상 그리면 얼음비가 한 번 더 터뜨려요."; break;
+        case 16: return "코코가 시간을 얼려 잠시 동안 시간이 가지 않아요."; break;
+        case 17: return "파란 피스를 한 번에 10개 이상 그리면 여신을 소환해요!"; break;
             
         case 31: return "초록 피스를 그리면 추가 점수를 획득해요."; break;
         case 32: return "초록 피스를 사이클로 그리면 무작위로 피스를 터뜨려요."; break;
         case 33: return "지팡이의 레벨만큼 별사탕을 추가로 획득해요."; break;
-        case 34: return "초록 피스를 한 번에 10개 이상 그리면 추가 별사탕을 획득해요."; break;
-        case 35: return "마법 잎사귀가 초록 피스를 모두 모아줘요."; break;
-        case 36: return "초록 피스를 한 번에 6개 이상 그리면 상쾌한 바람으로 한 번 더 터뜨려요."; break;
-        case 37: return "가끔씩 포션 1개를 얻을 수 있어요."; break;
-        case 38: return "초록 피스를 한 번에 10개 이상 그리면 고대나무를 소환해요!"; break;
+        //case 34: return "초록 피스를 한 번에 10개 이상 그리면 추가 별사탕을 획득해요."; break;
+        case 34: return "마법 잎사귀가 초록 피스를 모두 모아줘요."; break;
+        case 35: return "초록 피스를 한 번에 6개 이상 그리면 상쾌한 바람으로 한 번 더 터뜨려요."; break;
+        case 36: return "가끔씩 포션 1개를 얻을 수 있어요."; break;
+        case 37: return "초록 피스를 한 번에 10개 이상 그리면 고대나무를 소환해요!"; break;
     }
     return "";
 }
@@ -1503,61 +1525,6 @@ int SkillPropertyInfo::GetCost(int id)
     return -1;
 }
 
-/*
-// RSA public keys
-std::string publicKey[50] = {
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANTPl77S5NRHJlyVXiZIv36bpkX8m+5A\na0NM3S+BliP3l8LntujYQtT/uelabrfDGwgbbhcaqfU06AwbYA7R4jECAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAN5yD9yR/9D3DEFX6+BxDvHZizJ3bTjF\nmEI3Y6LOS8kaljxGOuhIMFY9wSDxBcP6FBzCSxUJARAh1IHQno51QccCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALEOiecpazVBk2Tk+CL9+JRQP8NfgiKW\nTaqFWkZIauVkhjB7c9QWJIdR0vZ+JmeqIrV5Ouj8ob+HQBR9PTaRr4UCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAN+3ZGjdhlVn1JlsAA8LJYslN380DP05\neSK2ifDxP4+D7993GjSf0bOLWg4MRd0/CtDqPx/sG7E/En/CgumwWJ0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMKbxLj60MklbKBYgJjCjjKWcvKUHwnB\n/+xOKMc+zfIzWG7zvc4IgA9z+9DZAB6knZ6Hw79nob13Jm/tJPueis0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPK9amFuAxZ94VvEVDs9Z+E2jz5VTVrN\n6f5PpUEpU5RqmgM82HJqTwT9gvmwmik9qH+y8F7fQIUo1FO+uRdMWjUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANAKLEl04YKC9UAwBqC1LZ2+gsJUWXea\n8Zazh4BG0IXYJvG8qu9A+p88FooqpkT3fc92QGnHy688VMOZvBAagB8CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKhvb/OUVs/MLM/q0NuqNHsSwYC8cqMD\n37wgmNpKt/J9Ypdmln/Y6quPjvnPJ2M43FHWkeH1lkzkR8B4vf8VEe0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALPXf5LkhThxylpjlNks4/c68eQnH720\nQx6ugNV3aC+ts5S8QqZ6m1NWzs7j1k9xKKE8JLdtFj/ZG+CPMCUJfgECAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANSvGmtXW03tpLakZ4MAGSlPXBXfxXvI\niTFkb22PhmltiVDtYipc1rCWg/DWLAfzksXXvBOH6JqYO+lirwvTHWkCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMy75EzMBjKEKJKSlz2pT+jNU7BCRG+b\ntow/4K71raEtPIAMMuv1rO0TXD3mrZ+wEOLt74wSUCXz+icUKNZ8Pi0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALVniIg1M3n0goSY5ePSREbTHew4FZrA\nYG6QwaeILOSAiNK3IhqaJYT5wlKUb0FqkcXgnmaANdQ0Yg2gj6gtnLkCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMb9kii6vM5IgId2l+yOiouUlPMbEqnD\nj3Y33RvsT4qnPmGKMn5rBqRt3cr02VAeFo0JhwWZzTtE2mPZ1trKsxUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOrSoemyBOuGVUi1uhS79KqLmc1IFcmJ\ncn4y6DovT645Ho70ldFityYuSkPxQ4EbtHkRr9aPPeAHC6VvcjrFIVUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALsa7ylO7yM81CMjVD9ngY4Hf/ygBbvJ\nohlsY3fgdSJCzI1yJEMwMMz3uOrLo79x4cGFJ0Cwd15/SO4iygFM7BMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKtPw/72Trdul0Helj9JclKi7eUyW2fP\n6NFcXpTsJTJKBJ7u1qbYh9MKIUrSg/GBVK52CZvWgz1S0tAMtFGJREsCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMLufCwGRcNRe1AScML6qCL8d7TEiRgN\n/0H8gSmqAoWLdOPB0C/qKZO/UgsFNs+uOKvqVeNvO1CVElwYd4IwsQUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALWx2rSjxygaJJlNx/bsdKiqDWMELxRp\nDLWKcMdeMGVsmPJ6RUIHbL/96Ybzouas/GcvEnjRzFzWjDz/EyMqw6ECAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMCJm6GxMpFbKKadJAyBJmKzjGAzlMzz\npOlFD5q/qtknYymW441eseTmLZLwJ7LlXxRqhZFM4bJceEIoY7dKdocCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKRh5EBDscAZtf6S1V+ZyJjf0ama8aM2\ngCi9jnkiPlG9qD2ZyhMJS26uVzFbXfPuRI1YLoYhB1QHw3jbSPzPbB8CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAK2w3xx3uSnzcyn/DAz8VAPifdKNfN31\nN5phLZMfDGx0gYPOJwhIKRV3PVFBg2S2S7Zfn+LoJZVzgUByWf13S80CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANU+dOZUWasdlGuopoPXKsiaB6/QWNfz\nJvuyHyyUqvKhu2p/zJYdci/T+6BInvmhbvSlvCqL5T4rFJ8i2iHfFKMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMHa9+h/2SpxdMc2piF5izYtiqrddI0e\n5FNP+MldNjUylDp+2SFBH4On+aPiOm0pWWgrqKGNEq12IH9J4BLS6tcCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKqL3SfDkBK/TJGf88OvoVO3MSTO3qUt\njBviMP4sGmcQRg47FQd/JQRXkhsYTyr5+RGfQSHYGEONHXYwe5JereMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAN7SMpAVx6CX4xCWPIFzIo36tJLqz8xJ\n8JnBeeDa7Fs6c1q8Dpks6KuquzqgbGmOiRW+tCB994m9YUzYAILWRKMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMJrphhIbtRwsoq+PLTnogJjCx0+n6rf\nDa+9L1dUegKy/UbZQejMuSoiikRLxvznplhQrzRuQ/Cr5bFJNHRBy9UCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAL4f8esSTK4efX4wfSunFcpZzEXn24m0\n+fNcEEZpJVp/cufwIlTFxddkFbywAZk7SpmIfQQE+UZKXxVqR7djZmsCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMA0kQ6t929keyA7DAPiCHZgRcVlmroH\nS9gcMQf4gc8YRYxMh8R+qz2XW9PAjIZnkMIIcUjMO0qlmtrxIzyGV88CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAL17RNK9kLDeONadZqwWbFbEk6eZSWIp\nMsx2Ac1HEhih9mWY5GGdfgzwLwTBoA67zm31iiDmnZe6pP8schYFAjcCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAL/RJJAjYCDVdb8k1AX4sdT9zfepxKbx\nZJDWUPwbiB0oveP8vcP6sd3MjTcM4UwOtn+QBxk/zdCnUmNNSAVpUlsCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPjeF7PM2amaTJ1j/uTIDnS1fw/BTz+X\nLDpXqGVoAl75yD4xPjevfIYKeR7yRFcYowzHOwcd7pUVHzHscj+ZlpcCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOvo1bKE2QkKcVJnirG2ihXUN1ENr3IK\nJ1eiNt83pz/YMd9KHouMyQRjmpCeORqHGMX4KXK7iwc3c3mQBCk8UGcCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM63rReCqu8w5F+gSokbF8x/MXfSB4Ax\nSXGZB2cLhu1U6esbt7LRzCXmddEEZaSPy8aF7SHcpbuZh6g6Ilqw7qECAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMAQmrIihehFRbDExiCvI5MqjhCNH3/v\nDL+zniWQ1+ynoBDFRTbBYqdYQP2/QEKWzbMBOEkW2YrglyHOFHNobDkCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMw77iAuzRibn4kWaMoLn+gee2rFtXEc\nlWRLoEfxxtlnH0ur71b1AI3xoofo+5h6WosR6RVGHqVj9bp5M4PuW0cCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANjvTpOETYRkaVC1vDQeGpCV0ID5a+de\n42AOMXvbhM75hQ2YzA/4fytZGq9u66RrgZ0t8HH5LmQMihccQSGfyCUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALQuXkQN8xSdEzeuMW1A8VWOek2+XdMW\nAZbtA7UmDkKpTwuM2Dxj6I/NY3nJwvtpNsS1YxUJd5rcvdOrw9P5mUsCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMc6YaClRRZw/nJ07LVitZKoQdE+Mj98\nyqaUBgU/gwjYjLGQT53O3lXuYhS2OOlOIWlVzNI4iXNEhZ5GhlszbQ8CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMAjd0rmj4FRzucEhQck0DCp6liV2lwo\nNG1+av0w68rovE1d96yhHj+Yf179gaXgAKo+OnmPKPjLFUECWGYdLikCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOuZmlQwqKPo/WmEp2PEppySSax4AgmV\nNELHNU0cPaHslkq6NaUcL4RvAls4s77c2W1qtDxTMbn8sip+9WJDhFMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAK13/t0tkCoLmZJUmmS4Iiqcnedpp7qi\nZ63lkNW17isH2ad2AsolFV7nyE1Upe7miiA4Hjqr/S4kdyCCk09JXccCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOjD6bY9Z14x2ulMj/w2gdKedJUncbOs\nXryFHwKplEkIox60lLwlBTd2Gq19q/fDVqrinOjVkAcf49QBS16ajLUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM9c6tiZYeFqO81tij9DNQzbAxf5Iq+u\n6875Up6Il5pmUSUVulwi4Aa4hQ8ZmOmStlWItl5v5bGjFxdpiP+Vq8MCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAN95+ulJ1hopO6NOYAy8XbSd7U1vtaxy\nvlBjdK6iwTayMUZCKFcgpfxIR2dirTj4Rwr2HwHFBwO2EBD40k5u2W8CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANhjGTU5LqUwV3ahSmAdJot1w/r0WZaT\nsmJM3owpsulwfd+Z1tuu+XxVfxb+pwZXlj7lNMKOIqz40vwZHizbWKMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJzo2bPvQYXRGcCX64YnYCRPYOd57O/e\nQPRGHqhYKPnIsxpQvr7/kLff+O6CNEoXNZT+Oe5lvDIQ4xG0dmfithMCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMhivLHtqFItA8gLCqpk07cYKEqMcXas\nI239J84T8AOHSNkV3iGYTUIto0+ooya2DXqoAS0/x8mJ3TJfn2VdWw0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANzolZcqAkceAWQxy1xSHDjPZtUjMTv9\nWGjCMmn+51k29F7dST/CdSDSJcE/jbkWdxUbH0yAkDc9fgNvAat+Bv0CAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKExHXj75NktWJa/24Ey5yuq10GAQFJJ\n6iXfce7LQHUVukWn5s7IKS5GBQCwg62mDT+1R1E3vtsr8eD3R8p3TzUCAwEAAQ==\n-----END PUBLIC KEY-----",
-    "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAO5IZeAyIoaZv1XhdXDhIpBU/CW8rwdu\nAGdpb/5beXE34VlCIhhb4KLw4oWrJTw7TNLTNuomPi+mfFPo+Ea/BpUCAwEAAQ==\n-----END PUBLIC KEY-----",
-};
-*/
 
 // 난독화 public keys
 std::string obfuscationKey[30] = {

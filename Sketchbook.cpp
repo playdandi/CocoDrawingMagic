@@ -463,6 +463,7 @@ void Sketchbook::MakeScrollBook(int idx)
     int numOfList = myInfo->GetSkillList().size();
     for (int i = 0 ; i < numOfList ; i++)
     {
+        //CCLog("my skill : %d", myInfo->GetSkillList()[i]->GetCommonId());
         if (myInfo->GetSkillList()[i]->GetCommonId() / 10 == idx)
         {
             ms.push_back(myInfo->GetSkillList()[i]);
@@ -473,6 +474,7 @@ void Sketchbook::MakeScrollBook(int idx)
     numOfList++;
     
     int numOfMaxSkill = 7;
+    CCLog("numOfList = %d", numOfList);
     
     containerBook = CCLayer::create();
     containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, numOfMaxSkill)*206));
@@ -499,6 +501,7 @@ void Sketchbook::MakeScrollBook(int idx)
         containerBook->addChild(itemLayer, 5*10-i);
         spriteClassBook->layers.push_back(itemLayer);
         
+        CCLog("%d", i);
         
         if (i == numOfList-1)
             id = sInfo->GetId();
@@ -506,6 +509,8 @@ void Sketchbook::MakeScrollBook(int idx)
             id = ms[i]->GetCommonId();
         sprintf(name, "background/bg_board_brown.png%d", i+3);
         spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
+        
+        CCLog("id = %d", id);
         
         // 스킬 배경
         sprintf(name, "icon/icon_skill_division_red.png%d", i+3);

@@ -32,27 +32,6 @@ void Puzzle::onEnter()
     CCLayer::onEnter();
     
     
-    /*
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, "Puzzle", "Loading", false);
-    
-    char temp[255];
-    std::string param = "";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
-    param += temp;
-    int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
-    int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
-    int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
-    int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
-    int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
-    sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
-    param += temp;
-    
-    Network::HttpPost(param, URL_GAMESTART, this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
-    */
-    ////////
-    
-    
     // Fade Out (서서히 밝아진다) + 3/2/1/시작 액션으로 이동
     CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyAndStart), this), NULL);
     pBlackOpen->runAction(action);
@@ -98,7 +77,7 @@ bool Puzzle::init()
     
     
     sound = new Sound();
-    //sound->PreLoadInGameSound();
+    sound->PreLoadInGameSound();
     effect = new Effect();
     effect->Init(effect, this);
     
@@ -159,6 +138,7 @@ bool Puzzle::init()
     this->addChild(pBlackOpen, 3000);
     
     isFalling = false;
+    isGameStarted = false;
     isGameOver = false;
     isInGamePause = false;
     
@@ -187,6 +167,8 @@ bool Puzzle::init()
     
     m_bIsItemPossible = true;
     
+    readySprite = NULL;
+    
 	return true;
 }
 
@@ -204,8 +186,11 @@ void Puzzle::Notification(CCObject* obj)
         m_bTouchStarted = false;
         CCLog("Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
-        sound->ResumeBackgroundInGameSound();
-        sound->ResumeAllEffects();
+        if (isGameStarted) // 만약 게임 시작 안 한 경우 ('고' 글자 나오기 전) 이면, 어차피 '고' 지난 후 음악이 재생되니까, 여기서는 하지 않음.
+        {
+            sound->ResumeBackgroundInGameSound();
+            sound->ResumeAllEffects();
+        }
         
         // 정령 다시 움직이기
         if (skill->IsSpiritAlive(0))
@@ -214,6 +199,10 @@ void Puzzle::Notification(CCObject* obj)
             effect->GetSpirit(1)->resumeSchedulerAndActions();
         if (skill->IsSpiritAlive(2))
             effect->GetSpirit(2)->resumeSchedulerAndActions();
+        
+        // '레디' sprite의 action resume
+        if (readySprite != NULL)
+            CCDirector::sharedDirector()->getActionManager()->resumeTarget(readySprite);
     }
     else if (param->intValue() == 1)
     {
@@ -246,22 +235,50 @@ void Puzzle::InitSkills()
         MySkill* ms = MySkill::GetObj(id);
         if (ms != NULL)
         {
-            if (id >= 21 && id <= 28) {
-                skillNum.push_back(id-21);
-                if (id == 27) skillProb.push_back(10);
+            /*
+            skillNum.push_back(id);
+            if (id == 26) // 코코타임
+                skillProb.push_back(10);
+            else if (id == 16) // 시간을얼리다
+                skillProb.push_back(10);
+            else
+                skillProb.push_back(100);
+            */
+
+            if (id / 10 == 2) // 불
+            {
+                // 21 22 23 24 25 26 27
+                //  0  1  2  4  5  6  7
+                if (id <= 23)
+                    skillNum.push_back(id-21);
+                else
+                    skillNum.push_back(id-20);
+                if (id == 26) skillProb.push_back(10);
                 else skillProb.push_back(100);
             }
-            else if (id >= 11 && id <= 18) {
-                skillNum.push_back(id-3);
+            else if (id / 10 == 1) // 물
+            {
+                // 11 12 13 14 15 16 17
+                // 8  9  10 12 13 14 15
+                if (id <= 13)
+                    skillNum.push_back(id-3);
+                else
+                    skillNum.push_back(id-2);
                 if (id == 17) skillProb.push_back(10);
                 else skillProb.push_back(100);
             }
-            else if (id >= 31 && id <= 38) {
-                skillNum.push_back(id-15);
+            else if (id / 10 == 3) // 땅
+            {
+                // 31 32 33 34 35 36 37
+                // 16 17 18 20 21 22 23
+                if (id <= 33)
+                    skillNum.push_back(id-15);
+                else
+                    skillNum.push_back(id-14);
                 if (id == 38) skillProb.push_back(100);
                 else skillProb.push_back(100);
             }
-            //CCLog("적용 스킬 : %d", id);
+
             skillLv.push_back(ms->GetLevel());
         }
     }
@@ -403,6 +420,10 @@ void Puzzle::InitInfoBar()
         spriteClassInfo->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 32, ccp(1, 1), ccp(171-9, 137), ccc3(255,255,255), "background/bg_mission.png", "0", NULL, 6, 2, 255, 99999) );
         pMissionLabel = ((CCLabelTTF*)spriteClassInfo->FindLabelByTag(99999));
     }
+    
+    
+    for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
+        spriteClassInfo->SetOpacity(i, 0);
     
     for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
         spriteClassInfo->AddChild(i);
@@ -920,6 +941,7 @@ void Puzzle::SetScoreAndStarCandy()
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93-7));
+    pScoreLayer->setVisible(false);
     this->addChild(pScoreLayer, 6);
     
     iStarCandy = 0;
@@ -973,6 +995,8 @@ void Puzzle::ShowSkillScore(int score, int queue_pos, int etc)
         pos = ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120+30);
     else // (x, y)를 직접 받은 경우
         pos = SetTouch8Position(queue_pos, etc);
+    
+    CCLog("%d %d", (int)pos.x, (int)pos.y);
     label->setPosition( ccp(pos.x, pos.y+10) );
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), NULL), NULL );
@@ -1135,22 +1159,23 @@ void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
     sender->removeFromParentAndCleanup(true); // pBlackOpen 제거
     
     sound->PlayVoice(VOICE_READY);
-    
-    CCSprite* sprite = CCSprite::createWithSpriteFrameName("letter_ready.png");
-    sprite->setAnchorPoint(ccp(0.5, 0.5));
-    sprite->setPosition(ccp(m_winSize.width/2+20, vo.y+tbSize.height+boardSize.height+120+180));
-    sprite->setScale(1.2f);
-    sprite->setOpacity(0);
-    this->addChild(sprite, 5000);
+
+    readySprite = CCSprite::createWithSpriteFrameName("letter_ready.png");
+    readySprite->setAnchorPoint(ccp(0.5, 0.5));
+    readySprite->setPosition(ccp(m_winSize.width/2+20, vo.y+tbSize.height+boardSize.height+120+180));
+    readySprite->setScale(1.2f);
+    readySprite->setOpacity(0);
+    this->addChild(readySprite, 5000);
 
     CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(0.8f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::Ready_C), NULL), NULL);
-    sprite->runAction(action);
+    readySprite->runAction(action);
 }
 void Puzzle::Ready_C(CCNode* sender, void* p)
 {
     sound->PlayVoice(VOICE_GO);
     
     sender->removeFromParentAndCleanup(true);
+    readySprite = NULL;
     
     CCSprite* sprite = CCSprite::createWithSpriteFrameName("letter_go.png");
     sprite->setAnchorPoint(ccp(0.5, 0.5));
@@ -1169,14 +1194,27 @@ void Puzzle::Ready_C(CCNode* sender, void* p)
         pMissionSpriteDetailContent->runAction( CCFadeOut::create(0.3f) );
     }
 }
+/*
 void Puzzle::Ready(float f)
 {
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.15f), CCEaseBackIn::create(CCMoveBy::create(0.3f, ccp(0, 1200))), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ReadyCallback), this), NULL);
     readyTimeLabel->runAction(action);
 }
+*/
 void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true);
+    
+    // 화면 제일 위 정보 bar 보이기
+    for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
+        spriteClassInfo->SetOpacity(i, 255);
+    pMissionSpriteDetail->setOpacity(0);
+    pMissionSpriteDetailIcon->setOpacity(0);
+    pMissionSpriteDetailContent->setOpacity(0);
+    pScoreLayer->setVisible(true);
+    
+    isGameStarted = true;
+    m_bTouchStarted = false;
     
     // 배경음 재생
     if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
@@ -1185,7 +1223,6 @@ void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
             sound->PlayBackgroundInGameSound();
     }
     
-    m_bTouchStarted = false;
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::HintTimer), 0.1f);
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::ChangeAnimFairy), 0.1f);
@@ -1676,6 +1713,9 @@ void Puzzle::PauseGame()
         return;
     isInGamePause = true;
     
+    // '레디'->'고' 사이가 문제가 되기 때문에, 그 액션을 pause 시키자.
+    CCDirector::sharedDirector()->getActionManager()->pauseTarget(readySprite);
+    
     sound->PauseBackgroundInGameSound();
     
     CancelDrawing();
@@ -1721,7 +1761,7 @@ void Puzzle::StopAllActionsAtPieces()
 
 bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (isGameOver)
+    if (isGameOver | !isGameStarted)
         return false;
     CCPoint point = pTouch->getLocation();
     //CCLog("Puzzle :: %d , %d", (int)point.x, (int)point.y);
@@ -3275,6 +3315,7 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     param += temp;
     sprintf(temp, "score=%d&", iScore);
     param += temp;
+    iStarCandy = 400;
     sprintf(temp, "starcandy=%d", iStarCandy);
     param += temp;
     
@@ -3796,6 +3837,11 @@ void Puzzle::EndScene()
         this->unschedule(schedule_selector(Puzzle::UpdateTimer));
         this->unschedule(schedule_selector(Puzzle::HintTimer));
         this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
+        
+        spriteClassInfo->RemoveAllObjects();
+        delete spriteClassInfo;
+        pScoreLayer->removeAllChildren();
+        pScoreLayer->removeFromParentAndCleanup(true);
     }
     isInGamePause = false;
     

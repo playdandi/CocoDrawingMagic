@@ -234,10 +234,13 @@ void Sound::PlayGameResult()
 void Sound::PlayClock()
 {
     nClockSoundId = engine->playEffect(ext("sounds/clock").c_str(), true);
+    //CCLog("play clock = %d", nClockSoundId);
 }
 void Sound::StopClock()
 {
-    engine->stopEffect(nClockSoundId);
+    engine->stopAllEffects();
+    //engine->stopEffect(nClockSoundId);
+    //CCLog("stop clock = %d", nClockSoundId);
 }
 
 void Sound::PlaySkillSound(int skillNum)

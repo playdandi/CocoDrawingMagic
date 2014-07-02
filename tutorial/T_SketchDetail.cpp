@@ -131,52 +131,12 @@ void T_SketchDetail::InitSprites()
     int scid = skill_common_id;
     SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
     MySkill* ms = MySkill::GetObj(scid);
-    
-    bool isOpened = (ms != NULL);
+
     
     // 스킬 그림의 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(120, 1090), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
     
-    // 스킬그림 (+ 스킬속성표시, 스킬레벨)
-    /*
-    if (isOpened)
-    {
-        sprintf(name, "skill_%d.png", scid);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(120+8, 1090+8), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
-        // 스킬속성표시
-        if (scid / 10 == 2) sprintf(name, "icon/icon_skill_division_red.png");
-        else if (scid / 10 == 1) sprintf(name, "icon/icon_skill_division_blue.png");
-        else if (scid / 10 == 3) sprintf(name, "icon/icon_skill_division_green.png");
-        else sprintf(name, "icon/icon_skill_division_purple.png");
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(120, 1090+81), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
-        // 스킬레벨
-        int offset = 0;
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(155, 1085), CCSize(0,0), "", "T_SketchDetail", this, 5) );
-        if (ms->GetLevel() >= 10)
-        {
-            sprintf(name, "number/level_%d.png", ms->GetLevel() / 10);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(155+43+3, 1085), CCSize(0,0), "",   "T_SketchDetail", this, 5) );
-            offset = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width;
-        }
-        sprintf(name, "number/level_%d.png", ms->GetLevel() % 10);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(155+43+3+offset, 1085), CCSize(0,0), "", "T_SketchDetail", this, 5) );
-        
-        // 연습량 프로그레스바 안의 바
-        //MySkill* ms = MySkill::GetObj(scid);
-        float percentage = ((float)ms->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
-        bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, (float)(412-8)*percentage, 31-10));
-        bar->setAnchorPoint(ccp(0, 0));
-        bar->setPosition(ccp(290+4, 1112+6));
-        bar->setColor(ccc3(255,255,255));
-        if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()))
-            bar->setColor(ccc3(255,219,53));
-        this->addChild(bar, 10);
-    }
-    else
-    {
-     */
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0, 0), ccp(165, 1118), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
-    //}
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0, 0), ccp(165, 1118), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
     
     
     // 스킬 이름
@@ -192,36 +152,18 @@ void T_SketchDetail::InitSprites()
     
     // 연습량 프로그레스바
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_progress_bar.png", ccp(0, 0), ccp(290, 1112), CCSize(412, 31), "", "T_SketchDetail", this, 5) );
-    
-    /*
-    // 현재 경험치 (연습량) + 레벨업을 위한 max경험치 (연습량)
-    if (isOpened)
-    {
-        sprintf(name, "%d", ms->GetExp());
-        sprintf(name2, "/%d", SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()));
-    }
-    else // '?'인 경우
-    {
-        */
-        sprintf(name, "0");
-        sprintf(name2, "/0");
-    //}
+
+    sprintf(name, "0");
+    sprintf(name2, "/0");
+
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[2], 30, ccp(1, 0), ccp(300+412+10+33-3, 1117), ccc3(255,255,255), "", "T_SketchDetail", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[2], 30, ccp(0, 0), ccp(300+412+10+33, 1112), ccc3(182,142,142), "", "T_SketchDetail", this, 5) );
     
     // dotted line
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0, 0), ccp(105, 1070), CCSize(0, 0), "", "T_SketchDetail", this, 5) );
     
-    /*
-    if (isOpened)
-    {
-        MakeOpenedSkillSprites();
-    }
-    else
-    {
-        */
-        MakeClosedSkillSprites();
-    //}
+
+    MakeClosedSkillSprites();
     
     // 가격표 (스킬을 마스터했을 경우 표시하지 않는다)
     //if ( (isOpened && !SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel())) ||
@@ -237,56 +179,6 @@ void T_SketchDetail::InitSprites()
     //}
 }
 
-/*
-void T_SketchDetail::MakeOpenedSkillSprites()
-{
-    int scid = skill_common_id;
-    //SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
-    MySkill* ms = MySkill::GetObj(scid);
-    
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120, 680), CCSize(390, 390), "", "T_SketchDetail", this, 4) );
-    
-    // 문구
-    CCLayer* descLayer = CCLayer::create();
-    descLayer->setAnchorPoint(ccp(0, 0));
-    descLayer->setPosition(140, 700);
-    this->addChild(descLayer, 5);
-    spriteClass->layers.push_back(descLayer);
-    
-    
-    // 스킬 설명
-    std::string desc = SkillDescription(scid);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(desc, fontList[0], 28, ccp(0, 1), ccp(540, 1070), ccc3(0,0,0), CCSize(420, 250), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "T_SketchDetail", this, 5) );
-    
-    // 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "T_SketchDetail", this, 5, 0, 255, scid) );
-    CCPoint pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
-    
-    // 레벨업 해야하는 경우 (강화)
-    if (ms->GetExp() == SkillBuildUpInfo::GetMaxExp(scid, ms->GetLevel()) &&
-        !SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel()))
-    {
-        btnStatus = 1;
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_red.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-    }
-    // 일반적인 경우
-    else
-    {
-        btnStatus = 2;
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-    }
-}
-
-std::string T_SketchDetail::SkillDescription(int scid)
-{
-    scid = 21;
-    switch (scid)
-    {
-        case 21: return "붉은색 피스를 터뜨리면 추가점수를 얻어요.\n\n스킬 강화를 통해 추가점수의 양을 더 상승시킬 수 있어요."; break;
-    }
-    return "";
-}
-*/
 
 void T_SketchDetail::MakeClosedSkillSprites()
 {
@@ -305,7 +197,9 @@ void T_SketchDetail::MakeClosedSkillSprites()
     
     
     // '?'스킬의 요구조건을 모두 충족한 경우
-    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() &&
+        MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 충족하여 새로운 마법을 배울 준비가 다 되었어요. '배움' 버튼을 클릭해 보세요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "T_SketchDetail", this, 5) );
     }
@@ -316,16 +210,16 @@ void T_SketchDetail::MakeClosedSkillSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_2.png", ccp(0, 1), ccp(0, -85), CCSize(0, 0), "", "Layer", descLayer, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_3.png", ccp(0, 1), ccp(0, -170), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_3.png", ccp(0, 1), ccp(0, -170), CCSize(0, 0), "", "Layer", descLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png1", ccp(0, 1), ccp(26, -30), CCSize(0, 0), "", "Layer", descLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png2", ccp(0, 1), ccp(30, -115), CCSize(0, 0), "", "Layer", descLayer, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png3", ccp(0, 1), ccp(30, -200), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_comma.png3", ccp(0, 1), ccp(30, -200), CCSize(0, 0), "", "Layer", descLayer, 5) );
     ((CCSprite*)spriteClass->FindSpriteByName("number/rank_1.png"))->setScale(0.8f);
     ((CCSprite*)spriteClass->FindSpriteByName("number/rank_2.png"))->setScale(0.8f);
-    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_3.png"))->setScale(0.8f);
+    //((CCSprite*)spriteClass->FindSpriteByName("number/rank_3.png"))->setScale(0.8f);
     ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png1"))->setScale(0.8f);
     ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png2"))->setScale(0.8f);
-    ((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png3"))->setScale(0.8f);
+    //((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png3"))->setScale(0.8f);
     
     // 만족된 조건에 대해 숫자 옆에 체크 표시하기
     //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP())
@@ -333,7 +227,7 @@ void T_SketchDetail::MakeClosedSkillSprites()
     //if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -128), CCSize(0, 0), "", "Layer", descLayer, 5) );
     //if (myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv())
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -213), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    //    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -213), CCSize(0, 0), "", "Layer", descLayer, 5) );
     
     
     //SkillInfo* sInfoReq = SkillInfo::GetSkillInfo(sInfo->GetRequiredSkillId());
@@ -355,8 +249,8 @@ void T_SketchDetail::MakeClosedSkillSprites()
     sprintf(name, "Lv %d 이상 (%s)", sInfo->GetRequiredSkillLv(), sInfoReq->GetName().c_str());
     //sprintf(name, "Lv 1 이상 (%s)", sInfoReq->GetName().c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, -85), ccc3(0,0,0), "", "Layer", descLayer, 5) );
-    sprintf(name, "지팡이 Lv %d 이상", sInfo->GetRequiredStaffLv());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(65, -170), ccc3(0,0,0), "", "Layer", descLayer, 5) );
+    //sprintf(name, "지팡이 Lv %d 이상", sInfo->GetRequiredStaffLv());
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(65, -170), ccc3(0,0,0), "", "Layer", descLayer, 5) );
     
     
     

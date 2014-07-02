@@ -45,6 +45,7 @@ USING_NS_CC;
 #define BUFFER_SIZE 80000
 #define IMAGE_BUFFER_SIZE 120*120*8
 
+//#define NUMOFSKILL 46 // 11~17, 21~27, 31~37, (41~45) 까지 현재 사용중 (skill-common-id)
 #define NUMOFSKILL 32
 
 #define COUPON_LENGTH 16
@@ -90,6 +91,7 @@ USING_NS_CC;
 #define UPGRADE_STAFF_BY_STARCANDY_TRY 26
 #define UPGRADE_STAFF_OK 27
 #define UPGRADE_STAFF_FAIL 28
+#define UPGRADE_STAFF_INSUFFICIENT_MP 29
 #define UPGRADE_STAFF_FULL_LEVEL 31
 #define BUY_FAIRY_BY_TOPAZ_TRY 32
 #define BUY_FAIRY_BY_STARCANDY_TRY 33
@@ -218,6 +220,7 @@ public:
 class SpriteClass
 {
 public:
+    void SetOpacity(int idx, int alpha);
     void AddChild(int idx);
     int FindParentPriority(int idx, std::string parentName);
     void* FindParentSprite(int idx, std::string parentName);

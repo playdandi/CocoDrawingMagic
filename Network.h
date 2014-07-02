@@ -45,6 +45,8 @@ using namespace cocos2d::extension;
 #define URL_PURCHASE_SKILL_PROPERTY "http://14.63.212.106/cogma/game/purchase_skill_type.php?"
 #define URL_SESSION_CHECK           "http://14.63.212.106/cogma/game/update_session.php?"
 #define URL_COUPON                  "http://14.63.212.106/cogma/game/receive_coupon_reward.php?"
+#define URL_NONCONSUMED_GETFRIENDID "http://14.63.212.106/cogma/game/send_topaz_google_get_friend.php?"
+
 
 class Network
 {
