@@ -88,6 +88,10 @@ void Sound::StopAllEffects()
 {
     engine->stopAllEffects();
 }
+void Sound::PauseAllEffects()
+{
+    engine->pauseAllEffects();
+}
 void Sound::ResumeAllEffects()
 {
     engine->resumeAllEffects();
@@ -234,13 +238,10 @@ void Sound::PlayGameResult()
 void Sound::PlayClock()
 {
     nClockSoundId = engine->playEffect(ext("sounds/clock").c_str(), true);
-    //CCLog("play clock = %d", nClockSoundId);
 }
 void Sound::StopClock()
 {
     engine->stopAllEffects();
-    //engine->stopEffect(nClockSoundId);
-    //CCLog("stop clock = %d", nClockSoundId);
 }
 
 void Sound::PlaySkillSound(int skillNum)

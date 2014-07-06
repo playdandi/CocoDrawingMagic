@@ -525,6 +525,10 @@ void NoImage::InitSprites()
             title = "쿠폰 등록하기";
             sprintf(text, "존재하지 않는 쿠폰입니다.\n다른 쿠폰을 이용해 주세요.");
             break;
+        case BUY_PROPERTY_FREE_MSG:
+            title = "속성 선택하기";
+            sprintf(text, "축하합니다! 이제 다른 속성을 배울 수 있어요.");
+            break;
     }
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "NoImage", this, 5) );
 
@@ -719,20 +723,24 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         CCString* param = CCString::create("2");
                         CCNotificationCenter::sharedNotificationCenter()->postNotification("Coupon", param);
                     }
+                    else if (type == UPGRADE_SKILL_OK)
+                    {
+                        EndScene();
+                        // 스케치북에서, 한 속성의 7개 스킬이 모두 5레벨 이상인지 확인한다.
+                        CCString* param = CCString::create("4");
+                        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+                    }
+                    else if (type == BUY_PROPERTY_FREE_MSG)
+                    {
+                        EndScene();
+                        // 속성선택창을 연다.
+                        CCString* param = CCString::create("5");
+                        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+                    }
                     else
                     {
                         EndScene();
                     }
-                    /*
-                    //CCNode* parent = this->getParent();
-                    EndScene();
-                    
-                     // 특정 scene은 그 부모의 scene까지 end 시킨다.
-                     if (type == BUY_STARCANDY_OK || type == BUYPOTION_OK)
-                     {
-                     parent->removeFromParentAndCleanup(true);
-                     }
-                     */
                     return true;
                 }
                 else if (type == POPUP_EXIT)
@@ -1726,7 +1734,7 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
         // 나의 스킬 리스트 갱신
         myInfo->ClearSkillList();
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
-        int csi, usi, level, exp;
+        int csi, usi, level, exp, learntime;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -1736,8 +1744,9 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
                 else if (name == "user-skill-id") usi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "exp") exp = ait->as_int();
+                else if (name == "learn-time") learntime = ait->as_int();
             }
-            myInfo->AddSkill(csi, usi, level, exp);
+            myInfo->AddSkill(csi, usi, level, exp, learntime);
         }
         myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
         

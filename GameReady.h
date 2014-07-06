@@ -13,7 +13,7 @@ class GameReady : public CCLayer,
 {
 public:
     ~GameReady(void);
-    static CCScene* scene(int prio);
+    static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

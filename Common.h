@@ -1,6 +1,7 @@
 #ifndef PuzzleGame_Common
 #define PuzzleGame_Common
 
+#include <algorithm>
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "CCPlatformConfig.h"
@@ -35,7 +36,7 @@ USING_NS_CC;
 
 
 #define PUZZLE_TIME 60
-#define FEVER_TIME 8
+#define FEVER_TIME 5
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
@@ -143,6 +144,7 @@ USING_NS_CC;
 #define COUPON_ALREADY_USED 80
 #define COUPON_EXPIRED 81
 #define COUPON_NOT_EXIST 82
+#define BUY_PROPERTY_FREE_MSG 83
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -178,7 +180,7 @@ public:
     static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
     static CCLayer* MakeItemNumberLayer(std::string number);
-    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int priority = -1);
+    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
     
@@ -186,9 +188,11 @@ public:
     static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
     static std::string base64_decode(std::string const& encoded_string);
     
-    //static void verifyPayloadAndProvideItem(const char* data, const char* signature);
     //static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
+    //static void VerifyPayloadAndProvideItem(int type, int topazId, const char* kakaoid, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
+    static std::string GetVerifyParams(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
     static void XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx);
+    //void XmlParseVerifyPurchaseResult(xml_document *xmlDoc, int type, int consumeIdx);
     //void onHttpRequestCompleted(CCNode *sender, void *data);
 };
 

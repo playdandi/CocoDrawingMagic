@@ -12,10 +12,11 @@ std::vector<class PriceTopaz*> priceTopaz;
 std::vector<class PriceStarCandy*> priceStarCandy;
 std::vector<class MagicStaffBuildUpInfo*> magicStaffBuildupInfo;
 std::vector<class SkillSlotInfo*> skillSlotInfo;
-std::vector<class PrerequisiteInfo*> prerequisiteInfo;
+//std::vector<class PrerequisiteInfo*> prerequisiteInfo;
 std::vector<class FairyInfo*> fairyInfo;
 std::vector<class FairyBuildUpInfo*> fairyBuildUpInfo;
 std::vector<class SkillInfo*> skillInfo;
+std::vector<class SkillBuildupMPInfo*> skillBuildupMPInfo;
 std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
@@ -195,7 +196,8 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->starcandy = starcandy;
     this->mp = mp;
     this->mpStaffPercent = mpStaffPercent;
-    this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
+    //this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
+    this->mpStaff = (int) ((float)(mp * mpStaffPercent) / (float)100);
     this->mpFairy = mpFairy;
     this->staffLv = staffLv;
     this->highScore = highScore;
@@ -428,6 +430,33 @@ bool MyInfo::HasNoProperty()
 {
     return (!IsFire() && !IsWater() && !IsLand() && !IsMaster());
 }
+bool MyInfo::IsTimeToFreelyBuyProperty()
+{
+    int checkProperty[5] = {0,};
+    int numOfSkillsInProperty[5] = {0,};
+    int idx;
+    
+    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+    {
+        idx = myInfo->GetSkillList()[i]->GetCommonId() / 10;
+        numOfSkillsInProperty[idx]++;
+        if (myInfo->GetSkillList()[i]->GetLevel() >= 5)
+            checkProperty[idx]++;
+    }
+    
+    bool ret = true;
+    for (int i = 1 ; i <= 4; i++) // i = {물,불,땅,마스터}
+    {
+        if (numOfSkillsInProperty[i] == 0) // 아예 스킬이 없으면 (배우지 않은 속성) 패스.
+            continue;
+        if (numOfSkillsInProperty[i] > 0 && numOfSkillsInProperty[i] < 7) // 일단 개수가 0과 7사이면 다 배운 게 아니므로 false
+            ret = false;
+        if (numOfSkillsInProperty[i] == 7 && (checkProperty[i] < 7)) // 스킬 7개는 다 배웠지만, 5레벨 미만인 게 있는 경우도 false
+            ret = false;
+    }
+    
+    return ret;
+}
 
 void MyInfo::SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved)
 {
@@ -545,9 +574,9 @@ void MyInfo::AddFairy(int cfi, int ufi, int level, int isUse)
 {
     myFairy.push_back( new MyFairy(cfi, ufi, level, isUse) );
 }
-void MyInfo::AddSkill(int csi, int usi, int level, int exp)
+void MyInfo::AddSkill(int csi, int usi, int level, int exp, int learntime)
 {
-    mySkill.push_back( new MySkill(csi, usi, level, exp) );
+    mySkill.push_back( new MySkill(csi, usi, level, exp, learntime) );
 }
 
 int MyInfo::GetActiveFairyId() // 현재 사용중인 요정의 common id
@@ -677,12 +706,13 @@ int MyFairy::GetLevel()
     return level;
 }
 
-MySkill::MySkill(int csi, int usi, int level, int exp)
+MySkill::MySkill(int csi, int usi, int level, int exp, int learntime)
 {
     this->common_skill_id = csi;
     this->user_skill_id = usi;
     this->level = level;
     this->exp = exp;
+    this->learnTime = learntime;
 }
 MySkill* MySkill::GetObj(int scid)
 {
@@ -710,6 +740,10 @@ int MySkill::GetLevel()
 int MySkill::GetExp()
 {
     return exp;
+}
+int MySkill::GetLearnTime()
+{
+    return learnTime;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1020,12 +1054,6 @@ void DataProcess::SortMagicStaffBuildUpInfo()
 {
     std::sort(magicStaffBuildupInfo.begin(), magicStaffBuildupInfo.end(), compare2);
 }
-//void DataProcess::SortMySkillByCommonId(std::vector<MySkill*> mySkill)
-/*void DataProcess::SortMySkillByCommonId()
-{
-    std::vector<MySkill*> ms = (myInfo->GetSkillList());
-    std::sort(mySkill.begin(), mySkill.end(), compare3);
-}*/
 std::string DataProcess::FindSkillNameById(int skillId)
 {
     for (int i = 0 ; i < skillInfo.size() ; i++)
@@ -1180,7 +1208,7 @@ int SkillSlotInfo::GetCost(int id)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, int value2)
 {
     this->nId = id;
@@ -1189,7 +1217,7 @@ PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, i
     this->nValue1 = value1;
     this->nValue2 = value2;
 }
-
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int pid)
@@ -1460,6 +1488,77 @@ int SkillInfo::GetRequiredMP()
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SkillBuildupMPInfo::SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2)
+{
+    this->nSkillCount = skillCount;
+    this->nRequireMP = requireMP;
+    this->nDiscountOne = discount1;
+    this->nDiscountTwo = discount2;
+}
+SkillBuildupMPInfo* SkillBuildupMPInfo::GetObj(int skillCount)
+{
+    for (int i = 0 ; i < skillBuildupMPInfo.size() ; i++)
+    {
+        if (skillBuildupMPInfo[i]->GetSkillCount() == skillCount)
+            return skillBuildupMPInfo[i];
+    }
+    return NULL;
+}
+int SkillBuildupMPInfo::RequiredMP(std::vector<MySkill*> sList, int scid)
+{
+    // '?' 스킬이 몇 번째로 등장한 것인지 알아내자.
+    int p;
+    for (int i = 0 ; i < sList.size() ; i++)
+    {
+        if (sList[i]->GetCommonId() == scid-1) // '?' 직전 스킬의 common-id가 뭔지 찾기.
+            p = i;
+    }
+    
+    int eachPropertyCnt[5] = {0,};
+    for (int i = 0 ; i <= p ; i++) // [처음 배운 스킬 ~ '?' 직전 스킬]을 속성별로 몇 개씩인지 분류한다.
+        eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
+    
+    // 각 속성마다 그것+1개만큼 개수를 계산한다. (+1하는 이유는, 예를 들어 불 속성이 2개 있다면 필연적으로 불의 3번째 '?' 스킬이 등장했기 때문)
+    int orderNumber = 0;
+    for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
+        orderNumber += ( (eachPropertyCnt[i]) + (0 < eachPropertyCnt[i] && eachPropertyCnt[i] < 7) );
+    
+    // finally, {orderNumber}번째 스킬 (우리가 원하는 '?' 스킬) 의 요구 MP를 구한다.
+    SkillBuildupMPInfo* sInfoMP = SkillBuildupMPInfo::GetObj( orderNumber );
+    float requiredMP = (float)sInfoMP->GetRequireMP();
+    
+    // 할인 적용을 위한 내용
+    int numOfPropertiesByTopaz = 0;
+    if (myInfo->IsFireByTopaz()) numOfPropertiesByTopaz++;
+    if (myInfo->IsWaterByTopaz()) numOfPropertiesByTopaz++;
+    if (myInfo->IsLandByTopaz()) numOfPropertiesByTopaz++;
+    
+    if (numOfPropertiesByTopaz == 1)
+        requiredMP = (float)requiredMP * (float)(100 - sInfoMP->GetDiscount1()) / (float)100;
+    else if (numOfPropertiesByTopaz >= 2)
+        requiredMP = (float)requiredMP * (float)(100 - sInfoMP->GetDiscount2()) / (float)100;
+    
+    return (int)requiredMP;
+}
+int SkillBuildupMPInfo::GetSkillCount()
+{
+    return nSkillCount;
+}
+int SkillBuildupMPInfo::GetRequireMP()
+{
+    return nRequireMP;
+}
+int SkillBuildupMPInfo::GetDiscount1()
+{
+    return nDiscountOne;
+}
+int SkillBuildupMPInfo::GetDiscount2()
+{
+    return nDiscountTwo;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int maxExp, int ability1, int ability2, int prob, int cs)
 {
     this->nId = id;
@@ -1470,6 +1569,13 @@ SkillBuildUpInfo::SkillBuildUpInfo(int id, std::string name, int skillLv, int ma
     this->nAbility2 = ability2;
     this->nProbability = prob;
     this->nCost_starcandy = cs;
+}
+SkillBuildUpInfo* SkillBuildUpInfo::GetObj(int sid, int level)
+{
+    for (int i = 0 ; i < skillBuildUpInfo.size() ; i++)
+        if (skillBuildUpInfo[i]->GetId() == sid && skillBuildUpInfo[i]->GetLevel() == level)
+            return skillBuildUpInfo[i];
+    return NULL;
 }
 int SkillBuildUpInfo::GetMaxExp(int sid, int level)
 {
@@ -1506,6 +1612,26 @@ bool SkillBuildUpInfo::IsMastered(int sid, int level)
     if (maxLevel == level)
         return true;
     return false;
+}
+int SkillBuildUpInfo::GetId()
+{
+    return nId;
+}
+int SkillBuildUpInfo::GetAbility1()
+{
+    return nAbility1;
+}
+int SkillBuildUpInfo::GetAbility2()
+{
+    return nAbility2;
+}
+int SkillBuildUpInfo::GetProb()
+{
+    return nProbability;
+}
+int SkillBuildUpInfo::GetLevel()
+{
+    return nSkillLv;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

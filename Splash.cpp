@@ -134,7 +134,7 @@ void Splash::LogoLoadingCompleted()
         mDeviceType = 3;
     
     // Label 생성
-    m_pMsgLabel = CCLabelTTF::create("", fontList[2].c_str(), 40);
+    m_pMsgLabel = CCLabelTTF::create("", fontList[0].c_str(), 40);
     m_pMsgLabel->setAnchorPoint(ccp(0.5, 0.5));
     m_pMsgLabel->setPosition(ccp(winSize.width/2, 400));
     m_pMsgLabel->setColor(ccc3(0, 0, 0));
@@ -441,7 +441,8 @@ void Splash::XMLParseGameData()
     for (int i = 0 ; i < obfuscatedStr.size() ; i++) // xor operation
         decodedStr += obfuscatedStr[i] ^ obfuscationKey[obfKey][i%keyLen];
     
-    //CCLog("%s", decodedStr.c_str());
+    CCLog("%s", decodedStr.c_str());
+    //CCLog("%d", decodedStr.size());
     
     // xml parsing
     xml_document xmlDoc;
@@ -534,24 +535,6 @@ void Splash::XMLParseGameData()
         skillSlotInfo.push_back( new SkillSlotInfo(id, costType, cost) );
     }
     
-    /*
-    // prerequisite info
-    its = nodeResult.child("prerequisite_define").children("Data");
-    for (it = its.begin() ; it != its.end() ; ++it)
-    {
-        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-        {
-            std::string name = ait->name();
-            if (name == "nPrerequisiteID") id = ait->as_int();
-            else if (name == "bCategory") category = ait->as_int();
-            else if (name == "nType") type = ait->as_int();
-            else if (name == "nValue1") value1 = ait->as_int();
-            else if (name == "nValue2") value2 = ait->as_int();
-        }
-        prerequisiteInfo.push_back( new PrerequisiteInfo(id, category, type, value1, value2) );
-    }
-    */
-    
     // fairy info
     its = nodeResult.child("fairy_define").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
@@ -609,31 +592,20 @@ void Splash::XMLParseGameData()
     }
     
     // skill_require_mp_define info
-    /*
-     <skill_require_mp_define>
-        <Data nSkillCount="1" nRequireMP="0" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="2" nRequireMP="0" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="3" nRequireMP="50" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="4" nRequireMP="100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="5" nRequireMP="200" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="6" nRequireMP="300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="7" nRequireMP="500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="8" nRequireMP="700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="9" nRequireMP="900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="10" nRequireMP="1100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="11" nRequireMP="1300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="12" nRequireMP="1500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="13" nRequireMP="1700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="14" nRequireMP="1900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="15" nRequireMP="2300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="16" nRequireMP="2700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="17" nRequireMP="3100" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="18" nRequireMP="3500" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="19" nRequireMP="3900" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="20" nRequireMP="4300" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-        <Data nSkillCount="21" nRequireMP="4700" nDiscountPercentOneType="20" nDiscountPercentTwoType="30" />
-     </skill_require_mp_define>
-     */
+    int skillCnt, skillRequireMP, discountOne, discountTwo;
+    its = nodeResult.child("skill_require_mp_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nSkillCount") skillCnt = ait->as_int();
+            else if (name == "nRequireMP") skillRequireMP = ait->as_int();
+            else if (name == "nDiscountPercentOneType") discountOne = ait->as_int();
+            else if (name == "nDiscountPercentTwoType") discountTwo = ait->as_int();
+        }
+        skillBuildupMPInfo.push_back( new SkillBuildupMPInfo(skillCnt, skillRequireMP, discountOne, discountTwo) );
+    }
     
     // skill buildup info
     its = nodeResult.child("skill_detail_define").children("Data");
@@ -683,6 +655,7 @@ void Splash::WriteResFile(char* data, int size)
     
     size_t realSize = strlen(data);
     size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
+    //CCLog("%d %d", realSize, fwriteSize);
     if (fwriteSize != realSize)
     {
         CCLog("FILE WRITE ERROR !");
@@ -745,7 +718,6 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         CCLog("public key idx = %d", publicKeyIndex);
         
         // rsa 만들기 (초기 1회만 만들면 됨)
-        //rsa = createRSA((unsigned char*)(publicKey[myInfo->GetKeyValue()-10].c_str()), 1);
         rsa = createRSA((unsigned char*)(publicKey.c_str()), 1);
     
         
@@ -850,7 +822,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
         }
         
         its = nodeResult.child("skill-list").children("skill");
-        int exp;
+        int exp, learntime;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -860,8 +832,9 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
                 else if (name == "user-skill-id") usi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "exp") exp = ait->as_int();
+                else if (name == "learn-time") learntime = ait->as_int();
             }
-            myInfo->AddSkill(csi, usi, level, exp);
+            myInfo->AddSkill(csi, usi, level, exp, learntime);
             
             // 현재 연습 중인 스킬 id 가져오기
             if (usi == practiceUserSkillId)
@@ -1123,7 +1096,8 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[BUFFER_SIZE];
+    //char dumpData[BUFFER_SIZE];
+    char dumpData[200000];
     
     // 프로필 사진 or resource.xml 받아올 때
     if (!res || !res->isSucceed())
@@ -1138,6 +1112,7 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
 
+    CCLog("%d", (int)buffer->size());
     
     // gameVersion 변경으로 resource XML 파일 받았을 경우
     if (atoi(res->getHttpRequest()->getTag()) == 999)
@@ -1170,8 +1145,6 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             param += temp;
             
             Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
-            //GetNonConsumedItems();
-            //LastActionStart();
             #endif
             
             #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)

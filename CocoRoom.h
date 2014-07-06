@@ -15,7 +15,7 @@ class CocoRoom : public CCLayer,
                  public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int tab, int prio);
+    static CCScene* scene(int tab);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

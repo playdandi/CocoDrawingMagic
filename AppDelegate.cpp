@@ -64,16 +64,13 @@ void AppDelegate::applicationDidEnterBackground()
     // 인게임 중에는 '일시정지' flag를 세운다.
     else
     {
-        //isInGamePause = true;
-        //void* p = Depth::FindPointer("Puzzle");
-        //((Puzzle*)p)->CancelDrawing();
-        
         // 인게임 중이면, Puzzle 화면으로 돌아갈 경우에 한해 Pause 화면을 띄워준다. (게임결과 화면에서는 필요없다)
         if (Depth::GetCurNameString() == "Puzzle")
         {
             CCLog("background : 게임 일시정지 화면 띄우자.");
             void* p = Depth::GetCurPointer();
             ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
+            ((Puzzle*)p)->GetSound()->ResumeAllEffects();
             ((Puzzle*)p)->PauseGame();
         }
     }
@@ -101,41 +98,46 @@ void AppDelegate::applicationWillEnterForeground()
     {
         if (Depth::GetCurNameString() == "Splash")
             Resume();
-        
         else
-        {
-            //CCLog("not in game : %s", Depth::GetCurNameString().c_str());
-            // Loading 화면으로 MESSAGE request 넘기기
-            Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-            
-            std::string param = "";
-            char temp[40];
-            sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-            param += temp;
-            
-            Network::HttpPost(param, URL_SESSION_CHECK, Depth::GetParentPointer(), httpresponse_selector(AppDelegate::onHttpRequestCompleted));
-        }
+            SessionCheck();
     }
     else
     {
-        // 인게임 중이면, Puzzle 화면으로 돌아갈 경우에 한해 Pause 화면을 띄워준다. (게임결과 화면에서는 필요없다)
-        if (Depth::GetParentNameString() == "Puzzle")
+        if (Depth::GetCurNameString() == "RankUp")
         {
-            CCLog("foreground : 사운드 1순위로 만들기");
+            SessionCheck(); // 인게임이지만 이 때는 sessionCheck를 해 주어야 한다.
+        }
+        else if (Depth::GetParentNameString() == "Puzzle")
+        {
+            //CCLog("foreground : 사운드 1순위로 만들기");
             void* p = Depth::GetParentPointer();
             ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
             ((Puzzle*)p)->GetSound()->PauseBackgroundInGameSound();
         }
-        
+
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
 }
 
+
+void AppDelegate::SessionCheck()
+{
+    Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+    
+    std::string param = "";
+    char temp[40];
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    param += temp;
+    
+    Network::HttpPost(param, URL_SESSION_CHECK, Depth::GetParentPointer(), httpresponse_selector(AppDelegate::onHttpRequestCompleted));
+}
+
+
 void AppDelegate::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    // Loading 창 끄기
+    CCLog("%p", Depth::GetCurPointer());
     ((Loading*)Depth::GetCurPointer())->EndScene();
-    
+
     CCHttpResponse* res = (CCHttpResponse*) data;
     
     xml_document xmlDoc;
@@ -166,6 +168,9 @@ void AppDelegate::XmlParseSessionCheck(xml_document *xmlDoc)
 
 void AppDelegate::Resume()
 {
+    CCLog("성공적으로 Resume");
+    CCLog("현재위치 : %s", Depth::GetCurName());
+    
     CCString* param = CCString::create("5");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
@@ -173,7 +178,10 @@ void AppDelegate::Resume()
     param = CCString::create("10");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
-    // if you use SimpleAudioEngine, it must resume here
-    SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
-    SimpleAudioEngine::sharedEngine()->resumeAllEffects();
+    if (Depth::GetCurNameString() != "RankUp")
+    {
+        // if you use SimpleAudioEngine, it must resume here
+        SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+        SimpleAudioEngine::sharedEngine()->resumeAllEffects();
+    }
 }

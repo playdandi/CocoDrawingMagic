@@ -275,6 +275,7 @@ void PuzzleResult::InitSprites()
         {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/mission_fail.png", ccp(0.5,0.5), ccp(125+40, 525+146-20), CCSize(0,0), "", "PuzzleResult", this, 1010) );
             ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_fail.png"))->setRotation(-10);
+            ((CCSprite*)spriteClass->FindSpriteByName("icon/mission_fail.png"))->setScale(1.2f);
         }
         
         // 연습량 프로그레스바 안의 노란 바

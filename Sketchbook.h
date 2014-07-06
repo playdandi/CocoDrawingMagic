@@ -47,7 +47,7 @@ public:
     
     int FromWhere();
     
-    //void TutorialNextState();
+    void SortMySkillByUserId();
     
     CREATE_FUNC(Sketchbook);
     
@@ -76,6 +76,8 @@ private:
     
     CCLayer* containerBook;
     CCLayer* containerSlot;
+    
+    std::vector<MySkill*> sList;
 };
 
 #endif /* defined(__CocoMagic__Sketchbook__) */

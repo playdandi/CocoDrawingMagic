@@ -100,12 +100,17 @@ void GetDegree::InitSprites()
     // background
     pBackground = CCSprite::create("images/main_background.png");
     pBackground->setAnchorPoint(ccp(0.5, 0.5));
-    pBackground->setScale(1.2f);
-    pBackground->setPosition(ccp(winSize.width/2, winSize.height+pBackground->getContentSize().height/2));
+    pBackground->setScale(1.5f);
+    pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
     pBackground->setOpacity(0);
     this->addChild(pBackground, 0);
     
-    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(3.0f), CCMoveTo::create(3.0f, ccp(winSize.width/2, winSize.height/2)), CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SoundCallback), this), NULL) , NULL ), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SpriteCallback), this), NULL );
+    int h = pBackground->getContentSize().height;
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    int dy = std::max((int)(h-vs.height)/2, 100);
+    //CCLog("%d %d", h, (int)vs.height);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(2.0f), CCMoveBy::create(2.0f, ccp(0, dy)), CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SoundCallback), this), NULL) , NULL ), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SpriteCallback), this), NULL );
     pBackground->runAction(action);
 }
 
@@ -152,7 +157,7 @@ void GetDegree::InitDegree()
     
     // action (fade-in)
     callbackCnt = 0;
-    CCActionInterval* action = CCSequence::create( CCFadeIn::create(3.0f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::DegreeCallback), this), NULL );
+    CCActionInterval* action = CCSequence::create( CCFadeIn::create(2.0f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::DegreeCallback), this), NULL );
     ((CCSprite*)spriteClass->FindSpriteByTag(0))->runAction(action);
     ((CCSprite*)spriteClass->FindSpriteByTag(1))->runAction((CCActionInterval*)action->copy());
     ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->runAction((CCActionInterval*)action->copy());
@@ -217,7 +222,7 @@ void GetDegree::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void GetDegree::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (isLoadingDone)
+    if (!isLoadingDone)
         return;
     isTouched = false;
 }

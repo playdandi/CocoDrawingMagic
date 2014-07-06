@@ -36,7 +36,6 @@ void Ranking::onEnter()
     if (fromWhere == 1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
-    //else
         Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
 }
 void Ranking::onPause()

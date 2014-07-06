@@ -16,6 +16,8 @@ public:
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
 
     void Callback(CCNode* sender, void* p);

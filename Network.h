@@ -46,13 +46,16 @@ using namespace cocos2d::extension;
 #define URL_SESSION_CHECK           "http://14.63.212.106/cogma/game/update_session.php?"
 #define URL_COUPON                  "http://14.63.212.106/cogma/game/receive_coupon_reward.php?"
 #define URL_NONCONSUMED_GETFRIENDID "http://14.63.212.106/cogma/game/send_topaz_google_get_friend.php?"
-
+#define URL_PURCHASE_TOPAZ          "http://14.63.212.106/cogma/game/purchase_topaz_google.php?"
+#define URL_SEND_TOPAZ              "http://14.63.212.106/cogma/game/send_topaz_google.php?"
 
 class Network
 {
 public:
     static void HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag = "", std::string etc = "");
     static void replaceAll(std::string& str, const std::string& from, const std::string& to);
+    static std::string Encrypt_PS();
+    static std::string Encrypt_a(std::string data);
     
     static int GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfuscate = true);
     static int DeObfuscation(std::string obfuscatedStr, char* data);

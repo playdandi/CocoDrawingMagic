@@ -27,7 +27,7 @@ class PuzzleP4Set;
 class Puzzle : public CCLayerColor
 {
 public:
-    static CCScene* scene(int addedPotion);
+    static CCScene* scene(int addedPotion, int numOfFreezeTime);
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -53,6 +53,7 @@ public:
     void UpdateStarCandy(int type, int data);
     void ShowSkillScore(int score, int queue_pos, int etc = -1);
     void ShowSkillScore_Callback(CCNode* sender, void* data);
+    void ShowSkillAddedScore(int score, int queue_pos, int height, int x = -1, int y = -1);
     
     void ShowStarCandy(std::vector<CCPoint> pos);
     void ShowStarCandy_Callback(CCNode* sender, void* data);
@@ -102,6 +103,10 @@ public:
     void UnLockEach(int x, int y);
     void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);//, int F8_idx = -1);
     void BombCallback(CCNode* sender, void *queue_pos);
+    
+    void RemoveConnectPieces(std::vector<CCPoint> pos);
+    void CreateConnectPieces();
+    void ReplaceConnectPieces();
     
     void FallingProcess();
     void Falling(int queue_pos, int xx = -1);
@@ -176,6 +181,8 @@ public:
     void SetRenewFlag(bool flag);
     bool IsRenewing();
     
+    void SetGlobalType(int queue_pos, int pieceType);
+    
     void StartFeverTime();
     void EndFeverTime();
     bool IsFeverTime();
@@ -191,6 +198,8 @@ public:
     bool IsItemPaint();
     bool IsItemStaff();
     void SetItemPossible(bool flag);
+    
+    int Time100(int denom);
     
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
@@ -292,6 +301,7 @@ protected:
     int feverStartCnt; // 피버타임에 들어가기 위해 필요한 마법발동횟수
     int magicCnt; // 마법발동 횟수 (피버타임 끝나면 0으로 초기화)
     int iFeverTime; // 피버타임 발동중 남은 시간
+    int iFeverCombo; // 피버용 콤보 수
     
     int iNumOfFairySkillStart; // 요정 스킬 발동해야 하는 횟수 (falling callback에서 수행하자)
     
@@ -302,8 +312,12 @@ protected:
     bool item_time;
     bool item_paint;
     bool item_staff;
-    int iNumOfPaintItemNeeded;
-    int iNumOfStaffItemNeeded;
+    int totalCnt_paint; // 나와야 할 전체 paint item 수
+    int totalCnt_staff; // 나와야 할 전체 staff item 수
+    int iNumOfPaintItemRemained; // 지금까지 나타난 paint item 수
+    int iNumOfStaffItemRemained; // 지금까지 나타난 staff item 수
+    int iNumOfPaintItemNeeded; // paint item 발동 횟수
+    int iNumOfStaffItemNeeded; // staff item 발동 횟수
     bool m_bIsItemTouched;
     int item_dx;
     int item_dy;
@@ -312,6 +326,8 @@ protected:
     int fairyTimer; // 요정 액션 타이머
     
     CCSprite* readySprite; // '레디' sprite (pause후 인게임 끝낼 때 필요해서)
+    
+    bool bFreezeFlag;
     
 private:
     Sound* sound;
@@ -403,7 +419,9 @@ class PuzzleP4Set
 public:
     void SetGameLayer(Puzzle* layer);
     void SetPuzzleLayer(CCLayer* layer);
-    void CreatePiece(int x, int y, int type = -100, int designatedType = -1);
+    void CreateObject(int x, int y);
+    //void CreatePiece(int x, int y, int type = -100, int designatedType = -1);
+    void CreatePiece(int x, int y, int type = -1);
     int GetType(int x, int y);
     void SetType(int x, int y, int type);
     void SetOpacity(int x, int y, int alpha);
@@ -413,6 +431,7 @@ public:
     void StopAllActions(int x, int y);
     PuzzleP4* GetObject(int x, int y);
     void RemoveAllObjects();
+    bool IsRemoved(int x, int y);
     
 private:
     PuzzleP4* object[COLUMN_COUNT][ROW_COUNT];

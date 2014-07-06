@@ -1,11 +1,8 @@
 #include "CocoRoomTodayCandy.h"
 
-//static int priority;
 
-CCScene* CocoRoomTodayCandy::scene(int prio)
+CCScene* CocoRoomTodayCandy::scene()
 {
-    //priority = prio;
-    
     CCScene* pScene = CCScene::create();
     CocoRoomTodayCandy* pLayer = CocoRoomTodayCandy::create();
     pScene->addChild(pLayer);

@@ -4,11 +4,15 @@ static std::vector<int> kakaoIds;
 static std::vector<int> remainTimes;
 static int todayCnt, monthCnt, totalCnt;
 
+//static CCScene* scene;
+
 CCScene* InviteFriend::scene()
 {
     CCScene* pScene = CCScene::create();
     InviteFriend* pLayer = InviteFriend::create();
     pScene->addChild(pLayer);
+    
+    pLayer->setScale(0);
     
 	return pScene;
 }
@@ -19,6 +23,8 @@ void InviteFriend::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    this->runAction(CCScaleTo::create(0.2f, 1.0f));
 }
 void InviteFriend::onExit()
 {

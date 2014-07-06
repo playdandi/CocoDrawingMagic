@@ -34,6 +34,9 @@ public:
     
     void Invoke(int skillNum, int queue_pos);
     
+    SkillBuildUpInfo* GetObj(int num);
+    int GetBasicSkillScore(int num);
+    
     void A1(int num, int queue_pos);
     void A2(int num, int queue_pos);
     std::vector<CCPoint> A2GetPos();
@@ -68,11 +71,14 @@ public:
     //int W4GetCandy();
     void W5(int num);
     void W5_Callback(CCNode* sender, void* data);
+    void W7_Init(int numOfFreezeTime);
+    int W7_GetSlotTime();
+    void W7_IncreaseSlotIdx();
     void W7(int num);
-    void W7SetVar();
-    bool W7GetVar();
     void W7SetTime(int time);
     int W7GetTime();
+    void W7_SetNonFreeze();
+    bool W7_IsFreezed();
     void W8(int num, int queue_pos);
     void W8_Timer(float f);
     void W8_AccelTimer(float f);
@@ -119,19 +125,21 @@ public:
     void FT_StartEnd(int queue_pos);
     void FT_Bomb(std::vector<CCPoint> p);
     void FT_Callback(CCNode* sender, void* pointer);
-    void FT_CreatePiece(int pos);
-    void FT_Create_Recur(int x, int y, int cnt, int minx, int maxx);
+    //void FT_CreatePiece(int pos);
+    //void FT_Create_Recur(int x, int y, int cnt, int minx, int maxx);
     bool IsFTBombing();
     
     void ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos);
     void ApplyItemPaint_Change(CCNode* sender, void* pointer);
     void ApplyItemPaint_Callback(CCNode* sender, void* pointer);
     void ApplyItemPaint_Done();
+    void ApplyItemPaint_Bomb(int x, int y, int queue_pos);
     void ApplyItemStaff(int x, int y, int dx, int dy, int queue_pos);
     void SequenceBomb(CCNode* sender, void* pointer);
     std::vector<CCPoint> GetPieces(int x, int y, int dx, int dy);
     
-    void LastItems();
+    //void LastItems();
+    void LastItems(int type, int queue_pos);
     
     
     std::vector<CCPoint> GetResult();
@@ -163,14 +171,15 @@ private:
     std::vector<CCPoint> A2_pos;
     
     int F3_addedScore;
-    //bool F4_isDoubledMT;
     
-    int spiritShownCnt[3];
+    int spiritShownRemainCnt[3];
     bool isSpiritAlive[3];
     
     int F5_callbackCnt;
+    
     int F6_callbackCnt;
     std::vector<CCPoint> F6_order;
+    int A6_addedScore;
     
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
@@ -191,11 +200,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////
     
     int W3_addedScore;
-    //int W4_addedCandy;
     int W5_callbackCnt;
 
+    int W7_timeSlot[5];
+    int W7_slotIdx;
     int W7_RemainTime;
-    bool W7_isTimeSlowed;
+    bool W7_isFreezed;
     
     bool W8_isActive;
     int W8_remainTime;

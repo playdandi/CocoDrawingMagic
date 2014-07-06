@@ -173,10 +173,14 @@ void PuzzlePause::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void PuzzlePause::EndGame()
 {
+    // 먼저, 끝났다는 flag를 미리 보낸다. (isGameOver = true로 만든다)
+    CCString* param = CCString::create("3");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
+    
     EndScene();
     
-    // 이걸 끝내면서, Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
-    CCString* param = CCString::create("2");
+    // Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
+    param = CCString::create("2");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
 }
 

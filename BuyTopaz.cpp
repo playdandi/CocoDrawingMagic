@@ -102,7 +102,7 @@ void BuyTopaz::Notification(CCObject* obj)
         }
         isTryingPurchase = false;
     }
-    else
+    else // "{friendkakaoid}/{priceTopazIdx}" 형태로 왔을 경우
     {
         std::string p = param->getCString();
         std::string friendKakaoId = p.substr(0, p.find("/"));
@@ -373,7 +373,7 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
     {
         isTryingPurchase = true; // 안드로이드 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)        
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         int topazId = priceTopaz[priceTopazIdx]->GetId();
         char productId[15];
         if (httpStatus == 0)
@@ -385,11 +385,16 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         
         char myKakaoId[20];
         sprintf(myKakaoId, "%d", myInfo->GetKakaoId());
+        
+        // type : 일반구매(1) , 선물하기(2)
+        int type = (httpStatus == 0) ? 1 : 2;
 
+        CCLog("type = %d", type);
         CCLog("topazId = %d", topazId);
         CCLog("productId = %s", productId);
         CCLog("kakaoId = %s", myKakaoId);
         CCLog("friendKakaoId = %s", friendKakaoId.c_str());
+        
         
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
@@ -399,7 +404,7 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         {  // 파라미터 (int, String, String), 리턴타입은 Void
             // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
             t.env->CallStaticVoidMethod(t.classID, t.methodID,
-                                        1,
+                                        type,
                                         topazId,
                                         t.env->NewStringUTF(myKakaoId),
                                         t.env->NewStringUTF(friendKakaoId.c_str()),

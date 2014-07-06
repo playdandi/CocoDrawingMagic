@@ -8,7 +8,7 @@ GameReady::~GameReady(void)
     CCLog("GameReady 소멸자");
 }
 
-CCScene* GameReady::scene(int prio)
+CCScene* GameReady::scene()
 {   
     CCScene* pScene = CCScene::create();
     GameReady* pLayer = GameReady::create();

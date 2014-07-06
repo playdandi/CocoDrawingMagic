@@ -38,14 +38,20 @@ bool RankUp::init()
 	{
 		return false;
 	}
+    
+    // make depth tree
+    Depth::AddCurDepth("RankUp", this);
 
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(0);
     CCLog("RankUp : touch prio = %d", this->getTouchPriority());
     
+    // notification observer
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RankUp::Notification), Depth::GetCurName(), NULL);
+    
+    
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rankup.plist");
-
     
     spriteClass = new SpriteClass();
     
@@ -57,6 +63,18 @@ bool RankUp::init()
     
 	return true;
 }
+
+void RankUp::Notification(CCObject* obj)
+{
+    CCString* param = (CCString*)obj;
+    
+    if (param->intValue() == 10)
+    {
+        // 터치 풀기 (백그라운드에서 돌아올 때)
+        isTouched = false;
+    }
+}
+
 
 void RankUp::InitSprites()
 {
@@ -272,39 +290,6 @@ void RankUp::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void RankUp::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCPoint point = pTouch->getLocation();
-    /*
-    CCPoint p;
-    for (int i = 0 ; i < friendList.size() ; i++)
-    {
-        p = friendList[i]->GetProfile()->convertToNodeSpace(point);
-        CCSize size = friendList[i]->GetProfile()->getContentSize();
-        if (isScrollViewTouched && !isScrolling &&
-            (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
-        {
-            sound->playClick();
-            Common::ShowNextScene(this, "RankUp", "Profile", false, i);
-        }
-        
-        if (friendList[i]->GetPotionSprite() != NULL)
-        {
-            // 포션 보낼 수 있는 상태 & 남은시간 = 0 일 때만 가능하다.
-            p = friendList[i]->GetPotionSprite()->convertToNodeSpace(point);
-            CCSize size = friendList[i]->GetPotionSprite()->getContentSize();
-            if (isScrollViewTouched && !isScrolling &&
-                (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height &&
-                friendList[i]->GetPotionMsgStatus() == 1 && friendList[i]->GetRemainPotionTime() == 0)
-            {
-                sound->playClick();
-                std::vector<int> data;
-                data.push_back(i);
-                Common::ShowPopup(this, "RankUp", "NoImage", false, POTION_SEND_TRY, BTN_2, data);
-                break;
-            }
-        }
-    }
-    */
-    
     isTouched = false;
 }
 
@@ -331,6 +316,14 @@ void RankUp::EndSceneCallback(CCNode* sender, void* pointer)
 {
     RankUp* pThis = (RankUp*)pointer;
     
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(pThis, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+
+    pThis->setKeypadEnabled(false);
+    pThis->setTouchEnabled(false);
+    
     // remove all CCNodes
     pThis->spriteClass->RemoveAllObjects();
     delete pThis->spriteClass;
@@ -342,6 +335,6 @@ void RankUp::EndSceneCallback(CCNode* sender, void* pointer)
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
     
-    Common::ShowNextScene(this, "RankUp", "Ranking", true, 1);
+    Common::ShowNextScene(pThis, "RankUp", "Ranking", true, 1);
 }
 

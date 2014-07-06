@@ -88,6 +88,8 @@ public:
     void PlayEffect_14();
     void Effect14Callback(CCNode* sender, void* data);
     
+    void PlayEffect_FeverBg();
+    void PlayEffect_FeverBg_Off();
     void PlayEffect_FeverCircle(CCPoint p, int size);
     void PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer);
     
@@ -120,6 +122,8 @@ private:
     int queue_pos_now;
     int skillNum;
     std::vector<int> multi_callbackCnt;
+    
+    int A2_addedScore;
     
     CCSprite* W7_bg;
     CCSprite* iced_bar;
@@ -158,6 +162,9 @@ private:
     int queuePos;
     
     CCSprite* sp_fire;
+    
+    // 피버타임
+    CCParticleSystemQuad* feverBg;
 };
 
 #endif /* defined(__CocoMagic__Effect__) */

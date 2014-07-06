@@ -12,7 +12,7 @@ class CocoRoomTodayCandy : public CCLayer,
                             public CCScrollViewDelegate
 {
 public:
-    static CCScene* scene(int prio);
+    static CCScene* scene();
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

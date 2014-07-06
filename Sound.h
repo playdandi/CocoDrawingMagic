@@ -36,6 +36,7 @@ public:
     void StopBackgroundSound();
     
     void StopAllEffects();
+    void PauseAllEffects();
     void ResumeAllEffects();
     
     void playWarning();

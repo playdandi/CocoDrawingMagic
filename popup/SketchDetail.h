@@ -10,7 +10,7 @@ class SketchDetail : public CCLayer
 {
 public:
     ~SketchDetail(void);
-    static CCScene* scene(int id, int prio);
+    static CCScene* scene(int id);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -27,6 +27,8 @@ public:
     
     void MakeOpenedSkillSprites();
     void MakeClosedSkillSprites();
+    
+    void SortMySkillByUserId();
     
     std::string SkillDescription(int scid);
     
@@ -47,6 +49,8 @@ private:
     CCSprite* pBlack;
     CCSprite* bar;
     SpriteClass* spriteClass;
+    
+    std::vector<MySkill*> sList;
 };
 
 

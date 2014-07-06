@@ -102,6 +102,8 @@ bool MagicList::init()
     isScrolling = false;
     isScrollViewTouched = false;
     
+    code = -1;
+    
     return true;
 }
 
@@ -111,15 +113,15 @@ void MagicList::Notification(CCObject* obj)
     
     if (param->intValue() == -1)
     {
-        if (code != 0) // 성공적으로 네트워크가 마무리되면, 터치를 활성화시키지 않는다. (어차피 끄니까)
-        {
+        //if (code != 0) // 성공적으로 네트워크가 마무리되면, 터치를 활성화시키지 않는다. (어차피 끄니까)
+        //{
             // 터치 활성
             CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
             this->setTouchPriority(Depth::GetCurPriority());
             isTouched = false;
             scrollViewSlot->setTouchEnabled(true);
             CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
-        }
+        //}
     }
     else if (param->intValue() == 0)
     {

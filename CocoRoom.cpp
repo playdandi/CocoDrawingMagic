@@ -2,7 +2,7 @@
 
 static int tabNumber;
 
-CCScene* CocoRoom::scene(int tab, int prio)
+CCScene* CocoRoom::scene(int tab)
 {
     tabNumber = tab;
     

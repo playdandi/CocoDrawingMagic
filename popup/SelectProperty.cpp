@@ -84,15 +84,19 @@ void SelectProperty::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
-        // 속성 하나를 성공적으로 배웠을 때 : 스케치북 튜토리얼 시작
         EndScene(false);
-        CCLog("현재 : %s", Depth::GetCurNameString().c_str());
-        int from;
-        if (Depth::GetCurNameString() == "Ranking")
-            from = 0;
-        else
-            from = 1;
-        Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "T_Sketchbook", false, from);
+        
+        // 속성 하나를 성공적으로 배웠을 때 : 스케치북 튜토리얼 시작 (단, 두 번째 이상으로 속성을 열었을 때는 X)
+        if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
+            !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 2) // 튜토리얼 시작한다.
+        {
+            int from;
+            if (Depth::GetCurNameString() == "Ranking")
+                from = 0;
+            else
+                from = 1;
+            Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurNameString(), "T_Sketchbook", false, from);
+        }
     }
     else if (param->intValue() == 3)
     {
@@ -154,14 +158,29 @@ void SelectProperty::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png1", ccp(0.5, 0.5), ccp(835, base_h+400+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png1");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png1", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png1", "0", NULL, 5, 1) );
+    if (myInfo->IsFire())
+    {
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue_mini.png1"))->setColor(ccc3(170,170,170));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_select.png1"))->setColor(ccc3(170,170,170));
+    }
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png2", ccp(0.5, 0.5), ccp(835, base_h+200+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png2");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png2", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png2", "0", NULL, 5, 1) );
+    if (myInfo->IsWater())
+    {
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue_mini.png2"))->setColor(ccc3(170,170,170));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_select.png2"))->setColor(ccc3(170,170,170));
+    }
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png3", ccp(0.5, 0.5), ccp(835, base_h+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png3");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png3", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png3", "0", NULL, 5, 1) );
+    if (myInfo->IsLand())
+    {
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue_mini.png3"))->setColor(ccc3(170,170,170));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_select.png3"))->setColor(ccc3(170,170,170));
+    }
     
     
     // 각 속성 설명 문구
@@ -201,6 +220,9 @@ bool SelectProperty::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 int num = atoi(spriteClass->spriteObj[i]->name.substr(24).c_str());
+                if ( (num == 1 && myInfo->IsFire()) || (num == 2 && myInfo->IsWater()) || (num == 3 && myInfo->IsLand()) )
+                    break;
+                
                 std::vector<int> data;
                 data.push_back(num);
                 data.push_back(isInGameTutorialStart); // 인게임 튜토리얼 시작 여부 (1 = 시작)

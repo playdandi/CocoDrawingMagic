@@ -2,17 +2,15 @@
 #include "Sketchbook.h"
 
 static int skill_common_id;
-static int priority;
 
 SketchDetail::~SketchDetail(void)
 {
     //CCLog("SketchDetail destructor");
 }
 
-CCScene* SketchDetail::scene(int id, int prio)
+CCScene* SketchDetail::scene(int id)
 {
     skill_common_id = id;
-    priority = prio;
     
     CCScene* pScene = CCScene::create();
     SketchDetail* pLayer = SketchDetail::create();
@@ -271,13 +269,22 @@ std::string SketchDetail::SkillDescription(int scid)
     return "";
 }
 
+
+bool compare_sd(MySkill* ms1, MySkill* ms2)
+{
+    return ms1->GetLearnTime() < ms2->GetLearnTime();
+}
+void SketchDetail::SortMySkillByUserId()
+{
+    std::sort(sList.begin(), sList.end(), compare_sd);
+}
+
 void SketchDetail::MakeClosedSkillSprites()
 {
     char name[40];
     
     int scid = skill_common_id;
     SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
-    //MySkill* ms = MySkill::GetObj(scid);
     
     // 문구
     CCLayer* descLayer = CCLayer::create();
@@ -286,11 +293,18 @@ void SketchDetail::MakeClosedSkillSprites()
     this->addChild(descLayer, 5);
     spriteClass->layers.push_back(descLayer);
     
+    // 지금 이 스킬을 배우는데 요구되는 MP
+    sList = myInfo->GetSkillList();
+    SortMySkillByUserId();
+    int requiredMP = SkillBuildupMPInfo::RequiredMP(sList, sInfo->GetId());
+    
+    // 스킬을 새로 습득하려면?
+    // 조건1) prerequisite 스킬의 레벨이 요구레벨 이상!
+    // 조건2) 내 MP가 요구MP 이상! (결제를 통해 얻은 속성의 수에 따라 요구MP 할인이 있을 수 있다)
     
     // '?'스킬의 요구조건을 모두 충족한 경우
-    //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() &&
-        MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv() &&
+        myInfo->GetMPTotal() >= requiredMP)
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 충족하여 새로운 마법을 배울 준비가 다 되었어요.\n'배움' 버튼을 클릭해 보세요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SketchDetail", this, 5) );
     }
@@ -313,8 +327,10 @@ void SketchDetail::MakeClosedSkillSprites()
     //((CCSprite*)spriteClass->FindSpriteByName("number/rank_comma.png3"))->setScale(0.8f);
     
     // 만족된 조건에 대해 숫자 옆에 체크 표시하기
-    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP())
+    //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP())
+    if (myInfo->GetMPTotal() >= requiredMP)
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -43), CCSize(0, 0), "", "Layer", descLayer, 5) );
+    //if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
     if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png1", ccp(0, 0), ccp(-70, -128), CCSize(0, 0), "", "Layer", descLayer, 5) );
     //if (myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv())
@@ -332,7 +348,8 @@ void SketchDetail::MakeClosedSkillSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos, CCSize(0, 0), "background/bg_skill_brown.png5", "0", spriteClass->FindSpriteByName("background/bg_skill_brown.png5"), 5, 1) );
     
     // 각 조건마다의 문구
-    sprintf(name, "%d 이상", sInfo->GetRequiredMP());
+    //sprintf(name, "%d 이상", sInfo->GetRequiredMP());
+    sprintf(name, "%d 이상", requiredMP);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, 0), ccc3(0,0,0), "", "Layer", descLayer, 5) );
     sprintf(name, "Lv %d 이상 (%s)", sInfo->GetRequiredSkillLv(), sInfoReq->GetName().c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(160, -85), ccc3(0,0,0), "", "Layer", descLayer, 5) );
@@ -346,9 +363,8 @@ void SketchDetail::MakeClosedSkillSprites()
     pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
     
     // '?'스킬의 요구조건을 모두 충족한 경우
-    //if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() && MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
-    if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() &&
-        MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+    if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv() &&
+        myInfo->GetMPTotal() >= requiredMP)
     {
         btnStatus = 3;
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
@@ -516,7 +532,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
                 // code 10 : 가지고 있는 스킬이 아님.
                 // code 11 : 스킬이 이미 만렙임.
                 // code 12 : 연습량 미달.
-                Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_FAIL, BTN_1, nullData, -1, priority-1);
+                Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_FAIL, BTN_1, nullData, -1);
             }
             else
                 Common::ShowPopup(this, "SketchDetail", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
@@ -533,7 +549,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
                 // code 13 : 요구 지팡이의 레벨 미달.
                 // code 14 : 요구 스킬의 소유or레벨 미달.
                 // code 15 : 이미 배운 스킬임.
-                Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_FAIL, BTN_1, nullData, -1, priority-1);
+                Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_FAIL, BTN_1, nullData, -1);
             }
             else
                 Common::ShowPopup(this, "SketchDetail", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
@@ -552,7 +568,7 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
         // 나의 스킬 리스트 갱신
         myInfo->ClearSkillList();
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
-        int csi, usi, level, exp;
+        int csi, usi, level, exp, learntime;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -562,8 +578,9 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
                 else if (name == "user-skill-id") usi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "exp") exp = ait->as_int();
+                else if (name == "learn-time") learntime = ait->as_int();
             }
-            myInfo->AddSkill(csi, usi, level, exp);
+            myInfo->AddSkill(csi, usi, level, exp, learntime);
         }
         myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
         
@@ -587,9 +604,9 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
         data.push_back(skill_common_id); // 스킬 common id
         data.push_back(MySkill::GetObj(skill_common_id)->GetLevel()); // 증가한 스킬 레벨
         if (tag == 0) // 스킬을 레벨업한 경우
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_OK, BTN_1, data, -1, priority-1);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, UPGRADE_SKILL_OK, BTN_1, data, -1);
         else if (tag == 1) // 스킬을 새로 배운 경우
-            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_OK, BTN_1, data, -1, priority-1);
+            Common::ShowPopup(this, "SketchDetail", "NoImage", true, PURCHASE_SKILL_OK, BTN_1, data, -1);
     }
 }
 

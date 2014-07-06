@@ -36,6 +36,7 @@ public:
     */
     virtual void applicationWillEnterForeground();
     
+    void SessionCheck();
     void XmlParseSessionCheck(xml_document *xmlDoc);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     

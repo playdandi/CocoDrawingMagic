@@ -29,10 +29,11 @@ extern std::vector<class PriceTopaz*> priceTopaz;
 extern std::vector<class PriceStarCandy*> priceStarCandy;
 extern std::vector<class MagicStaffBuildUpInfo*> magicStaffBuildupInfo;
 extern std::vector<class SkillSlotInfo*> skillSlotInfo;
-extern std::vector<class PrerequisiteInfo*> prerequisiteInfo;
+//extern std::vector<class PrerequisiteInfo*> prerequisiteInfo;
 extern std::vector<class FairyInfo*> fairyInfo;
 extern std::vector<class FairyBuildUpInfo*> fairyBuildUpInfo;
 extern std::vector<class SkillInfo*> skillInfo;
+extern std::vector<class SkillBuildupMPInfo*> skillBuildupMPInfo;
 extern std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 extern std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
@@ -188,6 +189,7 @@ public:
     bool IsWaterByTopaz();
     bool IsLandByTopaz();
     bool HasNoProperty();
+    bool IsTimeToFreelyBuyProperty();
     
     void SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved);
     void SetMoney(int topaz, int starcandy);
@@ -214,7 +216,7 @@ public:
     
     void AddSkillSlot(int id, int csi, int usi);
     void AddFairy(int cfi, int ufi, int level, int isUse);
-    void AddSkill(int csi, int usi, int level, int exp);
+    void AddSkill(int csi, int usi, int level, int exp, int learntime);
     void SortMySkillByCommonId();
     
     int GetActiveFairyId();
@@ -315,17 +317,19 @@ private:
 class MySkill
 {
 public:
-    MySkill(int csi, int usi, int level, int exp);
+    MySkill(int csi, int usi, int level, int exp, int learntime);
     static MySkill* GetObj(int scid);
     int GetCommonId();
     int GetUserId();
     int GetLevel();
     int GetExp();
+    int GetLearnTime();
 private:
     int common_skill_id;
     int user_skill_id;
     int level;
     int exp;
+    int learnTime;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -514,6 +518,7 @@ private:
     int nCost;
 };
 
+/*
 class PrerequisiteInfo
 {
 public:
@@ -525,6 +530,7 @@ private:
     int nValue1;
     int nValue2;
 };
+*/
 
 
 class FairyInfo
@@ -596,6 +602,23 @@ private:
     bool bIsActive;
 };
 
+class SkillBuildupMPInfo
+{
+public:
+    SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2);
+    static SkillBuildupMPInfo* GetObj(int skillCount);
+    static int RequiredMP(std::vector<MySkill*> sList, int scid);
+    int GetSkillCount();
+    int GetRequireMP();
+    int GetDiscount1();
+    int GetDiscount2();
+private:
+    int nSkillCount;
+    int nRequireMP;
+    int nDiscountOne;
+    int nDiscountTwo;
+};
+
 class SkillBuildUpInfo
 {
 public:
@@ -603,6 +626,12 @@ public:
     static bool IsMastered(int sid, int level);
     static int GetMaxExp(int sid, int level);
     static int GetCost(int sid, int level);
+    static SkillBuildUpInfo* GetObj(int sid, int level);
+    int GetId();
+    int GetAbility1();
+    int GetAbility2();
+    int GetProb();
+    int GetLevel();
 private:
     int nId;
     std::string sName;

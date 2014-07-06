@@ -296,19 +296,18 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
         
         // '끈질긴 생명력' 스킬 발동 결과
         int addedPotion = gameInfo.child("add-potion").attribute("add-number").as_int();
+        // '시간을 얼리다' 발동 횟수
+        int numOfFreezetime = gameInfo.child("freeze-time").attribute("add-number").as_int();
         
-        // image memory 해제
-        //pCoco->removeFromParentAndCleanup(true);
-        //pLoading->removeFromParentAndCleanup(true);
-        //pLoading2->removeFromParentAndCleanup(true);
-
         //return;
-        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion);
+        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion, numOfFreezetime);
     }
 }
 
 void Loading::EndScene()
 {
+    CCLog("%s", Depth::GetCurName());
+    CCLog("%p", this);
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -316,20 +315,14 @@ void Loading::EndScene()
     CCString* param = CCString::create("-1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
-    //if (status == LOADING_PUZZLEEND)
     CCLog("Loading : EndScene");
     if (loadingSprites)
     {
-        //timerStop = true;
-        //this->unschedule(schedule_selector(Loading::LoadingSpriteTimer));
         pCoco->removeFromParentAndCleanup(true);
-        pLoading->removeFromParentAndCleanup(true);
-        //pLoading2->removeFromParentAndCleanup(true);
         pTip->removeFromParentAndCleanup(true);
         pTipMsg->removeFromParentAndCleanup(true);
     }
-    else
-        pLoading->removeFromParentAndCleanup(true);
+    pLoading->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

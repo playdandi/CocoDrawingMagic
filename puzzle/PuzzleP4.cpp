@@ -5,6 +5,7 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type, int designatedT
 {
     PuzzleP4* puzzleP4 = new PuzzleP4();
     
+    /*
     if (type != -100)
         puzzleP4->type = type;
     else
@@ -12,11 +13,13 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type, int designatedT
         if (designatedType != -1) // 게임중 요정에 의해 새로 만들어졌을 떄 (보통 designatedType == CONNECTED)
             puzzleP4->type = designatedType;
         else
-            puzzleP4->type = (rand()%100 < 70) ? CONNECTED : BLOCKED;
+            puzzleP4->type = (rand()%100 < 60) ? CONNECTED : BLOCKED;
     }
-
+    */
+    puzzleP4->type = -1;
     puzzleP4->parent = parent;
     puzzleP4->zOrder = zOrder;
+    puzzleP4->isRemoved = false;
     
     return puzzleP4;
 }
@@ -28,12 +31,25 @@ void PuzzleP4::InitChild()
     leftdown = NULL;
     rightdown = NULL;
 }
-
-void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint ap, CCPoint pos, float half_width)
+void PuzzleP4::SetRemoved(bool flag)
 {
+    isRemoved = flag;
+}
+
+void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint pos, float half_width, int decidedType)
+{
+    if (decidedType != -1)
+        type = decidedType;
+    else
+        type = (rand()%100 < 60) ? CONNECTED : BLOCKED;
+    //type = CONNECTED;
+    
+    isRemoved = false;
+    
     if (type != BLOCKED)
     {
         InitChild();
+        
         char name[25];
 
         if (lu == rd && (lu >= PIECE_RED && lu <= PIECE_WHITE))
@@ -124,5 +140,10 @@ int PuzzleP4::GetType()
 int PuzzleP4::GetZOrder()
 {
     return zOrder;
+}
+
+bool PuzzleP4::IsRemoved()
+{
+    return isRemoved;
 }
 

@@ -27,7 +27,14 @@ void Sketchbook::onEnter()
     
     if (myInfo->HasNoProperty())
     {
-        Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false);
+        // 속성을 처음 익힐 때
+        Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false, 0);
+    }
+    else if (myInfo->IsTimeToFreelyBuyProperty())
+    {
+        // 속성 하나를 무료로 open 가능! (팝업메시지 띄우기)
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_FREE_MSG, BTN_1, nullData);
     }
 }
 void Sketchbook::onExit()
@@ -100,11 +107,12 @@ bool Sketchbook::init()
     InitSprites();
     MakeScrollSlot();
     
+    
     // 연습 중인 스킬이 속한 속성을 우선적으로 보여주는데, 만약 없다면 불/물/땅/궁극 순서대로 연 것 먼저 보여준다.
     int pcsi = myInfo->GetPracticeSkillId();
-    if (21 <= pcsi && pcsi <= 28) tabNumber = 0;
-    else if (11 <= pcsi && pcsi <= 18) tabNumber = 1;
-    else if (31 <= pcsi && pcsi <= 38) tabNumber = 2;
+    if (21 <= pcsi && pcsi <= 27) tabNumber = 0;
+    else if (11 <= pcsi && pcsi <= 17) tabNumber = 1;
+    else if (31 <= pcsi && pcsi <= 37) tabNumber = 2;
     else if (41 <= pcsi && pcsi <= 45) tabNumber = 3;
     else {
         if (myInfo->IsFire()) tabNumber = 0;
@@ -119,101 +127,18 @@ bool Sketchbook::init()
     isTouched = false;
     isScrolling = false;
     isScrollViewTouched = false;
-    
+
     return true;
 }
 
-/*
-void Sketchbook::TutorialNextState()
+bool compare_sb(MySkill* ms1, MySkill* ms2)
 {
-    char temp[200];
-    tutorialState++;
-    
-    // 붙어있는 sprite 미리 제거
-    if ((tutorialState-1 >= 1 && tutorialState-1 <= 3) || tutorialState-1 == 6 || tutorialState-1 == 8 || tutorialState-1 == 10)
-        ttrPos->removeFromParent();
-    if (tutorialState-1 == 3 || tutorialState-1 == 10)
-        ttrArrow->removeFromParent();
-    
-    int sNum;
-    std::string prop;
-    if (tabNumber == 0) { sNum = 21; prop = "불"; }
-    else if (tabNumber == 1) { sNum = 11; prop = "물"; }
-    else if (tabNumber == 2) { sNum = 31; prop = "땅"; }
-    
-    
-    switch (tutorialState)
-    {
-        case 0:
-            ttrMsg->setString("여기는 내가 그릴 줄 아는 마법을 모아 놓은 스케치북이야.");
-            break;
-        case 1:
-            sprintf(temp, "나는 %s 속성 마법사이고 '%s'을 그릴 수 있어.", prop.c_str(), SkillInfo::GetSkillInfo(sNum)->GetName().c_str());
-            ttrMsg->setString(temp);
-            MakeScroll(curState);
-            break;
-        case 2:
-            sprintf(temp, "새로운 마법인 '%s' 스킬을 배워볼까?", SkillInfo::GetSkillInfo(sNum+1)->GetName().c_str());
-            ttrMsg->setString(temp);
-            MakeScroll(curState);
-            break;
-        case 3:
-            ttrMsg->setString("오른쪽에 있는 습득 버튼을 눌러봐!");
-            MakeScroll(curState);
-            break;
-        case 4:
-            ttrMsg->setString("조건이 충족되었으니까 습득 버튼을 눌러!"); // SketchDetail
-            break;
-        case 5:
-            ttrMsg->setString("새로운 마법을 배웠어!"); // NoImage
-            break;
-        case 6:
-            sprintf(temp, "'%s' 스킬에는 자동효과라고 되어있지?\n이것은 장착하지 않아도 자동으로 발동해.", SkillInfo::GetSkillInfo(sNum)->GetName().c_str());
-            ttrMsg->setString(temp);
-            ttrArrow->setRotation(0);
-            MakeScroll(curState);
-            break;
-        case 7:
-            sprintf(temp, "하지만 새로 배운 '%s' 스킬은 슬롯에 장착해야 쓸 수 있어.", SkillInfo::GetSkillInfo(sNum+1)->GetName().c_str());
-            ttrMsg->setString(temp);
-            break;
-        case 8:
-            ttrMsg->setString("아래쪽에 있는 바를 눌러봐.");
-            
-            ttrBg->setPosition(ccp(vo.x, 458));
-            ttrCoco->setPosition(ccp(vo.x, 458+5));
-            ttrMsg->setPosition(ccp(vo.x+320, 458+103));
-            
-            ttrPos->setAnchorPoint(ccp(0, 0));
-            ttrPos->setPosition(ccp(77, 228));
-            ttrPos->setScaleX( (float)792 / (float)162 );
-            ttrPos->setScaleY( (float)187 / (float)89 );
-            this->addChild(ttrPos, 101);
-            ttrArrow->setAnchorPoint(ccp(0.5, 0));
-            ttrArrow->setPosition(ccp(77+782-100, 228+187+10));
-            CCActionInterval* action;
-            action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
-            ttrArrow->runAction(CCRepeatForever::create(action));
-            this->addChild(ttrArrow, 1000);
-            break;
-        case 9:
-            ttrMsg->setString("여기를 누르면 장착할 수 있어.");
-            ttrPos->removeFromParent();
-            ttrArrow->removeFromParent();
-            break;
-        case 10:
-            ttrMsg->setString("장착이 완료되었어! 다시 스케치북으로 돌아갈까? 아래쪽의 바를 눌러봐.");
-            break;
-        case 11:
-            ttrMsg->setString("이제 강화하고 싶은 마법을 선택해서 마음껏 마법을 그려보자!");
-            ttrBg->setPosition(ccp(vo.x, vo.y));
-            ttrCoco->setPosition(ccp(vo.x, vo.y+5));
-            ttrMsg->setPosition(ccp(vo.x+320, vo.y+103));
-            MakeScroll(curState);
-            break;
-    }
+    return ms1->GetLearnTime() < ms2->GetLearnTime();
 }
- */
+void Sketchbook::SortMySkillByUserId()
+{
+    std::sort(sList.begin(), sList.end(), compare_sb);
+}
 
 void Sketchbook::Notification(CCObject* obj)
 {
@@ -254,6 +179,22 @@ void Sketchbook::Notification(CCObject* obj)
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+    }
+    else if (param->intValue() == 4)
+    {
+        // 어떤 스킬을 레벨업하고 돌아오는 경우.
+        
+        if (myInfo->IsTimeToFreelyBuyProperty())
+        {
+            // 속성 하나를 무료로 open 가능! (팝업메시지 띄우기)
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_FREE_MSG, BTN_1, nullData);
+        }
+    }
+    else if (param->intValue() == 5)
+    {
+        // 속성선택창을 열어야 하는 경우 (무료로 배울 때가 되서)
+        Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false, 0);
     }
     else if (param->intValue() == 8)
     {
@@ -474,7 +415,7 @@ void Sketchbook::MakeScrollBook(int idx)
     numOfList++;
     
     int numOfMaxSkill = 7;
-    CCLog("numOfList = %d", numOfList);
+    //CCLog("numOfList = %d", numOfList);
     
     containerBook = CCLayer::create();
     containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, numOfMaxSkill)*206));
@@ -494,14 +435,12 @@ void Sketchbook::MakeScrollBook(int idx)
         else
             sInfo = SkillInfo::GetSkillInfo(ms[i]->GetCommonId());
         
-        //CCLog("next skill = (%d), %s", sInfo->GetId(), sInfo->GetName().c_str());
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setPosition(ccp(27, (std::min(numOfList, numOfMaxSkill)-i-1)*206));
         containerBook->addChild(itemLayer, 5*10-i);
         spriteClassBook->layers.push_back(itemLayer);
-        
-        CCLog("%d", i);
+
         
         if (i == numOfList-1)
             id = sInfo->GetId();
@@ -509,8 +448,6 @@ void Sketchbook::MakeScrollBook(int idx)
             id = ms[i]->GetCommonId();
         sprintf(name, "background/bg_board_brown.png%d", i+3);
         spriteClassBook->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(0, 0), CCSize(872, 206), "", "Layer", itemLayer, 5, 0, 255, id) );
-        
-        CCLog("id = %d", id);
         
         // 스킬 배경
         sprintf(name, "icon/icon_skill_division_red.png%d", i+3);
@@ -642,8 +579,16 @@ void Sketchbook::MakeScrollBook(int idx)
         else
         {
             // '?'스킬의 요구조건을 모두 충족한 경우
-            if (myInfo->GetMPTotal() >= sInfo->GetRequiredMP() && myInfo->GetStaffLv() >= sInfo->GetRequiredStaffLv() &&
-                MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv())
+            // 조건1) prerequisite 스킬의 레벨이 요구레벨 이상!
+            // 조건2) 내 MP가 요구MP 이상! (결제를 통해 얻은 속성의 수에 따라 요구MP 할인이 있을 수 있다)
+            
+            // 지금 이 스킬을 배우는데 요구되는 MP
+            sList = myInfo->GetSkillList();
+            SortMySkillByUserId();
+            int requiredMP = SkillBuildupMPInfo::RequiredMP(sList, sInfo->GetId());
+            
+            if (MySkill::GetObj(sInfo->GetRequiredSkillId())->GetLevel() >= sInfo->GetRequiredSkillLv() &&
+                myInfo->GetMPTotal() >= requiredMP)
             {
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, sInfo->GetId()) );
@@ -744,9 +689,11 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(35,36).c_str());
+
                 if (number == 4)
                     continue;
                 
+                // 열려있는 속성은 그 스케치북을 보여준다.
                 if ( (number == 1 && myInfo->IsFire()) || (number == 2 && myInfo->IsWater()) ||
                     (number == 3 && myInfo->IsLand()) || (number == 4 && myInfo->IsMaster()) )
                 {
@@ -754,11 +701,21 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 }
                 else
                 {
-                    std::vector<int> data;
-                    data.push_back(number); // 불(1), 물(2), 땅(3), 마스터(4)
-                    data.push_back(SkillPropertyInfo::GetCost(number)); // 가격
-                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data);
+                    // 잠긴 속성의 경우,
+                    
+                    if (myInfo->IsTimeToFreelyBuyProperty()) // 무료로 속성을 배울 수 있는 경우
+                    {
+                        Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false, 0);
+                    }
+                    else // 돈 주고 사야 하는 경우
+                    {
+                        std::vector<int> data;
+                        data.push_back(number); // 불(1), 물(2), 땅(3), 마스터(4)
+                        data.push_back(SkillPropertyInfo::GetCost(number)); // 가격
+                        Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data);
+                    }
                 }
+
                 break;
             }
         }
