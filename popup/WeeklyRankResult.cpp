@@ -16,6 +16,8 @@ void WeeklyRankResult::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
     
+    isTouched = false;
+    
     //if (학위받았으면)
     std::vector<int> nullData;
     Common::ShowPopup(this, "WeeklyRankResult", "NoImage", false, GET_DEGREE, BTN_1, nullData);
@@ -30,7 +32,6 @@ void WeeklyRankResult::onExit()
 
 void WeeklyRankResult::keyBackClicked()
 {
-    EndScene();
 }
 
 
@@ -41,11 +42,14 @@ bool WeeklyRankResult::init()
 		return false;
 	}
     
+    idx = -1;
+    isTouched = true;
+    
     // make depth tree
     Depth::AddCurDepth("WeeklyRankResult", this);
     
     this->setTouchEnabled(true);
-    this->setKeypadEnabled(true);
+    //this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("WeeklyRankResult : touch prio = %d", this->getTouchPriority());
     
@@ -76,18 +80,25 @@ void WeeklyRankResult::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("WeeklyRankResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("WeeklyRankResult : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        if (idx > -1)
+        {
+            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
+        }
     }
 }
 
@@ -115,6 +126,12 @@ void WeeklyRankResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
     CCPoint p = spriteClass->FindParentCenterPos("button/btn_red.png");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red.png", "0", NULL, 5, 1) );
+    
+    // 확인 버튼 젤리 움직임
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->runAction(CCRepeatForever::create(action));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
+    
  
     // 트로피
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon_weekly_rank_trophy.png", ccp(0.5, 0), ccp(winSize.width/2, 750), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
@@ -236,16 +253,30 @@ bool WeeklyRankResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isTouched = true;
     
     CCPoint point = pTouch->getLocation();
+    CCLog("weekly : touch began");
+    
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png" ||
-            spriteClass->spriteObj[i]->name == "button/btn_red.png")
+        if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
+        {
+            EndScene();
+            return true;
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndScene();
-                break;
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
             }
         }
     }
@@ -260,6 +291,23 @@ void WeeklyRankResult::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void WeeklyRankResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
+    CCPoint point = pTouch->getLocation();
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_CONFIRM:
+                EndScene();
+                break;
+        }
+    }
+    
     isTouched = false;
 }
 

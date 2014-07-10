@@ -40,12 +40,15 @@ void Loading::AAA(CCNode* sender, void* p)
     std::string param = "";
     sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
     param += temp;
-    int a = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
-    int b = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
-    int c = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
-    int d = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
-    int e = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_4");
+    
+    int a = CCUserDefault::sharedUserDefault()->getBoolForKey("item_00", false);
+    int b = CCUserDefault::sharedUserDefault()->getBoolForKey("item_01", false);
+    int c = CCUserDefault::sharedUserDefault()->getBoolForKey("item_02", false);
+    int d = CCUserDefault::sharedUserDefault()->getBoolForKey("item_03", false);
+    int e = CCUserDefault::sharedUserDefault()->getBoolForKey("item_04", false);
+
     sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
+    //sprintf(temp, "item_a=1&item_b=1&item_c=1&item_d=1&item_e=0");
     param += temp;
     
     Network::HttpPost(param, URL_GAMESTART, pThis, httpresponse_selector(Loading::onHttpRequestCompleted));
@@ -205,6 +208,8 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)
     {
+        Common::RebootSystem(this);
+        /*
         std::vector<int> nullData;
         if (code <= MAX_COMMON_ERROR_CODE)
             Network::ShowCommonError(code);
@@ -212,6 +217,7 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
             Common::ShowPopup(this, "Loading", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
         else
             Common::ShowPopup(this, "Loading", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+        */
     }
 
     else if (code == 0)
@@ -298,16 +304,18 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
         int addedPotion = gameInfo.child("add-potion").attribute("add-number").as_int();
         // '시간을 얼리다' 발동 횟수
         int numOfFreezetime = gameInfo.child("freeze-time").attribute("add-number").as_int();
+        // '코코타임' 발동 횟수
+        int numOfCocoTime = gameInfo.child("coco-time").attribute("add-number").as_int();
         
         //return;
-        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion, numOfFreezetime);
+        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime);
     }
 }
 
 void Loading::EndScene()
 {
-    CCLog("%s", Depth::GetCurName());
-    CCLog("%p", this);
+    //CCLog("%s", Depth::GetCurName());
+    //CCLog("%p", this);
     // release depth tree
     Depth::RemoveCurDepth();
     
@@ -315,7 +323,7 @@ void Loading::EndScene()
     CCString* param = CCString::create("-1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
-    CCLog("Loading : EndScene");
+    //CCLog("Loading : EndScene");
     if (loadingSprites)
     {
         pCoco->removeFromParentAndCleanup(true);

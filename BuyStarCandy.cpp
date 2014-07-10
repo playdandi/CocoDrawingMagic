@@ -19,6 +19,14 @@ void BuyStarCandy::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(BuyStarCandy::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void BuyStarCandy::SceneCallback()
+{
+    isTouched = false;
 }
 void BuyStarCandy::onExit()
 {
@@ -30,6 +38,10 @@ void BuyStarCandy::onExit()
 
 void BuyStarCandy::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
     sound->playClick();
     EndScene();
 }
@@ -41,6 +53,8 @@ bool BuyStarCandy::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("BuyStarCandy", this);
@@ -60,12 +74,16 @@ bool BuyStarCandy::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
-    isTouched = false;
     
     return true;
 }
@@ -80,12 +98,14 @@ void BuyStarCandy::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("BuyStarCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("BuyStarCandy 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -109,15 +129,15 @@ void BuyStarCandy::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
-                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "BuyStarCandy", this, 2) );
+                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "BuyStarCandy", this, 2) );
+                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_purchase_starcandy.png",
-                    ccp(0, 0), ccp(269, 1389+243), CCSize(0, 0), "", "BuyStarCandy", this, 2) );
+                    ccp(0, 0), ccp(269, 1389+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "BuyStarCandy", this, 1) );
+                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "BuyStarCandy", this, 1) );
+                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "Layer", tLayer, 1) );
 }
 
 void BuyStarCandy::MakeScroll()
@@ -125,7 +145,7 @@ void BuyStarCandy::MakeScroll()
     // make scroll
     itemContainer = CCLayer::create();
     itemContainer->setPosition(ccp(77, 492));
-    this->addChild(itemContainer, 2);
+    tLayer->addChild(itemContainer, 2);
     
     int numOfList = priceStarCandy.size();
     
@@ -262,6 +282,9 @@ void BuyStarCandy::EndScene()
     delete spriteClass;
     itemContainer->removeAllChildren();
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

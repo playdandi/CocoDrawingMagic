@@ -20,6 +20,29 @@ void CocoRoomFairyTown::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    isTouched = false;
+    isScrolling = false;
+    scrollViewTouch = false;
+    
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+    
+    // 네트워크로 메시지들을 받아온다.
+    char temp[50];
+    std::string params = "";
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    params += temp;
+    
+    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(CocoRoomFairyTown::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void CocoRoomFairyTown::SceneCallback()
+{
+    
 }
 void CocoRoomFairyTown::onExit()
 {
@@ -31,6 +54,11 @@ void CocoRoomFairyTown::onExit()
 
 void CocoRoomFairyTown::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -41,6 +69,10 @@ bool CocoRoomFairyTown::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrolling = true;
+    scrollViewTouch = true;
     
     // make depth tree
     Depth::AddCurDepth("CocoRoomFairyTown", this);
@@ -60,6 +92,12 @@ bool CocoRoomFairyTown::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     // scrollView 생성
     scrollView = CCScrollView::create();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
@@ -68,24 +106,11 @@ bool CocoRoomFairyTown::init()
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority()); // priority
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
     
     InitSprites();
-    
-    isTouched = false;
-    
+
     fairyData.clear();
-    
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-    
-    // 네트워크로 메시지들을 받아온다.
-    char temp[50];
-    std::string params = "";
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    params += temp;
-    
-    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
 
     return true;
 }
@@ -100,6 +125,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -107,6 +133,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoomFairyTown : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -137,12 +164,12 @@ void CocoRoomFairyTown::InitSprites()
     
     // make pop-up background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1",
-                    ccp(0, 0), ccp(49, 458), CCSize(982, 1073), "", "CocoRoomFairyTown", this, 1) );
+                    ccp(0, 0), ccp(49, 458), CCSize(982, 1073), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
-                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "CocoRoomFairyTown", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_fairytown.png", ccp(0, 0), ccp(103, 1429), CCSize(0, 0), "", "CocoRoomFairyTown", this, 1) );
+                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_fairytown.png", ccp(0, 0), ccp(103, 1429), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
-                    ccp(0, 0), ccp(900, 1420), CCSize(0, 0), "", "CocoRoomFairyTown", this, 1) );
+                    ccp(0, 0), ccp(900, 1420), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -348,6 +375,9 @@ void CocoRoomFairyTown::EndScene()
     scrollView->removeAllChildren();
     scrollView->removeFromParentAndCleanup(true);
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

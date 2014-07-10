@@ -55,6 +55,10 @@ protected:
     
     bool isScrolling;
     int skillIdx;
+    
+    CCRect rect;
+    int kind;
+    int idx;
 
 private:
     CCSprite* pBlack;

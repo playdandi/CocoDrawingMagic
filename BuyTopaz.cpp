@@ -16,6 +16,14 @@ void BuyTopaz::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(BuyTopaz::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void BuyTopaz::SceneCallback()
+{
+    isTouched = false;
 }
 void BuyTopaz::onExit()
 {
@@ -27,6 +35,11 @@ void BuyTopaz::onExit()
 
 void BuyTopaz::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -37,6 +50,8 @@ bool BuyTopaz::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("BuyTopaz", this);
@@ -56,12 +71,16 @@ bool BuyTopaz::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
-    isTouched = false;
     
     httpStatus = 0;
     
@@ -80,12 +99,14 @@ void BuyTopaz::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("BuyTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("BuyTopaz : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -142,19 +163,19 @@ void BuyTopaz::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
-                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "BuyTopaz", this, 2) );
+                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "BuyTopaz", this, 2) );
+                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_purchase_topaz.png",
-                    ccp(0, 0), ccp(269, 1389+243), CCSize(0, 0), "", "BuyTopaz", this, 2) );
+                    ccp(0, 0), ccp(269, 1389+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "BuyTopaz", this, 1) );
+                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "BuyTopaz", this, 1) );
+                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "Layer", tLayer, 1) );
     
     // button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png",
-                    ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "BuyTopaz", this, 1) );
+                    ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_request.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png", "0", NULL, 1, 1) );
@@ -165,7 +186,7 @@ void BuyTopaz::MakeScroll()
     // make scroll
     itemContainer = CCLayer::create();
     itemContainer->setPosition(ccp(77, 492));
-    this->addChild(itemContainer, 2);
+    tLayer->addChild(itemContainer, 2);
     
     int numOfList = priceTopaz.size();
     
@@ -187,6 +208,19 @@ void BuyTopaz::MakeScroll()
             
         sprintf(name, "icon/icon_purchase_topaz_%c.png", 'a'+i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), pos, CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        
+        
+        // 'hot' icon
+        if (i == 1)
+        {
+            sprintf(name, "icon/icon_hot.png%d", i);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0), ccp(pos.x+35, pos.y+100), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setRotation(-20);
+            
+            CCActionInterval* action = CCSequence::create( CCMoveBy::create(1.0f, ccp(0, -10)), CCMoveBy::create(1.0f, ccp(0, 10)), NULL );
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->runAction(CCRepeatForever::create(action));
+        }
+        
         
         // 토파즈 개수
         sprintf(name, "%d", priceTopaz[i]->GetCount());
@@ -439,8 +473,10 @@ void BuyTopaz::EndScene()
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
-    //itemContainer->removeAllChildren();
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

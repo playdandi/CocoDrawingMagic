@@ -244,14 +244,14 @@ CCLayer* Common::MakeScoreLayer(int num)
 
 std::string Common::MakeComma(int number)
 {
-    char temp[10];
+    char temp[20];
     sprintf(temp, "%d", number);
     std::string num = temp;
     std::string result = "";
-    for (int i = num.size()-1 ; i >= 0 ; i--)
+    for (int q = num.size()-1 ; q >= 0 ; q--)
     {
-        result = num[i] + result;
-        if (i > 0 && (num.size() - i) % 3 == 0)
+        result = num[q] + result;
+        if (q > 0 && (num.size() - q) % 3 == 0)
             result = "," + result;
     }
     return result;
@@ -395,7 +395,7 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
 // from       : 이 함수를 불러온 scene 이름
 // to         : 이동할 scene 이름
 // isReplaced : replaceScene을 할 경우 true, otherwise, false.
-void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc, int etc2)
+void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc, int etc2, int etc3)
 {
     if (from == "Sketchbook")
         ((Sketchbook*)obj)->SetTouchLock(false);
@@ -466,7 +466,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "Loading")
     {
         if (isReplaced) // to Puzzle
-            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2));
+            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
         else
             ((Loading*)obj)->addChild(nextScene, 200, 200);
     }
@@ -589,6 +589,8 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     }
     else if (from == "NoImage")
         ((NoImage*)obj)->addChild(popup, 200, 200);
+    else if (from == "Puzzle")
+        ((Puzzle*)obj)->addChild(popup, 200, 200);
 }
 
 
@@ -690,9 +692,7 @@ SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int 
     obj->parentType = parentType;
     obj->parent = parent;
     
-    // z-order
     obj->zOrder = zOrder;
-    
     obj->priority = priority;
     
     return obj;
@@ -984,7 +984,7 @@ void Common::RebootSystem(void* p)
         if (Depth::GetCurNameString() == "Splash") ((Splash*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Ranking") ((Ranking*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "GameReady") ((GameReady*)cur)->EndSceneCallback(NULL, cur);
-        else if (Depth::GetCurNameString() == "MagicList") ((MagicList*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "MagicList") ((MagicList*)cur)->EndSceneCallback();
         else if (Depth::GetCurNameString() == "DegreeInfo") ((DegreeInfo*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Profile") ((Profile*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "InviteFriend") ((InviteFriend*)cur)->EndScene();
@@ -1052,7 +1052,6 @@ void Common::RebootSystem(void* p)
     todayCandyKakaoId.clear();
     
     Depth::ClearDepth();
-    
     
     // reload SPLASH scene
     CCScene *pScene = Splash::scene();

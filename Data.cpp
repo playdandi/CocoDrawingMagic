@@ -32,6 +32,9 @@ bool isInGame; // 인게임 중이면 true
 bool isInGameTutorial; // 인게임의 튜토리얼 중이면 true
 int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
 
+// item cost
+int itemCost[5];
+
 // 환경설정 메뉴
 int menuInSetting = -1;
 
@@ -160,7 +163,7 @@ void ProfileSprite::SetSprite(CCTexture2D* texture)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int mission, int newrecord)
+MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text)
 {
     this->getTopaz = topaz;
     this->getStarCandy = starcandy;
@@ -169,8 +172,10 @@ MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int sco
     this->score = score;
     this->totalScore = totalscore;
     this->combo = combo;
+    this->bestCombo = bestcombo;
     this->isMissionSuccess = (mission == 1);
     this->isNewRecord = (newrecord == 1);
+    this->content = text;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -444,6 +449,7 @@ bool MyInfo::IsTimeToFreelyBuyProperty()
             checkProperty[idx]++;
     }
     
+    int count = 0;
     bool ret = true;
     for (int i = 1 ; i <= 4; i++) // i = {물,불,땅,마스터}
     {
@@ -451,9 +457,13 @@ bool MyInfo::IsTimeToFreelyBuyProperty()
             continue;
         if (numOfSkillsInProperty[i] > 0 && numOfSkillsInProperty[i] < 7) // 일단 개수가 0과 7사이면 다 배운 게 아니므로 false
             ret = false;
-        if (numOfSkillsInProperty[i] == 7 && (checkProperty[i] < 7)) // 스킬 7개는 다 배웠지만, 5레벨 미만인 게 있는 경우도 false
+        else if (numOfSkillsInProperty[i] == 7 && (checkProperty[i] < 7)) // 스킬 7개는 다 배웠지만, 5레벨 미만인 게 있는 경우도 false
             ret = false;
+        else
+            count++; // 조건달성한 속성의 개수
     }
+    if (count >= 3) // 물/불/땅 모두 조건이 만족되면, 더 이상 열 속성이 없으므로 return false를 한다.
+        ret = false;
     
     return ret;
 }
@@ -488,6 +498,10 @@ void MyInfo::SetItem(std::vector<int> items)
 {
     for (int i = 0 ; i < items.size() ; i++)
         this->item[i] = items[i];
+}
+void MyInfo::ChangeItem(int idx, int value)
+{
+    item[idx] += value;
 }
 void MyInfo::SetProperties(int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
 {

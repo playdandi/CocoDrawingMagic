@@ -25,6 +25,16 @@ void Sketchbook::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
     
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.1f, ccp(0, 0)), CCScaleTo::create(0.1f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Sketchbook::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Sketchbook::SceneCallback()
+{
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
+    
     if (myInfo->HasNoProperty())
     {
         // 속성을 처음 익힐 때
@@ -47,6 +57,10 @@ void Sketchbook::onExit()
 
 void Sketchbook::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
     sound->playClick();
     EndScene();
 }
@@ -59,6 +73,10 @@ bool Sketchbook::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("Sketchbook", this);
@@ -77,28 +95,32 @@ bool Sketchbook::init()
 
     
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, winSize.height/2));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
 
     // scrollview init.
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 914-40+offsets));
     scrollView->setAnchorPoint(ccp(0, 0));
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 5);
+    tLayer->addChild(scrollView, 5);
     
     // scrollview SLOT init.
     scrollViewSlot = CCScrollView::create();
-    //scrollViewSlot->retain();
     scrollViewSlot->setDirection(kCCScrollViewDirectionHorizontal);
     scrollViewSlot->setViewSize(CCSizeMake(782-40, 177-20));
     scrollViewSlot->setAnchorPoint(ccp(0, 0));
     scrollViewSlot->setPosition(ccp(77+20, 228+12));
     scrollViewSlot->setDelegate(this);
     scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollViewSlot, 5);
+    tLayer->addChild(scrollViewSlot, 5);
     
     spriteClass = new SpriteClass();
     spriteClassBook = new SpriteClass();
@@ -123,10 +145,6 @@ bool Sketchbook::init()
     }
     curState = -1;
     MakeScroll(tabNumber);
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
 
     return true;
 }
@@ -150,6 +168,7 @@ void Sketchbook::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
         CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
@@ -163,6 +182,7 @@ void Sketchbook::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Sketchbook : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -254,57 +274,57 @@ void Sketchbook::InitSprites()
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_purple.png",
-                    ccp(0, 0), ccp(14, 1586+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(14, 1586+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1634+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(875, 1634+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_sketchbook.png",
-                    ccp(0, 0), ccp(279, 1632+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(279, 1632+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     
     // select menu
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_sketchbook_select.png1",
-                    ccp(0, 0), ccp(100, 1416+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(100, 1416+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_sketchbook_select.png2",
-                    ccp(0, 0), ccp(296, 1416+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(296, 1416+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_sketchbook_select.png3",
-                    ccp(0, 0), ccp(492, 1416+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(492, 1416+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_sketchbook_select.png4",
-                    ccp(0, 0), ccp(688, 1416+offsets), CCSize(0, 0), "", "Sketchbook", this, 2) );
+                    ccp(0, 0), ccp(688, 1416+offsets), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire.png",
-                    ccp(0, 0), ccp(153, 1460+offsets), CCSize(0, 0), "", "Sketchbook", this, 3) );
+                    ccp(0, 0), ccp(153, 1460+offsets), CCSize(0, 0), "", "Layer", tLayer, 3) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water.png",
-                    ccp(0, 0), ccp(350, 1461+offsets), CCSize(0, 0), "", "Sketchbook", this, 3) );
+                    ccp(0, 0), ccp(350, 1461+offsets), CCSize(0, 0), "", "Layer", tLayer, 3) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land.png",
-                    ccp(0, 0), ccp(534, 1464+offsets), CCSize(0, 0), "", "Sketchbook", this, 3) );
+                    ccp(0, 0), ccp(534, 1464+offsets), CCSize(0, 0), "", "Layer", tLayer, 3) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_master.png",
-                    ccp(0, 0), ccp(737, 1463+offsets), CCSize(0, 0), "", "Sketchbook", this, 3) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png1", ccp(0, 0), ccp(100+90, 1416+offsets+40), CCSize(0, 0), "", "Sketchbook", this, 3) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png2", ccp(0, 0), ccp(296+90, 1416+offsets+40), CCSize(0, 0), "", "Sketchbook", this, 3) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png3", ccp(0, 0), ccp(492+90, 1416+offsets+40), CCSize(0, 0), "", "Sketchbook", this, 3) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png4", ccp(0, 0), ccp(688+90, 1416+offsets+40), CCSize(0, 0), "", "Sketchbook", this, 3) );
+                    ccp(0, 0), ccp(737, 1463+offsets), CCSize(0, 0), "", "Layer", tLayer, 3) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png1", ccp(0, 0), ccp(100+90, 1416+offsets+40), CCSize(0, 0), "", "Layer", tLayer, 3) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png2", ccp(0, 0), ccp(296+90, 1416+offsets+40), CCSize(0, 0), "", "Layer", tLayer, 3) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png3", ccp(0, 0), ccp(492+90, 1416+offsets+40), CCSize(0, 0), "", "Layer", tLayer, 3) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png4", ccp(0, 0), ccp(688+90, 1416+offsets+40), CCSize(0, 0), "", "Layer", tLayer, 3) );
     
     CheckProperties();
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1",
-                    ccp(0, 0), ccp(49, 458), CCSize(982, 974+offsets), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(49, 458), CCSize(982, 974+offsets), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
-                    ccp(0, 0), ccp(77, 492), CCSize(929, 914+offsets), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(77, 492), CCSize(929, 914+offsets), "", "Layer", tLayer, 1) );
     
     // slot part
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2",
-                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2",
-                    ccp(0, 0), ccp(77, 228), CCSize(782, 177), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(77, 228), CCSize(782, 177), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", // slot plus
-                    ccp(0, 0), ccp(896, 312), CCSize(0, 0), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(896, 312), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png0",
-                    ccp(0, 0), ccp(867, 237), CCSize(136, 63), "", "Sketchbook", this, 1) );
+                    ccp(0, 0), ccp(867, 237), CCSize(136, 63), "", "Layer", tLayer, 1) );
     // 슬롯 개수 숫자
     char name[7];
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 245), ccc3(255,219,53), "", "Sketchbook", this, 5, 0, 255, 100) ); // 현재 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 245), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 245), ccc3(182,142,142), "", "Sketchbook", this, 5) ); // 젼체 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 245), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 젼체 개수
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -551,7 +571,7 @@ void Sketchbook::MakeScrollBook(int idx)
                 sprintf(name2, "letter/letter_buildup_red.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 sprintf(name2, "icon/icon_levelup.png%d", i);
-                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73-20), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(-4, 73), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
                 CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL);
                 ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->runAction( CCRepeatForever::create(action) );
@@ -690,11 +710,14 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClickboard();
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(35,36).c_str());
 
-                if (number == 4)
-                    continue;
+                if (number == 4) // 마스터 속성의 경우 업데이트 예정
+                {
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "Sketchbook", "NoImage", false, WILL_BE_UPDATED, BTN_1, nullData);
+                }
                 
                 // 열려있는 속성은 그 스케치북을 보여준다.
-                if ( (number == 1 && myInfo->IsFire()) || (number == 2 && myInfo->IsWater()) ||
+                else if ( (number == 1 && myInfo->IsFire()) || (number == 2 && myInfo->IsWater()) ||
                     (number == 3 && myInfo->IsLand()) || (number == 4 && myInfo->IsMaster()) )
                 {
                     MakeScroll(number-1);
@@ -702,7 +725,6 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 else
                 {
                     // 잠긴 속성의 경우,
-                    
                     if (myInfo->IsTimeToFreelyBuyProperty()) // 무료로 속성을 배울 수 있는 경우
                     {
                         Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false, 0);
@@ -716,7 +738,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     }
                 }
 
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
@@ -725,7 +747,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 EndScene();
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
@@ -746,7 +768,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 1);
                 }
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png1")
@@ -755,7 +777,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Sketchbook", "BuyTopaz", false, 0);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png2")
@@ -764,7 +786,7 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Sketchbook", "BuyStarCandy", false, 0);
-                break;
+                return true;
             }
         }
     }
@@ -918,6 +940,9 @@ void Sketchbook::EndScene()
     scrollViewSlot->removeFromParent();
     
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

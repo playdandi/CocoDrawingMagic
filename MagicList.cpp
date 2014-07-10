@@ -4,7 +4,6 @@
 using namespace pugi;
 
 static int from;
-//int sid[16] = {22, 25, 26, 28, 12, 15, 16, 18, 32, 35, 36, 38, 42, 43, 45, -1};
 int sid[16];
 
 
@@ -25,6 +24,17 @@ void MagicList::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* move = CCMoveTo::create(0.5f, ccp(0, 0));
+    CCActionInterval* action = CCSequence::create(CCEaseElasticOut::create((CCActionInterval*)move, 0.5f), CCCallFunc::create(this, callfunc_selector(MagicList::Scene_Callback)), NULL );
+    layer->runAction(action);
+}
+void MagicList::Scene_Callback()
+{
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
 void MagicList::onExit()
 {
@@ -39,7 +49,12 @@ void MagicList::onExit()
 
 void MagicList::keyBackClicked()
 {
-    EndScene();
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
+    TryEnd();
 }
 
 static int offset;
@@ -48,6 +63,10 @@ bool MagicList::init()
 {
 	if (!CCLayer::init())
 		return false;
+    
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("MagicList", this);
@@ -93,14 +112,10 @@ bool MagicList::init()
     while (pos < 16) // 아직 존재하지 않는 master 속성에 대해 -1로 대입.
         sid[pos++] = -1;
     
-    
+    last_scid = -1;
+    MakeScrollSlot(false);
     InitSprites();
     InitBtn();
-    MakeScrollSlot(false);
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
     
     code = -1;
     
@@ -129,6 +144,7 @@ void MagicList::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollViewSlot->setTouchEnabled(true);
         CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
@@ -143,6 +159,7 @@ void MagicList::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("MagicList 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollViewSlot->setTouchEnabled(false);
     }
@@ -221,8 +238,14 @@ void MagicList::InitSprites()
         }
     }
     
-    // 스킬 선택/비선택할 때 설명 text
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("스킬 설명 부분", fontList[0], 36, ccp(0.5, 0.5), ccp(77+929/2, 726+offset+200/2), ccc3(78,47,8), CCSize(929-80, 200-10), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10, 0, 255, 999) );
+    // default 설명 글
+    std::string default_msg;
+    if (last_scid == -1)
+        default_msg = "스킬을 장착하고 있지 않아요.";
+    else // 슬롯의 가장 뒤에 배치된 스킬의 설명을 디폴트로 보여준다.
+        default_msg = (SkillInfo::GetSkillInfo(last_scid)->GetName()+"\n"+SkillInfo::GetFullDesc(last_scid)).c_str();
+    // text
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(default_msg, fontList[0], 32, ccp(0.5, 0.5), ccp(77+929/2, 726+offset+200/2), ccc3(78,47,8), CCSize(929-80, 200-10), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", layer, 10, 0, 255, 999) );
     
     
     // slot part
@@ -239,11 +262,6 @@ void MagicList::InitSprites()
     // add child
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-
-    // action
-    CCActionInterval* move = CCMoveTo::create(0.5f, ccp(0, 0));
-    CCActionInterval* action = CCEaseElasticOut::create((CCActionInterval*)move, 0.5f);
-    layer->runAction(action);
 }
 
 void MagicList::InitBtn()
@@ -281,6 +299,7 @@ void MagicList::MakeScrollSlot(bool isAutoMove)
         scid = myInfo->GetSlot()[i]->GetCommonId();
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
+            last_scid = scid;
             sprintf(fname2, "skill_%d.png", scid);
             spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0.5), spriteClassSlot->FindParentCenterPos(fname), CCSize(0, 0), fname, "0", NULL, 4, 1) );
         }

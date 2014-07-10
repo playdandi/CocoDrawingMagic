@@ -25,7 +25,12 @@ public:
     
 protected:
     CCSize winSize;
+    bool isKeybackTouched;
     bool isTouched;
+    
+    CCRect rect;
+    int kind;
+    int idx;
     
 private:
     CCSprite* pBlack;

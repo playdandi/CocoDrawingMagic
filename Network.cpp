@@ -17,85 +17,11 @@ void Network::replaceAll(std::string& str, const std::string& from, const std::s
 void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc)
 {
     CCLog("HttpPost : url = %s", url.c_str());
-
-    //Network::replaceAll(data, "&", "||");
-    
     CCLog("param length = %d", (int)data.size());
     CCLog("param = %s", (unsigned char*)(data.c_str()));
-/*
-    // data => 다음 3단계를 거쳐 암호화한다.
-    // 1) RSA_public_encrypt (512 bit씩 쪼개서 암호화)
-    // 2) base64_encode
-    // 3) replacing '+' to '-'
-   
-    int unitLength = RSA_BIT/8 - 11; // substring 한 개의 단위길이
-    int numOfSubstr = (int)data.size() / unitLength; // substring 개수
-    if ((int)data.size() % unitLength > 0)
-        numOfSubstr++;
-    
-    std::string totalEncryptedString = "";
-    int totalEncryptedLength = 0;
-    
-    unsigned char encrypted[1024];
-    int result;
-    std::string subs;
-
-    // a 암호화
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // 1) RSA_public_encrypt (512 bit씩 쪼개서 암호화)
-    for (int i = 0 ; i < numOfSubstr ; i++)
-    {
-        subs = data.substr(i*unitLength, unitLength);
-        result = RSA_public_encrypt((int)subs.size(), (unsigned char*)(subs.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
-        if (result == -1)
-        {
-            char* err;
-            ERR_load_crypto_strings();
-            ERR_error_string(ERR_get_error(), err);
-            CCLog("RSA ERROR = %s", err);
-            exit(0);
-        }
-        
-        for (int i = 0 ; i < result ; i++)
-            totalEncryptedString.push_back(encrypted[i]);
-        totalEncryptedLength += result;
-    }
-    
-    // 2) base64_encode + 3) replacing '+' to '-'
-    std::string encoded = Common::base64_encode((unsigned char*)totalEncryptedString.c_str(), totalEncryptedLength);
-    for (int i = 0 ; i < encoded.size() ; i++)
-        if (encoded[i] == '+')
-            encoded[i] = '-';
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    
-    // PS 암호화
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    char ps_param[30];
-    sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
-    std::string ps_param_s = ps_param;
-    //CCLog("ps_param_str = %s", ps_param_s.c_str());
-    
-    result = RSA_public_encrypt((int)ps_param_s.size(), (unsigned char*)(ps_param_s.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
-    if (result == -1)
-    {
-        char* err;
-        ERR_load_crypto_strings();
-        ERR_error_string(ERR_get_error(), err);
-        CCLog("RSA ERROR = %s", err);
-        exit(0);
-    }
-    
-    std::string encoded_ps = Common::base64_encode(encrypted, result);
-    for (int i = 0 ; i < encoded_ps.size() ; i++)
-        if (encoded_ps[i] == '+')
-            encoded_ps[i] = '-';
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    */
     
     std::string encoded_a = Encrypt_a(data);
     std::string encoded_ps = Encrypt_PS();
-    
     
     // 이제 파라미터를 만든다. (필요 파라미터 : PS, a)
     std::string postData = "";

@@ -16,6 +16,16 @@ void CocoRoomTodayCandy::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(CocoRoomTodayCandy::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void CocoRoomTodayCandy::SceneCallback()
+{
+    isTouched = false;
+    isScrollViewTouched = false;
+    isScrolling = false;
 }
 void CocoRoomTodayCandy::onExit()
 {
@@ -27,6 +37,11 @@ void CocoRoomTodayCandy::onExit()
 
 void CocoRoomTodayCandy::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -37,6 +52,10 @@ bool CocoRoomTodayCandy::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrollViewTouched = true;
+    isScrolling = true;
     
     // make depth tree
     Depth::AddCurDepth("CocoRoomTodayCandy", this);
@@ -56,6 +75,12 @@ bool CocoRoomTodayCandy::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     // scrollView 생성
     scrollView = CCScrollView::create();
     //scrollView->retain();
@@ -65,7 +90,7 @@ bool CocoRoomTodayCandy::init()
     scrollView->setPosition(ccp(77, 492+40));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
     
     InitSprites();
     MakeScroll();
@@ -74,10 +99,6 @@ bool CocoRoomTodayCandy::init()
     
     spriteClassList = new SpriteClass();
     RefreshProfileList();
-    
-    isTouched = false;
-    isScrollViewTouched = false;
-    isScrolling = false;
     
     return true;
 }
@@ -92,6 +113,7 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("CocoRoomTodayCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -99,6 +121,7 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoomTodayCandy : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -123,28 +146,28 @@ void CocoRoomTodayCandy::InitSprites()
 
     // make pop-up background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1",
-                    ccp(0, 0), ccp(49, 458), CCSize(982, 1073), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(49, 458), CCSize(982, 1073), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
-                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "CocoRoomTodayCandy", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_todaystarcandy_groupfriend_select.png", ccp(0, 0), ccp(103, 1429), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_todaystarcandy_groupfriend_select.png", ccp(0, 0), ccp(103, 1429), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
-                    ccp(0, 0), ccp(900, 1420), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(900, 1420), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     // bottom background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2",
-                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(49, 198), CCSize(982, 223), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2",
-                    ccp(0, 0), ccp(77, 228), CCSize(929, 177), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(77, 228), CCSize(929, 177), "", "Layer", tLayer, 1) );
     
     
     // bottom 5 profile 중에 내 프로필
     
-    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.85f) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
     // bottom button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png",
-                    ccp(0, 0), ccp(750, 262), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 1) );
+                    ccp(0, 0), ccp(750, 262), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",
             ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 1, 1) );
 }
@@ -295,13 +318,13 @@ void CocoRoomTodayCandy::RefreshProfileList()
             CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
             if (friendList[i]->GetImageUrl() != "")
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130+5, 254+11), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5, 0, 255, 0.85f) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.85f) );
                 sprintf(name, "background/bg_profile.png%d", cnt);
-                spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0, 0), "", "CocoRoomTodayCandy", this, 5) );
+                spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0, 0), "", "Layer", tLayer, 5) );
             }
             else
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0,0), "", "CocoRoomTodayCandy", this, 5) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0,0), "", "Layer", tLayer, 5) );
             }
 
             cnt++;
@@ -452,10 +475,9 @@ void CocoRoomTodayCandy::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     selected.clear();
     
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
+    
     this->removeFromParentAndCleanup(true);
-}
-
-void CocoRoomTodayCandy::EndSceneCallback()
-{
 }
 

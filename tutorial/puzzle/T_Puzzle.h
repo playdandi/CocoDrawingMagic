@@ -152,6 +152,8 @@ public:
     CCSize floorSize;
     
 protected:
+    bool isKeybackTouched;
+    
     float PIECE8_WIDTH;
     float PIECE8_HEIGHT;
     float PIECE4_WIDTH;
@@ -246,8 +248,9 @@ private:
     // 튜토리얼 변수들
     CCLabelTTF* ttrMsg;
     CCSprite* ttrBg;
-    CCSprite* ttrArrow;
+    //CCSprite* ttrArrow;
     CCSprite* ttrSkip;
+    CCSprite* ttrFinger;
     
     bool isSkipPossible;
 };

@@ -78,7 +78,9 @@ public:
     void Effect23_Clear();
     void Effect23_Clear_Callback(CCNode* sender, void* pointer);
     
-    void PlayEffect_6(int num); // F7 : 코코 변신 + 코코 주위 링
+    void PlayEffect_6_Fever(); // F7 : 코코타임
+    
+    void PlayEffect_6(int num);
     void PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt); // F7 : 불 이펙트
     void Effect6Callback(CCNode* sender, void* pointer);
     
@@ -90,7 +92,7 @@ public:
     
     void PlayEffect_FeverBg();
     void PlayEffect_FeverBg_Off();
-    void PlayEffect_FeverCircle(CCPoint p, int size);
+    void PlayEffect_FeverCircle(CCPoint p, CCPoint bp, int size);
     void PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer);
     
     void NewlyMadeConnPiece(int x, int y);
@@ -164,6 +166,7 @@ private:
     CCSprite* sp_fire;
     
     // 피버타임
+    CCSprite* fever_black_bg;
     CCParticleSystemQuad* feverBg;
 };
 

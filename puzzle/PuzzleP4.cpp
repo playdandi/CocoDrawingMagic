@@ -42,7 +42,6 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
         type = decidedType;
     else
         type = (rand()%100 < 60) ? CONNECTED : BLOCKED;
-    //type = CONNECTED;
     
     isRemoved = false;
     

@@ -16,6 +16,14 @@ void BuyPotion::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(BuyPotion::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void BuyPotion::SceneCallback()
+{
+    isTouched = false;
 }
 void BuyPotion::onExit()
 {
@@ -27,6 +35,10 @@ void BuyPotion::onExit()
 
 void BuyPotion::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
     sound->playClick();
     EndScene();
 }
@@ -38,6 +50,8 @@ bool BuyPotion::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("BuyPotion", this);
@@ -57,9 +71,13 @@ bool BuyPotion::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
-    InitSprites();
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
     
-    isTouched = false;
+    InitSprites();
     
     return true;
 }
@@ -74,12 +92,14 @@ void BuyPotion::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("BuyPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("BuyPotion 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -103,23 +123,23 @@ void BuyPotion::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
-                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "BuyPotion", this, 2) );
+                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "BuyPotion", this, 2) );
+                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_purchase_potion.png",
-                    ccp(0, 0), ccp(309, 1389), CCSize(0, 0), "", "BuyPotion", this, 2) );
+                    ccp(0, 0), ccp(309, 1389), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458), CCSize(982, 954), "", "BuyPotion", this, 1) );
+                    ccp(0, 0), ccp(49, 458), CCSize(982, 954), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "BuyPotion", this, 1) );
-    CCSprite* bg = CCSprite::create("images/buyPotion_bg.png");
-    bg->setAnchorPoint(ccp(0, 0));
-    bg->setPosition(ccp(75, 528+132+28));
-    this->addChild(bg, 2);
+                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "Layer", tLayer, 1) );
+    background = CCSprite::create("images/buyPotion_bg.png");
+    background->setAnchorPoint(ccp(0, 0));
+    background->setPosition(ccp(75, 528+132+28));
+    tLayer->addChild(background, 2);
     
     // 내용
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
-                    ccp(0, 0), ccp(110, 528), CCSize(857, 132), "", "BuyPotion", this, 2) );
+                    ccp(0, 0), ccp(110, 528), CCSize(857, 132), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz.png",
                     ccp(0, 0), ccp(50, 16), CCSize(0, 0), "background/bg_degree_desc.png", "1", NULL, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_big.png",
@@ -130,17 +150,19 @@ void BuyPotion::InitSprites()
                 ccp(0, 0), ccp(470, 47), ccc3(78,47,8), "background/bg_degree_desc.png", "1", NULL, 2) );
     
     // 코코 그림
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_potion.png", ccp(0.5, 0.5), ccp(75+929/2+50, 492+904/2+45), CCSize(0, 0), "", "BuyPotion", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_potion.png", ccp(0.5, 0.5), ccp(75+929/2+50, 492+904/2+45), CCSize(0, 0), "", "Layer", tLayer, 5) );
     ((CCSprite*)spriteClass->FindSpriteByName("image/coco_potion.png"))->setScale(1.05f);
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(1.0f, ccp(0, 10)), CCMoveBy::create(1.0f, ccp(0, -10)), NULL);
+    ((CCSprite*)spriteClass->FindSpriteByName("image/coco_potion.png"))->runAction(CCRepeatForever::create(action));
     
     // button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png1",
-                    ccp(0, 0), ccp(71, 193), CCSize(0, 0), "", "BuyPotion", this, 1) );
+                    ccp(0, 0), ccp(71, 193), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_request.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png1", "0", NULL, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png2",
-                    ccp(0, 0), ccp(568, 193), CCSize(0, 0), "", "BuyPotion", this, 1) );
+                    ccp(0, 0), ccp(568, 193), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_exchange.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 40), CCSize(0, 0), "button/btn_green.png2", "0", NULL, 1) );
@@ -224,6 +246,9 @@ void BuyPotion::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/buyPotion_bg.png");
     

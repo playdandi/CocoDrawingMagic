@@ -15,6 +15,16 @@ void RequestPotion::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(RequestPotion::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void RequestPotion::SceneCallback()
+{
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
 void RequestPotion::onExit()
 {
@@ -26,6 +36,11 @@ void RequestPotion::onExit()
 
 void RequestPotion::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -36,6 +51,10 @@ bool RequestPotion::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("RequestPotion", this);
@@ -55,6 +74,12 @@ bool RequestPotion::init()
 
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     scrollView = CCScrollView::create();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100 + (487-630)));
@@ -62,16 +87,12 @@ bool RequestPotion::init()
     scrollView->setPosition(ccp(77, 630));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
 
     spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
     InitSprites();
     MakeScroll();
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
     
     return true;
 }
@@ -86,6 +107,7 @@ void RequestPotion::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
@@ -96,6 +118,7 @@ void RequestPotion::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("RequestPotion 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollView->setTouchEnabled(false);
     }
@@ -126,20 +149,20 @@ void RequestPotion::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
-                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "RequestPotion", this, 2) );
+                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "RequestPotion", this, 2) );
+                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_pester.png",
-                    ccp(0, 0), ccp(279, 1389+243), CCSize(0, 0), "", "RequestPotion", this, 2) );
+                    ccp(0, 0), ccp(279, 1389+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion_big.png",
-                    ccp(0, 0), ccp(192, 1389+243), CCSize(0, 0), "", "RequestTopaz", this, 2) );
+                    ccp(0, 0), ccp(192, 1389+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "RequestPotion", this, 1) );
+                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "RequestPotion", this, 1) );
+                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "Layer", tLayer, 1) );
     
     // 설명 창 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",ccp(0, 0), ccp(110, 478), CCSize(857, 132), "", "RequestPotion", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",ccp(0, 0), ccp(110, 478), CCSize(857, 132), "", "Layer", tLayer, 2) );
     CCPoint p = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("요청한 친구에게는 24시간 후 다시 요청 가능합니다.", fontList[0], 36, ccp(0.5, 0.5), p, ccc3(78,47,8), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
     
@@ -331,6 +354,9 @@ void RequestPotion::EndScene()
     scrollView->removeFromParentAndCleanup(true);
     
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

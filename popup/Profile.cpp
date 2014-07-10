@@ -23,6 +23,14 @@ void Profile::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.3f, ccp(0, 0)), CCScaleTo::create(0.3f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Profile::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Profile::SceneCallback()
+{
+    isTouched = false;
 }
 void Profile::onExit()
 {
@@ -34,6 +42,11 @@ void Profile::onExit()
 
 void Profile::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -44,6 +57,8 @@ bool Profile::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("Profile", this);
@@ -62,6 +77,12 @@ bool Profile::init()
     
     
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, winSize.height/2));
+    this->addChild(tLayer, 1);
+    tLayer->setScale(0);
     
     spriteClass = new SpriteClass();
     InitSprites();
@@ -83,12 +104,14 @@ void Profile::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("Profile : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("Profile : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -110,18 +133,18 @@ void Profile::InitSprites()
     
     // make pop-up background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png1",
-                ccp(0, 0), ccp(49, 640-25), CCSize(982, 623+50), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(49, 640-25), CCSize(982, 623+50), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                ccp(0, 0), ccp(76, 678-25), CCSize(929, 562+50), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(76, 678-25), CCSize(929, 562+50), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png",
-                ccp(0, 0), ccp(809, 1039+25), CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(809, 1039+25), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png",
-                ccp(0, 0), ccp(900, 1132+25), CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(900, 1132+25), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     CCLayer* profileLayer = CCLayer::create();
     profileLayer->setContentSize(CCSizeMake(862, 166));
     profileLayer->setPosition(ccp(115, 1050));
-    this->addChild(profileLayer, 5);
+    tLayer->addChild(profileLayer, 5);
     
     // rank
     if (profile_index+1 == 1) // 1~3위는 이미지 사용
@@ -141,19 +164,8 @@ void Profile::InitSprites()
     }
 
     int idx = profile_index;
+   
     
-    // profile
-    /*
-    if (friendList[idx]->GetImageUrl() != "")
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[idx]->GetProfile(), ccp(0    , 0), ccp(102+5, 36+10), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png", ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
-    }
-    else
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[idx]->GetProfile(), ccp(0    , 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255, 1.0f) );
-    }
-    */
     CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
     if (friendList[idx]->GetImageUrl() != "")
     {
@@ -190,7 +202,7 @@ void Profile::InitSprites()
     if (friendList[idx]->IsFire())
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png1",
-                ccp(0, 0), pos, CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png1",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png1"), CCSize(0, 0), "background/bg_skill_yellow_mini.png1", "0", NULL, 1, 1) );
@@ -200,7 +212,7 @@ void Profile::InitSprites()
     if (friendList[idx]->IsWater())
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png2",
-                ccp(0, 0), pos, CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png2",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png2"), CCSize(0, 0), "background/bg_skill_yellow_mini.png2", "0", NULL, 1, 1) );
@@ -210,7 +222,7 @@ void Profile::InitSprites()
     if (friendList[idx]->IsLand())
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_yellow_mini.png3",
-                ccp(0, 0), pos, CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_property_big.png3",
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 1, 1) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land_mini.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_yellow_mini.png3"), CCSize(0, 0), "background/bg_skill_yellow_mini.png3", "0", NULL, 1, 1) );
@@ -219,9 +231,9 @@ void Profile::InitSprites()
     
     // degree
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
-                ccp(0, 0), ccp(114, 701-25), CCSize(858, 76), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(114, 701-25), CCSize(858, 76), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png",
-                ccp(0, 0), ccp(908, 710-25), CCSize(0, 0), "", "Profile", this, 1) );
+                ccp(0, 0), ccp(908, 710-25), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("오늘도 곰을 백마리 잡은 마법사", fontList[0], 48,
                 ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_degree_desc.png"), ccc3(255,255,255), "background/bg_degree_desc.png", "1", NULL, 1, 1) );
 }
@@ -231,7 +243,7 @@ void Profile::InitFairy()
     CCLayer* fairyLayer = CCLayer::create();
     fairyLayer->setAnchorPoint(ccp(0, 0));
     fairyLayer->setPosition(ccp(382, 797-25));
-    this->addChild(fairyLayer, 10);
+    tLayer->addChild(fairyLayer, 10);
     
     // 배경보드
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png2", ccp(0, 0), ccp(0, 0), CCSize(309, 236), "", "Layer", fairyLayer, 5) );
@@ -330,11 +342,11 @@ void Profile::InitSkill()
     
     // skill board
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png3",
-                ccp(0, 0), ccp(699, 797-25), CCSize(263, 236), "", "Profile", this, 5) );
+                ccp(0, 0), ccp(699, 797-25), CCSize(263, 236), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png2",
                 ccp(0, 0), ccp(19, 22), CCSize(228, 53), "background/bg_board_brown.png3", "1", NULL, 5, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(760, 850), CCSize(0, 0), "", "Profile", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0, 0), ccp(760, 850), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
     CCPoint pos = spriteClass->FindParentCenterPos("background/bg_gameready_name.png2");
     
@@ -365,11 +377,11 @@ void Profile::InitSkill()
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
         
         // Lv. <- 이 그림
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797, 850), CCSize(0, 0), "", "Profile", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797, 850), CCSize(0, 0), "", "Layer", tLayer, 5) );
         // 레벨 숫자 이미지
         CCSize size = ((CCSprite*)spriteClass->FindSpriteByName("number/level_lv.png"))->getContentSize();
         sprintf(skillName, "number/level_%d.png", friendList[idx]->GetSkillLv() % 10);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797+size.width, 850+3), CCSize(0, 0), "", "Profile", this, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797+size.width, 850+3), CCSize(0, 0), "", "Layer", tLayer, 5) );
     }
 }
 
@@ -436,6 +448,9 @@ void Profile::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
 
     this->removeFromParentAndCleanup(true);
 }

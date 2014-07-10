@@ -33,6 +33,12 @@ void Ranking::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
     
+    isOnceScrollViewTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
+    isTouched = false;
+    isKeybackTouched = false;
+    
     if (fromWhere == 1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
     else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
@@ -52,12 +58,11 @@ void Ranking::onExit()
 
 void Ranking::keyBackClicked()
 {
-    //if (isKeyBackClicked)
-    //    return;
-    //isKeyBackClicked = true;
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
     
-    sound->playWarning();
-    
+    sound->playWarning();    
     std::vector<int> nullData;
     Common::ShowPopup(this, "Ranking", "NoImage", false, POPUP_EXIT, BTN_2, nullData);
 }
@@ -68,6 +73,12 @@ bool Ranking::init()
 	{
 		return false;
 	}
+    
+    isOnceScrollViewTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
+    isTouched = true;
+    isKeybackTouched = true;
     
     // make depth tree (처음 시작이니까 clear하고 진행)
     Depth::ClearDepth();
@@ -97,20 +108,6 @@ bool Ranking::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Ranking::Notification), "Ranking", NULL);
     
-    /*
-     - RGBA8888(kTexture2DPixelFormat_RGBA8888) : 최대 품질을 보장하며 32비트 픽셀 포맷이다. 단점은 다른 포맷들에 비해 메모리를 많이 소모한다는 점이다. 16비트 텍스처의 두 배나 되기 때문에 렌더링도 느리다. 이 픽셀 포맷이 적용된 이미지는 1024×1024 해상도에서 4MB, 2048×2048 해상도에서 16MB의 메모리를 사용한다. 다음에 설명할 RGB4444를 적용하면 이를 반으로 줄일 수 있다.
-     - RGBA4444(kTexture2DPixelFormat_RGBA4444) : 16비트 픽셀 포맷으로 적당한 수준의 품질과 속도를 보장하며, 메모리도 그다지 많이 사용하지 않는다.
-     - RGB5_A1( kTexture2DPixelFormat_RGB5A) : 역시 16비트 픽셀 포맷이며 RGB 채널에는 상대적으로 높은 품질을 보장하지만, 알파 채널에는 1비트만 할당했기 때문에 상세한 표현이 불가능하다. 평균적인 속도와 메모리 사용량을 갖는다.
-     - RGB565(kTexture2DPixelFormat_RGB565) : 알파 채널을 지원하지 않지만 16비트 텍스체 중 가장 나은 RGB 품질을 갖는다.
-     */
-    /*
-    CCTexture2D::setDefaultAlphaPixelFormat(kTexture2DPixelFormat_RGBA4444);
-    // load images
-    tBackground = CCTextureCache::sharedTextureCache()->addImage("images/ranking.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking.png");
-    tBackground = NULL;
-    */
-    
     
     // 인게임에서 돌아온 경우 potion timer 시간 갱신한다.
     if (fromWhere != -1)
@@ -118,7 +115,7 @@ bool Ranking::init()
     // 모든 시간에 대한 타이머 작동
     this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
     
-    
+    idx = -1;
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -138,13 +135,7 @@ bool Ranking::init()
         sound->StopBackgroundSound();
         sound->PlayBackgroundSound();
     }
-    
-    isOnceScrollViewTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
-    isTouched = false;
-    isKeyBackClicked = false;
-    
+
 	return true;
 }
 
@@ -210,7 +201,7 @@ void Ranking::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         scrollView->setTouchEnabled(true);
         isTouched = false;
-        isKeyBackClicked = false;
+        isKeybackTouched = false;
         CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
@@ -253,6 +244,7 @@ void Ranking::Notification(CCObject* obj)
         CCLog("Ranking 터치 비활성");
         this->setKeypadEnabled(false);
         this->setTouchEnabled(false);
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -319,6 +311,7 @@ void Ranking::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
     }
@@ -460,12 +453,11 @@ void Ranking::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("남음", fontList[0], 30, ccp(0, 0), ccp(550, 1400), ccc3(212, 212, 212), "", "Ranking", this, 5) );
     
     
-
+    // 버튼 젤리 움직임
     CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"));
     CCSize t = temp->getContentSize();
     temp->setAnchorPoint(ccp(0.5,0.5));
     temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
-    
     CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
     temp->runAction(CCRepeatForever::create(action));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
@@ -654,10 +646,6 @@ void Ranking::PotionTimer(float f)
 }
 
 
-static CCRect rect;
-static int kind;
-static int idx;
-
 bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     if (isTouched)
@@ -776,7 +764,6 @@ void Ranking::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
-    CCLog("%d %d", (int)point.x, (int)point.y);
     
     CCPoint p;
     for (int i = 0 ; i < friendList.size() ; i++)
@@ -811,21 +798,19 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
     }
     
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
+    }
     if (rect.containsPoint(point))
     {
         switch (kind)
         {
             case BTN_MENU_GAMEREADY:
                 Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
-                //spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-                //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
                 break;
         }
-    }
-    if (idx > -1)
-    {
-        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
     }
     
     isOnceScrollViewTouched = true;

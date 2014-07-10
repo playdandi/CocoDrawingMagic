@@ -14,6 +14,8 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
+    void SceneCallback();
+    
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
@@ -48,14 +50,21 @@ public:
     
 protected:
     CCSize winSize;
+    bool isKeybackTouched;
     bool isTouched;
     bool isTouchDone;
     bool isEnded;
-    bool isKeybackTouched;
+    
     
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
+    
+    CCLayer* tLayer;
+    
+    CCRect rect;
+    int kind;
+    int idx;
 };
 
 #endif /* defined(__CocoMagic__NoImage__) */

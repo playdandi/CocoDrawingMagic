@@ -49,6 +49,9 @@ extern bool isInGamePause;
 extern bool isInGameTutorial;
 extern int savedTime;
 
+// item cost
+extern int itemCost[5];
+
 // 환경설정 메뉴
 extern int menuInSetting;
 
@@ -125,7 +128,7 @@ private:
 class MyGameResult
 {
 public:
-    MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int mission, int newrecord);
+    MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text);
     int getTopaz;
     int getStarCandy;
     int getPotion;
@@ -133,8 +136,10 @@ public:
     int score;
     int totalScore;
     int combo;
+    int bestCombo;
     bool isMissionSuccess;
     bool isNewRecord;
+    std::string content;
     std::vector<int> skillNum;
     std::vector<int> skillCnt;
 };
@@ -196,6 +201,7 @@ public:
     void SetPotion(int potion, int remainPotionTime);
     void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
     void SetItem(std::vector<int> items);
+    void ChangeItem(int idx, int value);
     void SetProperties(int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     void SetScore(int highScore, int weeklyHighScore, int certificateType, int remainWeeklyRankTime);
     void SetRemainWeeklyRankTime(int time);

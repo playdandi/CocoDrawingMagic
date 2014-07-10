@@ -48,7 +48,11 @@ void T_Puzzle::onExit()
 
 void T_Puzzle::keyBackClicked()
 {
-    if (!isInGamePause)
+    if (isKeybackTouched || m_bTouchStarted)
+        return;
+    isKeybackTouched = true;
+    
+    if (ttrState < 22) // 용 시전이 시작되면 터치 불가능
         PauseGame();
 }
 
@@ -58,6 +62,11 @@ bool T_Puzzle::init()
 	{
 		return false;
 	}
+    
+    isKeybackTouched = true;
+    isFalling = true;
+    isInGamePause = true;
+    isCancelling = true;
     
     // make depth tree
     Depth::AddCurDepth("T_Puzzle", this);
@@ -113,12 +122,6 @@ bool T_Puzzle::init()
     pBlackOpen->setColor(ccc3(0,0,0));
     this->addChild(pBlackOpen, 3000);
     
-    isFalling = false;
-    isInGamePause = false;
-    
-    isCancelling = false;
-    //m_iSpiritSP = 0;
-    
 	return true;
 }
 
@@ -139,14 +142,23 @@ void T_Puzzle::InitTutorial()
     ttrBg->addChild(ttrMsg, 3002);
     ttrBg->setOpacity(0);
     
-    ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-    ttrArrow->setRotation(180);
-    ttrArrow->retain();
+    //ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+    //ttrArrow->setRotation(180);
+    //ttrArrow->retain();
     
+    ttrFinger = CCSprite::create("images/tutorial_finger.png");
+    ttrFinger->setScale(1.3f);
+    ttrFinger->setAnchorPoint(ccp(0.5, 1));
+    ttrFinger->setOpacity(0);
+    this->addChild(ttrFinger, 3003);
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, 10)), CCMoveBy::create(0.5f, ccp(0, -10)), NULL );
+    ttrFinger->runAction(CCRepeatForever::create(action));
+    
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     isSkipPossible = false;
-    CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
-    if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
-    {
+    //CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
+    //if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
+    //{
         isSkipPossible = true;
         ttrSkip = CCSprite::create("images/tutorial_explain.png");
         ttrSkip->setAnchorPoint(ccp(1, 0));
@@ -154,7 +166,8 @@ void T_Puzzle::InitTutorial()
         ttrSkip->setScaleX((float)400 / (float)637);
         ttrSkip->setScaleY((float)100 / (float)130);
         this->addChild(ttrSkip, 3001);
-    }
+    //}
+    #endif
 }
 
 void T_Puzzle::Notification(CCObject* obj)
@@ -169,6 +182,7 @@ void T_Puzzle::Notification(CCObject* obj)
         ((T_Puzzle*)Depth::GetCurPointer())->setKeypadEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
         m_bTouchStarted = false;
+        isKeybackTouched = false;
         CCLog("T_Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         //sound->ResumeBackgroundInGameSound();
@@ -187,6 +201,7 @@ void T_Puzzle::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("T_Puzzle 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         ((T_Puzzle*)depth[depth.size()-2]->GetCurPointer())->setTouchEnabled(false);
@@ -757,6 +772,13 @@ void T_Puzzle::TutorialStart(CCNode* sender, void* pointer)
     ttrMsg->setOpacity(255);
     
     pThis->ttrState = -1;
+    
+    // touch 해제
+    pThis->isFalling = false;
+    pThis->isInGamePause = false;
+    pThis->isCancelling = false;
+    pThis->isKeybackTouched = false;
+    
     pThis->TutorialNextState();
 }
 
@@ -786,6 +808,8 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString("먼저 피스를 그리는 방법을 보여줄게.");
             break;
         case 6: // 피스 그리기
+            ttrFinger->setOpacity(255);
+            ttrFinger->setPosition( SetTouch8Position(2, 3) );
             spriteP8[2][3]->setColor(ccc3(255,255,255));
             spriteP8[3][3]->setColor(ccc3(255,255,255));
             spriteP8[4][4]->setColor(ccc3(255,255,255));
@@ -807,6 +831,8 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString("붉은색 피스를 따라 그려봐.");
             break;
         case 11: // 붉은색 기본 마법 위한 한붓그리기
+            ttrFinger->setOpacity(255);
+            ttrFinger->setPosition( SetTouch8Position(5, 4) );
             spriteP8[3][5]->setColor(ccc3(255,255,255));
             spriteP8[4][5]->setColor(ccc3(255,255,255));
             spriteP8[5][4]->setColor(ccc3(255,255,255));
@@ -835,6 +861,8 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString("아래에 보이는 붉은 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
             break;
         case 16: // 사이클 한붓그리기
+            ttrFinger->setOpacity(255);
+            ttrFinger->setPosition( SetTouch8Position(4, 1) );
             spriteP8[4][1]->setColor(ccc3(255,255,255));
             spriteP8[5][1]->setColor(ccc3(255,255,255));
             spriteP8[5][2]->setColor(ccc3(255,255,255));
@@ -859,8 +887,14 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString("마지막으로 화려한 마법을 보여주고 갈게. 그럼 안녕!");
             break;
         case 22: // 붉은 용의 숨결 시전
+            m_bTouchStarted = true;
+            // tutorial object delete
             ttrMsg->removeFromParentAndCleanup(true);
             ttrBg->removeFromParentAndCleanup(true);
+            ttrFinger->removeFromParentAndCleanup(true);
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            ttrSkip->removeFromParentAndCleanup(true);
+            #endif
             ReverseColor();
             skill->Invoke(7, touch_cnt%QUEUE_CNT);
             break;
@@ -987,12 +1021,6 @@ CCPoint T_Puzzle::BoardMovePosition(CCPoint point)
 
 void T_Puzzle::PauseGame()
 {
-    if (isInGamePause)
-        return;
-    isInGamePause = true;
-    
-    sound->PauseBackgroundInGameSound();
-    
     CancelDrawing();
     
     // 정령 멈추기
@@ -1005,7 +1033,7 @@ void T_Puzzle::PauseGame()
         effect->GetSpirit(2)->pauseSchedulerAndActions();
     */
     
-    Common::ShowNextScene(this, "T_Puzzle", "T_PuzzlePause", false, vo.y+tbSize.height+boardSize.height+60);
+    Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60);
 }
 void T_Puzzle::SkipGame()
 {
@@ -1041,29 +1069,22 @@ void T_Puzzle::StopAllActionsAtPieces()
 
 bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCPoint point = pTouch->getLocation();
+    if (ttrState >= 22)
+        return false;
     
-    /*
-    // 보드판과 상관없는 것들 (lock에 제한받지 않는 것들)
-    // 1) pause button
-    CCRect rect = ((CCSprite*)spriteClassInfo->FindSpriteByName("icon/icon_pause.png"))->boundingBox();
-    rect.setRect(rect.getMinX()-50, rect.getMinY()-50, rect.getMaxX()-rect.getMinX()+100, rect.getMaxY()-rect.getMinY()+100);
-    if (rect.containsPoint(point))
-    {
-        PauseGame();
-        return true;
-    }
-    */
+    CCPoint point = pTouch->getLocation();
+
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     // 2) 튜토리얼 건너뛰기
-    if (isSkipPossible)
-    {
+    //if (isSkipPossible)
+    //{
         if (ttrSkip->boundingBox().containsPoint(point))
         {
             SkipGame();
             return false;
         }
-    }
-    
+    //}
+    #endif
     
     CCLog("ttrState = %d", ttrState);
     CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);
@@ -1125,6 +1146,25 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         return (m_bTouchStarted = false);
     }
      */
+    
+    // 강제로 시작점 잡기
+    if (ttrState == 6)
+    {
+        if (!(x == 2 && y == 3))
+            return (m_bTouchStarted = false);
+    }
+    else if (ttrState == 11)
+    {
+        if (!(x == 5 && y == 4))
+            return (m_bTouchStarted = false);
+    }
+    else if (ttrState == 16)
+    {
+        if (!(x == 4 && y == 1))
+            return (m_bTouchStarted = false);
+    }
+    
+    ttrFinger->setOpacity(0);
     
     m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
     m_bLockP8[x][y]++; // lock 걸기
@@ -1359,6 +1399,7 @@ void T_Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 if (!m_bIsCycle[touch_cnt%QUEUE_CNT])
                 {
+                    ttrFinger->setOpacity(255);
                     CancelDrawing();
                     return;
                 }
@@ -1430,6 +1471,7 @@ void T_Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         // 3개 미만으로 한붓그리기가 되었다면, 원상태로 복구시킨다.
         else
         {
+            ttrFinger->setOpacity(255);
             CancelDrawing();
         }
     }
@@ -1488,7 +1530,8 @@ void T_Puzzle::InvokeSkills(int queue_pos)
         
         Lock(queue_pos);
         
-        skill->Invoke(0, queue_pos);
+        if (ttrState != 6)
+            skill->Invoke(0, queue_pos);
         
         Bomb(queue_pos, piece8xy[queue_pos]);
     }
@@ -2004,10 +2047,8 @@ void T_Puzzle::EndScene()
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game3.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
-    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game3.png");
     
     // delete all objects
     effect->RemoveAllObjects();

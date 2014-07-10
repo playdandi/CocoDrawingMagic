@@ -23,7 +23,7 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    virtual void registerWithTouchDispatcher(void);
+    void SceneCallback();
     
     void Notification(CCObject* obj);
     
@@ -44,6 +44,7 @@ public:
     
 protected:
     CCSize winSize;
+    bool isKeybackTouched;
     bool isTouched;
     bool isScrolling;
     bool isScrollViewTouched;
@@ -52,15 +53,22 @@ protected:
     bool itemSelected[5];
     int callbackType;
     
+    CCRect rect;
+    int kind;
+    int idx;
+    
 private:
+    CCLayer* tLayer;
+    
     CCSprite* pBlack;
     CCSprite* pBlackClose;
     
     CCLayer* fairyLayer;
     CCLayer* skillLayer;
     CCLayer* containerSlot;
-    
     CCScrollView* scrollViewSlot;
+    
+    CCLayer* itemNumberLayer[5];
     
     SpriteClass* spriteClass;
     SpriteClass* spriteClassProperty;

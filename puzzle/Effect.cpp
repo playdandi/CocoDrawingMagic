@@ -165,10 +165,21 @@ void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_SkillIcon(int skillNum)
 {
+    // 스킬 실제 고유번호 계산
     int num;
+    if (skillNum <= 2) num = skillNum+21;
+    else if (skillNum < 8) num = skillNum+20;
+    else if (skillNum <= 10) num = skillNum+3;
+    else if (skillNum < 16) num = skillNum+2;
+    else if (skillNum <= 18) num = skillNum+15;
+    else if (skillNum < 24) num = skillNum+14;
+
+    /*
     if (skillNum < 8) num = skillNum+21;
     else if (skillNum < 16) num = skillNum+3;
     else if (skillNum < 24) num = skillNum+15;
+    */
+    
     char name[40];
     sprintf(name, "skill_%d.png", num);
     CCSprite* skill = CCSprite::createWithSpriteFrameName(name);
@@ -1165,12 +1176,22 @@ void Effect::Effect23_Clear_Callback(CCNode* sender, void* pointer)
 }
 
 
+void Effect::PlayEffect_6_Fever()
+{
+    CCSprite* F7_icon = CCSprite::createWithSpriteFrameName("icon/icon_gauge_big.png");
+    F7_icon->setPosition(gameLayer->SetTouch8Position(3, 3));
+    F7_icon->setScale(3.0f);
+    F7_icon->setOpacity(0);
+    gameLayer->addChild(F7_icon, 5010);
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.3f, 4.0f), CCSequence::create( CCFadeIn::create(0.3f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), this), NULL );
+    F7_icon->runAction(action);
+}
 
 void Effect::PlayEffect_6(int num)
 {
-    // F7 : 코코타임 (코코 주위의 링)
+    // 피스 새로고침
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire7_coco.plist");
-    //m_emitter->retain();
     m_emitter->setPosition(ccp(200, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+150));
     m_emitter->setScale(1.2f);
     gameLayer->addChild(m_emitter, 2000);
@@ -1178,7 +1199,7 @@ void Effect::PlayEffect_6(int num)
 }
 void Effect::PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt)
 {
-    // F7 : 코코타임 (덩어리에 생기는 이펙트들)
+    // 피스 새로고침 (덩어리에 생기는 이펙트들)
     // 1회 : fire7_1, 2회 : fire7_2, 3회부터 : fire7_3 + (덩어리 기준 이펙트 1개 공통)
     
     queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
@@ -1615,6 +1636,7 @@ void Effect::NewlyMadeConnPiece(int x, int y)
 
 void Effect::ShowStarCandy(std::vector<CCPoint> pos)
 {
+    return;
     starCandyCallbackCnt = 3;
     starCandyPos.clear();
     starCandyPos = pos;
@@ -1684,12 +1706,12 @@ void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
 void Effect::PlayEffect_FeverBg()
 {
     // 어두운 배경
-    F8_bg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, gameLayer->m_winSize.width, gameLayer->m_winSize.height));
-    F8_bg->setPosition(ccp(0, 0));
-    F8_bg->setAnchorPoint(ccp(0, 0));
-    F8_bg->setColor(ccc3(0,0,0));
-    gameLayer->addChild(F8_bg, 5);
-    F8_bg->runAction(CCFadeTo::create(0.5f, 255));
+    fever_black_bg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, gameLayer->m_winSize.width, gameLayer->m_winSize.height));
+    fever_black_bg->setPosition(ccp(0, 0));
+    fever_black_bg->setAnchorPoint(ccp(0, 0));
+    fever_black_bg->setColor(ccc3(0,0,0));
+    gameLayer->addChild(fever_black_bg, 5);
+    fever_black_bg->runAction(CCFadeTo::create(0.5f, 255));
     
     // 피버타임 배경
     feverBg = CCParticleSystemQuad::create("particles/feverTime_bg.plist");
@@ -1701,13 +1723,13 @@ void Effect::PlayEffect_FeverBg()
 }
 void Effect::PlayEffect_FeverBg_Off()
 {
-    F8_bg->removeFromParentAndCleanup(true);
+    fever_black_bg->removeFromParentAndCleanup(true);
     feverBg->setDuration(0.1f);
     feverBg->setAutoRemoveOnFinish(true);
     CCLog("피버타임 이펙트 잘 제거됨.");
 }
 
-void Effect::PlayEffect_FeverCircle(CCPoint p, int size)
+void Effect::PlayEffect_FeverCircle(CCPoint p, CCPoint bp, int size)
 {
     CCSprite* fc = CCSprite::createWithSpriteFrameName("fever_circle.png");
     fc->setPosition(gameLayer->SetTouch8Position(p.x, p.y));
@@ -1715,7 +1737,17 @@ void Effect::PlayEffect_FeverCircle(CCPoint p, int size)
     fc->setScale((float)(size*2+1)/(float)3);
     gameLayer->addChild(fc, 2000);
     
-    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.15f), CCRotateBy::create(0.15f, 20), NULL), CCFadeOut::create(0.15f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
+    std::vector<CCPoint> pp = gameLayer->GetPosForFeverTime(true);
+    int dx = 10/2 * ((int)(p.x - bp.x));
+    int dy = 10/2 * ((int)(p.y - bp.y));
+    
+    float angle = 10.0f;
+    if ((dx <= 0 && dy < 0) || (dx < 0 && dy == 0) || (dx < 0 && dy > 0))
+        angle = -10.0f;
+    
+    //CCActionInterval* action = CCSequence::create( CCSpawn::create(CCEaseOut::create(CCFadeIn::create(0.2f), 1.0f), CCRotateBy::create(0.2f, angle), CCMoveBy::create(0.2f, ccp(dx, dy)), NULL), CCSpawn::create(CCEaseIn::create(CCFadeIn::create(0.2f), 1.0f), CCRotateBy::create(0.2f, angle), NULL), CCMoveBy::create(0.2f, ccp(dx, dy)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
+    
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.2f), CCRotateBy::create(0.2f, angle), CCMoveBy::create(0.2f, ccp(dx, dy)), NULL), CCSpawn::create(CCFadeOut::create(0.2f), CCRotateBy::create(0.2f, angle), NULL), CCMoveBy::create(0.2f, ccp(dx, dy)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
     fc->runAction(action);
 }
 void Effect::PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer)

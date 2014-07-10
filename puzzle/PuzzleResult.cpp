@@ -20,7 +20,7 @@ void PuzzleResult::onEnter()
     CCLayer::onEnter();
     
     // sound
-    //((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
+    ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
 }
 void PuzzleResult::onExit()
 {
@@ -45,7 +45,7 @@ bool PuzzleResult::init()
     // make depth tree
     Depth::AddCurDepth("PuzzleResult", this);
     
-    this->setKeypadEnabled(true);
+    //this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     
@@ -234,7 +234,7 @@ void PuzzleResult::InitSprites()
     // 말풍선
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_speech_balloon.png", ccp(0, 0), ccp(150, 680-5), CCSize(550, 80), "", "PuzzleResult", this, 1005) );
     CCPoint p = spriteClass->FindParentCenterPos("background/bg_speech_balloon.png");
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("와~ 오늘은 연습이 정말 잘 되는구나!", fontList[2], 30, ccp(0.5, 0.5), ccp(p.x, p.y), ccc3(0,0,0), "background/bg_speech_balloon.png", "1", NULL, 1005, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myGameResult->content, fontList[2], 30, ccp(0.5, 0.5), ccp(p.x, p.y), ccc3(0,0,0), "background/bg_speech_balloon.png", "1", NULL, 1005, 1) );
     // 말풍선 움직이는 액션
     CCActionInterval* action = CCSequence::create(CCMoveBy::create(1.0f, ccp(-5, 0)), CCMoveBy::create(1.0f, ccp(5, 0)), NULL);
     CCActionInterval* rep = CCRepeatForever::create(action);
@@ -340,13 +340,13 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, 300), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
     CCPoint pos = spriteClass->FindParentCenterPos("button/btn_green.png");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_green.png", ccp(0.5, 0.5), ccp(pos.x, pos.y+5), CCSize(0, 0), "button/btn_green.png", "0", this, 1005, 1) );
-    
 
-    // 게임시작 버튼 움직이기
+    // 확인 버튼 젤리 움직임
     CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green.png"));
     CCActionInterval* action2 = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
     temp->runAction(CCRepeatForever::create(action2));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
+    
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -531,7 +531,15 @@ void PuzzleResult::MPTimer(float f)
 
 bool PuzzleResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (isTouched)
+        return false;
+    isTouched = true;
+    
     CCPoint point = pTouch->getLocation();
+    
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
@@ -539,8 +547,12 @@ bool PuzzleResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                //sound->playClick();
                 spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
                 ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
                 return true;
             }
         }
@@ -556,7 +568,7 @@ void PuzzleResult::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
-    
+    /*
     ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green.png"))->setColor(ccc3(255,255,255));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(255,255,255));
     
@@ -580,6 +592,32 @@ void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
     }
+    */
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_CONFIRM:
+                // 화면 어둡게 하고, PuzzleResult 팝업창 끄고, Puzzle->Ranking으로 돌아가자.
+                pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
+                pBlackClose->setPosition(ccp(0, 0));
+                pBlackClose->setAnchorPoint(ccp(0, 0));
+                pBlackClose->setColor(ccc3(0, 0, 0));
+                pBlackClose->setOpacity(0);
+                this->addChild(pBlackClose, 7000);
+                CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::EndSceneCallback), this), NULL);
+                pBlackClose->runAction(action);
+                break;
+        }
+    }
+    
+    isTouched = false;
 }
 
 void PuzzleResult::EndScene()

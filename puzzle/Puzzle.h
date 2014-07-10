@@ -27,7 +27,7 @@ class PuzzleP4Set;
 class Puzzle : public CCLayerColor
 {
 public:
-    static CCScene* scene(int addedPotion, int numOfFreezeTime);
+    static CCScene* scene(int addedPotion, int freezeTime, int cocoTime = 1);
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -68,6 +68,8 @@ public:
     
     void HintTimer(float f);
     void FeverTimer(float f);
+    
+    bool IsHintShown();
     
     void AddPiecesByFeverTime(std::vector<CCPoint> &p, int queue_pos);
     
@@ -211,7 +213,11 @@ public:
     void XmlParseGameEnd(xml_document *xmlDoc);
     void ParseProfileImage(char* data, int size, int idx);
     
+    CCClippingNode* GetBoardClip();
+    
 protected:
+    bool isKeybackTouched;
+    
     float PIECE8_WIDTH;
     float PIECE8_HEIGHT;
     float PIECE4_WIDTH;
@@ -390,6 +396,9 @@ private:
     
     int m_iFallingCallbackCnt;
 	int m_numOfFallingObjects;
+    
+    CCSprite* boardSP;
+    CCClippingNode* boardClip;
 };
 
 class PuzzleP8Set

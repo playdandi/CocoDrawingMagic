@@ -31,8 +31,6 @@ void T_Sketchbook::onExit()
 
 void T_Sketchbook::keyBackClicked()
 {
-    sound->playClick();
-    EndScene();
 }
 
 static int offsets = -80;

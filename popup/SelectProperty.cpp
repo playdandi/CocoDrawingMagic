@@ -18,6 +18,14 @@ void SelectProperty::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.3f, ccp(0, 0)), CCScaleTo::create(0.3f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(SelectProperty::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void SelectProperty::SceneCallback()
+{
+    isTouched = false;
 }
 void SelectProperty::onExit()
 {
@@ -29,6 +37,10 @@ void SelectProperty::onExit()
 
 void SelectProperty::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
     sound->playClick();
     EndScene(false);
 }
@@ -39,6 +51,7 @@ bool SelectProperty::init()
 	if (!CCLayer::init())
 		return false;
 
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("SelectProperty", this);
@@ -57,6 +70,12 @@ bool SelectProperty::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, winSize.height/2));
+    this->addChild(tLayer, 1);
+    tLayer->setScale(0);
+    
     InitSprites();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -74,12 +93,14 @@ void SelectProperty::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("SelectProperty : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("SelectProperty : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 2)
@@ -123,39 +144,39 @@ void SelectProperty::InitSprites()
     spriteClass = new SpriteClass();
     
     // 기본 팝업창 틀
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0.5, 0.5), ccp(winSize.width/2, winSize.height/2), CCSize(982, 970), "", "SelectProperty", this, 0) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0.5, 0.5), ccp(winSize.width/2, winSize.height/2), CCSize(929, 920), "", "SelectProperty", this, 0) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, winSize.height/2+970/2-225), CCSize(0, 0), "", "SelectProperty", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, winSize.height/2+970/2-131), CCSize(0, 0), "", "SelectProperty", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0.5, 0.5), ccp(winSize.width/2, winSize.height/2), CCSize(982, 970), "", "Layer", tLayer, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0.5, 0.5), ccp(winSize.width/2, winSize.height/2), CCSize(929, 920), "", "Layer", tLayer, 0) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, winSize.height/2+970/2-225), CCSize(0, 0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, winSize.height/2+970/2-131), CCSize(0, 0), "", "Layer", tLayer, 1) );
    
     // 타이틀
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(126+5, winSize.height/2+970/2-50), CCSize(759-126+52, 90), "", "SelectProperty", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(126+5, winSize.height/2+970/2-50), CCSize(759-126+52, 90), "", "Layer", tLayer, 1) );
     CCPoint pos = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("속성 선택하기", fontList[0], 48, ccp(0.5,0.5), ccp(pos.x+2, pos.y+3-1), ccc3(0,0,0), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("속성 선택하기", fontList[0], 48, ccp(0.5,0.5), ccp(pos.x, pos.y+3), ccc3(242,242,242), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
     
     // dotted-lines
     int base_h = winSize.height/2-970/2 + 200;
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h), CCSize(0, 0), "", "SelectProperty", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h+200), CCSize(0, 0), "", "SelectProperty", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h+400), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h), CCSize(0, 0), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h+200), CCSize(0, 0), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0.5, 0.5), ccp(winSize.width/2, base_h+400), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
     // 속성 아이콘
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png1", ccp(0.5, 0), ccp(220, base_h+400+30), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png1", ccp(0.5, 0), ccp(220, base_h+400+30), CCSize(0, 0), "", "Layer", tLayer, 5) );
     CCPoint p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png1");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_fire.png", ccp(0.5, 0.5), p, CCSize(0, 0), "background/bg_skill_brown.png1", "0", NULL, 5, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png2", ccp(0.5, 0), ccp(220, base_h+200+30), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png2", ccp(0.5, 0), ccp(220, base_h+200+30), CCSize(0, 0), "", "Layer", tLayer, 5) );
     p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png2");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_water.png", ccp(0.5, 0.5), ccp(p.x-3, p.y), CCSize(0, 0), "background/bg_skill_brown.png2", "0", NULL, 5, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png3", ccp(0.5, 0), ccp(220, base_h+30), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png3", ccp(0.5, 0), ccp(220, base_h+30), CCSize(0, 0), "", "Layer", tLayer, 5) );
     p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png3");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_property_land.png", ccp(0.5, 0.5), p, CCSize(0, 0), "background/bg_skill_brown.png3", "0", NULL, 5, 1) );
     
     
     // 선택 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png1", ccp(0.5, 0.5), ccp(835, base_h+400+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png1", ccp(0.5, 0.5), ccp(835, base_h+400+100), CCSize(0, 0), "", "Layer", tLayer, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png1");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png1", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png1", "0", NULL, 5, 1) );
     if (myInfo->IsFire())
@@ -164,7 +185,7 @@ void SelectProperty::InitSprites()
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_select.png1"))->setColor(ccc3(170,170,170));
     }
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png2", ccp(0.5, 0.5), ccp(835, base_h+200+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png2", ccp(0.5, 0.5), ccp(835, base_h+200+100), CCSize(0, 0), "", "Layer", tLayer, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png2");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png2", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png2", "0", NULL, 5, 1) );
     if (myInfo->IsWater())
@@ -173,7 +194,7 @@ void SelectProperty::InitSprites()
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_select.png2"))->setColor(ccc3(170,170,170));
     }
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png3", ccp(0.5, 0.5), ccp(835, base_h+100), CCSize(0, 0), "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue_mini.png3", ccp(0.5, 0.5), ccp(835, base_h+100), CCSize(0, 0), "", "Layer", tLayer, 5) );
     p = spriteClass->FindParentCenterPos("button/btn_blue_mini.png3");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_select.png3", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_blue_mini.png3", "0", NULL, 5, 1) );
     if (myInfo->IsLand())
@@ -184,13 +205,13 @@ void SelectProperty::InitSprites()
     
     
     // 각 속성 설명 문구
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("타오르는 힘으로,\n강력한 마법과\n붉은용을 소환해요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+400+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SelectProperty", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("생성하는 힘으로,\n시간을 얼리고\n여신의 은총을 받아요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+200+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SelectProperty", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("자연의 힘으로,\n바람을 일으키고\n고대나무를 찾아요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("타오르는 힘으로,\n강력한 마법과\n붉은용을 소환해요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+400+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("생성하는 힘으로,\n시간을 얼리고\n여신의 은총을 받아요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+200+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("자연의 힘으로,\n바람을 일으키고\n고대나무를 찾아요!", fontList[0], 32, ccp(0, 0.5), ccp(320, base_h+100), ccc3(78,47,8), CCSize(829, 200), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
     
     
     // 마지막 설명 문구
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("* 한번 선택하면 바꿀 수 없습니다.\n(한 속성을 모두 배우면 다른 속성을 배울 수 있어요)", fontList[0], 32, ccp(0.5, 1), ccp(winSize.width/2+30, base_h-30), ccc3(78,47,8), CCSize(929-100, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "SelectProperty", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("* 한번 선택하면 바꿀 수 없습니다.\n(한 속성을 모두 배우면 다른 속성을 배울 수 있어요)", fontList[0], 32, ccp(0.5, 1), ccp(winSize.width/2+30, base_h-30), ccc3(78,47,8), CCSize(929-100, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
 }
 
 
@@ -264,6 +285,9 @@ void SelectProperty::EndScene(bool isInGameTtrStart)
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
     

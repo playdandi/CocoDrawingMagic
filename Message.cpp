@@ -15,6 +15,30 @@ void Message::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
+    
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
+    
+    httpStatus = 0;
+    msgData.clear();
+    // 네트워크로 메시지들을 받아온다.
+    char temp[50];
+    std::string params = "";
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    params += temp;
+    
+    Network::HttpPost(params, URL_MESSAGE_LIST, this, httpresponse_selector(Message::onHttpRequestCompleted));
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Message::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Message::SceneCallback()
+{
 }
 void Message::onExit()
 {
@@ -26,6 +50,11 @@ void Message::onExit()
 
 void Message::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -36,6 +65,11 @@ bool Message::init()
 	{
 		return false;
 	}
+    
+    idx = -1;
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("Message", this);
@@ -55,6 +89,12 @@ bool Message::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     // scrollView 생성
     scrollView = CCScrollView::create();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
@@ -63,31 +103,12 @@ bool Message::init()
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
     
-    // init sprites
     InitSprites();
     
     spriteClassScroll = new SpriteClass();
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
-    
     scrollContainer = NULL;
-    
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
-    
-    httpStatus = 0;
-    msgData.clear();
-    // 네트워크로 메시지들을 받아온다.
-    char temp[50];
-    std::string params = "";
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    params += temp;
-    
-    Network::HttpPost(params, URL_MESSAGE_LIST, this, httpresponse_selector(Message::onHttpRequestCompleted));
 
     return true;
 }
@@ -111,6 +132,7 @@ void Message::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
@@ -139,6 +161,7 @@ void Message::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Message : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -152,6 +175,11 @@ void Message::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        if (idx > -1)
+        {
+            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_potion_all_recieve.png"))->setColor(ccc3(255,255,255));
+        }
     }
 }
 
@@ -168,20 +196,28 @@ void Message::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_red.png",
-                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Message", this, 2, 0) );
+                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Layer", tLayer, 2, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "Message", this, 2, 0) );
+                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "Layer", tLayer, 2, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_message.png",
-                    ccp(0, 0), ccp(409, 1389), CCSize(0, 0), "", "Message", this, 2, 0) );
+                    ccp(0, 0), ccp(409, 1389), CCSize(0, 0), "", "Layer", tLayer, 2, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458), CCSize(982, 954), "", "Message", this, 1, 0) );
+                    ccp(0, 0), ccp(49, 458), CCSize(982, 954), "", "Layer", tLayer, 1, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "Message", this, 1, 0) );
+                    ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "Layer", tLayer, 1, 0) );
 
+    // 모두받기 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png",
-            ccp(0, 0), ccp(319, 191), CCSize(929, 904), "", "Message", this, 1, 0) );
+            ccp(0, 0), ccp(319, 191), CCSize(929, 904), "", "Layer", tLayer, 1, 0) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_potion_all_recieve.png",
             ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 40), CCSize(0, 0), "button/btn_red.png", "0", NULL, 1, 1) );
+    // 버튼 젤리 움직임
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"));
+    CCSize t = temp->getContentSize();
+    temp->setAnchorPoint(ccp(0.5, 0.5));
+    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.03f, 0.96f), CCScaleTo::create(1.0f, 0.97f, 1.04f), NULL );
+    temp->runAction(CCRepeatForever::create(action));
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -338,6 +374,10 @@ bool Message::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     CCPoint point = pTouch->getLocation();
     
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
+    
     if (scrollView->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
@@ -348,7 +388,20 @@ bool Message::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 EndScene();
-                break;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_potion_all_recieve.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
             }
         }
     }
@@ -415,22 +468,20 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         }
     }
     
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    if (idx > -1)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_potion_all_recieve.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        if (kind == BTN_MENU_CONFIRM)
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (msgData.size() > 0)
             {
-                if (msgData.size() == 0)
-                    continue;
-                
-                sound->playClick();
-                
                 httpMsgIdx = -1; // 메시지 리스트 갱신 방지
-                
                 std::vector<int> nullData;
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_ALL_TRY, BTN_2, nullData);
-                break;
             }
         }
     }
@@ -478,6 +529,9 @@ void Message::EndScene()
     scrollView->removeFromParentAndCleanup(true);
     
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

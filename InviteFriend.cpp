@@ -4,16 +4,12 @@ static std::vector<int> kakaoIds;
 static std::vector<int> remainTimes;
 static int todayCnt, monthCnt, totalCnt;
 
-//static CCScene* scene;
 
 CCScene* InviteFriend::scene()
 {
     CCScene* pScene = CCScene::create();
     InviteFriend* pLayer = InviteFriend::create();
     pScene->addChild(pLayer);
-    
-    pLayer->setScale(0);
-    
 	return pScene;
 }
 
@@ -24,7 +20,28 @@ void InviteFriend::onEnter()
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
     
-    this->runAction(CCScaleTo::create(0.2f, 1.0f));
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
+    
+    // Loading 화면으로 MESSAGE request 넘기기
+    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+    
+    // 네트워크로 초대할 친구 리스트를 받아온다.
+    httpStatus = 0;
+    char temp[50];
+    std::string params = "";
+    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    params += temp;
+    
+    Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(InviteFriend::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void InviteFriend::SceneCallback()
+{
 }
 void InviteFriend::onExit()
 {
@@ -36,6 +53,11 @@ void InviteFriend::onExit()
 
 void InviteFriend::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -46,6 +68,10 @@ bool InviteFriend::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("InviteFriend", this);
@@ -62,8 +88,15 @@ bool InviteFriend::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    
+
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
     
     // scrollView 생성
     scrollView = CCScrollView::create();
@@ -74,26 +107,11 @@ bool InviteFriend::init()
     scrollView->setPosition(ccp(77, 492+20));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
+    //this->addChild(scrollView, 3);
     
     spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
-    
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-    
-    // 네트워크로 초대할 친구 리스트를 받아온다.
-    httpStatus = 0;
-    char temp[50];
-    std::string params = "";
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
-    params += temp;
-    
-    Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
     
     return true;
 }
@@ -108,6 +126,7 @@ void InviteFriend::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("InviteFriend : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -115,6 +134,7 @@ void InviteFriend::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("InviteFriend : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -137,51 +157,51 @@ void InviteFriend::InitSprites()
     this->addChild(pBlack, 0);
     
     // strap
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png", ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png", ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_invite.png", ccp(0, 0), ccp(359, 1389), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_addfriend.png", ccp(0, 0), ccp(264, 1389), CCSize(0, 0), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png", ccp(0, 0), ccp(14-ofs, 1343), CCSize(0, 0), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png", ccp(0, 0), ccp(875-ofs, 1391), CCSize(0, 0), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_invite.png", ccp(0, 0), ccp(359-ofs, 1389), CCSize(0, 0), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_addfriend.png", ccp(0, 0), ccp(264-ofs, 1389), CCSize(0, 0), "", "Layer", tLayer, 2) );
     
     // background
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 147), CCSize(982, 1265), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1", ccp(0, 0), ccp(75, 492), CCSize(929, 904), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", ccp(0, 0), ccp(98, 256-30), CCSize(244, 176+30), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", ccp(0, 0), ccp(390, 256-30), CCSize(244, 176+30), "", "InviteFriend", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png4", ccp(0, 0), ccp(686, 256-30), CCSize(293, 176+30), "", "InviteFriend", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49-ofs, 147), CCSize(982, 1265), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1", ccp(0, 0), ccp(75-ofs, 492), CCSize(929, 904), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", ccp(0, 0), ccp(98-ofs, 256-30), CCSize(244, 176+30), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", ccp(0, 0), ccp(390-ofs, 256-30), CCSize(244, 176+30), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png4", ccp(0, 0), ccp(686-ofs, 256-30), CCSize(293, 176+30), "", "Layer", tLayer, 1) );
     
     // 친구초대 보상이벤트
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_friendevent.png", ccp(0, 0), ccp(98, 438), CCSize(0, 0), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_subtitle_friendevent.png", ccp(0, 0), ccp(98-ofs, 438), CCSize(0, 0), "", "Layer", tLayer, 2) );
     
     // invite 10,20,30
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png1", ccp(0, 0), ccp(228, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png2", ccp(0, 0), ccp(519, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png3", ccp(0, 0), ccp(817+49, 378), CCSize(0, 0), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png1", ccp(0, 0), ccp(228-ofs, 378), CCSize(0, 0), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png2", ccp(0, 0), ccp(519-ofs, 378), CCSize(0, 0), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dontknow_1.png3", ccp(0, 0), ccp(817+49-ofs, 378), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_10.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png1"), CCSize(0, 0), "background/bg_dontknow_1.png1", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_20.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png2"), CCSize(0, 0), "background/bg_dontknow_1.png2", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_30.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png3"), CCSize(0, 0), "background/bg_dontknow_1.png3", "0", NULL, 2, 1) );
     
     // 그림들
     /*
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_10.png", ccp(0.5, 0), ccp(98+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_20.png", ccp(0.5, 0), ccp(390+244/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_30.png", ccp(0.5, 0), ccp(686+293/2, 226+5), CCSize(700, 30), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_10.png", ccp(0.5, 0), ccp(98+244/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_20.png", ccp(0.5, 0), ccp(390+244/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_30.png", ccp(0.5, 0), ccp(686+293/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
     */
     
     // progress bar 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96+10, 192-15), CCSize(700, 30), "", "InviteFriend", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96+10-ofs, 192-15), CCSize(700, 30), "", "Layer", tLayer, 2) );
     // bar
     float size = (float)totalCnt / (float)MAX_NUM_OF_INVITE_FRIEND;
     if (size > 1.0f) size = 1.0f;
     bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 30-12));
-    bar->setPosition(ccp(96+10+5, 192+6-15));
+    bar->setPosition(ccp(96+10+5-ofs, 192+6-15));
     bar->setAnchorPoint(ccp(0, 0));
     bar->setColor(ccc3(255,255,255));
-    this->addChild(bar, 3);
+    tLayer->addChild(bar, 3);
     
     // 초대 인원 수 text
     char name[20];
     sprintf(name, "%d명 초대", totalCnt);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0, 0), ccp(812+10, 200-20), ccc3(255,255,255), "", "InviteFriend", this, 2, 0, 255, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0, 0), ccp(812+10-ofs, 200-20), ccc3(255,255,255), "", "Layer", tLayer, 2, 0, 255, 1) );
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -378,6 +398,9 @@ void InviteFriend::EndScene()
     bar->removeFromParentAndCleanup(true);
     pBlack->removeFromParentAndCleanup(true);
     
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
+    
     this->removeFromParentAndCleanup(true);
 }
 
@@ -414,7 +437,7 @@ void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
     xml_document xmlDoc;
     Network::GetXMLFromResponseData(res, xmlDoc);
     
-    CCLog("http status = %d", httpStatus);
+    //CCLog("http status = %d", httpStatus);
     switch (httpStatus)
     {
         case 0: XmlParseList(&xmlDoc); break;

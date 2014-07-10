@@ -32,11 +32,13 @@ void PuzzlePause::onExit()
 
 void PuzzlePause::keyBackClicked()
 {
+    /*
     if (!isKeybackTouched)
     {
         isKeybackTouched = true;
         ResumeGame();
     }
+     */
 }
 
 
@@ -50,7 +52,7 @@ bool PuzzlePause::init()
     // make depth tree
     Depth::AddCurDepth("PuzzlePause", this);
     
-    this->setKeypadEnabled(true);
+    //this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     

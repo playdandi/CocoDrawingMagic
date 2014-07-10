@@ -12,6 +12,8 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
+    void Scene_Callback();
+    
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent* event);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
@@ -39,11 +41,13 @@ public:
     
 protected:
     CCSize winSize;
+    bool isKeybackTouched;
     bool isTouched;
     bool isScrolling;
     bool isScrollViewTouched;
     
     int code;
+    int last_scid;
     
 private:
     SpriteClass* spriteClass;

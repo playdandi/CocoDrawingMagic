@@ -15,6 +15,14 @@ void Setting::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Setting::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Setting::SceneCallback()
+{
+    isTouched = false;
 }
 void Setting::onExit()
 {
@@ -26,6 +34,11 @@ void Setting::onExit()
 
 void Setting::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -36,6 +49,9 @@ bool Setting::init()
 	{
 		return false;
 	}
+    
+    idx = -1;
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("Setting", this);
@@ -54,6 +70,12 @@ bool Setting::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     spriteClass = new SpriteClass();
     InitSprites();
     
@@ -63,7 +85,6 @@ bool Setting::init()
     potionMsgReserved = myInfo->GetPotionMsg();
     
     selectedBtn = -1;
-    isTouched = false;
     
     return true;
 }
@@ -89,18 +110,26 @@ void Setting::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("Setting : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        if (idx > -1)
+        {
+            spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+        }
     }
 }
 
@@ -115,76 +144,76 @@ void Setting::InitSprites()
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_red.png",
-                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Setting", this, 2) );
+                    ccp(0, 0), ccp(14, 1343), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "Setting", this, 2) );
+                    ccp(0, 0), ccp(875, 1391), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_setting.png",
-                    ccp(0, 0), ccp(409, 1389), CCSize(0, 0), "", "Setting", this, 2) );
+                    ccp(0, 0), ccp(409, 1389), CCSize(0, 0), "", "Layer", tLayer, 2) );
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 147), CCSize(982, 1265), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(49, 147), CCSize(982, 1265), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
-                    ccp(0, 0), ccp(75, 492+270), CCSize(929, 904-270), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(75, 492+270), CCSize(929, 904-270), "", "Layer", tLayer, 1) );
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png2", // ver
-                    ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png3", // id
-                    ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Layer", tLayer, 1) );
 
     
     // text (version, kakaoID)
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("게임버전 : 1.0.0 ver", fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Setting", this, 4) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카카오 ID : 123456789012", fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Setting", this, 4) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("게임버전 : 1.0.0 ver", fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Layer", tLayer, 4) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카카오 ID : 123456789012", fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     
     // 버튼 : 만든 사람들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png1",
-                    ccp(0, 0), ccp(737, 633), CCSize(0, 0), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(737, 633), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_maker.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 36), CCSize(0, 0), "button/btn_purple_mini.png1", "0", NULL, 1) );
 
     // 버튼 : 쿠폰등록
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png2",
-                ccp(0, 0), ccp(96, 492), CCSize(0, 0), "", "Setting", this, 1) );
+                ccp(0, 0), ccp(96, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_coupon.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png2", "0", NULL, 1) );
     
     // 버튼 : 튜토리얼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png3",
-                ccp(0, 0), ccp(423, 492), CCSize(0, 0), "", "Setting", this, 1) );
+                ccp(0, 0), ccp(423, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_tutorial.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png3", "0", NULL, 1) );
     
     // 버튼 : ?
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png4",
-                ccp(0, 0), ccp(737, 492), CCSize(0, 0), "", "Setting", this, 1) );
+                ccp(0, 0), ccp(737, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_service.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png4", "0", NULL, 1) );
     
     // 버튼 : 회원탈퇴
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png1",
-                    ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
     
     // 버튼 : id복사
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png2",
-                    ccp(0, 0), ccp(779, 192), CCSize(0, 0), "", "Setting", this, 1) );
+                    ccp(0, 0), ccp(779, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_idcopy.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 36), CCSize(0, 0), "button/btn_system.png2", "0", NULL, 1) );
     
     // text
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("효과음", fontList[0], 48, ccp(0, 0), ccp(162, 1277), ccc3(78,47,8), "", "Setting", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("배경음", fontList[0], 48, ccp(0, 0), ccp(162, 1168), ccc3(78,47,8), "", "Setting", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카톡메시지수신", fontList[0], 48, ccp(0, 0), ccp(162, 1057), ccc3(78,47,8), "", "Setting", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸시알림", fontList[0], 48, ccp(0, 0), ccp(162, 942), ccc3(78,47,8), "", "Setting", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션,그룹메시지", fontList[0], 48, ccp(0, 0), ccp(162, 829), ccc3(78,47,8), "", "Setting", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("효과음", fontList[0], 48, ccp(0, 0), ccp(162, 1277), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("배경음", fontList[0], 48, ccp(0, 0), ccp(162, 1168), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카톡메시지수신", fontList[0], 48, ccp(0, 0), ccp(162, 1057), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸시알림", fontList[0], 48, ccp(0, 0), ccp(162, 942), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션,그룹메시지", fontList[0], 48, ccp(0, 0), ccp(162, 829), ccc3(78,47,8), "", "Layer", tLayer, 2) );
     
     
     // on-off button
@@ -195,7 +224,7 @@ void Setting::InitSprites()
     {
         sprintf(name, "background/bg_degree_desc.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, name,
-                ccp(0, 0), ccp(627, 1261-i*112), CCSize(300, 82), "", "Setting", this, 2) );
+                ccp(0, 0), ccp(627, 1261-i*112), CCSize(300, 82), "", "Layer", tLayer, 2) );
         sprintf(name2, "letter/letter_on.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
                 ccp(0, 0), ccp(38, 18), CCSize(0, 0), name, "1", NULL, 2) );
@@ -220,7 +249,7 @@ void Setting::InitSprites()
             pos = ccp(627+150, 1261-i*112);
         sprintf(name2, "button/btn_option.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0, 0), pos, CCSize(0, 0), "", "Setting", this, 3) );
+                ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 3) );
     }
     standardBtnPos = ccp(627, 0);
     
@@ -229,11 +258,6 @@ void Setting::InitSprites()
         spriteClass->AddChild(i);
 }
 
-
-
-static CCRect rect;
-static int kind;
-static int idx;
 
 bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -488,6 +512,9 @@ void Setting::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
     

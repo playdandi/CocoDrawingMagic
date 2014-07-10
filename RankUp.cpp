@@ -20,6 +20,14 @@ void RankUp::onEnter()
     CCActionInterval* action = CCSequence::create(CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(RankUp::Callback), this), NULL);
     pBlackOpen->runAction(action);
 }
+void RankUp::Callback(CCNode* sender, void* p)
+{
+    sender->removeFromParentAndCleanup(true);
+    CCActionInterval* action = CCEaseElasticOut::create( CCMoveTo::create(1.0f, ccp(-700, 0)), 1.0f );
+    ((RankUp*)p)->spriteClass->layers[1]->runAction(action);
+    
+    isTouched = false;
+}
 void RankUp::onExit()
 {
     CCLog("RankUp :: onExit");
@@ -38,6 +46,9 @@ bool RankUp::init()
 	{
 		return false;
 	}
+    
+    idx = -1;
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("RankUp", this);
@@ -58,8 +69,6 @@ bool RankUp::init()
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     InitSprites();
-
-    isTouched = false;
     
 	return true;
 }
@@ -72,6 +81,11 @@ void RankUp::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        if (idx > -1)
+        {
+            spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+        }
     }
 }
 
@@ -249,15 +263,6 @@ void RankUp::InitSprites()
     */
 }
 
-void RankUp::Callback(CCNode* sender, void* p)
-{
-    sender->removeFromParentAndCleanup(true);
-    
-    //CCActionInterval* action = CCEaseBackOut::create( CCMoveTo::create(1.0f, ccp(-700, 0)) );
-    CCActionInterval* action = CCEaseElasticOut::create( CCMoveTo::create(1.0f, ccp(-700, 0)), 1.0f );
-    ((RankUp*)p)->spriteClass->layers[1]->runAction(action);
-}
-
 
 bool RankUp::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -267,15 +272,23 @@ bool RankUp::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     CCPoint point = pTouch->getLocation();
     
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        //if (spriteClass->spriteObj[i]->name == "btn_system.png")
         if (spriteClass->spriteObj[i]->name == "btn_red_mini.png2")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndScene();
-                break;
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
             }
         }
     }
@@ -290,14 +303,30 @@ void RankUp::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void RankUp::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (!isTouched)
+        return;
+    
+    CCPoint point = pTouch->getLocation();
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        if (kind == BTN_MENU_CONFIRM)
+        {
+            EndScene();
+        }
+    }
+            
     isTouched = false;
 }
 
 
 void RankUp::EndScene()
 {
-    sound->playClick();
-    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     

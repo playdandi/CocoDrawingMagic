@@ -52,9 +52,10 @@ public:
     void F6_Callback(CCNode* sender, void *p);
 
     void F7(int num, int queue_pos);
-    
+    int F7_GetCnt();
 
     void F8(int num, int queue_pos);
+    void F8_Start(int num, int queue_pos);
     void F8Check(int x, int y, int idx);
     void F8_Comet(float f);
     void F8_Timer();
@@ -64,6 +65,7 @@ public:
     void F8_FinishCountUp();
     bool F8_IsFinished();
     bool F8_IsActive();
+    bool F8_IsReady();
     
     void W3(int num);
     int W3GetScore();
@@ -71,12 +73,13 @@ public:
     //int W4GetCandy();
     void W5(int num);
     void W5_Callback(CCNode* sender, void* data);
-    void W7_Init(int numOfFreezeTime);
-    int W7_GetSlotTime();
-    void W7_IncreaseSlotIdx();
+    //void W7_Init(int numOfFreezeTime);
+    //int W7_GetSlotTime();
+    //void W7_IncreaseSlotIdx();
     void W7(int num);
     void W7SetTime(int time);
     int W7GetTime();
+    int W7_GetCnt();
     void W7_SetNonFreeze();
     bool W7_IsFreezed();
     void W8(int num, int queue_pos);
@@ -181,11 +184,13 @@ private:
     std::vector<CCPoint> F6_order;
     int A6_addedScore;
     
+    int F7_cnt;
     bool F7_check[COLUMN_COUNT][ROW_COUNT];
     int F7_callbackCnt;
     int F7_callbackCntMini;
     
     bool F8_isActive;
+    bool F8_isReady;
     int F8_check[COLUMN_COUNT][ROW_COUNT];
     int F8_bombCallbackCnt[20];
     
@@ -202,8 +207,9 @@ private:
     int W3_addedScore;
     int W5_callbackCnt;
 
-    int W7_timeSlot[5];
-    int W7_slotIdx;
+    //int W7_timeSlot[5];
+    //int W7_slotIdx;
+    int W7_cnt;
     int W7_RemainTime;
     bool W7_isFreezed;
     

@@ -23,6 +23,16 @@ void SendTopaz::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(SendTopaz::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void SendTopaz::SceneCallback()
+{
+    isTouched = false;
+    isScrolling = false;
+    isScrollViewTouched = false;
 }
 void SendTopaz::onExit()
 {
@@ -34,6 +44,11 @@ void SendTopaz::onExit()
 
 void SendTopaz::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
+    sound->playClick();
     EndScene();
 }
 
@@ -44,6 +59,10 @@ bool SendTopaz::init()
 	{
 		return false;
 	}
+    
+    isTouched = true;
+    isScrolling = true;
+    isScrollViewTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("SendTopaz", this);
@@ -63,24 +82,25 @@ bool SendTopaz::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, 0));
+    tLayer->setScale(0);
+    this->addChild(tLayer, 1);
+    
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904+243+45-100));
     scrollView->setAnchorPoint(ccp(0, 0));
     scrollView->setPosition(ccp(77, 492-45+40));
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
-    this->addChild(scrollView, 3);
+    tLayer->addChild(scrollView, 3);
     
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
-    
-    isTouched = false;
-    isScrolling = false;
-    isScrollViewTouched = false;
     
     return true;
 }
@@ -95,6 +115,7 @@ void SendTopaz::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("SendTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -102,6 +123,7 @@ void SendTopaz::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("SendTopaz 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollView->setTouchEnabled(false);
     }
@@ -135,15 +157,15 @@ void SendTopaz::InitSprites()
     
     // background
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_green.png",
-                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "SendTopaz", this, 2) );
+                    ccp(0, 0), ccp(14, 1586), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_yellow.png",
-                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "SendTopaz", this, 2) );
+                    ccp(0, 0), ccp(875, 1391+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap/strap_title_present.png",
-                    ccp(0, 0), ccp(359, 1389+243), CCSize(0, 0), "", "SendTopaz", this, 2) );
+                    ccp(0, 0), ccp(359, 1389+243), CCSize(0, 0), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
-                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "SendTopaz", this, 1) );
+                    ccp(0, 0), ccp(49, 458-45), CCSize(982, 954+243+45), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
-                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "SendTopaz", this, 1) );
+                    ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "Layer", tLayer, 1) );
 }
 
 void SendTopaz::MakeScroll()
@@ -309,6 +331,9 @@ void SendTopaz::EndScene()
     scrollView->removeFromParentAndCleanup(true);
     
     pBlack->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }

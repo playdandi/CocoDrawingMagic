@@ -26,7 +26,6 @@ void GetDegree::onExit()
 
 void GetDegree::keyBackClicked()
 {
-    EndScene();
 }
 
 
@@ -37,11 +36,15 @@ bool GetDegree::init()
 		return false;
 	}
     
+    idx = -1;
+    isTouched = true;
+    isLoadingDone = false;
+    
     // make depth tree
     Depth::AddCurDepth("GetDegree", this);
     
     this->setTouchEnabled(true);
-    this->setKeypadEnabled(true);
+    //this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     CCLog("GetDegree : touch prio = %d", this->getTouchPriority());
     
@@ -55,8 +58,6 @@ bool GetDegree::init()
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     
-    isTouched = true;
-    isLoadingDone = false;
     sound->PauseBackgroundSound();
     
     InitSprites();
@@ -74,18 +75,25 @@ void GetDegree::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("GetDegree : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("GetDegree : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        if (idx > -1)
+        {
+            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
+        }
     }
 }
 
@@ -99,9 +107,10 @@ void GetDegree::InitSprites()
     
     // background
     pBackground = CCSprite::create("images/main_background.png");
-    pBackground->setAnchorPoint(ccp(0.5, 0.5));
     pBackground->setScale(1.5f);
-    pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
+    pBackground->setAnchorPoint(ccp(0.5, 1));
+    //pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
+    pBackground->setPosition(ccp(winSize.width/2, winSize.height));
     pBackground->setOpacity(0);
     this->addChild(pBackground, 0);
     
@@ -109,6 +118,7 @@ void GetDegree::InitSprites()
     CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
     int dy = std::max((int)(h-vs.height)/2, 100);
     //CCLog("%d %d", h, (int)vs.height);
+    dy = h-vs.height;
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(2.0f), CCMoveBy::create(2.0f, ccp(0, dy)), CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SoundCallback), this), NULL) , NULL ), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SpriteCallback), this), NULL );
     pBackground->runAction(action);
@@ -152,6 +162,12 @@ void GetDegree::InitDegree()
     CCPoint p = spriteClass->FindParentCenterPos("button/btn_red.png");
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red.png", "0", NULL, 5, 1, 0, 11) );
     
+    // 확인 버튼 젤리 움직임
+    CCActionInterval* action2
+    = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->runAction(CCRepeatForever::create(action2));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action2->copy()));
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
@@ -168,19 +184,9 @@ void GetDegree::DegreeCallback(CCNode* sender, void* p)
 {
     GetDegree* pThis = (GetDegree*)p;
     pThis->callbackCnt++;
-    CCLog("%d", pThis->callbackCnt);
+
     if (pThis->callbackCnt >= 4)
     {
-        /*
-        int size = pThis->spriteClass->spriteObj.size();
-        // 확인 버튼
-        pThis->spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "GetDegree", this, 5) );
-        CCPoint p = pThis->spriteClass->FindParentCenterPos("button/btn_red.png");
-        pThis->spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm.png", ccp(0.5, 0.5), ccp(p.x, p.y+3), CCSize(0, 0), "button/btn_red.png", "0", NULL, 5) );
-        
-        for (int i = size ; i < pThis->spriteClass->spriteObj.size() ; i++)
-            pThis->spriteClass->AddChild(i);
-        */
         // 확인 버튼 나타나기
         ((CCSprite*)spriteClass->FindSpriteByTag(10))->setOpacity(255);
         ((CCSprite*)spriteClass->FindSpriteByTag(11))->setOpacity(255);
@@ -200,14 +206,23 @@ bool GetDegree::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     CCPoint point = pTouch->getLocation();
     
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndScene();
-                break;
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
             }
         }
     }
@@ -224,6 +239,24 @@ void GetDegree::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     if (!isLoadingDone)
         return;
+    
+    CCPoint point = pTouch->getLocation();
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        switch (kind)
+        {
+            case BTN_MENU_CONFIRM:
+                EndScene();
+                break;
+        }
+    }
+    
     isTouched = false;
 }
 

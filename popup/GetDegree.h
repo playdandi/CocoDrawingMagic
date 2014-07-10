@@ -29,9 +29,14 @@ public:
     
 protected:
     CCSize winSize;
+    bool isKeybackTouched;
     bool isTouched;
     bool isLoadingDone;
     int callbackCnt;
+    
+    CCRect rect;
+    int kind;
+    int idx;
     
 private:
     CCSprite* pBackground;

@@ -31,8 +31,6 @@ void T_SketchDetail::onExit()
 
 void T_SketchDetail::keyBackClicked()
 {
-    sound->playClick();
-    EndScene(true);
 }
 
 
@@ -253,13 +251,20 @@ void T_SketchDetail::MakeClosedSkillSprites()
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 1), ccp(65, -170), ccc3(0,0,0), "", "Layer", descLayer, 5) );
     
     
-    
     // 버튼
+    btnStatus = 3;
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "T_SketchDetail", this, 5, 0, 255, scid) );
     pos = spriteClass->FindParentCenterPos("button/btn_red_mini.png");
-    
-    btnStatus = 3;
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+    
+    // 버튼 젤리 움직임
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"));
+    CCSize t = temp->getContentSize();
+    temp->setAnchorPoint(ccp(0.5, 0.5));
+    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    temp->runAction(CCRepeatForever::create(action));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
 }
 
 

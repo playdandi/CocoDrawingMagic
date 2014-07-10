@@ -36,7 +36,8 @@ USING_NS_CC;
 
 
 #define PUZZLE_TIME 60
-#define FEVER_TIME 5
+#define FEVER_TIME 7
+#define FEVER_START_COMBO 10
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
@@ -57,6 +58,7 @@ USING_NS_CC;
 #define BTN_2 1
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
+#define WILL_BE_UPDATED -7
 #define ERROR_IN_APP_BILLING -6
 #define NEED_TO_UPDATE -5
 #define NEED_TO_REBOOT -4
@@ -154,6 +156,9 @@ USING_NS_CC;
 #define BTN_MENU_GAMESTART 1
 #define BTN_MENU_TUTORIAL 2
 #define BTN_MENU_COUPON 3
+#define BTN_MENU_CONFIRM 4
+#define BTN_MENU_UPGRADE_1 5
+#define BTN_MENU_UPGRADE_2 6
 
 using namespace pugi;
 using namespace cocos2d;
@@ -180,7 +185,7 @@ public:
     static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
     static CCLayer* MakeItemNumberLayer(std::string number);
-    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1);
+    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1, int etc3 = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
     

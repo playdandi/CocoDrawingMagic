@@ -44,13 +44,15 @@ public:
     
 protected:
     CCSize winSize;
-    
+    bool isKeybackTouched;
     bool isTouched;
     bool isScrolling;
     bool isScrollViewTouched;
     bool isOnceScrollViewTouched;
     
-    bool isKeyBackClicked;
+    CCRect rect;
+    int kind;
+    int idx;
     
 private:
     CCSprite* pBackground;

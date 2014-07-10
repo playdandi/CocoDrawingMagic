@@ -5,8 +5,6 @@ static int btn;
 static std::vector<int> d;
 static int fromWhere;
 
-static int newSkillType;
-
 CCScene* T_NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc)
 {
     // data
@@ -107,6 +105,9 @@ void T_NoImage::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        // 젤리 버튼 초기화
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"))->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
     }
 }
 
@@ -146,7 +147,15 @@ void T_NoImage::InitSprites()
     // 확인 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "T_NoImage", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-
+    
+    // 버튼 젤리 움직임
+    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"));
+    CCSize t = temp->getContentSize();
+    temp->setAnchorPoint(ccp(0.5, 0.5));
+    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
+    temp->runAction(CCRepeatForever::create(action));
+    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);

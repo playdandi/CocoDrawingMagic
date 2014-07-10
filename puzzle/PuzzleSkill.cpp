@@ -51,9 +51,12 @@ void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<
     W7_isFreezed = false;
     W8_isActive = false;
     E7_getPotion = false;
+    W7_cnt = 0;
+    F7_cnt = 0;
     
     E8_isActive = false;
     F8_isActive = false;
+    F8_isReady = false;
     
     for (int i = 0 ; i < 3; i++)
     {
@@ -93,7 +96,6 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos, bool isFeverTime)
     for (int i = 0 ; i < NUMOFSKILL ; i++)
     {
         skillApplied[queue_pos][i] = false;
-        //if (i == 10 || i == 11)
         if (i == 10 || i == 18)
             skillApplied[queue_pos][i] = true;
     }
@@ -112,7 +114,22 @@ void PuzzleSkill::TrySkills(int pieceColor, int queue_pos, bool isFeverTime)
             }
             else if (i == 9) {
                 if (pieceColor == PIECE_BLUE && m_pGameLayer->IsCycle(queue_pos))
-                    Try(i, queue_pos);
+                {
+                    // 파도타기의 경우, 사이클 한붓그리기가 되었어도 파도를 칠 피스가 없으면 행하지 않는다.
+                    std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(false);
+                    CCPoint last = pos[0];
+                    CCPoint before = pos[pos.size()-1];
+                    CCPoint delta = ccp((int)last.x-(int)before.x, (int)last.y-(int)before.y);
+                    int x = (int)(last.x+delta.x);
+                    int y = (int)(last.y+delta.y);
+                    
+                    if ( (x < 0 || y < 0 || x > COLUMN_COUNT-1 || y > ROW_COUNT-1) ||
+                         ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == 0) ||
+                          (x == COLUMN_COUNT-1 && y == ROW_COUNT-1)) )
+                        ;
+                    else
+                        Try(i, queue_pos);
+                }
             }
             else if (i == 17) {
                 if (pieceColor == PIECE_GREEN && m_pGameLayer->IsCycle(queue_pos))
@@ -203,6 +220,11 @@ void PuzzleSkill::Try(int skillNum, int queue_pos)
     int prob = rand()%100;
     if (prob < skillProb[skillNum])
         skillApplied[queue_pos][skillNum] = true;
+    
+    if (skillNum == 6)
+    {
+        CCLog("코코 try : %d (%d), %d", prob, skillProb[skillNum], skillApplied[queue_pos][skillNum]);
+    }
     
     if ((skillNum == 5 || skillNum == 13 || skillNum == 21) && skillApplied[queue_pos][skillNum])
     {
@@ -907,9 +929,19 @@ void PuzzleSkill::F6_Callback(CCNode* sender, void *p)
 
 void PuzzleSkill::F7(int num, int queue_pos)
 {
-    // 코코 타임 : Fever Time 게이지를 더 빨리 채운다. (10~20% 더 빠르게)
-    
+    // 코코 타임 : Fever Time 즉시 시전
     UpdateAppliedSkillCount(num);
+    
+    F7_cnt++;
+    
+    m_pGameLayer->GetEffect()->PlayEffect_6(num);
+    m_pGameLayer->GetEffect()->PlayEffect_6_Fever();
+    
+    m_pGameLayer->StartFeverTime();
+}
+int PuzzleSkill::F7_GetCnt()
+{
+    return F7_cnt;
 }
 
 
@@ -917,8 +949,27 @@ static PuzzleSkill* psF8;
 
 void PuzzleSkill::F8(int num, int queue_pos)
 {
-    CCLog("용.숨 시작 , queue_pos = %d", queue_pos);
+    F8_isActive = true;
+    F8_isReady = true;
+    
+    result_pos.clear();
+    for (int x = 0 ; x < COLUMN_COUNT ; x++)
+    {
+        for (int y = 0 ; y < ROW_COUNT ; y++)
+        {
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                continue;
+            result_pos.push_back(ccp(x, y));
+        }
+    }
+    m_pGameLayer->Bomb(queue_pos, result_pos);
+}
+
+void PuzzleSkill::F8_Start(int num, int queue_pos)
+{
     // 붉은 용의 숨결
+    F8_isReady = false;
     F8_isActive = true;
     F8_isFalling = false;
     
@@ -1152,6 +1203,10 @@ bool PuzzleSkill::F8_IsActive()
 {
     return F8_isActive;
 }
+bool PuzzleSkill::F8_IsReady()
+{
+    return F8_isReady;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1341,6 +1396,7 @@ void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
     }
 }
 
+/*
 void PuzzleSkill::W7_Init(int numOfFreezeTime)
 {
     W7_slotIdx = 0;
@@ -1376,25 +1432,23 @@ void PuzzleSkill::W7_IncreaseSlotIdx()
 {
     W7_slotIdx++;
 }
+*/
 void PuzzleSkill::W7(int num)
 {
     // 시간을 얼리다 - 5초 동안 시간을 멈춘다.
-    CCLog("W7 W7 W7");
-    if (!W7_isFreezed)
-    {
-        UpdateAppliedSkillCount(num);
-        
-        W7_isFreezed = true;
-        W7_RemainTime = 5000;
-        
-        // 이펙트 실행
-        m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
-        m_pGameLayer->PlayEffect(num, NULL);
-        
-        // iced-bar sound
-        m_pGameLayer->GetSound()->PlaySkillSound(num);
-        m_pGameLayer->GetSound()->PlayVoice(VOICE_STOPTIME);
-    }
+    UpdateAppliedSkillCount(num);
+    
+    W7_isFreezed = true;
+    W7_cnt++;
+    W7_RemainTime = 5 * 1000;
+    
+    // 이펙트 실행
+    m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
+    m_pGameLayer->PlayEffect(num, NULL);
+    
+    // iced-bar sound
+    m_pGameLayer->GetSound()->PlaySkillSound(num);
+    m_pGameLayer->GetSound()->PlayVoice(VOICE_STOPTIME);
 }
 void PuzzleSkill::W7SetTime(int time)
 {
@@ -1411,6 +1465,10 @@ void PuzzleSkill::W7_SetNonFreeze()
 bool PuzzleSkill::W7_IsFreezed()
 {
     return W7_isFreezed;
+}
+int PuzzleSkill::W7_GetCnt()
+{
+    return W7_cnt;
 }
 
 static PuzzleSkill* ps;
@@ -1565,16 +1623,6 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
             }
         }
         */
-        /*
-        // lock 풀기
-        int x, y;
-        for (int i = 0 ; i < ps->result_pos.size() ; i++)
-        {
-            x = (int)ps->result_pos[i].x;
-            y = (int)ps->result_pos[i].y;
-            ps->m_pGameLayer->UnLockEach(x, y);
-        }
-        */
         
         pss->m_pGameLayer->SkillSemaphoreUpdate(-1);
         
@@ -1585,6 +1633,10 @@ void PuzzleSkill::W8_Callback(CCNode* sender, void* data)
 }
 void PuzzleSkill::W8_LastChange()
 {
+    // hint action 중지 + hint time 초기화
+    if (m_pGameLayer->IsHintShown())
+        m_pGameLayer->StopAllActionsAtPieces();
+    
     CCLog("W8_lastChange");
     ps->W8_isLastChangeWaiting = false;
     ps->W8_isLastChange = true;
@@ -2727,23 +2779,6 @@ void PuzzleSkill::ApplyItemPaint(int x, int y, int dx, int dy, int type, int que
     m_pGameLayer->RemoveConnectPieces(result_pos);
     
     ApplyItemPaint_Change(NULL, this);
-    
-    /*
-    for (int i = 0 ; i < result_pos.size() ; i++)
-    {
-        x = (int)result_pos[i].x;
-        y = (int)result_pos[i].y;
-        
-        // lock을 건다.
-        m_pGameLayer->LockEach(x, y);
-        
-        // 진행방향 5픽셀 밀고 + 교체하고 + 다시 5픽셀 당기기
-        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.1f, ccp(dx*5, dy*5)), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), this), NULL);
-        // 없애기
-        //CCFiniteTimeAction* action = CCSequence::create(CCScaleTo::create(0.05f, 0.0f), CCCallFuncND::create(m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), this), NULL);
-        m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
-    }
-    */
 }
 void PuzzleSkill::ApplyItemPaint_Change(CCNode* sender, void* pointer)
 {
@@ -2760,9 +2795,16 @@ void PuzzleSkill::ApplyItemPaint_Change(CCNode* sender, void* pointer)
     
     // lock을 건다.
     //m_pGameLayer->LockEach(x, y);
-    
+
+    float time = (float)(pss->itemPaint_callbackCnt-1 + 1)*0.005f;
+    CCLog("%d : %f", pss->itemPaint_callbackCnt-1, time);
+/*
+    0     1     2    3
+    0.01  0.02  0.03  0.04  0.05
+    0.005 0.01  0.015 0.02  0.025
+  */
     // 진행방향 5픽셀 밀고 + 교체하고 + 다시 5픽셀 당기기
-    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.01f, ccp(pss->item_dx, pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), pss), NULL);
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(pss->item_dx, pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), pss), NULL);
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
 }
 
@@ -2798,7 +2840,9 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
     CCPoint p = pss->m_pGameLayer->SetPiece8Position(x, y);
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition( ccp(p.x+pss->item_dx, p.y+pss->item_dy) );
     
-    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.01f, ccp(-pss->item_dx, -pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Change), pss), NULL);
+    float time = (float)(pss->itemPaint_callbackCnt-1 + 1)*0.005f;
+    CCLog("%d : %f", pss->itemPaint_callbackCnt-1, time);
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(-pss->item_dx, -pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Change), pss), NULL);
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
 }
 

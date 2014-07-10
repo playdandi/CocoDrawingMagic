@@ -14,11 +14,12 @@
 #define HTTP_NONCONSUMED_GET_FRIEND_ID -10
 #define HTTP_NONCONSUMEDITEMS -100
 
+using namespace cocos2d;
 using namespace cocos2d::extension;
 
 USING_NS_CC_EXT;
 
-class Splash : public CCLayer,
+class Splash : public CCLayerColor,
                 public CCIMEDelegate
 {
 public:
@@ -27,7 +28,25 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
-    
+
+    void onInitComplete();
+    void onInitErrorComplete(const char* status, const char* error);
+    void onAuthComplete(bool result);
+    void onAuthErrorComplete(char const* status, char const* error);
+    void onTokenComplete();
+    void onTokenErrorComplete(char const* status, char const* error);
+    void onLoginComplete();
+    void onLoginErrorComplete(char const* status, char const* error);
+    void onLocalUserComplete();
+    void onLocalUserErrorComplete(char const* status, char const* error);
+    void onFriendsComplete();
+    void onFriendsErrorComplete(char const* status, char const* error);
+    void onLogoutComplete();
+    void onLogoutErrorComplete(char const* status, char const* error);
+    void onUnregisterComplete();
+    void onUnregisterErrorComplete(char const* status, char const* error);
+
+
     virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent);
@@ -35,6 +54,8 @@ public:
 	static CCScene* scene();
 	CREATE_FUNC(Splash);
     
+    void Callback_Logo_KakaoGame(CCNode* sender, void* p);
+    void Callback_Logo_playDANDi(CCNode* sender, void* p);
     void LogoLoadingCompleted();
     void SoundCallback(CCNode* sender, void* p);
     void Button_Callback();
@@ -74,9 +95,11 @@ protected:
     CCSize winSize;
     bool isLoading;
     bool isStarting;
-    bool isKeyBackClicked;
+    bool isKeybackTouched;
     
     int gameVersion; // 새로 받은 게임버전
+    bool needToLoginForKakao;
+    bool isKakaoLoading;
     
     int mKakaoId;
     int mDeviceType;
@@ -94,6 +117,7 @@ private:
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
+    CCSprite* m_pKakaoBtn;
     
     CCTextFieldTTF* m_pEditName;
 };

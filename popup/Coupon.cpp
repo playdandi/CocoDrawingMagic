@@ -15,6 +15,14 @@ void Coupon::onEnter()
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
+    
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.3f, ccp(0, 0)), CCScaleTo::create(0.3f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Coupon::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Coupon::SceneCallback()
+{
+    isTouched = false;
 }
 void Coupon::onExit()
 {
@@ -26,6 +34,10 @@ void Coupon::onExit()
 
 void Coupon::keyBackClicked()
 {
+    if (isKeybackTouched || isTouched)
+        return;
+    isKeybackTouched = true;
+    
     sound->playClick();
     EndScene();
 }
@@ -36,6 +48,7 @@ bool Coupon::init()
 	if (!CCLayer::init())
 		return false;
     
+    isTouched = true;
     
     // make depth tree
     Depth::AddCurDepth("Coupon", this);
@@ -53,6 +66,12 @@ bool Coupon::init()
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
+    
+    tLayer = CCLayer::create();
+    tLayer->setAnchorPoint(ccp(0, 0));
+    tLayer->setPosition(ccp(winSize.width/2, winSize.height/2));
+    this->addChild(tLayer, 1);
+    tLayer->setScale(0);
     
     InitSprites();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -73,12 +92,14 @@ void Coupon::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         CCLog("Coupon : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("Coupon : 터치 비활성");
+        isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 2)
@@ -105,34 +126,34 @@ void Coupon::InitSprites()
     spriteClass = new SpriteClass();
     
     // pop-up 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "Coupon", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "Coupon", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "Coupon", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "Coupon", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     std::string text = "알파벳/숫자로 이루어진\n16자리 번호를 입력해 주세요.";
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(winSize.width/2, 1000), ccc3(78,47,8), CCSize(829-20, 280), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "Coupon", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(winSize.width/2, 1000), ccc3(78,47,8), CCSize(829-20, 280), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
     
     
     // title
     std::string title = "쿠폰등록";
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(126+5, 678+562 - 35), CCSize(759-126+52, 90), "", "Coupon", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(126+5, 678+562 - 35), CCSize(759-126+52, 90), "", "Layer", tLayer, 1) );
     CCPoint pos = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(title, fontList[0], 48, ccp(0.5,0.5), ccp(pos.x+2, pos.y+3-1), ccc3(0,0,0), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(title, fontList[0], 48, ccp(0.5,0.5), ccp(pos.x, pos.y+3), ccc3(242,242,242), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
     
     
     // 닫기 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "Coupon", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_cancel.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 5, 1) );
     
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "Coupon", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"))->setColor(ccc3(170,170,170));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
     
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 0), ccp(winSize.width/2, 880), CCSize(750, 76), "", "Coupon", this, 2) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 0), ccp(winSize.width/2, 880), CCSize(750, 76), "", "Layer", tLayer, 2) );
     
     // 쿠폰 text 레이블
     m_pCouponField = CCTextFieldTTF::textFieldWithPlaceHolder("", CCSize(700, 66), kCCTextAlignmentCenter, fontList[0].c_str(), 56);
@@ -144,10 +165,10 @@ void Coupon::InitSprites()
     this->addChild(m_pCouponField, 3);
     
     int h = 860;
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 0), ccp(200-3, h), CCSize(200, 76), "", "Coupon", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png3", ccp(0.5, 0), ccp(430-3, h), CCSize(200, 76), "", "Coupon", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png4", ccp(0.5, 0), ccp(660-3, h), CCSize(200, 76), "", "Coupon", this, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png5", ccp(0.5, 0), ccp(890-3, h), CCSize(200, 76), "", "Coupon", this, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 0), ccp(200-3, h), CCSize(200, 76), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png3", ccp(0.5, 0), ccp(430-3, h), CCSize(200, 76), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png4", ccp(0.5, 0), ccp(660-3, h), CCSize(200, 76), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png5", ccp(0.5, 0), ccp(890-3, h), CCSize(200, 76), "", "Layer", tLayer, 2) );
     
     // 실제 레이블
     int off = 65;
@@ -160,7 +181,7 @@ void Coupon::InitSprites()
         else if (i == 12) x = 890-3-off;
         if (i % 4 == 0) d = 0;
         
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("*", fontList[0], 56, ccp(0.5, 0.5), ccp(x+43*d, h+76/2), ccc3(0,0,0), "", "Coupon", this, 5, 0, 255, i) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("*", fontList[0], 56, ccp(0.5, 0.5), ccp(x+43*d, h+76/2), ccc3(0,0,0), "", "Layer", tLayer, 5, 0, 255, i) );
         
         d++;
     }
@@ -337,6 +358,9 @@ void Coupon::EndScene()
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
     m_pCouponField->removeFromParentAndCleanup(true);
+    
+    tLayer->removeAllChildren();
+    tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
 }
