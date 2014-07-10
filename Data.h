@@ -2,6 +2,8 @@
 #define __CocoMagic__Data__
 
 #include "Common.h"
+#include "Kakao/Common/KakaoLocalUser.h"
+#include "Kakao/Common/KakaoFriends.h"
 
 #include "openssl/rsa.h"
 #include "openssl/bio.h"
@@ -41,7 +43,7 @@ extern std::vector<class LastWeeklyRank*> lastWeeklyRank;
 
 extern std::vector<int> inGameSkill;
 extern std::vector<class Depth*> depth;
-extern std::vector<int> todayCandyKakaoId;
+extern std::vector<std::string> todayCandyKakaoId;
 
 extern bool isRebooting;
 extern bool isInGame;
@@ -147,17 +149,23 @@ public:
 class MyInfo
 {
 public:
-    void Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
+    void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     
     std::string GetSessionId();
     int GetKeyValue();
     int GetUserId();
+    
+    std::string GetHashedTalkUserId();
+    std::string GetCountryIso();
+    bool IsMessageBlocked();
+    bool isVerified();
+    
     //void SetSessionId(std::string sessionId);
     static CCSprite* GetProfile();
     static std::string GetName();
     int GetDeviceType();
-    int GetKakaoId();
+    std::string GetKakaoId();
     int GetMsgCnt();
     void SetMsgCnt(int cnt);
     bool GetKakaoMsg();
@@ -244,7 +252,11 @@ private:
     bool settingPushNoti;
     bool settingPotionMsg;
     
-    int kakaoId;
+    std::string kakaoId;
+    std::string hashedTalkUserId;
+    std::string countryIso;
+    bool messageBlocked;
+    bool verified;
     int deviceType;
     int userId;
     int msgCnt;
@@ -361,16 +373,16 @@ private:
 class Friend
 {
 public:
-    Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
+    Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
     
     void SetProfile(CCSprite* sp);
     void SetPotionSprite();
     void SetScore(int highScore, int weeklyHighScore, int certificateType);
     
-    static Friend* GetObj(int kakaoId);
-    static int GetRemainPotionTime(int kakaoId);
+    static Friend* GetObj(std::string kakaoId);
+    static int GetRemainPotionTime(std::string kakaoId);
     
-    int GetKakaoId();
+    std::string GetKakaoId();
     CCSprite* GetProfile();
     std::string GetImageUrl();
     std::string GetNickname();
@@ -403,7 +415,7 @@ public:
     int GetSkillLv();
     
 private:
-    int kakaoId;
+    std::string kakaoId;
     std::string nickname;
     CCLabelTTF* nicknameLabel;
     std::string imageUrl;
@@ -445,14 +457,14 @@ public:
 class Msg
 {
 public:
-    Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, int friendKakaoId);
+    Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, std::string friendKakaoId);
     int GetId();
     int GetType();
     int GetRewardCount();
     std::string GetContent();
     std::string GetProfileUrl();
     std::string GetNoticeUrl();
-    int GetFriendKakaoId();
+    std::string GetFriendKakaoId();
 
 private:
     int id;
@@ -462,7 +474,7 @@ private:
     std::string profileUrl;
     CCSprite* profile;
     std::string noticeUrl;
-    int friendKakaoId;
+    std::string friendKakaoId;
 };
 
 

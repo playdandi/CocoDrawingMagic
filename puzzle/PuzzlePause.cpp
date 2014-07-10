@@ -194,7 +194,7 @@ void PuzzlePause::ResumeGame()
     
     std::string param = "";
     char temp[40];
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
     param += temp;
     
     Network::HttpPost(param, URL_SESSION_CHECK, this, httpresponse_selector(PuzzlePause::onHttpRequestCompleted));

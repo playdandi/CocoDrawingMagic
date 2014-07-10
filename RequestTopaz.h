@@ -36,7 +36,7 @@ public:
     void EndScene();
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseResult(xml_document *xmlDoc, int friendKakaoId);
+    void XmlParseResult(xml_document *xmlDoc, std::string friendKakaoId);
     
     CREATE_FUNC(RequestTopaz);
     

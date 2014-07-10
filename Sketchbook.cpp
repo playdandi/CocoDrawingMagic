@@ -851,7 +851,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     
                     char temp[255];
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "user_skill_id=%d", -id); // 양수로 고치자.
                     param += temp;

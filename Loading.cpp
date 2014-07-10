@@ -38,7 +38,7 @@ void Loading::AAA(CCNode* sender, void* p)
     
     char temp[255];
     std::string param = "";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
     param += temp;
     
     int a = CCUserDefault::sharedUserDefault()->getBoolForKey("item_00", false);

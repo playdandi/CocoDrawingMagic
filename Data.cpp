@@ -1,4 +1,5 @@
 #include "Data.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
 #include <algorithm>
 
 int iGameVersion;
@@ -24,7 +25,7 @@ std::vector<class LastWeeklyRank*> lastWeeklyRank;
 
 std::vector<class Depth*> depth;
 std::vector<int> inGameSkill;
-std::vector<int> todayCandyKakaoId;
+std::vector<std::string> todayCandyKakaoId;
 
 bool isRebooting; // 시스템 재부팅 중일 시 true
 bool isInGamePause; // 인게임 중에 pause되었는지 여부
@@ -179,9 +180,13 @@ MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int sco
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MyInfo::Init(int kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId)
+void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId)
 {
     this->kakaoId = kakaoId;
+    this->hashedTalkUserId = KakaoLocalUser::getInstance()->hashedTalkUserId;
+    this->countryIso = KakaoLocalUser::getInstance()->countryIso;
+    this->messageBlocked = KakaoLocalUser::getInstance()->messageBlocked;
+    this->verified =KakaoLocalUser::getInstance()->verified;
     this->deviceType = deviceType;
     this->userId = userId;
     this->settingKakaoMsg = kakaoMsg;
@@ -263,9 +268,25 @@ int MyInfo::GetDeviceType()
 {
     return deviceType;
 }
-int MyInfo::GetKakaoId()
+std::string MyInfo::GetKakaoId()
 {
     return kakaoId;
+}
+std::string MyInfo::GetHashedTalkUserId()
+{
+    return hashedTalkUserId;
+}
+std::string MyInfo::GetCountryIso()
+{
+    return countryIso;
+}
+bool MyInfo::IsMessageBlocked()
+{
+    return messageBlocked;
+}
+bool MyInfo::isVerified()
+{
+    return verified;
 }
 int MyInfo::GetMsgCnt()
 {
@@ -490,7 +511,7 @@ void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
 {
     this->mp = mp;
     this->mpStaffPercent = mpStaffPercent;
-    this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
+    this->mpStaff = (int)((float)(mp*mpStaffPercent)/(float)100);
     this->mpFairy = mpFairy;
     this->staffLv = staffLv;
 }
@@ -802,7 +823,7 @@ void LastWeeklyRank::SortByRank()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
+Friend::Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
 {
     // constructor
     this->kakaoId = kakaoId;
@@ -833,7 +854,7 @@ Friend::Friend(int kakaoId, std::string nickname, std::string imageUrl, int poti
     this->skillLevel = skillLevel;
 }
 
-Friend* Friend::GetObj(int kakaoId)
+Friend* Friend::GetObj(std::string kakaoId)
 {
     for (int i = 0 ; i < friendList.size() ; i++)
     {
@@ -932,7 +953,7 @@ CCSprite* Friend::GetPotionSprite()
     return potionSprite;
 }
 
-int Friend::GetKakaoId()
+std::string Friend::GetKakaoId()
 {
     return kakaoId;
 }
@@ -972,7 +993,7 @@ int Friend::GetScoreUpdateTime()
 {
     return scoreUpdateTime;
 }
-int Friend::GetRemainPotionTime(int kakaoId)
+int Friend::GetRemainPotionTime(std::string kakaoId)
 {
     for (int i = 0 ; i < friendList.size() ; i++)
     {
@@ -1080,7 +1101,7 @@ std::string DataProcess::FindSkillNameById(int skillId)
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-Msg::Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, int friendKakaoId)
+Msg::Msg(int id, int type, int rewardCount, std::string content, std::string profileUrl, std::string noticeUrl, std::string friendKakaoId)
 {
     this->id = id;
     this->type = type;
@@ -1114,7 +1135,7 @@ std::string Msg::GetNoticeUrl()
 {
     return noticeUrl;
 }
-int Msg::GetFriendKakaoId()
+std::string Msg::GetFriendKakaoId()
 {
     return friendKakaoId;
 }

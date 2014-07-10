@@ -48,6 +48,9 @@ using namespace cocos2d::extension;
 #define URL_NONCONSUMED_GETFRIENDID "http://14.63.212.106/cogma/game/send_topaz_google_get_friend.php?"
 #define URL_PURCHASE_TOPAZ          "http://14.63.212.106/cogma/game/purchase_topaz_google.php?"
 #define URL_SEND_TOPAZ              "http://14.63.212.106/cogma/game/send_topaz_google.php?"
+#define URL_FRIENDADD               "http://14.63.212.106/cogma/game/friend_add.php?"
+#define URL_FRIENDDEL               "http://14.63.212.106/cogma/game/friend_del.php?"
+#define URL_JOIN                    "http://14.63.212.106/cogma/game/join.php?"
 
 class Network
 {

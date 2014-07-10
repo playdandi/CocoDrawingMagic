@@ -50,8 +50,8 @@ public:
     
     void MakeSpritesCandy();
     void SetTodayCandyList();
-    void DecideUser(int selectedKakaoId);
-    void TodayCandy_Result(int selectedKakaoId);
+    void DecideUser(char* selectedKakaoId);
+    void TodayCandy_Result(char* selectedKakaoId);
     void Callback(CCNode* sender, void* data);
     void Callback2(CCNode* sender, void* kakaoId);
     

@@ -1,6 +1,6 @@
 #include "InviteFriend.h"
 
-static std::vector<int> kakaoIds;
+static std::vector<std::string> kakaoIds;
 static std::vector<int> remainTimes;
 static int todayCnt, monthCnt, totalCnt;
 
@@ -31,7 +31,7 @@ void InviteFriend::onEnter()
     httpStatus = 0;
     char temp[50];
     std::string params = "";
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
     params += temp;
     
     Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
@@ -207,9 +207,54 @@ void InviteFriend::InitSprites()
         spriteClass->AddChild(i);
 }
 
+bool compareInvite(InviteList *a, InviteList *b)
+{
+    int c = a->nickname.compare(b->nickname);
+    
+    if (a->wasInvited && b->wasInvited)
+        return (c < 0);
+    else if (a->wasInvited)
+        return false;
+    else if (b->wasInvited)
+        return true;
+    else
+        return (c < 0);
+}
+
 void InviteFriend::MakeScroll()
 {
-    int numOfList = kakaoIds.size();
+    for (int i = 0 ; i < inviteList.size() ; i++)
+        delete inviteList[i];
+    inviteList.clear();
+    
+    int numOfList = KakaoFriends::getInstance()->friends->count();
+    CCLog("numOfList = %d", numOfList);
+    CCArray* keys = KakaoFriends::getInstance()->friends->allKeys();
+    
+    bool wasInvited;
+    for (int j = 0 ; j < numOfList ; j++)
+    {
+        CCString* k = (CCString*)keys->objectAtIndex(j);
+        std::string userId = k->getCString();
+        CCLog("user id = %s", userId.c_str());
+        KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey(userId.c_str());
+        
+        // 이미 초대되어있는지 서버에서 받아온 정보와 비교한다.
+        wasInvited = false;
+        for (int i = 0 ; i < kakaoIds.size() ; i++)
+        {
+            if (userId == kakaoIds[i] && remainTimes[i] > 0)
+            {
+                wasInvited = true;
+                break;
+            }
+        }
+
+        inviteList.push_back( new InviteList(userId, f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice, wasInvited) );
+    }
+    // 정렬 : 닉네임 순 (단, 초대된 사람은 무조건 뒤로 보낸다)
+    std::sort(inviteList.begin(), inviteList.end(), compareInvite);
+    
     
     // make scroll
     scrollContainer = CCLayer::create();
@@ -226,13 +271,13 @@ void InviteFriend::MakeScroll()
         scrollContainer->addChild(itemLayer, 2);
         spriteClassScroll->layers.push_back(itemLayer);
         
+        
         // profile bg
         sprintf(name, "background/bg_profile_noimage.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         
-        // name
-        sprintf(name, "%d번 친구", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(196, 118-10), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
+        // nickname
+        spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(inviteList[i]->nickname, fontList[0], 48, ccp(0, 0), ccp(196, 118-10), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
         // starcandy bg + starcandy + text(x 1000)
         sprintf(name, "background/bg_degree_desc.png1%d", i);
@@ -252,7 +297,7 @@ void InviteFriend::MakeScroll()
         //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
         // button
-        if (remainTimes[i] == 0) // 초대 가능한 경우
+        if (!inviteList[i]->wasInvited) // 초대 가능한 경우
         {
             sprintf(name, "button/btn_blue_mini.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3) );
@@ -339,10 +384,10 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 httpStatus = 1;
                 char temp[50];
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
-                sprintf(temp, "friend_kakao_id=%d", kakaoIds[idx]);
-                param += temp;
+                //sprintf(temp, "friend_kakao_id=%d", kakaoIds[idx]);
+                //param += temp;
                 
                 // tag
                 sprintf(temp, "%d", idx);
@@ -464,7 +509,8 @@ void InviteFriend::XmlParseList(xml_document *xmlDoc)
     {
         kakaoIds.clear();
         remainTimes.clear();
-        int kakaoId, remainTime;
+        std::string kakaoId;
+        int remainTime;
         std::string name;
         
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("invite-friend-list").children("friend");
@@ -473,7 +519,7 @@ void InviteFriend::XmlParseList(xml_document *xmlDoc)
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 name = ait->name();
-                if (name == "kakao-id") kakaoId = ait->as_int();
+                if (name == "kakao-id") kakaoId = ait->as_string();
                 else if (name == "remain-time") remainTime = ait->as_int();
             }
             kakaoIds.push_back(kakaoId);
@@ -545,3 +591,16 @@ void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc, int idx)
         Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_OK, BTN_1, data);
     }
 }
+
+InviteList::InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi)
+{
+    this->userId = userid;
+    this->nickname = name;
+    this->profileUrl = purl;
+    this->hashedTalkUserId = htuid;
+    this->messageBlocked = msgblocked;
+    this->supportedDevice = supporteddevice;
+    this->wasInvited = wi;
+}
+
+

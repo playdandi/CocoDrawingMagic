@@ -3,10 +3,15 @@
 #include "Kakao/Plugins/KakaoNativeExtension.h"
 #include "Kakao/Common/KakaoLocalUser.h"
 #include "Kakao/Common/KakaoFriends.h"
-//#include "KakaoFriendsScene.h"
+
 
 using namespace pugi;
 using namespace cocos2d;
+
+static std::vector<std::string> addedList;
+static std::vector<std::string> deletedList;
+static bool isFriendListChecked;
+static bool isJoinNeeded;
 
 Splash::~Splash(void)
 {
@@ -71,10 +76,20 @@ void Splash::onAuthComplete(bool result)
     CCLog("onAuthComplete : result (%d)", result);
     // result = true (로그인 된 상태) , false (로그인 안된 상태)
     needToLoginForKakao = !result;
+    
+    if (result && isJoinNeeded && !stopHere) // join을 해야 함.
+    {
+        stopHere = true;
+        CCLog("onAuthComplete : 조인하자!!!");
+        m_pMsgLabel->setString("잠시만 기다려주세요.");
+        KakaoNativeExtension::getInstance()->localUser(std::bind(&Splash::onLocalUserComplete, this), std::bind(&Splash::onLocalUserErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+    }
+    waitTouch = false;
 }
 void Splash::onAuthErrorComplete(char const* status, char const* error)
 {
     CCLog("onLoginErrorComplete : %s, %s", status, error);
+    waitTouch = false;
 }
 
 void Splash::onTokenComplete()
@@ -91,6 +106,9 @@ void Splash::onTokenErrorComplete(char const* status, char const* error)
 void Splash::onLoginComplete()
 {
     CCLog("onLoginComplete");
+    isJoinNeeded = true;
+    m_pKakaoBtn->removeFromParentAndCleanup(true);
+    
     KakaoNativeExtension::getInstance()->auth(std::bind(&Splash::onAuthComplete, this, std::placeholders::_1), std::bind(&Splash::onAuthErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
 }
 void Splash::onLoginErrorComplete(char const* status, char const* error)
@@ -102,7 +120,10 @@ void Splash::onLoginErrorComplete(char const* status, char const* error)
 void Splash::onLocalUserComplete()
 {
     CCLog("onLocalUserComplete");
-    CCLog("KakaoLocalUser nickname : %s", KakaoLocalUser::getInstance()->nickName.c_str());
+    
+    // 그 다음 친구목록 불러온다.
+    KakaoNativeExtension::getInstance()->friends(std::bind(&Splash::onFriendsComplete, this), std::bind(&Splash::onFriendsErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+    /*
     const char *message = CCString::createWithFormat("userId : %s\nnickName : %s\nhashedTalkUserId : %s\nprofileImageUrl: %s\ncountryIso : %s\nmessageBlocked : %s\nverified : %s",
                                                      KakaoLocalUser::getInstance()->userId.c_str(),
                                                      KakaoLocalUser::getInstance()->nickName.c_str(),
@@ -113,6 +134,7 @@ void Splash::onLocalUserComplete()
                                                      KakaoLocalUser::getInstance()->verified ? "true" : "false"
                                                      )->getCString();
     CCMessageBox(message, "LocalUser");
+    */
     
     /*
     따라서, LocalUser 호출 시 hashed_talk_user_id 가 없는 경우에는 아래와 같이 처리하는 것을 권장합니다.
@@ -123,33 +145,25 @@ void Splash::onLocalUserComplete()
 void Splash::onLocalUserErrorComplete(char const* status, char const* error) {
     CCMessageBox(error, "onLocalUserErrorComplete");
     CCLog("onLocalUserErrorComplete : %s, %s", status, error);
+    isTouched = false;
 }
 
 void Splash::onFriendsComplete()
 {
-    int cnt = KakaoFriends::getInstance()->appFriends->count();
-    CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
-    for (int i = 0 ; i < cnt ; i++)
-    {
-        CCString* k = (CCString*)keys->objectAtIndex(i);
-        KakaoFriends::Friends *f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->appFriends->objectForKey( k->getCString() );
-        
-        CCLog("%s %s %s %d %d", f->nickname.c_str(), f->friendNickname.c_str(), f->profileImageUrl.c_str(),
-              f->messageBlocked, f->supportedDevice );
-    }
+    CCLog("onFriendsComplete");
     
-    cnt = KakaoFriends::getInstance()->friends->count();
-    keys = KakaoFriends::getInstance()->friends->allKeys();
-    for (int i = 0 ; i < cnt ; i++)
-    {
-        CCString* k = (CCString*)keys->objectAtIndex(i);
-        KakaoFriends::Friends *f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey( k->getCString() );
-        
-        CCLog("%s %s %s %d %d", f->nickname.c_str(), f->friendNickname.c_str(), f->profileImageUrl.c_str(),
-              f->messageBlocked, f->supportedDevice );
-    }
+    // 시작 버튼
+    m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
+    m_pStartBtn->setAnchorPoint(ccp(0, 0));
+    m_pStartBtn->setPosition(ccp(319, 191));
+    this->addChild(m_pStartBtn, 3);
+    m_pStartLetter = CCSprite::createWithSpriteFrameName("letter/letter_startgame.png");
+    m_pStartLetter->setAnchorPoint(ccp(0.5, 0.5));
+    m_pStartLetter->setPosition(ccp(319+446/2, 191+160/2+5));
+    this->addChild(m_pStartLetter, 3);
+    isTouched = false;
     
-    /* 
+    /*
      [app_friends_info] :: 이 게임을 같이하는 친구
      
      “user_id” : 카카오톡 사용자 ID ,
@@ -176,17 +190,7 @@ void Splash::onFriendsErrorComplete(char const* status, char const* error)
 {
     CCMessageBox(error, "onFriendsErrorComplete");
     CCLog("onFriendsErrorComplete : %s, %s", status, error);
-}
-
-void Splash::onLogoutComplete()
-{
-    CCLog("onLogoutComplete");
-    KakaoNativeExtension::getInstance()->auth(std::bind(&Splash::onAuthComplete, this, std::placeholders::_1), std::bind(&Splash::onAuthErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
-}
-void Splash::onLogoutErrorComplete(char const* status, char const* error)
-{
-    CCMessageBox(error, "onLogoutErrorComplete");
-    CCLog("onLogoutErrorComplete : %s, %s", status, error);
+    isTouched = false;
 }
 
 void Splash::onUnregisterComplete()
@@ -200,7 +204,6 @@ void Splash::onUnregisterErrorComplete(char const* status, char const* error)
     CCLog("onUnregisterErrorComplete : %s, %s", status, error);
 }
 /*
- KakaoNativeExtension::getInstance()->logout(std::bind(&MainScene::onLogoutComplete, this), std::bind(&MainScene::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
  KakaoNativeExtension::getInstance()->unregister(std::bind(&MainScene::onUnregisterComplete, this), std::bind(&MainScene::onUnregisterErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
  */
 
@@ -221,8 +224,8 @@ bool Splash::init()
     Depth::AddCurDepth("Splash", this);
     
     winSize = CCDirector::sharedDirector()->getWinSize();
-    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
-    CCPoint vo = CCDirector::sharedDirector()->getVisibleOrigin();
+    vs = CCDirector::sharedDirector()->getVisibleSize();
+    vo = CCDirector::sharedDirector()->getVisibleOrigin();
     float logo_h = vs.height / (6.7f) * 3.0f;
     float size_h = vs.height / 6.7f;
     
@@ -240,6 +243,11 @@ bool Splash::init()
     isInGame = false;
     isInGameTutorial = false;
     isRebooting = false;
+    isFriendListChecked = false;
+    isJoinNeeded = false;
+    isTouched = false;
+    waitTouch = false;
+    stopHere = false;
     httpStatus = 0;
     m_pEditName = NULL;
     
@@ -277,6 +285,8 @@ void Splash::Callback_Logo_KakaoGame(CCNode* sender, void* p)
     m_pBackground = CCSprite::create("images/logo_playDANDi.png");
     m_pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
     m_pBackground->setOpacity(0);
+    float h = m_pBackground->getContentSize().height;
+    m_pBackground->setScale(vs.height/h);
     this->addChild(m_pBackground, 0);
 
     CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(1.0f), CCFadeOut::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Splash::Callback_Logo_playDANDi), this), NULL );
@@ -320,7 +330,7 @@ void Splash::LogoLoadingCompleted()
     m_pTitle->runAction(action);
     
     // 클라이언트에 들고 있던 kakao ID, device Type 불러오기
-    mKakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey("kakaoId", -1);
+    //mKakaoId = CCUserDefault::sharedUserDefault()->getIntegerForKey("kakaoId", -1);
     if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
         mDeviceType = 2;
     else if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -333,12 +343,14 @@ void Splash::LogoLoadingCompleted()
     m_pMsgLabel->setAnchorPoint(ccp(0.5, 0.5));
     m_pMsgLabel->setPosition(ccp(winSize.width/2, 400));
     m_pMsgLabel->setColor(ccc3(0, 0, 0));
-    if (mKakaoId == -1)
-        m_pMsgLabel->setString("처음이시군요!!!");
-    else
-        m_pMsgLabel->setString("다시 오셨군요! 환영합니다!");
+    m_pMsgLabel->setString("환영합니다!");
+    //if (mKakaoId == -1)
+    //    m_pMsgLabel->setString("처음이시군요!!!");
+    //else
+    //    m_pMsgLabel->setString("다시 오셨군요! 환영합니다!");
     this->addChild(m_pMsgLabel, 5);
     
+    /*
     // kakao id 세팅
     if (mKakaoId == -1)
     {
@@ -352,6 +364,7 @@ void Splash::LogoLoadingCompleted()
         m_pEditName->setAnchorPoint(ccp(0.5,0.5));
         this->addChild(m_pEditName);
     }
+    */
     
     // 버전 세팅
     iGameVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion", -1);
@@ -366,35 +379,41 @@ void Splash::SoundCallback(CCNode* sender, void* p)
 
 void Splash::Button_Callback()
 {
+    // 터치 활성화
+    isTouched = true;
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    
     if (needToLoginForKakao)
     {
         m_pKakaoBtn = CCSprite::create("images/kakao/kakao_login.png");
         m_pKakaoBtn->setPosition(ccp(winSize.width/2, 191+50));
         m_pKakaoBtn->setScale(4.0f/3.0f);
         this->addChild(m_pKakaoBtn, 3);
+        isTouched = false;
     }
     else
     {
-        // 시작 버튼
-        m_pStartBtn = CCSprite::createWithSpriteFrameName("button/btn_red.png");
-        m_pStartBtn->setAnchorPoint(ccp(0, 0));
-        m_pStartBtn->setPosition(ccp(319, 191));
-        this->addChild(m_pStartBtn, 3);
-        m_pStartLetter = CCSprite::createWithSpriteFrameName("letter/letter_startgame.png");
-        m_pStartLetter->setAnchorPoint(ccp(0.5, 0.5));
-        m_pStartLetter->setPosition(ccp(319+446/2, 191+160/2+5));
-        this->addChild(m_pStartLetter, 3);
+        CCLog("hihi");
+        //KakaoNativeExtension::getInstance()->logout(std::bind(&Splash::onLogoutComplete, this), std::bind(&Splash::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
         
+        m_pMsgLabel->setString("잠시만 기다려주세요.");
         KakaoNativeExtension::getInstance()->localUser(std::bind(&Splash::onLocalUserComplete, this), std::bind(&Splash::onLocalUserErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
-        KakaoNativeExtension::getInstance()->friends(std::bind(&Splash::onFriendsComplete, this), std::bind(&Splash::onFriendsErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
     }
-    
-    // 터치 활성화
-    CCDirector* pDirector = CCDirector::sharedDirector();
-    pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
-    this->setKeypadEnabled(true);
-	this->setTouchEnabled(true);
 }
+
+/*void Splash::onLogoutComplete()
+{
+    CCLog("onLogoutComplete");
+    CCDirector::sharedDirector()->end();
+}
+void Splash::onLogoutErrorComplete(char const* status, char const* error)
+{
+    CCMessageBox(error, "onLogoutErrorComplete");
+    CCLog("onLogoutErrorComplete : %s, %s", status, error);
+}*/
 
 
 RSA* Splash::createRSA(unsigned char * key, int pub)
@@ -430,17 +449,28 @@ void Splash::keyboardWillHide(CCIMEKeyboardNotificationInfo &info)
 
 bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
+    CCLog("%d %d %d", isTouched, waitTouch, isLoading);
+    CCLog("needtologin = %d", needToLoginForKakao);
+    if (waitTouch)
+        return false;
     if (isLoading)
         return true;
+    if (isTouched)
+        return false;
+    isTouched = true;
     
     CCPoint point = pTouch->getLocation();
-    
     
     if (needToLoginForKakao)
     {
         isKakaoLoading = true;
         if (m_pKakaoBtn->boundingBox().containsPoint(point)) // kakao 로그인하기
+        {
+            waitTouch = true;
+            isTouched = false;
             KakaoNativeExtension::getInstance()->login(std::bind(&Splash::onLoginComplete, this), std::bind(&Splash::onLoginErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+            return false;
+        }
     }
     else if (m_pStartBtn->boundingBox().containsPoint(point)) // 게임 시작하기 버튼
     {
@@ -449,8 +479,8 @@ bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         m_pStartLetter->setColor(ccc3(170,170,170));
     }
     
-    if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
-        m_pEditName->attachWithIME();
+    //if (mKakaoId == -1 && m_pEditName->boundingBox().containsPoint(point))
+    //    m_pEditName->attachWithIME();
     
     return true;
 }
@@ -462,7 +492,7 @@ void Splash::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (isLoading)
+    if (!isTouched || isLoading)
         return;
     
     CCPoint point = pTouch->getLocation();
@@ -471,11 +501,13 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (m_pStartBtn->boundingBox().containsPoint(point))
         {
-            
+            CCLog("hi 11");
             sound->playClick();
-            
             isLoading = true;
+            m_pStartBtn->setOpacity(0);
+            m_pStartLetter->setOpacity(0);
             
+            /*
             // kakao id save (처음 로그인 때만)
             if (mKakaoId == -1)
             {
@@ -483,37 +515,59 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCUserDefault::sharedUserDefault()->setIntegerForKey("kakaoId", mKakaoId);
                 m_pEditName->setOpacity(0);
             }
+            */
             
-            m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
+            CCLog("is join needed = %d", isJoinNeeded);
+            if (isJoinNeeded)
+            {
+                httpStatus = HTTP_JOIN;
+                m_pMsgLabel->setString("마법의 세계에 들어가는 중...");
+                // 카카오 로그인을 했을 경우 회원가입을 해야 한다. (join.php)
+                char temp[255];
+                std::string param = "";
+                sprintf(temp, "kakao_id=%s&", KakaoLocalUser::getInstance()->userId.c_str());
+                param += temp;
+                sprintf(temp, "kakao_user_type=1");
+                param += temp;
+                
+                CCLog("param = %s", param.c_str());
+                
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(URL_JOIN);
+                req->setRequestData(param.c_str(), param.size());
+                req->setRequestType(CCHttpRequest::kHttpPost);
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+            else
+            {
+                m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
+                // 게임 버전 체크
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl(URL_VERSION);
+                req->setRequestType(CCHttpRequest::kHttpPost);
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
             
-            // 게임 버전 체크
-            CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl(URL_VERSION);
-            req->setRequestType(CCHttpRequest::kHttpPost);
-            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-            CCHttpClient::getInstance()->send(req);
-            req->release();
-            
-            m_pStartBtn->setOpacity(0);
-            m_pStartLetter->setOpacity(0);
         }
         else
         {
+            CCLog("hi 22");
             m_pStartBtn->setColor(ccc3(255,255,255));
             m_pStartLetter->setColor(ccc3(255,255,255));
             isStarting = false;
         }
     }
-    
-    else if (isKakaoLoading)
-    {
-        
-    }
+
+    isTouched = false;
 }
 
 void Splash::XmlParseVersion(xml_document *xmlDoc)
 {
-    
+    CCLog("xml parse : version");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     CCLog("code = %d", code);
@@ -611,6 +665,46 @@ void Splash::TryLogin()
     std::string param = "";
     sprintf(temp, "game_version=%d&", iGameVersion);
     param += temp;
+    //sprintf(temp, "kakao_id=%d&", mKakaoId);
+    //param += temp;
+    
+    sprintf(temp, "device_type=%d&", mDeviceType);
+    param += temp;
+    sprintf(temp, "kakao_id=%s&", KakaoLocalUser::getInstance()->userId.c_str());
+    param += temp;
+    sprintf(temp, "nick_name=%s&", KakaoLocalUser::getInstance()->nickName.c_str());
+    param += temp;
+    sprintf(temp, "access_token=%s&", CCUserDefault::sharedUserDefault()->getStringForKey("access_token").c_str());
+    param += temp;
+    sprintf(temp, "profile_image_url=%s&", KakaoLocalUser::getInstance()->profileImageUrl.c_str());
+    param += temp;
+    if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) // 안드로이드는 기기 고유 id를,
+        sprintf(temp, "push_token=%s", regId);
+    else                                            // iPhone은 아이폰에서 기기 고유 id를 받아넣는다.
+        sprintf(temp, "push_token=TEST_PUSH_VALUE");
+    param += temp;
+    
+    CCLog("%s", param.c_str());
+    
+    CCHttpRequest* req = new CCHttpRequest();
+    req->setUrl(URL_LOGIN);
+    req->setRequestData(param.c_str(), param.size());
+    req->setRequestType(CCHttpRequest::kHttpPost);
+    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+    CCHttpClient::getInstance()->send(req);
+    req->release();
+}
+
+/*
+void Splash::TryLogin()
+{
+    m_pMsgLabel->setString("로그인 중...");
+    
+    // required parameter values
+    char temp[255];
+    std::string param = "";
+    sprintf(temp, "game_version=%d&", iGameVersion);
+    param += temp;
     sprintf(temp, "kakao_id=%d&", mKakaoId);
     param += temp;
     if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) // 안드로이드는 기기 고유 id를,
@@ -639,6 +733,7 @@ void Splash::TryLogin()
     CCHttpClient::getInstance()->send(req);
     req->release();
 }
+*/
 
 void Splash::XMLParseGameData()
 {
@@ -914,6 +1009,8 @@ void Splash::WriteResFile(char* data, int size)
 
 void Splash::XmlParseLogin(xml_document *xmlDoc)
 {
+    CCLog("xml parse : login");
+    
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -925,6 +1022,8 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
             Network::ShowCommonError(code);
         else if (code == 11) // 블록당한 유저
             Common::ShowPopup(this, "Splash", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+        else if (code == 12) // 카카오 토큰값 인증 실패
+            Common::ShowPopup(this, "Splash", "NoImage", false, KAKAO_TOKEN_ERROR, BTN_1, nullData);
         else
             Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
@@ -941,7 +1040,7 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         
         // 내 정보 class (extern) 만들기
         myInfo = new MyInfo();
-        myInfo->Init(mKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId);
+        myInfo->Init(KakaoLocalUser::getInstance()->userId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId);
         
         // get GCM key
         gcmKey = nodeResult.child("gcm-key").text().as_string();
@@ -963,7 +1062,7 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         // required parameter values
         char temp[255];
         std::string param = "";
-        sprintf(temp, "kakao_id=%d", mKakaoId);
+        sprintf(temp, "kakao_id=%s", KakaoLocalUser::getInstance()->userId.c_str());
         param += temp;
         
         Network::HttpPost(param, URL_USERINFO, this, httpresponse_selector(Splash::onHttpRequestCompleted));
@@ -972,6 +1071,7 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
 
 void Splash::XmlParseMyInfo(xml_document *xmlDoc)
 {
+    CCLog("xml parse : myinfo");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -1094,7 +1194,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
             // 저번주 주간랭킹 결과 불러온다.
             m_pMsgLabel->setString("지난 주 상이 있는지 힐끔 바라보는 중...");
             
-            sprintf(temp, "kakao_id=%d", mKakaoId);
+            sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
             param += temp;
             
             Network::HttpPost(param, URL_WEEKLYRANK, this, httpresponse_selector(Splash::onHttpRequestCompleted));
@@ -1104,7 +1204,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
             // 친구 리스트 정보를 받는다.
             m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
             
-            sprintf(temp, "kakao_id=%d", mKakaoId);
+            sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
             param += temp;
             
             httpStatus++;
@@ -1171,7 +1271,7 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
         
         char temp[50];
         std::string param;
-        sprintf(temp, "kakao_id=%d", mKakaoId);
+        sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
         param += temp;
 
         Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Splash::onHttpRequestCompleted));
@@ -1180,6 +1280,7 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
 
 void Splash::XmlParseFriends(xml_document *xmlDoc)
 {
+    CCLog("xml parse : friends");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -1195,7 +1296,12 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
     
     else if (code == 0)
     {
-        int kakaoId;
+        // 초기화 (다시 받아올 수 있으므로)
+        for (int i = 0 ; i < friendList.size() ; i++)
+            delete friendList[i];
+        friendList.clear();
+        
+        std::string kakaoId;
         std::string nickname;
         std::string imageUrl;
         int potionMsgStatus;
@@ -1221,7 +1327,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 std::string name = ait->name();
-                if (name == "kakao-id") kakaoId = ait->as_int();
+                if (name == "kakao-id") kakaoId = ait->as_string();
                 else if (name == "nick-name") nickname = ait->as_string();
                 else if (name == "profile-image-url") imageUrl = ait->as_string();
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
@@ -1242,6 +1348,10 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
+            // !!!!!!!!
+            imageUrl = "";
+            // !!!!!!!!
+            
             // nickname 너무 길면 자르자.
             nickname = SubstrNickname(nickname);
             
@@ -1255,9 +1365,63 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
         
+        // 추가 또는 삭제할 친구가 있는지 검사한다. (처음 한번만)
+        if (!isFriendListChecked)
+            CheckFriendList();
+        
+        CCLog("added : %d  ,  deleted : %d", (int)addedList.size(), (int)deletedList.size());
+        
+        if (addedList.size() > 0) // 추가할 친구가 있으면 프로토콜 실행.
+        {
+            char temp[255];
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            for (int i = 0 ; i < addedList.size() ; i++)
+            {
+                sprintf(temp, "friend_kakao_id_list[%d]=%s&", i, addedList[i].c_str());
+                param += temp;
+            }
+            param = param.substr(0, param.size()-1);
+            
+            addedList.clear();
+            httpStatus--;
+            Network::HttpPost(param, URL_FRIENDADD, this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        }
+        else if (deletedList.size() > 0) // 삭제할 친구가 있으면 프로토콜 실행.
+        {
+            char temp[255];
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            for (int i = 0 ; i < deletedList.size() ; i++)
+            {
+                sprintf(temp, "friend_kakao_id_list[%d]=%s&", i, deletedList[i].c_str());
+                param += temp;
+            }
+            param = param.substr(0, param.size()-1);
+            
+            deletedList.clear();
+            httpStatus--;
+            Network::HttpPost(param, URL_FRIENDDEL, this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        }
+        else
+        {
+            LastActionStart();
+        }
+        
         
         // get image by url (다 받으면 Ranking으로 넘어간다)
         profileCnt = 0;
+        for (int i = 0 ; i < profiles.size() ; i++)
+        {
+            if (profiles[i]->GetProfileUrl() == "")
+            {
+                profiles[i]->SetSpriteNoImage();
+                profileCnt++;
+            }
+        }
+        /*
         m_pMsgLabel->setString("친구의 못생긴 얼굴 지적하는 중...");
         char tag[5];
         for (int i = 0 ; i < profiles.size() ; i++)
@@ -1283,7 +1447,60 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 req->release();
             }
         }
+         */
     }
+}
+
+void Splash::CheckFriendList()
+{
+    bool flag;
+    int cnt = KakaoFriends::getInstance()->appFriends->count();
+    CCLog("COUNT = %d", cnt);
+    CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
+    
+    // 새로 추가된 친구가 있는지 찾는다.
+    for (int j = 0 ; j < cnt ; j++)
+    {
+        flag = false;
+        CCString* k = (CCString*)keys->objectAtIndex(j);
+        std::string userId = k->getCString();
+        CCLog("user id = %s", userId.c_str());
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            if (myInfo->GetKakaoId() == friendList[i]->GetKakaoId())
+                continue;
+            if (userId == friendList[i]->GetKakaoId())
+            {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag)
+            addedList.push_back(userId);
+    }
+    
+    // 사라진 친구가 있는지 찾는다.
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (myInfo->GetKakaoId() == friendList[i]->GetKakaoId())
+            continue;
+        
+        flag = false;
+        for (int j = 0 ; j < cnt ; j++)
+        {
+            CCString* k = (CCString*)keys->objectAtIndex(j);
+            std::string userId = k->getCString();
+            if (userId == friendList[i]->GetKakaoId())
+            {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag)
+            deletedList.push_back(friendList[i]->GetKakaoId());
+    }
+    
+    isFriendListChecked = true;
 }
 
 
@@ -1350,8 +1567,24 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 
     CCLog("%d", (int)buffer->size());
     
+    
+    // join.php에서 넘어온 경우, 바로 get_version을 시작하도록 한다.
+    if (httpStatus == HTTP_JOIN)
+    {
+        httpStatus = 0;
+        
+        m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
+        // 게임 버전 체크
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl(URL_VERSION);
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+    
     // gameVersion 변경으로 resource XML 파일 받았을 경우
-    if (atoi(res->getHttpRequest()->getTag()) == 999)
+    else if (atoi(res->getHttpRequest()->getTag()) == 999)
     {
         WriteResFile(dumpData, (int)buffer->size());
     }
@@ -1404,14 +1637,11 @@ void Splash::GetNonConsumedItems(std::string friendKakaoId)
                                        "StartIAB",
                                        "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
     {
-        char myKakaoId[20];
-        sprintf(myKakaoId, "%d", myInfo->GetKakaoId());
-        
         // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
         t.env->CallStaticVoidMethod(t.classID, t.methodID,
                                     0,
                                     -1, // topazid
-                                    t.env->NewStringUTF(myKakaoId), // kakaoid
+                                    t.env->NewStringUTF(myInfo->GetKakaoId().c_str()), // kakaoid
                                     t.env->NewStringUTF(friendKakaoId.c_str()), // friendkakaoid
                                     t.env->NewStringUTF(""), // productid
                                     t.env->NewStringUTF(""), // payload
@@ -1451,9 +1681,10 @@ void Splash::XmlParseGetFriendKakaoId(xml_document *xmlDoc)
 
 void Splash::GetTodayCandyFriend()
 {
+    /*
     m_pMsgLabel->setString("오늘의 별사탕 그룹 구성 중...");
     char name[15];
-    int kakaoId;
+    std::string kakaoId;
     bool flag;
     
     // 내 kakao id부터 넣자.
@@ -1479,6 +1710,7 @@ void Splash::GetTodayCandyFriend()
         
         CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[todayCandyKakaoId.size()-1]);
     }
+    */
 }
 
 void Splash::LastActionStart()

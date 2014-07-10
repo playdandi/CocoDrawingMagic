@@ -913,7 +913,7 @@ void CocoRoom::SetTodayCandyList()
     char name[50];
     for (int i = 0 ; i < todayCandyKakaoId.size() ; i++)
     {
-        if (todayCandyKakaoId[i] != -1)
+        if (todayCandyKakaoId[i] != "")
         {
             for (int j = 0 ; j < friendList.size() ; j++)
             {
@@ -1113,7 +1113,7 @@ CCPoint po[] = { ccp(542, 1210+offset2), ccp(334, 752+offset2), ccp(805, 1015+of
 int popo = 0;
 int candyIdx[] = {0, 2, 4, 1, 3};
 
-void CocoRoom::DecideUser(int selectedKakaoId)
+void CocoRoom::DecideUser(char* selectedKakaoId)
 {
     isTodayCandyWorking = true;
     ((CCSprite*)spriteClassCandy->FindSpriteByName("button/btn_red_mini.png"))->setOpacity(0);
@@ -1145,13 +1145,14 @@ void CocoRoom::Callback(CCNode* sender, void* data)
 {
     // 0 2 4 1 3
     popo++;
-    if (popo > 15 && todayCandyKakaoId[candyIdx[(popo-1)%5]] == (int)data)
+    std::string id = (char*)data;
+    if (popo > 15 && todayCandyKakaoId[candyIdx[(popo-1)%5]] == id)
     {
         CCLog("popo = %d", popo);
         ((CCParticleSystemQuad*)sender)->setDuration(0.05f);
         ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
         
-        TodayCandy_Result((int)data);
+        TodayCandy_Result((char*)data);
         return;
     }
         
@@ -1165,7 +1166,7 @@ void CocoRoom::Callback(CCNode* sender, void* data)
     sender->runAction(action);
 }
 
-void CocoRoom::TodayCandy_Result(int selectedKakaoId)
+void CocoRoom::TodayCandy_Result(char* selectedKakaoId)
 {
     CCParticleSystemQuad* star = CCParticleSystemQuad::create("particles/todaycandy_done.plist");
     star->setAnchorPoint(ccp(0.5, 0.5));
@@ -1186,16 +1187,17 @@ void CocoRoom::Callback2(CCNode* sender, void* kakaoId)
     
     // kakaoID랑 친구리스트의 idx를 넘겨준다.
     int idx;
+    std::string id = (char*)kakaoId;
     for (int i = 0 ; i < friendList.size() ; i++)
     {
-        if (friendList[i]->GetKakaoId() == (int)kakaoId)
+        if (friendList[i]->GetKakaoId() == id)
             idx = i;
     }
     std::vector<int> data;
     data.push_back((int)kakaoId);
     data.push_back(idx);
     
-    if ((int)kakaoId == myInfo->GetKakaoId())
+    if (myInfo->GetKakaoId() == id)
         Common::ShowPopup(Depth::GetCurPointer(), "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_WIN, BTN_1, data);
     else
         Common::ShowPopup(Depth::GetCurPointer(), "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_LOSE, BTN_1, data);
@@ -1448,7 +1450,7 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     
                     char temp[150];
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "user_fairy_id=%d", tag);
                     param += temp;
@@ -1558,7 +1560,7 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 bool flag = true;
                 for (int i = 0 ; i < todayCandyKakaoId.size() ; i++)
                 {
-                    if (todayCandyKakaoId[i] == -1)
+                    if (todayCandyKakaoId[i] == "")
                         flag = false;
                 }
                 
@@ -1578,11 +1580,11 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                         // 오늘의 별사탕 결과 받기
                         char temp[150];
                         std::string param = "";
-                        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                         param += temp;
                         for (int i = 1 ; i < 5 ; i++)
                         {
-                            sprintf(temp, "friend_kakao_id_%d=%d&", i, todayCandyKakaoId[i]);
+                            sprintf(temp, "friend_kakao_id_%d=%s&", i, todayCandyKakaoId[i].c_str());
                             param += temp;
                         }
                         param = param.substr(0, param.size()-1);
@@ -1751,8 +1753,9 @@ void CocoRoom::XmlParseTodayCandy(xml_document *xmlDoc)
     else if (code == 0)
     {
         // 오늘의 별사탕 액션 시작
-        int selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_int();
+        std::string selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_string();
+        char* skid = (char*)selectedKakaoId.c_str();
         myInfo->SetTodayCandy(1);
-        DecideUser(selectedKakaoId);
+        DecideUser(skid);
     }
 }

@@ -45,6 +45,8 @@ protected:
     bool pushNotiReserved;
     bool potionMsgReserved;
     
+    CCSprite* m_pLogoutBtn;
+    
     int code;
     
     CCRect rect;

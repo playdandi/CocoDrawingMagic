@@ -314,7 +314,7 @@ bool Coupon::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     // 네트워크로 메시지들을 받아온다.
                     char temp[50];
                     std::string params = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     params += temp;
                     sprintf(temp, "coupon_string=%s", string.c_str());
                     params += temp;

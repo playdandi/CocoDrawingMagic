@@ -28,7 +28,7 @@ void Message::onEnter()
     // 네트워크로 메시지들을 받아온다.
     char temp[50];
     std::string params = "";
-    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
     params += temp;
     
     Network::HttpPost(params, URL_MESSAGE_LIST, this, httpresponse_selector(Message::onHttpRequestCompleted));
@@ -443,7 +443,7 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 메시지에 대한 처리 서버 통신
                 char temp[50];
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
                 sprintf(temp, "message_id=%d", msgData[httpMsgIdx]->GetId());
                 param += temp;
@@ -455,9 +455,9 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     Friend::GetRemainPotionTime(msgData[httpMsgIdx]->GetFriendKakaoId()) <= 0)
                 {
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
-                    sprintf(temp, "friend_kakao_id=%d", msgData[httpMsgIdx]->GetFriendKakaoId());
+                    sprintf(temp, "friend_kakao_id=%s", msgData[httpMsgIdx]->GetFriendKakaoId().c_str());
                     param += temp;
                     
                     Network::HttpPost(param, URL_SEND_POTION, this, httpresponse_selector(Message::onHttpRequestCompleted));
@@ -605,14 +605,15 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
     else if (code == 0)
     {
         int id, type;
-        int rewardCount, friendKakaoId;
+        int rewardCount;
+        std::string friendKakaoId;
         std::string content, profileUrl, noticeUrl;
         std::string name;
         
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {
-            friendKakaoId = -1;
+            friendKakaoId = "";
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 name = ait->name();
@@ -626,7 +627,7 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
                 else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
                 else if (name == "reward-count") rewardCount = ait->as_int();
                 else if (name == "notice-url") noticeUrl = "";
-                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_int();
+                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_string();
             }
             msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }

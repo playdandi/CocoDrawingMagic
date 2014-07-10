@@ -9,7 +9,7 @@ using namespace pugi;
 class NoImage : public CCLayer
 {
 public:
-    static CCScene* scene(int popupType, int btnType, std::vector<int> data, int etc);
+    static CCScene* scene(int popupType, int btnType, std::vector<int> data, int etc, std::vector<std::string> sdata);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -25,6 +25,9 @@ public:
     void Notification(CCObject* obj);
     
     void InitSprites();
+    
+    void onLogoutComplete();
+    void onLogoutErrorComplete(char const* status, char const* error);
     
     void ReplaceScene(std::string to, int type, int btnType);
     void EndScene();

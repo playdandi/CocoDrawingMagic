@@ -1,13 +1,13 @@
 #include "SendTopaz.h"
 
 static int priceTopazIdx;
-static int friendKakaoId;
+static std::string friendKakaoId;
 static int topazId;
 
 CCScene* SendTopaz::scene(int idx)
 {
     priceTopazIdx = idx;
-    friendKakaoId = -1;
+    friendKakaoId = "";
     topazId = -1;
     
     CCScene* pScene = CCScene::create();
@@ -133,7 +133,7 @@ void SendTopaz::Notification(CCObject* obj)
         EndScene();
         
         char p[30];
-        sprintf(p, "%d/%d", friendKakaoId, topazId-1);
+        sprintf(p, "%s/%d", friendKakaoId.c_str(), topazId-1);
         CCString* param = CCString::create(p);
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }

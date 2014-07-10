@@ -64,6 +64,22 @@ private:
     
     SpriteClass* spriteClass;
     SpriteClass* spriteClassScroll;
+    
+    std::vector<class InviteList*> inviteList;
+};
+
+
+class InviteList
+{
+public:
+    InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi);
+    std::string userId;
+    std::string nickname;
+    std::string profileUrl;
+    std::string hashedTalkUserId;
+    bool messageBlocked;
+    bool supportedDevice;
+    bool wasInvited;
 };
 
 #endif /* defined(__CocoMagic__InviteFriend__) */

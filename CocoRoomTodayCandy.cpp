@@ -373,15 +373,15 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         todayCandyKakaoId.push_back( friendList[i]->GetKakaoId() );
                 }
                 for (int i = todayCandyKakaoId.size(); i < 5; i++)
-                    todayCandyKakaoId.push_back(-1);
+                    todayCandyKakaoId.push_back("");
                 
                 // User Default 값 갱신
                 char name[15];
                 for (int i = 1 ; i < todayCandyKakaoId.size() ; i++)
                 {
                     //CCLog("%d", todayCandyKakaoId[i]);
-                    sprintf(name, "todayCandy_%d", i);
-                    CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[i]);
+                    //sprintf(name, "todayCandy_%d", i);
+                    //CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[i]);
                 }
                 
                 EndScene();

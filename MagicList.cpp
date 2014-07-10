@@ -467,7 +467,7 @@ void MagicList::TryEnd()
 
     char temp[255];
     std::string param = "";
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
     param += temp;
     int cnt = 0;
     for (int i = 0 ; i < myInfo->GetSlot().size() ; i++)

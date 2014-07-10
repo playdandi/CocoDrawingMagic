@@ -147,6 +147,10 @@ USING_NS_CC;
 #define COUPON_EXPIRED 81
 #define COUPON_NOT_EXIST 82
 #define BUY_PROPERTY_FREE_MSG 83
+#define KAKAO_LOGOUT 84
+#define KAKAO_UNREGISTER 85
+#define SERVICE 86
+#define KAKAO_TOKEN_ERROR 87
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -159,6 +163,9 @@ USING_NS_CC;
 #define BTN_MENU_CONFIRM 4
 #define BTN_MENU_UPGRADE_1 5
 #define BTN_MENU_UPGRADE_2 6
+#define BTN_MENU_LOGOUT 7
+#define BTN_MENU_UNREGISTER 8
+#define BTN_MENU_SERVICE 9
 
 using namespace pugi;
 using namespace cocos2d;

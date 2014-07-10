@@ -161,10 +161,12 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png3", // id
                     ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Layer", tLayer, 1) );
 
-    
+    char temp[50];
     // text (version, kakaoID)
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("게임버전 : 1.0.0 ver", fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Layer", tLayer, 4) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카카오 ID : 123456789012", fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
+    sprintf(temp, "게임버전 : %d", binaryVersion_current);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Layer", tLayer, 4) );
+    sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     
     // 버튼 : 만든 사람들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png1",
@@ -194,12 +196,14 @@ void Setting::InitSprites()
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png4", "0", NULL, 1) );
     
-    // 버튼 : 회원탈퇴
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png1",
-                    ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png",
-                    ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
-                    getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
+    // 버튼 : logout
+    m_pLogoutBtn = CCSprite::create("images/kakao/kakao_logout.png");
+    m_pLogoutBtn->setAnchorPoint(ccp(0, 0));
+    m_pLogoutBtn->setPosition(ccp(82, 192));
+    tLayer->addChild(m_pLogoutBtn, 5);
+    
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png1", ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
+    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite-> getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
     
     // 버튼 : id복사
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png2",
@@ -292,7 +296,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     
                     char temp[50];
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
                     param += temp;
@@ -308,7 +312,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     // 바뀐 게 없으면 그냥 끈다.
                     EndScene();
                 }
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 21) == "button/btn_option.png") // on-off's
@@ -321,7 +325,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 selectedPos = spriteClass->spriteObj[i]->sprite->getPosition();
                 standardBtnPos.y = selectedPos.y;
                 selectedTouchPos = point;
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png2") // 쿠폰등록 버튼
@@ -334,6 +338,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_COUPON;
                 idx = i;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png3") // 튜토리얼 버튼
@@ -346,9 +351,48 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_TUTORIAL;
                 idx = i;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png4") // 고객센터 버튼
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_SERVICE;
+                idx = i;
+                return true;
+            }
+        }
+        
+        else if (spriteClass->spriteObj[i]->name == "btn_system.png2") // 로그아웃
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_UNREGISTER;
+                idx = i;
+                return true;
             }
         }
     }
+    
+    if (m_pLogoutBtn->boundingBox().containsPoint(point)) // 로그아웃
+    {
+        sound->playClick();
+        m_pLogoutBtn->setColor(ccc3(170,170,170));
+        rect = m_pLogoutBtn->boundingBox();
+        kind = BTN_MENU_LOGOUT;
+        idx = 999;
+        return true;
+    }
+
     
     return true;
 }
@@ -437,20 +481,37 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     if (idx > -1)
     {
-        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
-        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+        if (idx == 999)
+            m_pLogoutBtn->setColor(ccc3(255,255,255));
+        else
+        {
+            spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
+        }
     }
     if (rect.containsPoint(point))
     {
+        std::vector<int> nullData;
         switch (kind)
         {
             case BTN_MENU_TUTORIAL:
                 menuInSetting = 0;
                 EndScene();
                 break;
+            case BTN_MENU_SERVICE:
+                Common::ShowPopup(this, "Setting", "NoImage", false, SERVICE, BTN_1, nullData);
+                break;
             case BTN_MENU_COUPON:
                 Common::ShowNextScene(this, "Setting", "Coupon", false);
+                break;
+            case BTN_MENU_LOGOUT:
+                Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_LOGOUT, BTN_2, nullData);
+                break;
+            case BTN_MENU_UNREGISTER:
+                Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_UNREGISTER, BTN_2, nullData);
                 break;
         }
     }
@@ -512,6 +573,8 @@ void Setting::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    
+    m_pLogoutBtn->removeFromParentAndCleanup(true);
     
     tLayer->removeAllChildren();
     tLayer->removeFromParentAndCleanup(true);

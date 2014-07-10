@@ -211,7 +211,7 @@ void RequestTopaz::MakeScroll()
         
         // button
         sprintf(fname, "button/btn_yellow_mini.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, friendList[i]->GetKakaoId()) ); // 버튼에 친구 kakao id를 tag로 둔다.
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, i*100) ); // 버튼에 친구 kakao id를 tag로 둔다.
         sprintf(fname2, "letter/letter_request2.png%d", i);
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0), ccp(spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3) );
         // dotted line
@@ -292,18 +292,15 @@ void RequestTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // Loading 화면으로 MESSAGE request 넘기기
                 Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
 
-                int friendkakaoId = spriteClassScroll->spriteObj[i]->sprite->getTag();
+                std::string friendkakaoId = friendList[ spriteClassScroll->spriteObj[i]->sprite->getTag() ]->GetKakaoId();
                 char temp[255];
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
-                sprintf(temp, "friend_kakao_id=%d", friendkakaoId);
+                sprintf(temp, "friend_kakao_id=%s", friendkakaoId.c_str());
                 param += temp;
-                
-                // tag
-                sprintf(temp, "%d", friendkakaoId);
-                
-                Network::HttpPost(param, URL_REQUEST_TOPAZ, this, httpresponse_selector(RequestTopaz::onHttpRequestCompleted), temp);
+
+                Network::HttpPost(param, URL_REQUEST_TOPAZ, this, httpresponse_selector(RequestTopaz::onHttpRequestCompleted), friendkakaoId.c_str());
                 
                 break;
             }
@@ -369,11 +366,11 @@ void RequestTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     xml_document xmlDoc;
     Network::GetXMLFromResponseData(res, xmlDoc);
     
-    int friendKakaoId = atoi(res->getHttpRequest()->getTag());
+    std::string friendKakaoId = res->getHttpRequest()->getTag();
     XmlParseResult(&xmlDoc, friendKakaoId);
 }
 
-void RequestTopaz::XmlParseResult(xml_document *xmlDoc, int friendKakaoId)
+void RequestTopaz::XmlParseResult(xml_document *xmlDoc, std::string friendKakaoId)
 {
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();

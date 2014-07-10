@@ -992,8 +992,8 @@ void Puzzle::UpdateScore(int type, int data)
         if (data < 3)
             iScore += data * 1000;
         else
-            // 기본점수 : (50 + 15(n-3)^1.2) * n
-            iScore += ( (50 + 15*pow(data-3, 1.20)) * data );
+            // 기본점수 : (50 + 15(n-3)^1.6) * n
+            iScore += ( (50 + 15*pow(data-3, 1.6f)) * data );
     }
     else if (type == 1)
     {
@@ -3535,7 +3535,7 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     }
 
     
-    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
     param += temp;
     sprintf(temp, "score=%d&", iScore);
     param += temp;
@@ -3612,7 +3612,7 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
     
     else if (code == 0)
     {
-        int kakaoId;
+        std::string kakaoId;
         std::string nickname;
         std::string imageUrl;
         int potionMsgStatus;
@@ -3645,7 +3645,7 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 std::string name = ait->name();
-                if (name == "kakao-id") kakaoId = ait->as_int();
+                if (name == "kakao-id") kakaoId = ait->as_string();
                 else if (name == "nick-name") nickname = ait->as_string();
                 else if (name == "profile-image-url") imageUrl = ait->as_string();
                 else if (name == "potion-message-receive") potionMsgStatus = ait->as_int();
@@ -3862,7 +3862,7 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
                     flag = false;
                     char temp[50];
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
                     param += temp;
                     
                     Network::HttpPost(param, URL_FRIENDLIST, this, httpresponse_selector(Puzzle::onHttpRequestCompleted));

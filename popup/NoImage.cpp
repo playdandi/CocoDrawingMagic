@@ -1,5 +1,6 @@
 #include "NoImage.h"
 #include "BuyPotion.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
 
 static int type;
 static int btn;
@@ -8,7 +9,7 @@ static int fromWhere;
 
 static int newSkillType;
 
-CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc)
+CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int etc, std::vector<std::string> sdata)
 {
     // data
     type = popupType;
@@ -59,6 +60,24 @@ void NoImage::keyBackClicked()
     sound->playClick();
     EndScene();
 }
+
+void NoImage::onLogoutComplete()
+{
+    CCLog("onLogoutComplete");
+    EndScene();
+    
+    CCDirector::sharedDirector()->end();
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    exit(0);
+#endif
+}
+void NoImage::onLogoutErrorComplete(char const* status, char const* error)
+{
+    CCMessageBox(error, "onLogoutErrorComplete");
+    CCLog("onLogoutErrorComplete : %s, %s", status, error);
+}
+
+
 
 
 bool NoImage::init()
@@ -265,6 +284,9 @@ void NoImage::InitSprites()
         case YOU_WERE_BLOCKED:
             title = "오류";
             sprintf(text, "블록된 계정입니다. 문의사항은 help@playdandi.com 으로 이메일을 보내주세요."); break;
+        case KAKAO_TOKEN_ERROR:
+            title = "오류";
+            sprintf(text, "카카오 아이디 인증을 실패하였습니다."); break;
         case WILL_BE_UPDATED:
             title = "앱 업데이트";
             sprintf(text, "업데이트 예정입니다."); break;
@@ -511,7 +533,8 @@ void NoImage::InitSprites()
             title = present;
             title += " 당첨!";
             fontSize = 32;
-            sprintf(text, "축하합니다!\n%s님께서 %s %d개에 당첨되셨어요.\n%s님께 %s %d개를 보냅니다.\n(카카오톡 메시지가 전송됩니다)", Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
+            sprintf(text, "축하합니다");
+            //sprintf(text, "축하합니다!\n%s님께서 %s %d개에 당첨되셨어요.\n%s님께 %s %d개를 보냅니다.\n(카카오톡 메시지가 전송됩니다)", Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice(), Friend::GetObj(d[0])->GetNickname().c_str(), present, myInfo->GetTodayCandyValueChoice());
             break;
         case TODAYCANDY_ALREADY_DONE:
             title = "오늘의 별사탕";
@@ -562,6 +585,18 @@ void NoImage::InitSprites()
         case BUY_PROPERTY_FREE_MSG:
             title = "속성 선택하기";
             sprintf(text, "축하합니다! 이제 다른 속성을 배울 수 있어요.");
+            break;
+        case KAKAO_LOGOUT:
+            title = "카카오 계정 로그아웃";
+            sprintf(text, "카카오 계정을 로그아웃하시겠습니까?\n(로그아웃하면 게임을 종료합니다.)");
+            break;
+        case KAKAO_UNREGISTER:
+            title = "카카오 계정 탈퇴";
+            sprintf(text, "카카오 계정에서 탈퇴하시겠습니까?");
+            break;
+        case SERVICE:
+            title = "고객센터 이메일";
+            sprintf(text, "help@playdandi.com\n으로 이메일을 보내주세요.");
             break;
     }
     //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 52, ccp(0.5, 0.5), ccp(49+982/2+deltaX, 640+623/2+50), ccc3(78,47,8), CCSize(782+deltaSize.x, 300+deltaSize.y), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
@@ -870,13 +905,18 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 Common::ShowNextScene(parent, Depth::GetCurName(), "BuyStarCandy", false, 3); // curName == 결국 부모
                 //return true;
             }
+            else if (type == KAKAO_LOGOUT)
+            {
+                // 카카오 로그아웃 후 게임종료
+                KakaoNativeExtension::getInstance()->logout(std::bind(&NoImage::onLogoutComplete, this), std::bind(&NoImage::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+            }
             else if (type == BUY_TOPAZ_TRY)
             {
                 //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
                 // 토파즈 구입하기. (미결제 버전) -> 건드리지 말자
                 std::string url = "http://14.63.212.106/cogma/game/purchase_topaz.php?";
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
                 sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
                 param += temp;
@@ -896,7 +936,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     std::string url = URL_PURCHASE_STARCANDY;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "starcandy_id=%d", priceStarCandy[d[0]]->GetId());
                     param += temp;
@@ -915,7 +955,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     // 포션 구매 프로토콜을 요청한다.
                     std::string url = URL_PURCHASE_POTION;
-                    sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
                     std::string param = "";
                     param += temp;
                     CCLog("url : %s", url.c_str());
@@ -928,9 +968,9 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 포션 보내기 (랭킹 화면에서)
                 std::string url = URL_SEND_POTION;
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
-                sprintf(temp, "friend_kakao_id=%d", friendList[d[0]]->GetKakaoId());
+                sprintf(temp, "friend_kakao_id=%s", friendList[d[0]]->GetKakaoId().c_str());
                 param += temp;
                 CCLog("url : %s", url.c_str());
                 HttpRequest(url, param);
@@ -941,7 +981,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 포션 모두 받기 프로토콜 요청.
                 std::string url = URL_MESSAGE_ALL;
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
                 param += temp;
                 CCLog("url : %s", url.c_str());
                 HttpRequest(url, param);
@@ -959,9 +999,9 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 // 토파즈 선물하기. (미결제 버전) -> 건드리지말자
                 std::string url = "http://14.63.212.106/cogma/game/send_topaz.php?";
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
-                sprintf(temp, "friend_kakao_id=%d&", friendList[d[0]]->GetKakaoId());
+                sprintf(temp, "friend_kakao_id=%s&", friendList[d[0]]->GetKakaoId().c_str());
                 param += temp;
                 sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
                 param += temp;
@@ -988,7 +1028,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
                     std::string url = URL_UPGRADE_STAFF;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "cost_type=%d", costType);
                     param += temp;
@@ -1015,7 +1055,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     // 요정 강화 (by 별사탕, by 토파즈 모두 통용됨)
                     std::string url = URL_UPGRADE_FAIRY;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "user_fairy_id=%d&",  myInfo->GetActiveFairyUserId());
                     param += temp;
@@ -1048,7 +1088,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
                     std::string url = URL_PURCHASE_FAIRY;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "fairy_id=%d&", fi->GetId());
                     param += temp;
@@ -1073,7 +1113,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     char temp[255];
                     std::string url = URL_UPGRADE_SKILLSLOT;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "slot_id=%d", d[0]);
                     param += temp;
@@ -1094,7 +1134,7 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     char temp[255];
                     std::string url = URL_PURCHASE_SKILL_PROPERTY;
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
                     if (d[0] == 1) newSkillType = 2;
@@ -1416,7 +1456,8 @@ void NoImage::XmlParseMsg(xml_document *xmlDoc)
         msgData.clear();
         
         int id, type;
-        int rewardCount, friendKakaoId;
+        int rewardCount;
+        std::string friendKakaoId;
         std::string content, profileUrl, noticeUrl;
         std::string name;
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
@@ -1436,7 +1477,7 @@ void NoImage::XmlParseMsg(xml_document *xmlDoc)
                 else if (name == "friend-profile-image-url") profileUrl = ait->as_string();
                 else if (name == "reward-count") rewardCount = ait->as_int();
                 else if (name == "notice-url") noticeUrl = "";
-                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_int();
+                else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_string();
             }
             msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
@@ -1657,7 +1698,7 @@ void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
             char temp[150];
             std::string url = URL_USING_FAIRY;
             std::string param = "";
-            sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
             param += temp;
             sprintf(temp, "user_fairy_id=%d", myInfo->GetFairyList()[0]->GetUserId());
             param += temp;

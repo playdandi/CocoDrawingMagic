@@ -140,7 +140,7 @@ void BuyTopaz::Notification(CCObject* obj)
         
         std::string param = "";
         char temp[30];
-        sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
         param += temp;
         sprintf(temp, "friend_kakao_id=%s", friendKakaoId.c_str());
         param += temp;
@@ -319,7 +319,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 std::string param = "";
                 char temp[30];
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
                 sprintf(temp, "friend_kakao_id=NULL");
                 param += temp;
@@ -417,16 +417,13 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         
         const char* payload = nodeResult.child("payload").attribute("string").as_string();
         
-        char myKakaoId[20];
-        sprintf(myKakaoId, "%d", myInfo->GetKakaoId());
-        
         // type : 일반구매(1) , 선물하기(2)
         int type = (httpStatus == 0) ? 1 : 2;
 
         CCLog("type = %d", type);
         CCLog("topazId = %d", topazId);
         CCLog("productId = %s", productId);
-        CCLog("kakaoId = %s", myKakaoId);
+        CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
         CCLog("friendKakaoId = %s", friendKakaoId.c_str());
         
         
@@ -440,7 +437,7 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
             t.env->CallStaticVoidMethod(t.classID, t.methodID,
                                         type,
                                         topazId,
-                                        t.env->NewStringUTF(myKakaoId),
+                                        t.env->NewStringUTF(myInfo->GetKakaoId().c_str()),
                                         t.env->NewStringUTF(friendKakaoId.c_str()),
                                         t.env->NewStringUTF(productId),
                                         t.env->NewStringUTF(payload),

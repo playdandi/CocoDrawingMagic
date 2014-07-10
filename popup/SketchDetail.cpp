@@ -565,7 +565,7 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     // upgrade skill
                     char temp[255];
                     std::string param = "";
-                    sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
                     sprintf(temp, "user_skill_id=%d", ms->GetUserId());
                     param += temp;
@@ -586,7 +586,7 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 
                 char temp[255];
                 std::string param = "";
-                sprintf(temp, "kakao_id=%d&", myInfo->GetKakaoId());
+                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
                 sprintf(temp, "skill_id=%d", skill_common_id);
                 param += temp;

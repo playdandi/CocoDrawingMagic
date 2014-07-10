@@ -108,6 +108,7 @@ bool Ranking::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Ranking::Notification), "Ranking", NULL);
     
+    CCLog("1");
     
     // 인게임에서 돌아온 경우 potion timer 시간 갱신한다.
     if (fromWhere != -1)
@@ -115,18 +116,22 @@ bool Ranking::init()
     // 모든 시간에 대한 타이머 작동
     this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
     
+    CCLog("2");
     idx = -1;
     InitSprites();
+    CCLog("3");
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
+    CCLog("4");
     // 효과음 , 배경음은 클라이언트에 user data로 보관해야 한다. 기본 세팅을 위한 코드.
     bool opt0 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_0", true);
     bool opt1 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_0", opt0);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_1", opt1);
     
+    CCLog("5");
     sound = new Sound();
     sound->PreLoadSound();
     if (opt1)
@@ -471,10 +476,12 @@ void Ranking::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     
     int numOfList = friendList.size();
+    CCLog("makescroll : numOfList = %d", numOfList);
     
     char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
+        CCLog("imageurl(%d) : %s", i, friendList[i]->GetImageUrl().c_str());
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
@@ -518,6 +525,7 @@ void Ranking::MakeScroll()
         // 친구리스트에 포인터 저장.
         friendList[i]->SetProfile( spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite );
         
+        CCLog("nickname = %s", friendList[i]->GetNickname().c_str());
         
         // user name
         friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));
@@ -559,7 +567,6 @@ void Ranking::MakeScroll()
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     // scrollView 생성
     scrollView = CCScrollView::create();
-    //scrollView->retain();
     scrollView->setDirection(kCCScrollViewDirectionVertical);
     scrollView->setViewSize(CCSizeMake(929, 904-80)); // (내용 1개 크기, 노란보드 세로크기)
     scrollView->setContentSize(scrollContainer->getContentSize());

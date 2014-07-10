@@ -551,7 +551,8 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     }
     
     CCScene* popup;
-    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc);
+    std::vector<std::string> nulld;
+    if (to == "NoImage") popup = NoImage::scene(popupType, btnType, data, etc, nulld);
     else if (to == "T_NoImage") popup = T_NoImage::scene(popupType, btnType, data, etc);
     
     if (from == "Splash") ((Splash*)obj)->addChild(popup, 200, 200);
