@@ -36,7 +36,7 @@ public:
     void SetMenuChange(int state);
     void SetTouchLock(bool val);
     
-    SkillInfo* GetNextSkillInfo(int state);
+    SkillInfo* GetNextSkillInfo(int state, int idx);
     
     void EndScene();
     void EndSceneCallback();
@@ -77,7 +77,8 @@ private:
     CCLayer* containerSlot;
     
     CCLayer* ttr;
-    CCSprite* ttrCoco;
+    //CCSprite* ttrCoco;
+    CCScale9Sprite* ttrPos2;
     CCSprite* ttrPos;
     CCSprite* ttrArrow;
     CCSprite* ttrBg;

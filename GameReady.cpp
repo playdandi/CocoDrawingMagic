@@ -2,6 +2,9 @@
 #include "Ranking.h"
 #include "MagicList.h"
 
+static int minusCost_topaz;
+static int minusCost_starcandy;
+
 
 GameReady::~GameReady(void)
 {
@@ -28,17 +31,16 @@ void GameReady::onEnter()
     CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.05f), CCCallFunc::create(this, callfunc_selector(GameReady::SceneCallback)), NULL );
     tLayer->runAction(action);
     //tLayer->runAction(CCEaseExponentialOut::create(action));
+    
+    //  spriteClassProperty
+    // spriteClass
+    // balloon, ball => 이건 fade-in 끝나고 만들까?
 }
 void GameReady::SceneCallback()
 {
-    CCLog("scene callback");
-    // 현재 연습중인 스킬이 max exp라면 팝업창을 띄운다.
-    MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
-    if ( ms != NULL && ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()) )
-    {
-        std::vector<int> nullData;
-        Common::ShowPopup(this, "GameReady", "NoImage", false, PRACTICE_SKILL_FULL_EXP, BTN_1, nullData);
-    }
+    //CCLog("scene callback");
+
+    ShowRewardPopup();
     
     isTouched = false;
     isScrollViewTouched = false;
@@ -70,6 +72,9 @@ bool GameReady::init()
 	{
 		return false;
 	}
+    
+    popupStatus = 0;
+    doNotShowExpPopup = false;
     
     idx = -1;
     isTouched = true;
@@ -127,6 +132,9 @@ bool GameReady::init()
     skillLayer = CCLayer::create();
     tLayer->addChild(skillLayer, 4);
     
+    balloon = NULL;
+    ball = NULL;
+    
     // item select init.
     for (int i = 0 ; i < 5 ; i++)
     {
@@ -134,18 +142,11 @@ bool GameReady::init()
         itemNumberLayer[i] = NULL;
     }
     
-    CCLog("1");
     InitSprites();
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-        spriteClass->AddChild(i);
-    CCLog("2");
     
     InitFairy();
-    CCLog("3");
     InitSkill();
-    CCLog("4");
     MakeScrollSlot();
-    CCLog("5");
     return true;
 }
 
@@ -153,16 +154,7 @@ void GameReady::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == -1)
-    {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setTouchPriority(Depth::GetCurPriority());
-        isTouched = false;
-        scrollViewSlot->setTouchEnabled(true);
-        CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
-    }
-    else if (param->intValue() == 0)
+    if (param->intValue() == 0 || param->intValue() == -1)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -172,27 +164,14 @@ void GameReady::Notification(CCObject* obj)
         scrollViewSlot->setTouchEnabled(true);
         CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
-        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
-
-        // 포션 개수에 따른 포션 아이콘 업데이트
-        char name[40];
-        for (int i = 0 ; i < 5 ; i++)
-        {
-            sprintf(name, "icon/icon_potion.png%d", i);
-            if (i < myInfo->GetPotion())
-                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
-            else
-                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
-        }
+        if (param->intValue() == 0)
+            RenewInfo();
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("GameReady 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         //this->setKeypadEnabled(false);
         //this->setTouchEnabled(false);
@@ -202,22 +181,7 @@ void GameReady::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
-        // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
-        
-        // 포션 개수에 따른 포션 아이콘 업데이트
-        char name[40];
-        for (int i = 0 ; i < 5 ; i++)
-        {
-            sprintf(name, "icon/icon_potion.png%d", i);
-            if (i < myInfo->GetPotion())
-                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
-            else
-                ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
-        }
+        RenewInfo();
     }
     else if (param->intValue() == 3)
     {
@@ -230,7 +194,7 @@ void GameReady::Notification(CCObject* obj)
     }
     else if (param->intValue() == 5)
     {
-        CCLog("게임레디 : 스킬 바꾸자!");
+        //CCLog("게임레디 : 스킬 바꾸자!");
         // 스킬 정보가 바뀐 경우 (게임준비->스케치북->게임준비 돌아올 때)
         InitSkill();
     }
@@ -247,11 +211,14 @@ void GameReady::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+        
+        ShowHintOfBuyingSlot();
     }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"))->setColor(ccc3(255,255,255));
@@ -262,6 +229,177 @@ void GameReady::Notification(CCObject* obj)
     {
         // 속성을 처음 새로 배우고 인게임 튜토리얼 시작하는 경우
         StartGame();
+    }
+    else if (param->intValue() == 11)
+    {
+        // 필요한 팝업창이 있으면 (보상, 스킬연습량 관려) 띄우자.
+        ShowRewardPopup();
+    }
+}
+
+
+void GameReady::ShowRewardPopup()
+{
+    std::vector<int> nullData;
+    
+    while (popupStatus < 4)
+    {
+        if (popupStatus == 0) // 초보 유저에 대한 포션 보상
+        {
+            if (isStartUser)
+            {
+                myInfo->SetMsgCnt(myInfo->GetMsgCnt()+1); // 메시지함 개수 1개 추가
+                isStartUser = false;
+                Common::ShowPopup(this, "GameReady", "NoImage", false, POTION_REWARD, BTN_1, nullData);
+                return;
+            }
+        }
+        else if (popupStatus == 1) // MP 50의 배수, 100의 배수 관련 보상
+        {
+            if (myInfo->GetRewardTopaz() > 0)
+            {
+                myInfo->SetMsgCnt(myInfo->GetMsgCnt()+1); // 메시지함 개수 1개 추가
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_100, BTN_1, nullData);
+                return;
+            }
+            else if (myInfo->IsRewardPotion())
+            {
+                Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_50, BTN_1, nullData);
+                return;
+            }
+        }
+        else if (popupStatus == 2) // 요정을 구입할 수 있는 경우
+        {
+            if (!isPossibleBuyFairyShown)
+            {
+                int requireMP;
+                for (int i = 0 ; i < fairyInfo.size() ; i++) // 한 요정이라도 살 수 있는 조건이 충족되면 팝업창을 띄운다 (게임중 한번만)
+                {
+                    if (fairyInfo[i]->GetId() == 1) requireMP = 500;
+                    else if (fairyInfo[i]->GetId() == 2) requireMP = 30;
+                    else if (fairyInfo[i]->GetId() == 3) requireMP = 300;
+                    
+                    bool flag = false;
+                    for (int j = 0 ; j < myInfo->GetFairyList().size() ; j++)
+                    {
+                        if (myInfo->GetFairyList()[j]->GetId() == fairyInfo[i]->GetId())
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!flag && myInfo->GetMPTotal() >= requireMP)
+                    {
+                        char name[30];
+                        sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
+                        if (CCUserDefault::sharedUserDefault()->getBoolForKey(name, false))
+                        {
+                            CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
+                            isPossibleBuyFairyShown = true;
+                            doNotShowExpPopup = true;
+                            std::vector<int> data;
+                            data.push_back(i);
+                            Common::ShowPopup(this, "GameReady", "NoImage", false, POSSIBLE_BUY_FAIRY, BTN_1, data);
+                            return;
+                        }
+                        /*
+                        else if (myInfo->GetTopaz() >= fairyInfo[i]->GetCostTopaz())
+                        {
+                            isPossibleBuyFairyShown = true;
+                            doNotShowExpPopup = true;
+                            Common::ShowPopup(this, "GameReady", "NoImage", false, POSSIBLE_BUY_FAIRY, BTN_1, nullData);
+                            return;
+                        }
+                        */
+                    }
+                }
+            }
+        }
+        else if (popupStatus == 3) // 현재 연습중인 스킬이 max exp일 경우 팝업창
+        {
+            MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
+            if (!doNotShowExpPopup)
+            {
+                if ( ms != NULL && ms->GetExp() == SkillBuildUpInfo::GetMaxExp(ms->GetCommonId(), ms->GetLevel()) )
+                {
+                    doNotShowExpPopup = true;
+                    Common::ShowPopup(this, "GameReady", "NoImage", false, PRACTICE_SKILL_FULL_EXP, BTN_1, nullData);
+                    return;
+                }
+            }
+            ms = NULL;
+        }
+        
+        popupStatus++;
+    }
+}
+
+void GameReady::RenewInfo()
+{
+    // 선택된 아이템들의 cost를 보고, 별사탕/토파즈가 모자라면 취소시킨다.
+    char name3[40];
+    minusCost_starcandy = 0;
+    minusCost_topaz = 0;
+    for (int i = 0 ; i < 4 ; i++)
+    {
+        sprintf(name3, "item_0%d", i);
+        itemSelected[i] = CCUserDefault::sharedUserDefault()->getBoolForKey(name3, false);
+        if (itemSelected[i] && myInfo->GetItem(i) <= 0)
+        {
+            if (itemType[i] == ITEM_TOPAZ)
+                minusCost_topaz += itemCost[i];
+            else if (itemType[i] == ITEM_STARCANDY)
+                minusCost_starcandy += itemCost[i];
+        }
+    }
+    if (myInfo->GetTopaz()-minusCost_topaz < 0) // 돈이 모자라니 아이템을 취소시키고 선택 해제.
+    {
+        for (int i = 0 ; i < 4 ; i++)
+        {
+            sprintf(name3, "item_0%d", i);
+            if (itemType[i] == ITEM_TOPAZ) // 체크 선택모양 해제 및 클라이언트 변수 false
+            {
+                itemSelected[i] = false;
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name3, false);
+                ((CCSprite*)spriteClass->FindSpriteByTag(-888*(i+1)))->setOpacity(0);
+                ((CCSprite*)spriteClass->FindSpriteByTag(-777*(i+1)))->setOpacity(0);
+            }
+        }
+        minusCost_topaz = 0;
+    }
+    if (myInfo->GetStarCandy()-minusCost_starcandy < 0) // 마찬가지
+    {
+        for (int i = 0 ; i < 4 ; i++)
+        {
+            sprintf(name3, "item_0%d", i);
+            if (itemType[i] == ITEM_STARCANDY) // 체크 선택모양 해제 및 클라이언트 변수 false
+            {
+                itemSelected[i] = false;
+                CCUserDefault::sharedUserDefault()->setBoolForKey(name3, false);
+                ((CCSprite*)spriteClass->FindSpriteByTag(-888*(i+1)))->setOpacity(0);
+                ((CCSprite*)spriteClass->FindSpriteByTag(-777*(i+1)))->setOpacity(0);
+            }
+        }
+        minusCost_starcandy = 0;
+    }
+    
+    
+    // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()-minusCost_topaz).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()-minusCost_starcandy).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(4))->setString(myInfo->GetRemainPotionTime().c_str());
+    
+    // 포션 개수에 따른 포션 아이콘 업데이트
+    char name[40];
+    for (int i = 0 ; i < 5 ; i++)
+    {
+        sprintf(name, "icon/icon_potion.png%d", i);
+        if (i < myInfo->GetPotion())
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
+        else
+            ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(0);
     }
 }
 
@@ -298,12 +436,9 @@ void GameReady::InitSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(112, 1165), CCSize(274, 53), "", "Layer", tLayer, 4, 128) );
     
-    CCLog("9");
     
     // property 문양 (mp 바로 밑에)
     InitProperties();
-    
-    CCLog("10");
     
     // roof
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_roof.png1", ccp(0, 0), ccp(10, 1433), CCSize(0, 0), "", "Layer", tLayer, 1) );
@@ -329,8 +464,6 @@ void GameReady::InitSprites()
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 1000, 1, 0) );
     }
     
-    CCLog("11");
-    
     // potion-remain-time
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "Layer", tLayer, 5, 0, 255, 4) );
 
@@ -341,34 +474,39 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_grade_a.png", ccp(0, 0), ccp(408+11, 1143+165), CCSize(0, 0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_petlevel.png", ccp(0, 0), ccp(408+55, 1143+187), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
-    CCLog("12");
-    
-    // 선택된 아이템들의 cost를 보고, 별사탕이 모자라면 취소시킨다.
+
+    // 선택된 아이템들의 cost를 보고, 별사탕/토파즈가 모자라면 취소시킨다.
     char name3[40];
-    int minusCost = 0;
+    int minus_starcandy = 0;
+    int minus_topaz = 0;
     for (int i = 0 ; i < 4 ; i++)
     {
         sprintf(name3, "item_0%d", i);
         itemSelected[i] = CCUserDefault::sharedUserDefault()->getBoolForKey(name3, false);
         if (itemSelected[i] && myInfo->GetItem(i) <= 0)
-            minusCost += itemCost[i];
+        {
+            if (itemType[i] == ITEM_TOPAZ)
+                minus_topaz += itemCost[i];
+            else if (itemType[i] == ITEM_STARCANDY)
+                minus_starcandy += itemCost[i];
+        }
     }
-    
-    CCLog("13");
+    //CCLog("topaz = %d / starcandy = %d", minusCost_topaz, minusCost_starcandy);
     
     // 5 items
     int alpha;
     for (int i = 0 ; i < 4; i++)
     {
         sprintf(name3, "item_0%d", i);
-        //itemSelected[i] = CCUserDefault::sharedUserDefault()->getIntegerForKey(name3, 0);
         itemSelected[i] = CCUserDefault::sharedUserDefault()->getBoolForKey(name3, false);
-        CCLog("is %d(%s) selected? = %d", i, name3, itemSelected[i]);
+        //CCLog("is %d(%s) selected? = %d", i, name3, itemSelected[i]);
         
-        if (myInfo->GetStarCandy() < minusCost) // 아이템이 0개인데 별사탕은 모자라고 선택되어 있는 경우, 클라이언트에 false로 저장한다.
+        // 아이템이 0개인데 돈은 모자라고 선택되어 있는 경우, 클라이언트에 false로 저장한다.
+        if ( (itemCost[i] == ITEM_STARCANDY && myInfo->GetStarCandy() < minus_starcandy) ||
+             (itemCost[i] == ITEM_TOPAZ && myInfo->GetTopaz() < minus_topaz) )
         {
             CCUserDefault::sharedUserDefault()->setBoolForKey(name3, false);
-            itemSelected[i] = false; //CCUserDefault::sharedUserDefault()->getBoolForKey(name3, false);
+            itemSelected[i] = false;
         }
     
         sprintf(name, "background/bg_skill_brown.png%d", i+1);
@@ -378,12 +516,12 @@ void GameReady::InitSprites()
         else alpha = 0;
         
         sprintf(name2, "background/bg_skill_select.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1, alpha) );
-        spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1, alpha, -888*(i+1)) );
+        //spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
         sprintf(name3, "icon/icon_check.png%d", i+1);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 2, alpha) );
-        spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(100, 110), CCSize(0, 0), name2, "0", NULL, 6, 2, alpha, -777*(i+1)) );
+        //spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->setTag(i+1);
         
         if (i < 4)
         {
@@ -402,12 +540,9 @@ void GameReady::InitSprites()
         else if (i == 3)
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_item_staff.png", ccp(0.5, 0.5), p, CCSize(0, 0), name, "0", NULL, 6, 1) );
         
-        //sprintf(name2, "icon/icon_item_%d.png", i+1);
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 6, 1) );
 
         if (myInfo->GetItem(i) > 0)
         {
-            CCLog("104");
             // 아이템 별 남은 개수
             if (itemSelected[i])
                 itemNumberLayer[i] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(i)-1));
@@ -418,25 +553,27 @@ void GameReady::InitSprites()
         }
         else
         {
-            if (i < 4)
+            //CCLog("itemcost = %d", itemCost[i]);
+            // 남은 개수가 0이면 가격을 적는다 (별사탕 x개 or 토파즈 y개)
+            if (itemType[i] == ITEM_STARCANDY)
             {
-                CCLog("itemcost = %d", itemCost[i]);
-                CCLog("105");
-                // 남은 개수가 0이면 가격을 적는다 (별사탕 x개)
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(84+193*i-15, 925), CCSize(0, 0), "", "Layer", tLayer, 5) );
-                spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(itemCost[i]), fontList[0], 36, ccp(0, 0), ccp(84+193*i+50, 935), ccc3(255,255,255), "", "Layer", tLayer, 5) );
-                CCLog("106");
+                spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(itemCost[i]), fontList[0], 36, ccp(0, 0), ccp(84+193*i +45, 935), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+            }
+            else if (itemType[i] == ITEM_TOPAZ)
+            {
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(84+193*i-15+30, 925), CCSize(0, 0), "", "Layer", tLayer, 5) );
+                spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(itemCost[i]), fontList[0], 36, ccp(0, 0), ccp(84+193*i +45+30, 935), ccc3(255,255,255), "", "Layer", tLayer, 5) );
             }
         }
     }
-    //myInfo->SetMoney(myInfo->GetTopaz(), myInfo->GetStarCandy()-minusCost);
-    
-    CCLog("14");
     
     // 아이템별 설명
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아이템은 준비중입니다.", fontList[0], 36, ccp(0.5, 0), ccp(winSize.width/2, 736), ccc3(0,0,0), CCSize(880, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
-    
-    CCLog("123123");
+    int idx = -1;
+    for (int i = 3 ; i >= 0 ; i--) // 선택된 아이템 중 가장 처음 것을 구한다.
+        if (itemSelected[i])
+            idx = i;
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(ItemDesc(idx).c_str(), fontList[0], 36, ccp(0.5, 0), ccp(winSize.width/2+10, 736), ccc3(78,47,8), CCSize(880, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5, 0, 255, 10101) ); // tag = 10101
     
     // slot part
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png5", ccp(0, 0), ccp(49, 458), CCSize(982, 223), "", "Layer", tLayer, 1) );
@@ -444,17 +581,20 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", ccp(0, 0), ccp(896, 572), CCSize(0, 0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png4", ccp(0, 0), ccp(867, 497), CCSize(136, 63), "", "Layer", tLayer, 1) );
     
-    CCLog("%d %d", (int)myInfo->GetSlot().size(), (int)skillSlotInfo.size());
-    
+    // 슬롯 옆의 {현재 구입한 슬롯수} / {구입 가능한 max 슬롯수}
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 505), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 슬롯 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 44, ccp(1, 0), ccp(892+30, 505), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 슬롯 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 505), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 젼체 슬롯 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 34, ccp(0, 0), ccp(927+3, 505), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 젼체 슬롯 개수
     
 
     // 게임시작 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_blue.png", ccp(0, 0), ccp(318, 193), CCSize(0, 0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_gamestart.png", ccp(0.5, 0.5), ccp(319+446/2, 191+160/2+5), CCSize(0, 0), "", "Layer", tLayer, 5) );
+    
+    // 스케치북 버튼
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_sketchbook.png", ccp(0, 0), ccp(67, 1920-1569-96), CCSize(0, 0), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_sketchbook.png", ccp(0, 0), ccp(53, 1920-1674-44), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
     // 오늘의 별사탕 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_todaycandy.png", ccp(0, 0), ccp(886-50, 1920-1674-44), CCSize(0, 0), "", "Layer", tLayer, 5) );
@@ -463,13 +603,18 @@ void GameReady::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_ready.png", ccp(0.5, 0.5), ccp(250, 1190+100), CCSize(0, 0), "", "Layer", tLayer, 3) );
     ((CCSprite*)spriteClass->FindSpriteByName("image/coco_ready.png"))->setScale(0.85f);
     
-    CCLog("%d", myInfo->GetStaffLv());
     // 지팡이 레벨 표시
     sprintf(name, "지팡이 %dLv", myInfo->GetStaffLv());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1190), ccc3(121,71,0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 30, ccp(0.5, 0.5), ccp(250, 1193), ccc3(255,219,53), "", "Layer", tLayer, 5) );
     
-    CCLog("15");
+    
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+        spriteClass->AddChild(i);
+    
+    // 아이템 관련 바뀐 것들 체크
+    CCString* param = CCString::create("2");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
     // 게임시작 버튼 움직이기
     CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_blue.png"));
@@ -480,6 +625,45 @@ void GameReady::InitSprites()
     CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
     temp->runAction(CCRepeatForever::create(action));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
+    
+    
+    // 슬롯구입 힌트
+    ShowHintOfBuyingSlot();
+}
+
+void GameReady::ShowHintOfBuyingSlot()
+{
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    balloon = NULL;
+    ball = NULL;
+    bool flag = false;
+    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+    {
+        if (myInfo->GetSkillList()[i]->GetCommonId() % 10 == 3) // 정령 스킬이 있는가?
+        {
+            flag = true;
+            break;
+        }
+    }
+    if (myInfo->GetSlot().size() == 1 && flag)
+    {
+        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon->setContentSize(CCSize(600, 180));
+        balloon->setAnchorPoint(ccp(1, 0));
+        balloon->setPosition(ccp(896+100, 572+55));
+        this->addChild(balloon, 100);
+        ball = CCLabelTTF::create("여기서 슬롯을 구매하여\n두번째 발동스킬을 장착하세요!", fontList[0].c_str(), 36);
+        ball->setPosition(ccp(600/2, 180/2+30));
+        ball->setColor(ccc3(255,255,255));
+        balloon->addChild(ball, 101);
+        
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+        balloon->runAction( CCRepeatForever::create(action) );
+    }
 }
 
 void GameReady::InitProperties()
@@ -555,23 +739,7 @@ void GameReady::InitFairy()
             picture->setScale(0.9f);
             break;
     }
-    /*
-    if (fid == 1)
-    {
-        
-        
-    }
-    else if (fid == 2)
-    {
-        picture->setPosition(ccp(309/2, 236/2+15));
-        picture->setScale(0.7f);
-    }
-    else
-    {
-        picture->setPosition(ccp(309/2, 236/2+23));
-        picture->setScale(0.9f);
-    }
-    */
+ 
     picture->setTag(99999);
     fairyLayer->addChild(picture, 5);
     
@@ -606,7 +774,7 @@ void GameReady::InitFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 6) );
     
     if (fid > 0)
-        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false).c_str());
     else
         sprintf(fname, "요정 없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 6) );
@@ -668,7 +836,6 @@ void GameReady::InitSkill()
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClassSkill->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
         // 스킬 이름
         spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(19+228/2,22+53/2), ccc3(255,255,255), "", "Layer", skillLayer, 7) );
-        //spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(sid), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 100, 1) );
         
         // Lv. <- 이 그림
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(19, 850-772), CCSize(0, 0), "", "Layer", skillLayer, 5) );
@@ -692,13 +859,15 @@ void GameReady::InitSkill()
     {
         // 연습 중인 스킬이 있으며, 연습량이 0보다 클 때
         sp9 = CCScale9Sprite::createWithSpriteFrameName("background/bg_gameready_name.png");
-        sp9->setContentSize(CCSize(228 * MySkill::GetObj(sid)->GetExp() / SkillBuildUpInfo::GetMaxExp(sid, slv), 53));
+        //sp9->setContentSize(CCSize(228 * MySkill::GetObj(sid)->GetExp() / SkillBuildUpInfo::GetMaxExp(sid, slv), 53));
+        float width = 228.0f * (float)MySkill::GetObj(sid)->GetExp() / (float)SkillBuildUpInfo::GetMaxExp(sid, slv);
+        sp9->setContentSize(CCSize(228, 53));
         sp9->setAnchorPoint(ccp(0,0));
         sp9->setPosition(ccp(19, 22));
         sp9->setColor(ccc3(170,170,170));
 
         stencil = CCDrawNode::create();
-        CCPoint ver[] = { ccp(19, 22), ccp(19+228, 22), ccp(19+228, 22+53), ccp(19, 22+53) };
+        CCPoint ver[] = { ccp(19, 22+3), ccp(19+width, 22+3), ccp(19+width, 22+3+53), ccp(19, 22+3+53) };
         stencil->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
         clip = CCClippingNode::create(stencil);
         clip->addChild(sp9, 5);
@@ -742,6 +911,19 @@ void GameReady::MakeScrollSlot()
 }
 
 
+std::string GameReady::ItemDesc(int idx)
+{
+    // '코코가 그리는 마법에 오신 것을 환영합니다!'
+    switch (idx)
+    {
+        case 0: return "[4색 피스]\n게임 중 흰색 피스가 등장하지 않아요."; break;
+        case 1: return "[+5초 시계]\n게임 시간이 5초 늘어나요."; break;
+        case 2: return "[색깔붓]\n원하는 방향으로 같은 색깔을 만드는 색깔붓이 등장해요."; break;
+        case 3: return "[마법지팡이]\n노란색 또는 흰색을 모두 터뜨리는 지팡이가 등장해요."; break;
+    }
+    return "코코가 그리는 마법에 오신 것을 환영합니다!";
+}
+
 void GameReady::PotionTimer(float f)
 {
     int remainTime, potion;
@@ -772,12 +954,17 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     
     CCPoint point = pTouch->getLocation();
-    CCLog("GameReady : (%d , %d)", (int)point.x, (int)point.y);
+    
+    // 슬롯구매 힌트 있으면 안 보이게 한다.
+    if (balloon != NULL && ball != NULL)
+    {
+        balloon->setOpacity(0);
+        ball->setOpacity(0);
+    }
     
     rect = CCRectZero;
     kind = -1;
     idx = -1;
-    
     
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
@@ -840,35 +1027,50 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 if (!itemSelected[tag-1]) // 비선택 -> 선택
                 {
-                    if (myInfo->GetItem(tag-1) <= 0 && myInfo->GetStarCandy() < itemCost[tag-1]) // 별사탕이 모자란 경우
+                    if (myInfo->GetItem(tag-1) <= 0)
                     {
-                        std::vector<int> nullData;
-                        Common::ShowPopup(this, "GameReady", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
-                        return true;
+                        if (itemType[tag-1] == ITEM_STARCANDY)
+                        {
+                            if (myInfo->GetStarCandy()-minusCost_starcandy < itemCost[tag-1]) // 별사탕이 모자란 경우
+                            {
+                                std::vector<int> nullData;
+                                Common::ShowPopup(this, "GameReady", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
+                                return true;
+                            }
+                            //else // 별사탕이 충분한 경우
+                            //{
+                            //    CCLog("별사탕 충분함");
+                            //}
+                        }
+                        else if (itemType[tag-1] == ITEM_TOPAZ)
+                        {
+                            if (myInfo->GetTopaz()-minusCost_topaz < itemCost[tag-1]) // 토파즈가 모자란 경우
+                            {
+                                std::vector<int> nullData;
+                                Common::ShowPopup(this, "GameReady", "NoImage", false, NEED_TO_BUY_TOPAZ, BTN_2, nullData);
+                                return true;
+                            }
+                            //else // 토파즈가 충분한 경우
+                            //{
+                            //    CCLog("토파즈 충분함");
+                            //}
+                        }
                     }
                     else
                     {
-                        if (myInfo->GetItem(tag-1) > 0) // 아이템을 보유하고 있는 경우
-                        {
-                            // 아이템 남은 개수 변경 (실제로는 아님)
-                            itemNumberLayer[tag-1]->removeAllChildren();
-                            itemNumberLayer[tag-1]->removeFromParentAndCleanup(true);
-                            itemNumberLayer[tag-1] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(tag-1)-1));
-                            itemNumberLayer[tag-1]->setPosition(ccp(84+193*(tag-1)+130, 965));
-                            tLayer->addChild(itemNumberLayer[tag-1], 10);
-                        }
-                        else // 아이템은 없지만 별사탕이 충분한 경우
-                        {
-                            myInfo->SetMoney(myInfo->GetTopaz(), myInfo->GetStarCandy()-itemCost[tag-1]);
-                            CCString* param = CCString::create("2");
-                            CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-                        }
+                        // 아이템 남은 개수 변경 (실제로는 아님)
+                        itemNumberLayer[tag-1]->removeAllChildren();
+                        itemNumberLayer[tag-1]->removeFromParentAndCleanup(true);
+                        itemNumberLayer[tag-1] = Common::MakeItemNumberLayer(Common::MakeComma(myInfo->GetItem(tag-1)-1));
+                        itemNumberLayer[tag-1]->setPosition(ccp(84+193*(tag-1)+130, 965));
+                        tLayer->addChild(itemNumberLayer[tag-1], 10);
                     }
                 }
                 else // 선택 -> 비선택
                 {
                     if (myInfo->GetItem(tag-1) > 0) // 아이템을 보유하고 있는 경우
                     {
+                        CCLog("선->비선 : 아이템 있음");
                         // 숫자변경
                         // 아이템 남은 개수 변경 (실제로는 아님)
                         itemNumberLayer[tag-1]->removeAllChildren();
@@ -879,17 +1081,32 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     }
                     else // 아닌 경우
                     {
-                        myInfo->SetMoney(myInfo->GetTopaz(), myInfo->GetStarCandy()+itemCost[tag-1]);
-                        CCString* param = CCString::create("2");
-                        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+                        CCLog("선->비선 : 돈 되돌리기 (%d)", itemCost[tag-1]);
+                        /*
+                        if (itemType[tag-1] == ITEM_STARCANDY)
+                        {
+                            //myInfo->SetMoney(myInfo->GetTopaz(), myInfo->GetStarCandy()+itemCost[tag-1]);
+                        }
+                        else if (itemType[tag-1] == ITEM_TOPAZ)
+                        {
+                            //myInfo->SetMoney(myInfo->GetTopaz()+itemCost[tag-1], myInfo->GetStarCandy());
+                        }
+                        */
                     }
                 }
                 
+                
                 itemSelected[tag-1] = !itemSelected[tag-1];
+                
+                // 아이템 설명 변경
+                ((CCLabelTTF*)spriteClass->FindLabelByTag(10101))->setString(ItemDesc(tag-1).c_str());
                 
                 // user default에도 바로바로 저장.
                 sprintf(itemName, "item_0%d", tag-1);
                 CCUserDefault::sharedUserDefault()->setBoolForKey(itemName, itemSelected[tag-1]);
+                
+                CCString* param = CCString::create("2");
+                CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
                 
                 CCSprite* border = (CCSprite*)spriteClass->FindSpriteByName(n1);
                 CCSprite* check = (CCSprite*)spriteClass->FindSpriteByName(n2);
@@ -911,14 +1128,14 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                     kind = BTN_MENU_GAMESTART;
                     idx = i;
-                    break;
+                    return true;
                 }
                 else
                 {
                     // 포션 부족 - 구매창 유도 팝업
                     std::vector<int> nullData;
                     Common::ShowPopup(this, "GameReady", "NoImage", false, NEED_TO_BUY_POTION, BTN_2, nullData);
-                    break;
+                    return true;
                 }
             }
         }
@@ -928,7 +1145,22 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 1);
-                break;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_sketchbook.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                //if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+                //    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 0);
+                if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
+                         !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 2) // 튜토리얼 시작한다.
+                    Common::ShowNextScene(this, "GameReady", "T_Sketchbook", false, 1);
+                else
+                    Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
@@ -937,7 +1169,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 3);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_plus_big.png")
@@ -958,7 +1190,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     else
                         Common::ShowPopup(this, "GameReady", "NoImage", false, BUY_SKILLSLOT_BY_TOPAZ_TRY, BTN_2, data, 2);
                 }
-                break;
+                return true;
             }
         }
 
@@ -968,17 +1200,19 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     {
         sound->playClickboard();
         Common::ShowNextScene(this, "GameReady", "CocoRoom", false, 2);
+        return true;
     }
     else if (skillLayer->boundingBox().containsPoint(point))
     {
         sound->playClickboard();
-        if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
-            Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 0);
-        else if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
+        //if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+        //    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 0);
+        if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_tutorial_done", false) &&
                  !myInfo->HasNoProperty() && myInfo->GetSkillList().size() <= 2) // 튜토리얼 시작한다.
             Common::ShowNextScene(this, "GameReady", "T_Sketchbook", false, 1);
         else
             Common::ShowNextScene(this, "GameReady", "Sketchbook", false, 0);
+        return true;
     }
  
     return true;
@@ -1013,10 +1247,10 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         switch (kind)
         {
             case BTN_MENU_GAMESTART:
-                if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
-                    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 1);
-                else
-                    StartGame();
+                //if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+                //    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 1);
+                //else
+                StartGame();
                 break;
         }
     }
@@ -1029,6 +1263,7 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void GameReady::StartGame()
 {
+    isKeybackTouched = true; // 시작하면 백버튼 터치 못하게.
     isStarting = true;
     
     sound->playGameStart();
@@ -1103,7 +1338,15 @@ void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
     
     pThis->setKeypadEnabled(false);
     pThis->setTouchEnabled(false);
-    
+
+    // 슬롯구매 힌트 있으면 지운다.
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    ball = NULL;
+    balloon = NULL;
     
     // remove all CCNodes
     for (int i = 0 ; i < 5 ; i++)

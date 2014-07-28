@@ -237,7 +237,7 @@ void PuzzlePause::XmlParseSessionCheck(xml_document *xmlDoc)
     
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)
-    {
+    {   
         if (code <= MAX_COMMON_ERROR_CODE)
             Network::ShowCommonError(code);
     }

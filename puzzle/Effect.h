@@ -25,6 +25,7 @@ public:
     CCSprite* GetSpirit(int type);
     void RemoveSpirit(int type);
     void RemoveSpirit_Callback(CCNode* sender, void* pointer);
+    void FadeSpirit(bool fadeIn);
     void SpiritEffect(int type, int centerX = -1, int centerY = -1);
     
     void PlayEffect_0(std::vector<CCPoint> pos);
@@ -35,7 +36,8 @@ public:
     void PlayEffect_9(std::vector<CCPoint> pos, int queue_pos);
     ccBezierConfig GetBezierConfig(Effect* pThis, int mul);
     void Effect9Callback(CCNode* sender, void* pointer);
-    void PlayEffect_17(std::vector<CCPoint> pos);
+    void PlayEffect_17(std::vector<CCPoint> pos, int queue_pos);
+    void PlayEffect_17_Callback(CCNode* sender, void* p);
     
     //void PlayEffect_5(std::vector<CCPoint> pos); // 6개이상한번더
     void PlayEffect_5(int x, int y);
@@ -79,12 +81,14 @@ public:
     void Effect23_Clear_Callback(CCNode* sender, void* pointer);
     
     void PlayEffect_6_Fever(); // F7 : 코코타임
+    void PlayEffect_6_Fever_Callback(CCNode *sender, void* pointer);
     
     void PlayEffect_6(int num);
     void PlayEffect_6_Fire(std::vector< std::vector<CCPoint> > pos, int queue_pos, int cnt); // F7 : 불 이펙트
     void Effect6Callback(CCNode* sender, void* pointer);
     
     void PlayEffect_10();
+    void PlayEffect_10_Callback(CCNode* sender, void* pointer);
     void PlayEffect_11();
     
     void PlayEffect_14();
@@ -101,8 +105,19 @@ public:
     std::vector<CCPoint> GetDoublePos(int idx);
     
     void ShowStarCandy(std::vector<CCPoint> pos);
-    //void ShowStarCandy_Callback(CCNode* sender, void* data);
+    void ShowStarCandy(bool isCycle, std::vector<CCPoint> pos);
+    void ShowStarCandy(CCPoint pos, int size);
+    void ShowStarCandyAll(std::vector<CCPoint> pos);
     void ShowStarCandy_Callback_Done(CCNode* sender, void* pointer);
+    
+    void ShowItemPaintArrow(int x, int y);
+    void ChangeItemPaintArrow(int dx, int dy);
+    void RemoveItemPaintArrow();
+    
+    //void PlayEffect_ItemStaff(int x, int y, int type);
+    void PlayEffect_ItemStaff(std::vector<CCPoint> pos, int type);
+    
+    void BonusBomb(std::vector<CCPoint> pos);
     
     void RemoveAllObjects();
     
@@ -119,6 +134,7 @@ private:
     std::vector<CCPoint> skillPos;
     std::vector< std::vector<CCPoint> > skillDoublePos;
     CCPoint deltaPos;
+    int callbackDone;
     int callbackCnt;
     int callbackAll;
     int queue_pos_now;
@@ -168,6 +184,9 @@ private:
     // 피버타임
     CCSprite* fever_black_bg;
     CCParticleSystemQuad* feverBg;
+    CCParticleSystemQuad* feverCoco;
+    
+    std::vector<CCSprite*> itemPaintArrow;
 };
 
 #endif /* defined(__CocoMagic__Effect__) */

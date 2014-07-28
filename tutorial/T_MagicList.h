@@ -48,7 +48,7 @@ private:
     CCLayer* containerSlot;
     CCScrollView* scrollViewSlot;
     
-    CCSprite* ttrPos;
+    CCScale9Sprite* ttrPos;
     CCSprite* ttrArrow;
 };
 

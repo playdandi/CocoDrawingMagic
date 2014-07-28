@@ -2,6 +2,8 @@
 
 static int tabNumber;
 
+static std::string selectedKakaoId;
+
 CCScene* CocoRoom::scene(int tab)
 {
     tabNumber = tab;
@@ -45,7 +47,6 @@ void CocoRoom::keyBackClicked()
         return;
     isKeybackTouched = true;
     
-    sound->playClick();
     EndScene();
 }
 
@@ -117,6 +118,9 @@ bool CocoRoom::init()
     spriteClassCocoSlot = new SpriteClass();
     spriteClassCandyList = new SpriteClass();
     
+    balloon = NULL;
+    ball = NULL;
+    
     par = NULL;
     floor = NULL;
     stencil = CCDrawNode::create();
@@ -129,6 +133,8 @@ bool CocoRoom::init()
     InitSprites();
     curState = -1;
     MakeSprites(tabNumber);
+    
+    selectedKakaoId = "";
     
     return true;
 }
@@ -143,6 +149,7 @@ void CocoRoom::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
+        isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
@@ -156,61 +163,14 @@ void CocoRoom::Notification(CCObject* obj)
         scrollView->setTouchEnabled(true);
         CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
-        // 토파즈, 별사탕, MP 정보 업데이트
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
-        
-        // 코코의 정보 갱신
-        if (curState == 1)
-        {
-            // 총 mp, 요정 mp, 지팡이퍼센트, 지팡이레벨
-            char val[20];
-            sprintf(val, "%d", myInfo->GetMPTotal());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(1))->setString(val);
-            sprintf(val, "%d", myInfo->GetMP());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(2))->setString(val);
-            sprintf(val, "요정 %d", myInfo->GetMPFairy());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(3))->setString(val);
-            sprintf(val, "%dLv (+ %d%%)", myInfo->GetStaffLv(), myInfo->GetMPStaffPercent());
-            ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(4))->setString(val);
-            
-            // 지팡이 다음 강화에 필요한 cost 및 버튼 그림 갱신
-            SetStaffBuildUp();
-        }
-        // 요정의 정보 갱신
-        else if (curState == 2)
-        {
-            // 요정 레벨, 기본속성, 추가속성 값 갱신
-            int fid = myInfo->GetActiveFairyId();
-            FairyInfo* f = FairyInfo::GetObj(fid);
-            
-            char fname[30];
-            if (fid > 0)
-                sprintf(fname, "%s (%dLv)", f->GetName().c_str(), myInfo->GetActiveFairyLevel());
-            else
-                sprintf(fname, "요정 없음");
-            ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(0))->setString(fname);
-            
-            if (fid > 0)
-                sprintf(fname, "%s", FairyInfo::GetAbilityName(f, myInfo->GetActiveFairyLevel()).c_str());
-            else
-                sprintf(fname, "없음");
-            ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(2))->setString(fname);
-            
-            // 요정 다음 강화에 필요한 cost 및 버튼 그림 갱신
-            SetFairyBuildUp();
-        }
-        // 오.별 정보 갱신
-        else
-        {
-            SetTodayCandyList();
-        }
+        // 토파즈, 별사탕, MP 정보 + 각 방마다 정보 업데이트
+        RenewAllData();
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("CocoRoom : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -218,15 +178,14 @@ void CocoRoom::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
-        // 토파즈, 별사탕, MP 정보 업데이트
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
-        ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+        // 토파즈, 별사탕, MP 정보 + 각 방마다 정보 업데이트
+        RenewAllData();
     }
     else if (param->intValue() == 7)
     {
         // 요정을 처음 구입했을 경우 -> 그 요정을 바로 자동 착용 -> 정보 갱신해야 함.
         MakeSprites(-curState);
+        ShowHintOfFairy();
     }
     else if (param->intValue() == 8)
     {
@@ -251,6 +210,7 @@ void CocoRoom::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             if (curState == 1) // 코코의방
@@ -283,6 +243,82 @@ void CocoRoom::Notification(CCObject* obj)
                 ((CCSprite*)spriteClassCandy->FindSpriteByName("letter/letter_fairy_select.png"))->setColor(ccc3(255,255,255));
             }
         }
+    }
+    else if (param->intValue() == 11) // MP 관련 보상
+    {
+        if (myInfo->GetRewardTopaz() > 0)
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_100, BTN_1, nullData);
+        }
+        else if (myInfo->IsRewardPotion())
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_50, BTN_1, nullData);
+        }
+    }
+}
+
+void CocoRoom::RenewAllData()
+{
+    // 토파즈, 별사탕, MP 정보 업데이트
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(2))->setString(Common::MakeComma(myInfo->GetStarCandy()).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(3))->setString(Common::MakeComma(myInfo->GetMPTotal()).c_str());
+    
+    // 코코의 정보 갱신
+    if (curState == 1)
+    {
+        // 총 mp, 요정 mp, 지팡이퍼센트, 지팡이레벨
+        char val[20];
+        sprintf(val, "%d", myInfo->GetMPTotal());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(1))->setString(val);
+        sprintf(val, "%d", myInfo->GetMP());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(2))->setString(val);
+        sprintf(val, "요정 %d", myInfo->GetMPFairy());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(3))->setString(val);
+        sprintf(val, "%dLv (+ %d%%)", myInfo->GetStaffLv(), myInfo->GetMPStaffPercent());
+        ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(4))->setString(val);
+        
+        // 지팡이 다음 강화에 필요한 cost 및 버튼 그림 갱신
+        SetStaffBuildUp();
+    }
+    // 요정의 정보 갱신
+    else if (curState == 2)
+    {
+        // 요정 레벨, 기본속성, 추가속성 값 갱신
+        int fid = myInfo->GetActiveFairyId();
+        FairyInfo* f = FairyInfo::GetObj(fid);
+        char fname[30];
+        
+        // 요정 이름+레벨
+        if (fid > 0)
+            sprintf(fname, "%s (%dLv)", f->GetName().c_str(), myInfo->GetActiveFairyLevel());
+        else
+            sprintf(fname, "요정 없음");
+        ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(0))->setString(fname);
+        
+        // 요정 추가MP
+        if (fid > 0)
+            sprintf(fname, "%d", FairyBuildUpInfo::GetTotalMP(fid, myInfo->GetActiveFairyLevel()));
+        else
+            sprintf(fname, "없음");
+        ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(1))->setString(fname);
+        
+        // 요정 특수능력
+        if (fid > 0)
+            sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true).c_str());
+        else
+            sprintf(fname, "없음");
+        ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(2))->setString(fname);
+        
+        // 요정 다음 강화에 필요한 cost 및 버튼 그림 갱신
+        SetFairyBuildUp();
+    }
+    // 오.별 정보 갱신
+    else
+    {
+        SetTodayCandyList();
     }
 }
 
@@ -382,6 +418,7 @@ void CocoRoom::SetMenuChange(int state)
 
 void CocoRoom::MakeSprites(int state)
 {
+    CCLog("MakeSprites : %d %d", curState, state);
     if (curState == state)
         return;
     
@@ -435,12 +472,13 @@ void CocoRoom::MakeSpritesCoco()
 {
     // 슬롯 부분
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png", ccp(0, 0), ccp(867, 237), CCSize(136, 63), "", "Layer", tLayer, 1) );
-    // 구입 개수
+    
+    // 슬롯 옆의 {현재 구입한 슬롯수} / {구입 가능한 max 슬롯수}
     char val[6];
     sprintf(val, "%d", (int)myInfo->GetSlot().size());
-    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 48, ccp(0, 0), ccp(892, 245), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 개수
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 44, ccp(1, 0), ccp(892+30, 245), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 개수
     sprintf(val, "/ %d", (int)skillSlotInfo.size());
-    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 36, ccp(0, 0), ccp(927, 245), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 전체 슬롯 개수
+    spriteClassCoco->spriteObj.push_back( SpriteObject::CreateLabel(val, fontList[0], 34, ccp(0, 0), ccp(927+3, 245), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 전체 슬롯 개수
     
     spriteClassCoco->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png",
                         ccp(0, 0), ccp(441, 1290+offset), CCSize(543, 61), "", "Layer", coco, 5) );
@@ -612,8 +650,8 @@ void CocoRoom::MakeSpritesCoco()
 
 void CocoRoom::SetStaffBuildUp()
 {
-    // mp 500 미만의 경우
-    if (myInfo->GetMPTotal() < 500)
+    // mp 200 미만의 경우
+    if (myInfo->GetMPTotal() < 200)
     {
         ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_starcandy.png"))->setOpacity(0);
         ((CCSprite*)spriteClassCoco->FindSpriteByName("button/btn_receive_topaz.png"))->setOpacity(0);
@@ -627,7 +665,6 @@ void CocoRoom::SetStaffBuildUp()
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(7))->setString("강화 준비중");
         ((CCLabelTTF*)spriteClassCoco->FindLabelByTag(8))->setString("강화 준비중");
     }
-    
     // 일반적인 경우
     else if (myInfo->GetStaffLv() < magicStaffBuildupInfo[magicStaffBuildupInfo.size()-1]->GetLevel())
     {
@@ -684,9 +721,9 @@ void CocoRoom::MakeSpritesFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png2",
                         ccp(0, 0), ccp(524, 1186+offset), CCSize(439, 58), "", "Layer", fairy, 5) );
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png3",
-                        ccp(0, 0), ccp(524, 1124+offset), CCSize(439, 58), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4",
-                        ccp(0, 0), ccp(524, 1026+offset), CCSize(439, 58), "", "Layer", fairy, 5) );
+                        ccp(0, 0), ccp(524, 1124+offset-58+10), CCSize(439, 58*2-15), "", "Layer", fairy, 5) );
+    //spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4",
+    //                    ccp(0, 0), ccp(524, 1026+offset), CCSize(439, 58), "", "Layer", fairy, 5) );
     
     // stone floor
     //spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, "background/fairy_floor.png", ccp(0, 0), ccp(100, 760+offset), CCSize(0, 0), "", "Layer", fairy, 5) );
@@ -732,32 +769,39 @@ void CocoRoom::MakeSpritesFairy()
         sprintf(fname, "요정 없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 52, ccp(0.5, 0.5), spriteClassFairy->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5, 1, 255, 0) );
     
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(570, 1193+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(570, 1196+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("추가속성", fontList[2], 36, ccp(0, 0), ccp(570, 1131+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("추가속성", fontList[2], 36, ccp(0, 0), ccp(570, 1134+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1033+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1036+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("추가 MP", fontList[2], 36, ccp(0, 0), ccp(570, 1193+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("추가 MP", fontList[2], 36, ccp(0, 0), ccp(570, 1196+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1131+offset-3), ccc3(121,71,0), "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1134+offset-3), ccc3(255,219,53), "", "Layer", fairy, 5) );
+    //spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1033+offset), ccc3(121,71,0), "", "Layer", fairy, 5) );
+    //spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(570, 1036+offset), ccc3(255,219,53), "", "Layer", fairy, 5) );
     
     // 기본속성 값
     if (fid > 0)
-        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
+    {
+        int mp = FairyBuildUpInfo::GetTotalMP(fid, flv);
+        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(mp), fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(0,167,222), "", "Layer", fairy, 5, 0, 255, 1) );
+    }
     else
-        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("없음", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 1) );
+        spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel("없음", fontList[0], 36, ccp(0, 0), ccp(720, 1196+offset), ccc3(0,167,222), "", "Layer", fairy, 5, 0, 255, 1) );
     
+    /*
     // 추가속성 값
     if (fid > 0)
         sprintf(fname, "%s", FairyInfo::GetAbilityName(f, flv).c_str());
     else
         sprintf(fname, "없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1134+offset), ccc3(0,167,222), "", "Layer", fairy, 5, 0, 255, 2) );
+    */
     
     // 특수능력 값
     if (fid > 0)
-        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true).c_str());
     else
         sprintf(fname, "없음");
-    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1036+offset), ccc3(255,255,255), "", "Layer", fairy, 5) );
+    //spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabelArea(fname, fontList[0], 36, ccp(0, 1), ccp(720, 1134+offset+58-13), ccc3(255,255,255), CCSize(190, 58*2), kCCTextAlignmentLeft, kCCVerticalTextAlignmentTop, "", "Layer", fairy, 5) );
+    spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 1), ccp(720, 1134+offset+40), ccc3(255,255,255), "", "Layer", fairy, 5, 0, 255, 2) );
+    //spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[0], 36, ccp(0, 0), ccp(720, 1036+offset), ccc3(255,255,255), "", "Layer", fairy, 5) );
     
     // buttons
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png1",
@@ -819,6 +863,9 @@ void CocoRoom::MakeSpritesFairy()
     
     for (int i = 0 ; i < spriteClassFairy->spriteObj.size() ; i++)
         spriteClassFairy->AddChild(i);
+    
+    // 요정 구입 힌트 + 강화 힌트 표시
+    ShowHintOfFairy();
 }
 
 void CocoRoom::SetFairyBuildUp()
@@ -828,9 +875,9 @@ void CocoRoom::SetFairyBuildUp()
     // 일반적인 경우
     if (flv < FairyBuildUpInfo::GetMaxLevel(fid))
     {
-        CCLog("fid flv SSS = %d %d", fid, flv);
-        CCLog("%d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
-        CCLog("%d", FairyBuildUpInfo::GetCostTopaz(fid, flv+1));
+        //CCLog("fid flv SSS = %d %d", fid, flv);
+        //CCLog("%d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
+        //CCLog("%d", FairyBuildUpInfo::GetCostTopaz(fid, flv+1));
         // 지팡이 일반/고급 다음 cost 갱신
         char val[20];
         sprintf(val, "x %d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
@@ -860,6 +907,48 @@ void CocoRoom::SetFairyBuildUp()
         ((CCSprite*)spriteClassFairy->FindSpriteByName("icon/icon_lock_white.png2"))->setOpacity(255);
         ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(11))->setOpacity(255);
         ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(12))->setOpacity(255);
+    }
+}
+
+void CocoRoom::ShowHintOfFairy()
+{
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    balloon = NULL;
+    ball = NULL;
+    
+    if (myInfo->GetFairyList().size() == 0) // 구입한 요정이 없으면 띄운다.
+    {
+        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon->setContentSize(CCSize(600, 140));
+        balloon->setAnchorPoint(ccp(1, 0));
+        balloon->setPosition(ccp(896+100, 312+55));
+        tLayer->addChild(balloon, 100);
+        ball = CCLabelTTF::create("요정을 여기서 구입할 수 있어요.", fontList[0].c_str(), 36);
+        ball->setPosition(ccp(600/2, 140/2+30));
+        ball->setColor(ccc3(255,255,255));
+        balloon->addChild(ball, 101);
+        
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+        balloon->runAction( CCRepeatForever::create(action) );
+    }
+    else if (myInfo->GetFairyList().size() == 1 && myInfo->GetActiveFairyLevel() == 1) // 처음 구입하고 레벨이 1일 때
+    {
+        balloon = CCScale9Sprite::create("images/tutorial_balloon.png");
+        balloon->setContentSize(CCSize(600, 140));
+        balloon->setAnchorPoint(ccp(0, 0));
+        balloon->setPosition(ccp(94+300, 509+80));
+        tLayer->addChild(balloon, 100);
+        ball = CCLabelTTF::create("첫번째 강화를 시도해 보세요!", fontList[0].c_str(), 36);
+        ball->setPosition(ccp(600/2, 140/2+30));
+        ball->setColor(ccc3(255,255,255));
+        balloon->addChild(ball, 101);
+        
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+        balloon->runAction( CCRepeatForever::create(action) );
     }
 }
 
@@ -920,17 +1009,19 @@ void CocoRoom::SetTodayCandyList()
                 if (friendList[j]->GetKakaoId() == todayCandyKakaoId[i])
                     idx = j;
             }
+            
             // 프로필 이미지
-            CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
-            if (friendList[idx]->GetImageUrl() != "")
+            ProfileSprite* psp = ProfileSprite::GetObj(friendList[idx]->GetImageUrl());
+            //CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
+            if (friendList[idx]->GetImageUrl() != "" && psp->IsLoadingDone())
             {
-                spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), pos[i], CCSize(0,0), "", "Layer", candy, 99, 0, 255, 0.85f) );
+                spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), pos[i], CCSize(0,0), "", "Layer", candy, 99, 0, 255, 0.95f) );
                 sprintf(name, "background/bg_profile.png%d", i);
                 spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), pos[i], CCSize(0, 0), "", "Layer", candy, 100) );
             }
             else
             {
-                spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), pos[i], CCSize(0,0), "", "Layer", candy, 100) );
+                spriteClassCandyList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), pos[i], CCSize(0,0), "", "Layer", candy, 100) );
             }
 
             // name 변경
@@ -969,21 +1060,19 @@ void CocoRoom::SetTodayCandyList()
         CCSize s;
         
         char sname[40], sname2[40];
-        if (myInfo->GetTodayCandyType() == 1)
+        switch (myInfo->GetTodayCandyTypeChoice())
         {
-            sprintf(sname, "icon/icon_starcandy.png1");
-            sprintf(sname2, "icon/icon_starcandy.png2");
+            case 1: sprintf(sname, "icon/icon_starcandy.png1"); break;
+            case 2: sprintf(sname, "icon/icon_topaz.png1"); break;
+            case 3: sprintf(sname, "icon/icon_potion.png1"); break;
         }
-        else if (myInfo->GetTodayCandyType() == 2)
+        switch (myInfo->GetTodayCandyTypeMiss())
         {
-            sprintf(sname, "icon/icon_topaz.png1");
-            sprintf(sname2, "icon/icon_topaz.png2");
+            case 1: sprintf(sname2, "icon/icon_starcandy.png2"); break;
+            case 2: sprintf(sname2, "icon/icon_topaz.png2"); break;
+            case 3: sprintf(sname2, "icon/icon_potion.png2"); break;
         }
-        else if (myInfo->GetTodayCandyType() == 3)
-        {
-            sprintf(sname, "icon/icon_potion.png1");
-            sprintf(sname2, "icon/icon_potion.png2");
-        }
+
         spriteClassCandyList->spriteObj.push_back( SpriteObject::Create(0, sname, ccp(0, 0.5), ccp(340, h), CCSize(0, 0), "", "Layer", candy, 5) );
         ((CCSprite*)spriteClassCandyList->FindSpriteByName(sname))->setScale(1.15f);
         s = ((CCSprite*)spriteClassCandyList->FindSpriteByName(sname))->getContentSize();
@@ -1113,8 +1202,10 @@ CCPoint po[] = { ccp(542, 1210+offset2), ccp(334, 752+offset2), ccp(805, 1015+of
 int popo = 0;
 int candyIdx[] = {0, 2, 4, 1, 3};
 
-void CocoRoom::DecideUser(char* selectedKakaoId)
+//void CocoRoom::DecideUser(char* selectedKakaoId)
+void CocoRoom::DecideUser()
 {
+    CCLog("kakao id = %s", selectedKakaoId.c_str());
     isTodayCandyWorking = true;
     ((CCSprite*)spriteClassCandy->FindSpriteByName("button/btn_red_mini.png"))->setOpacity(0);
     ((CCSprite*)spriteClassCandy->FindSpriteByName("letter/letter_fairy_select.png"))->setOpacity(0);
@@ -1138,17 +1229,19 @@ void CocoRoom::DecideUser(char* selectedKakaoId)
     star->setAnchorPoint(ccp(0.5, 0.5));
     star->setPosition(ccp(188+357, 528+357));
     candy->addChild(star, 1001); //91); // 마법진 바로 위
-    star->runAction(CCSequence::create( CCMoveTo::create(0.25f, po[popo]), CCCallFuncND::create(this, callfuncND_selector(CocoRoom::Callback), (void*)selectedKakaoId), NULL) );
+    star->runAction(CCSequence::create( CCMoveTo::create(0.25f, po[popo]), CCCallFuncND::create(this, callfuncND_selector(CocoRoom::Callback), (void*)selectedKakaoId.c_str()), NULL) );
 }
 
 void CocoRoom::Callback(CCNode* sender, void* data)
 {
     // 0 2 4 1 3
     popo++;
-    std::string id = (char*)data;
-    if (popo > 15 && todayCandyKakaoId[candyIdx[(popo-1)%5]] == id)
+    //char* skid = (char*)data;
+    //CCLog("skid = %s", skid);
+    //std::string id = skid;
+    //CCLog("id = %s", id.c_str());
+    if (popo > 15 && todayCandyKakaoId[candyIdx[(popo-1)%5]] == selectedKakaoId)
     {
-        CCLog("popo = %d", popo);
         ((CCParticleSystemQuad*)sender)->setDuration(0.05f);
         ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
         
@@ -1187,21 +1280,25 @@ void CocoRoom::Callback2(CCNode* sender, void* kakaoId)
     
     // kakaoID랑 친구리스트의 idx를 넘겨준다.
     int idx;
-    std::string id = (char*)kakaoId;
+    //std::string id = (char*)kakaoId;
     for (int i = 0 ; i < friendList.size() ; i++)
     {
-        if (friendList[i]->GetKakaoId() == id)
+        if (friendList[i]->GetKakaoId() == selectedKakaoId)
             idx = i;
     }
     std::vector<int> data;
-    data.push_back((int)kakaoId);
+    //data.push_back((int)kakaoId);
     data.push_back(idx);
     
-    if (myInfo->GetKakaoId() == id)
+    if (myInfo->GetKakaoId() == selectedKakaoId)
         Common::ShowPopup(Depth::GetCurPointer(), "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_WIN, BTN_1, data);
     else
         Common::ShowPopup(Depth::GetCurPointer(), "CocoRoom", "NoImage", false, TODAYCANDY_RESULT_LOSE, BTN_1, data);
+    
+    selectedKakaoId = "";
 }
+
+
 
 bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
@@ -1216,6 +1313,13 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     rect = CCRectZero;
     kind = -1;
     idx = -1;
+    
+    // 요정구매 힌트 있으면 안 보이게 한다.
+    if (balloon != NULL && ball != NULL)
+    {
+        balloon->setOpacity(0);
+        ball->setOpacity(0);
+    }
     
     // 슬롯 터치 시작
     if (curState != 3 && scrollView->boundingBox().containsPoint(point))
@@ -1500,7 +1604,7 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (curState == 1) // 코코(지팡이) 강화
             {
-                if (myInfo->GetMPTotal() < 500)
+                if (myInfo->GetMPTotal() < 200)
                 {
                     sound->playClick();
                     std::vector<int> nullData;
@@ -1527,7 +1631,6 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     if (myInfo->GetActiveFairyId() > 0)
                     {
-                        sound->playClick();
                         std::vector<int> data;
                         data.push_back(0);
                         data.push_back(FairyBuildUpInfo::GetCostStarCandy(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()+1));
@@ -1538,7 +1641,6 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     if (myInfo->GetActiveFairyId() > 0)
                     {
-                        sound->playClick();
                         std::vector<int> data;
                         data.push_back(0);
                         data.push_back(FairyBuildUpInfo::GetCostTopaz(myInfo->GetActiveFairyId(), myInfo->GetActiveFairyLevel()+1));
@@ -1628,6 +1730,15 @@ void CocoRoom::EndScene()
 
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+    
+    // 요정구매 힌트 있으면 지운다.
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    ball = NULL;
+    balloon = NULL;
 
     // remove all objects
     spriteClass->RemoveAllObjects();
@@ -1753,9 +1864,22 @@ void CocoRoom::XmlParseTodayCandy(xml_document *xmlDoc)
     else if (code == 0)
     {
         // 오늘의 별사탕 액션 시작
-        std::string selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_string();
-        char* skid = (char*)selectedKakaoId.c_str();
+        selectedKakaoId = nodeResult.child("today-starcandy").attribute("selected-user").as_string();
+        
+        // 그 사이에 블락된 경우 (다른 사람이) => 카카오톡 메시지 보내지 마라.
+        int isBlocked = 1 - nodeResult.child("today-starcandy").attribute("blocked").as_int();
+        //CCLog("isBlocked = %d", isBlocked);
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            if (friendList[i]->GetKakaoId() == selectedKakaoId)
+            {
+                friendList[i]->SetPotionMsgStatus(isBlocked);
+                break;
+            }
+        }
+        
         myInfo->SetTodayCandy(1);
-        DecideUser(skid);
+        DecideUser();
+        //DecideUser(skid);
     }
 }

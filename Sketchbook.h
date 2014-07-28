@@ -47,6 +47,8 @@ public:
     void XmlParsePracticeSkill(xml_document *xmlDoc);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
+    void ShowHintOfBuyingSlot();
+    
     int FromWhere();
     
     void SortMySkillByUserId();
@@ -80,6 +82,9 @@ private:
     
     CCLayer* containerBook;
     CCLayer* containerSlot;
+    
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
     
     std::vector<MySkill*> sList;
 };

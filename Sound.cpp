@@ -146,6 +146,7 @@ void Sound::PreLoadInGameSound()
         sprintf(name, "%d", i);
         engine->preloadEffect(ext("sounds/pieces", name).c_str());
     }
+    engine->preloadEffect(ext("sounds/pieces", "cycle").c_str());
     
     engine->preloadEffect(ext("sounds/pieces", "bombA").c_str());
     engine->preloadEffect(ext("sounds/pieces", "bombB").c_str());
@@ -189,18 +190,58 @@ void Sound::PreLoadInGameSound()
     engine->preloadEffect(ext("sounds/voice", "eit").c_str());
     engine->preloadEffect(ext("sounds/voice", "eit2").c_str());
     engine->preloadEffect(ext("sounds/voice", "eit3").c_str());
+    engine->preloadEffect(ext("sounds/voice", "cocotime").c_str());
     
     engine->preloadEffect(ext("sounds/clock").c_str());
     engine->preloadEffect(ext("sounds/game_result").c_str());
+    engine->preloadEffect(ext("sounds/game_result_bg").c_str());
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.5f);
 }
 
-
-void Sound::PlayBackgroundInGameSound()
+void Sound::ReduceBackgroundMusicVolume(int volCnt)
 {
-    engine->playBackgroundMusic(ext("sounds/game_bgm").c_str(), true);
+    CCLog("%d", volCnt);
+    float vol = 0.8f * ((float)volCnt/(float)10.0f);
+    CCLog("reduce Volume = %f", vol);
+    engine->setBackgroundMusicVolume(vol);
+}
+void Sound::GainBackgroundMusicVolume(int volCnt)
+{
+    //volCnt++;
+    //float vol = 0.5f * ((float)volCnt/(float)15.0f);
+    //float vol = (float)(volCnt*volCnt) * ((float)1.0f / (float)450.0f); // y = (1/450)x^2 (x = 15일 때 0.5볼륨)
+    float vol = (float)(volCnt*volCnt) * ((float)1.0f / (float)200.0f); // y = (1/200)x^2 (x = 10일 때 0.5볼륨)
+    engine->setBackgroundMusicVolume(vol);
+}
+void Sound::PlayBackgroundInGameSound(int type)
+{
+    // type : 0(처음시작), 1(기본->피버), 2(피버->기본)
+    if (type == 0)
+    {
+        //volCnt = 15;
+        engine->playBackgroundMusic(ext("sounds/game_bgm").c_str(), true);
+    }
+    else if (type == 1)
+    {
+        engine->stopBackgroundMusic();
+        SetBackgroundMusicVolume(0.8f);
+        //volCnt = 15;
+        engine->playBackgroundMusic(ext("sounds/magictime_bgm").c_str(), true);
+    }
+    else if (type == 2)
+    {
+        engine->stopBackgroundMusic();
+        //SetBackgroundMusicVolume(0.5f);
+        //volCnt = 0;
+        engine->playBackgroundMusic(ext("sounds/game_bgm").c_str(), true);
+    }
+}
+int Sound::GetVolumeCnt()
+{
+    //return volCnt;
+    return 0;
 }
 void Sound::PauseBackgroundInGameSound()
 {
@@ -224,7 +265,19 @@ void Sound::PlayPieceClick(int idx)
     sprintf(name, "%d", idx);
     engine->playEffect(ext("sounds/pieces", name).c_str());
 }
+void Sound::PlayCycle()
+{
+    engine->playEffect(ext("sounds/pieces", "cycle").c_str());
+}
 
+void Sound::PlayItemPaint()
+{
+    engine->playEffect(ext("sounds/item", "paint").c_str());
+}
+void Sound::PlayItemStaff()
+{
+    engine->playEffect(ext("sounds/item", "staff").c_str());
+}
 void Sound::PlayBomb()
 {
     engine->playEffect(ext("sounds/pieces", "bombA").c_str());
@@ -233,7 +286,12 @@ void Sound::PlayBomb()
 
 void Sound::PlayGameResult()
 {
-    engine->playEffect(ext("sounds/game_result").c_str());
+    engine->playEffect(ext("sounds/game_result_bg").c_str()); // 배경효과음
+    nGameResultId = engine->playEffect(ext("sounds/game_result").c_str(), true); // 또또또또 효과음
+}
+void Sound::StopGameResult()
+{
+    engine->stopEffect(nGameResultId);
 }
 void Sound::PlayClock()
 {
@@ -305,6 +363,7 @@ void Sound::PlayVoice(int type)
         case VOICE_MISSIONSUCCESS: engine->playEffect(ext("sounds/voice", "missionsuccess").c_str()); break;
         case VOICE_EIT2: engine->playEffect(ext("sounds/voice", "eit2").c_str()); break;
         case VOICE_EIT3: engine->playEffect(ext("sounds/voice", "eit3").c_str()); break;
+        case VOICE_COCOTIME : engine->playEffect(ext("sounds/voice", "cocotime").c_str()); break;
     }
 }
 
@@ -319,6 +378,7 @@ void Sound::UnLoadInGameSound()
         sprintf(name, "%d", i);
         engine->unloadEffect(ext("sounds/pieces", name).c_str());
     }
+    engine->unloadEffect(ext("sounds/pieces", "cycle").c_str());
     
     engine->unloadEffect(ext("sounds/pieces", "bombA").c_str());
     engine->unloadEffect(ext("sounds/pieces", "bombB").c_str());
@@ -362,9 +422,11 @@ void Sound::UnLoadInGameSound()
     engine->unloadEffect(ext("sounds/voice", "eit").c_str());
     engine->unloadEffect(ext("sounds/voice", "eit2").c_str());
     engine->unloadEffect(ext("sounds/voice", "eit3").c_str());
+    engine->unloadEffect(ext("sounds/voice", "cocotime").c_str());
     
     engine->unloadEffect(ext("sounds/clock").c_str());
     engine->unloadEffect(ext("sounds/game_result").c_str());
+    engine->unloadEffect(ext("sounds/game_result_bg").c_str());
 }
 
 

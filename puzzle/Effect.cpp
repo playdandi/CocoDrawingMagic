@@ -50,7 +50,7 @@ void Effect::PlayEffect(int skillNum, int queue_pos, std::vector<CCPoint> pos)
             
         case 1:  PlayEffect_1(pos); break;
         case 9:  PlayEffect_9(pos, queue_pos); break;
-        case 17: PlayEffect_17(pos); break;
+        case 17: PlayEffect_17(pos, queue_pos); break;
             
         //case 5: PlayEffect_5(pos); break;
         case 13: PlayEffect_13(pos); break;
@@ -83,7 +83,6 @@ void Effect::PlayEffect_Default(std::vector<CCPoint> pos)
         
         sp_fire = CCSprite::create("particles/fire.png");
         CCParticleSystem* par = CCParticleFlower::create();
-        //par->retain();
         par->setTexture(sp_fire->getTexture());
         
         par->setAnchorPoint(ccp(0.5, 0.5));
@@ -166,19 +165,7 @@ void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
 void Effect::PlayEffect_SkillIcon(int skillNum)
 {
     // 스킬 실제 고유번호 계산
-    int num;
-    if (skillNum <= 2) num = skillNum+21;
-    else if (skillNum < 8) num = skillNum+20;
-    else if (skillNum <= 10) num = skillNum+3;
-    else if (skillNum < 16) num = skillNum+2;
-    else if (skillNum <= 18) num = skillNum+15;
-    else if (skillNum < 24) num = skillNum+14;
-
-    /*
-    if (skillNum < 8) num = skillNum+21;
-    else if (skillNum < 16) num = skillNum+3;
-    else if (skillNum < 24) num = skillNum+15;
-    */
+    int num = SkillInfo::ConvertedToOriginal(skillNum);
     
     char name[40];
     sprintf(name, "skill_%d.png", num);
@@ -198,6 +185,8 @@ void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
     sender->removeFromParentAndCleanup(true);
     
     Effect* pThis = (Effect*)p;
+    CCPoint pos = ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120);
+    CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
     if (pThis->callbackCnt == 18)
         pThis->PlayEffect_18(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
     else if (pThis->callbackCnt == 22)
@@ -232,7 +221,6 @@ void Effect::SetSpirit(int type)
     if (type == 0)
     {
         spirit_fire = CCSprite::createWithSpriteFrameName("icon/spirit_fire.png");
-        //spirit_fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
         spirit_fire->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
         spirit_fire->setOpacity(0);
         gameLayer->addChild(spirit_fire, 100);
@@ -249,40 +237,11 @@ void Effect::SetSpirit(int type)
     else if (type == 2)
     {
         spirit_land = CCSprite::createWithSpriteFrameName("icon/spirit_land.png");
-        //spirit_land->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0));
         spirit_land->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
         spirit_land->setOpacity(0);
         gameLayer->addChild(spirit_land, 100);
         spirit_land->runAction(action);
     }
-    
-    /*
-    if (type == 0) // 불의 정령
-    {
-        fire = CCParticleSystemQuad::create("particles/fire2.plist");
-        //fire = CCParticleSystemQuad::create("particles/spirit_fire.plist");
-        fire->setPosition(gameLayer->SetTouch8Position(0, ROW_COUNT-1));
-        fire->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(fire, 100);
-    }
-    else if (type == 1) // 물의 정령
-    {
-        water = CCParticleSystemQuad::create("particles/water.plist");
-        water->setPosition(gameLayer->SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1));
-        //water->retain();
-        water->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(water, 100);
-    }
-    else // 땅의 정령
-    {
-        land = CCParticleSystemQuad::create("particles/land.plist");
-        CCPoint p =gameLayer->SetTouch8Position(COLUMN_COUNT-1, 0);
-        land->setPosition(ccp(p.x, p.y-20));
-        //land->retain();
-        land->setAnchorPoint(ccp(0.5, 0.5));
-        gameLayer->addChild(land, 100);
-    }
-     */
 }
 void Effect::SetSpirit_Callback(CCNode* sender, void* pointer)
 {
@@ -335,7 +294,6 @@ void Effect::SpiritEffect(int type, int centerX, int centerY)
             m_emitter->setAutoRemoveOnFinish(true);
             gameLayer->addChild(m_emitter, 100);
         }
-        
     }
     else
     {
@@ -344,6 +302,24 @@ void Effect::SpiritEffect(int type, int centerX, int centerY)
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setAutoRemoveOnFinish(true);
         gameLayer->addChild(m_emitter, 100);
+    }
+}
+void Effect::FadeSpirit(bool fadeIn)
+{
+    if (gameLayer->GetSkill()->IsSpiritAlive(0))
+    {
+        if (fadeIn) spirit_fire->runAction(CCFadeIn::create(0.5f));
+        else spirit_fire->runAction(CCFadeOut::create(0.5f));
+    }
+    if (gameLayer->GetSkill()->IsSpiritAlive(1))
+    {
+        if (fadeIn) spirit_water->runAction(CCFadeIn::create(0.5f));
+        else spirit_water->runAction(CCFadeOut::create(0.5f));
+    }
+    if (gameLayer->GetSkill()->IsSpiritAlive(2))
+    {
+        if (fadeIn) spirit_land->runAction(CCFadeIn::create(0.5f));
+        else spirit_land->runAction(CCFadeOut::create(0.5f));
     }
 }
 
@@ -510,14 +486,6 @@ void Effect::PlayEffect_9(std::vector<CCPoint> pos, int queue_pos)
     // sound
     gameLayer->GetSound()->PlaySkillSound(9);
     
-    // 최종점수 = 발동점수 + [1000 + (파도폭파수)*(10+파도폭파수*발동점수의 30%)])
-    int bombNum = (int)pos.size()-1;
-    int basicScore = gameLayer->GetSkill()->GetBasicSkillScore(9); // 발동점수
-    A2_addedScore = 1000 + (int)((float)bombNum*(10.0f+(float)bombNum*((float)(basicScore*3)/10.0f)));
-    // 먼저 발동점수만 업데이트한다.
-    gameLayer->UpdateScore(1, basicScore);
-    gameLayer->ShowSkillScore(basicScore, queue_pos);
-    
     CCFiniteTimeAction* action = CCSequence::create(CCBezierBy::create(0.2f, GetBezierConfig(this, 1)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect9Callback), this), NULL);
     par->runAction(action);
 }
@@ -568,17 +536,25 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
     CCSprite* piece = pThis->gameLayer->GetSpriteP8(x, y);
     if (piece != NULL)
     {
-        // 하나 터뜨릴 때마다 점수 업데이트한다.
-        int eachAddedScore = (int)((float)pThis->A2_addedScore/(float)(pThis->skillPos.size()-1));
-        pThis->gameLayer->UpdateScore(1, eachAddedScore);
-        pThis->gameLayer->ShowSkillAddedScore(eachAddedScore, pThis->queuePos, 0, x, y);
-        
         CCFiniteTimeAction* bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
         piece->runAction(bomb);
         
         // 물 사이클 스킬은 Puzzle의 Bomb함수를 쓰지 않기 때문에, 여기서 개수를 cnt해야 한다.
         pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType(x, y), 1 );
+        
+        // 주변 연결피스 제거
+        pThis->gameLayer->RemoveConnectPiecesXY(x, y);
     }
+    
+    // 점수 업데이트
+    // 발동점수 + [ SIGMA[k=1~파도폭파수] { [(k)*(10+k*발동점수의 2%)]) } ]
+    int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(9); // 발동점수
+    int A2_addedScore = (int)((float)(pThis->callbackCnt)*(10.0f+(float)(pThis->callbackCnt)*((float)(basicScore*2)/100.0f)));
+    A2_addedScore += (int)((float)basicScore / (float)(pThis->skillPos.size()-1));
+    
+    pThis->gameLayer->UpdateScore(1, basicScore+A2_addedScore);
+    pThis->gameLayer->ShowSkillScore(basicScore+A2_addedScore, (float)((pThis->callbackCnt-1)*20+100)/100.0f, pThis->queuePos, x, y);
+    // scale : 1.0f, 1.2f, 1.4f, ......
     
     if (pThis->callbackCnt < (int)pThis->skillPos.size()-1)
     {
@@ -599,11 +575,8 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
         {
             x = (int)pThis->skillPos[i].x;
             y = (int)pThis->skillPos[i].y;
-            //CCLog("[[%d %d]]", x, y);
-            //if (pThis->gameLayer->GetPuzzleP8Set()->GetObject(x, y)->GetPiece() != NULL)
             if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
             {
-                //CCLog("(%d %d)", x, y);
                 pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
                 pThis->gameLayer->SetSpriteP8Null(x, y);
             }
@@ -617,23 +590,117 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
     }
 }
 
-void Effect::PlayEffect_17(std::vector<CCPoint> pos)
+void Effect::PlayEffect_17(std::vector<CCPoint> pos, int queue_pos)
 {
-    gameLayer->GetSound()->PlaySkillSound(17);
+    callbackCnt = 0;
+    callbackDone = 0;
+    skillPos = pos;
+    queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
     
-    // 땅2A : green 사이클 주변부 이펙트
-    int x, y;
-    for (int i = 0 ; i < pos.size() ; i++)
+    PlayEffect_17_Callback(NULL, this);
+}
+void Effect::PlayEffect_17_Callback(CCNode* sender, void* p)
+{
+    Effect* pThis = (Effect*)p;
+    int x[3], y[3];
+    
+    int size;
+    if (pThis->skillPos.size() < 5) size = 1;
+    else if (pThis->skillPos.size() < 9) size = 2;
+    else size = 3;
+    pThis->callbackCnt += size;
+    
+    int numOfBomb = (int)pThis->skillPos.size() / size; // 총 터지는 횟수 (네잎클로버 출현 횟수)
+    if ((int)pThis->skillPos.size() % size > 0)
+        numOfBomb++;
+    
+    int cnt = 0;
+    if (pThis->callbackDone < pThis->skillPos.size())
     {
-        x = (int)pos[i].x;
-        y = (int)pos[i].y;
+        if (size >= 3 && pThis->callbackCnt-3 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-3 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-3 ].y;
+            cnt++;
+        }
+        if (size >= 2 && pThis->callbackCnt-2 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-2 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-2 ].y;
+            cnt++;
+        }
+        if (size >= 1 && pThis->callbackCnt-1 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-1 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-1 ].y;
+            cnt++;
+        }
         
-        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land2.plist");
-        //m_emitter->retain();
-        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
-        gameLayer->addChild(m_emitter, 2000);
-        m_emitter->setAutoRemoveOnFinish(true);
+        // sound
+        pThis->gameLayer->GetSound()->PlaySkillSound(17);
+        
+        // 점수 업데이트
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 9%)])
+        int dragNum = pThis->gameLayer->GetPiece8xy(true).size(); // 드래그수 구하기
+        if (pThis->gameLayer->IsRoundInFeverTime(true))
+            dragNum = pThis->gameLayer->GetPosForFeverTime(true).size();
+        int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(17); // 발동점수
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*9)/100.0f))); // 가중치점수
+        pThis->gameLayer->UpdateScore(1, (basicScore+addedScore)/numOfBomb);
+        float scale = pThis->gameLayer->GetScoreBasicScale(dragNum);
+        pThis->gameLayer->ShowSkillScore((basicScore+addedScore)/numOfBomb, scale, pThis->queuePos, x[0], y[0]);
+        
+  
+        pThis->callbackDone += cnt;
+        
+        for (int i = 0 ; i < cnt ; i++)
+        {
+            pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType(x[i], y[i]), 1 );
+            pThis->gameLayer->RemoveConnectPiecesXY(x[i], y[i]);
+            
+            // effect
+            CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land2.plist");
+            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+            m_emitter->setPosition(pThis->gameLayer->SetTouch8Position(x[i], y[i]));
+            pThis->gameLayer->addChild(m_emitter, 2000);
+            m_emitter->setAutoRemoveOnFinish(true);
+            
+            // 피스 폭발
+            CCSprite* piece = pThis->gameLayer->GetSpriteP8(x[i], y[i]);
+            if (piece != NULL)
+            {
+                CCFiniteTimeAction* bomb;
+                if (i == 0)
+                    bomb = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::PlayEffect_17_Callback), pThis), NULL );
+                else
+                    bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
+                piece->runAction(bomb);
+            }
+        }
+        
+        
+        //else // 아마 이 경우는 없을 거야...
+        //    PlayEffect_17_Callback(NULL, pThis);
+    }
+    else
+    {
+        int x, y;
+        for (int i = 0 ; i < pThis->skillPos.size() ; i++)
+        {
+            x = (int)pThis->skillPos[i].x;
+            y = (int)pThis->skillPos[i].y;
+            //CCLog("[[%d %d]]", x, y);
+            //if (pThis->gameLayer->GetPuzzleP8Set()->GetObject(x, y)->GetPiece() != NULL)
+            if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
+            {
+                //CCLog("(%d %d)", x, y);
+                pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+                pThis->gameLayer->SetSpriteP8Null(x, y);
+            }
+        }
+        pThis->skillPos.clear();
+
+        pThis->gameLayer->Falling(pThis->queuePos);
     }
 }
 
@@ -919,10 +986,12 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         // big sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(72);
         
-        // 점수 업데이트 (10000 + 폭발피스수*1000)
-        int addedScore = 10000 + (int)ef->skillDoublePos[idx].size()*1000;
+        // 점수 업데이트 [ 발동점수의30% + (터지는피스개수 * 발동점수의5%) ]
+        float basicScore = (float)ef->gameLayer->GetSkill()->GetBasicSkillScore(7);
+        int addedScore = (int)((float)(basicScore * 0.3f) + (basicScore * 0.05f * (float)ef->skillDoublePos[idx].size()));
         ef->gameLayer->UpdateScore(1, addedScore);
-        ef->gameLayer->ShowSkillAddedScore(addedScore, ef->queuePos, 1, x, y);
+        ef->gameLayer->ShowSkillScore(addedScore, 1.5f, ef->queuePos, x, y);
+        //ef->gameLayer->ShowSkillAddedScore(addedScore, ef->queuePos, 1, x, y);
         
         for (int i = 0 ; i < ef->skillDoublePos[idx].size() ; i++)
         {
@@ -945,10 +1014,11 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         // small sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(71);
         
-        // 점수 업데이트 (1000)
-        int addedScore = 1000;
+        // 점수 업데이트 (발동점수의 10%)
+        int addedScore = (int)((float)ef->gameLayer->GetSkill()->GetBasicSkillScore(7) * 0.1f);
         ef->gameLayer->UpdateScore(1, addedScore);
-        ef->gameLayer->ShowSkillAddedScore(addedScore, ef->queuePos, 1, x, y);
+        ef->gameLayer->ShowSkillScore(addedScore, 1.2f, ef->queuePos, x, y);
+        //ef->gameLayer->ShowSkillAddedScore(addedScore, ef->queuePos, 1, x, y);
 
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
@@ -1013,10 +1083,13 @@ void Effect::PlayEffect_15(int num, std::vector<CCPoint> pos, int queue_pos) // 
     
     // 전체 배경 효과
     m_W8_bg = CCParticleSystemQuad::create("particles/water8_bg.plist");
-    //m_emitter->retain();
     m_W8_bg->setAnchorPoint(ccp(0.5, 0));
     m_W8_bg->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+190+100));
-    m_W8_bg->setScale(1.0f);
+    
+    float totalH = (gameLayer->vs.height-7-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+190+100);
+    m_W8_bg->setContentSize(CCSize(gameLayer->m_winSize.width, totalH));
+    float h = m_W8_bg->getContentSize().height;
+    m_W8_bg->setScaleY(totalH/h);
     gameLayer->addChild(m_W8_bg, 6);
     
     // 마법진 위에 여신 출현
@@ -1184,8 +1257,14 @@ void Effect::PlayEffect_6_Fever()
     F7_icon->setOpacity(0);
     gameLayer->addChild(F7_icon, 5010);
     
-    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.3f, 4.0f), CCSequence::create( CCFadeIn::create(0.3f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), this), NULL );
+    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.7f, 4.0f), CCSequence::create( CCFadeIn::create(0.4f), CCFadeOut::create(0.3f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_6_Fever_Callback), this), NULL );
     F7_icon->runAction(action);
+}
+void Effect::PlayEffect_6_Fever_Callback(CCNode *sender, void* pointer) // 코코타임으로 인한 피버타임 시작
+{
+    sender->removeFromParentAndCleanup(true);
+    Effect* pThis = (Effect*)pointer;
+    pThis->gameLayer->StartFeverTime();
 }
 
 void Effect::PlayEffect_6(int num)
@@ -1218,7 +1297,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
         ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
     }
     
-    CCLog("리뉴 콜백 %d", pThis->callbackCnt);
+    //CCLog("리뉴 콜백 %d", pThis->callbackCnt);
     
     if (pThis->callbackCnt < pThis->gameLayer->GetSkill()->GetResultDouble().size() &&
         pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt].size() > 0)
@@ -1272,7 +1351,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
     }
     else
     {
-        CCLog("리뉴 콜백 끝");
+        //CCLog("리뉴 콜백 끝");
         // 콜백 끝
         pThis->gameLayer->GetSkill()->RenewPuzzle_End(pThis->gameLayer->GetSkill(), pThis->queuePos);
     }
@@ -1289,10 +1368,10 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos, int queue_pos)
         y = (int)pos[0].y;
     }
     
-    if (queue_pos == -1) // 떡갈나무지팡이 실행한 경우
-        deltaPos = ccp(x, y);
-    else
-        deltaPos = gameLayer->SetTouch8Position(x, y);
+    //if (queue_pos == -1) // 떡갈나무지팡이 실행한 경우
+    //    deltaPos = ccp(x, y);
+    //else
+    deltaPos = gameLayer->SetTouch8Position(x, y);
     callbackCnt = 0;
     CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
     plus->setPosition(ccp(deltaPos.x, deltaPos.y));
@@ -1301,6 +1380,14 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos, int queue_pos)
     gameLayer->addChild(plus, z1+1);
     CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2CallbackNewSprite), this), CCFadeOut::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2Callback), this), NULL), NULL), NULL);
     plus->runAction(action);
+    
+    // 작은 불 이펙트
+    CCParticleSystemQuad* m_emitter2 = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
+    m_emitter2->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter2->setPosition(gameLayer->SetTouch8Position(x, y));
+    m_emitter2->setScale(1.8f);
+    m_emitter2->setAutoRemoveOnFinish(true);
+    gameLayer->addChild(m_emitter2, 1500);
 }
 void Effect::Effect2Callback(CCNode* sender, void* pointer)
 {
@@ -1332,18 +1419,19 @@ void Effect::Effect2CallbackNewSprite(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_18(CCPoint p)
 {
-    // E3 : 지팡이 레벨에 비례한 추가별사탕
+    // E3 : 떡갈나무지팡이
 
     // sound
     gameLayer->GetSound()->PlaySkillSound(18);
     
     // 추가별사탕 개수를 실제로 증가시킴
-    gameLayer->UpdateStarCandy(1, gameLayer->GetSkill()->E3_Get_AddedCandy());
+    //gameLayer->UpdateStarCandy(1, gameLayer->GetSkill()->E3_Get_AddedCandy());
     
-    deltaPos = p;
+    //deltaPos = p;
     callbackCnt = 0;
     CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
-    plus->setPosition(ccp(deltaPos.x, deltaPos.y));
+    //plus->setPosition(ccp(deltaPos.x, deltaPos.y));
+    plus->setPosition(ccp(p.x, p.y));
     plus->setScale(0.5);
     plus->setOpacity(0);
     gameLayer->addChild(plus, z1+1);
@@ -1378,7 +1466,7 @@ void Effect::Effect18CallbackNewSprite(CCNode* sender, void* pointer)
     else
     {
         // 끝났음. 다음 보너스 스킬로 넘어가자.
-        pThis->gameLayer->GetSkill()->E3_Done();
+        //pThis->gameLayer->GetSkill()->E3_Done();
     }
 }
 
@@ -1458,14 +1546,44 @@ void Effect::Effect22Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_10()
 {
+    /*
     // W3 : 콤보 비례 추가 점수
     CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire3.plist");
     m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    m_emitter->setPosition(ccp(150, 1600));
+    m_emitter->setPosition(ccp(150, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+200));
+    //ccp(150, 1600));
     m_emitter->setScale(3.0f);
     gameLayer->addChild(m_emitter, 2000);
     m_emitter->setDuration(0.5f);
     m_emitter->setAutoRemoveOnFinish(true);
+    */
+    
+    deltaPos = ccp(130, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+220);
+    callbackCnt = 0;
+    CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
+    plus->setPosition(deltaPos);
+    plus->setScale(0.5);
+    plus->setOpacity(0);
+    gameLayer->addChild(plus, z1+1);
+    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2CallbackNewSprite), this), CCFadeOut::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2Callback), this), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_10_Callback), this), NULL), NULL), NULL );
+    plus->runAction(action);
+    
+    
+    /*CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.3f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_10_Callback), this), NULL );
+    m_emitter->runAction(action);
+     */
+}
+void Effect::PlayEffect_10_Callback(CCNode* sender, void* pointer)
+{
+    Effect* pThis = (Effect*)pointer;
+
+    // 점수 보여주기
+    int W3_addedScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(10);
+    W3_addedScore *= (pThis->gameLayer->GetCombo()/10);
+    CCLog("W3 현재 콤보 : %d", pThis->gameLayer->GetCombo());
+    
+    pThis->gameLayer->UpdateScore(1, W3_addedScore);
+    pThis->gameLayer->ShowSkillScore(W3_addedScore, 1.5f, -1);
 }
 
 void Effect::PlayEffect_11()
@@ -1493,8 +1611,7 @@ void Effect::PlayEffect_14()
         W7Start->setColor(ccc3(255,255,255));
         W7Start->setOpacity(0);
         gameLayer->addChild(W7Start, 5000);
-        
-        CCActionInterval* startAction = CCSequence::create(CCFadeIn::create(0.10f), CCFadeOut::create(0.10f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect14Callback), this), NULL);
+        CCActionInterval* startAction = CCSequence::create(CCFadeIn::create(0.1f), CCFadeOut::create(0.1f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect14Callback), this), NULL);
         W7Start->runAction(startAction);
         
         if (gameLayer->GetSkill()->IsSpiritAlive(0))
@@ -1504,9 +1621,8 @@ void Effect::PlayEffect_14()
         if (gameLayer->GetSkill()->IsSpiritAlive(2))
             spirit_land->pauseSchedulerAndActions();
         
-        gameLayer->GetFairyLayer()->pauseSchedulerAndActions();
-        
-        
+        if (myInfo->GetActiveFairyId() > 0)
+            gameLayer->GetFairyLayer()->pauseSchedulerAndActions();
         
         // iced-bar
         iced_bar = CCSprite::createWithSpriteFrameName("background/bar_ice.png");
@@ -1556,7 +1672,6 @@ void Effect::PlayEffect_14()
         W7Start->setColor(ccc3(255,255,255));
         W7Start->setOpacity(0);
         gameLayer->addChild(W7Start, 5000);
-        
         CCActionInterval* startAction = CCSequence::create(CCFadeIn::create(0.10f), CCFadeOut::create(0.10f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect14Callback), this), NULL);
         W7Start->runAction(startAction);
         
@@ -1572,7 +1687,8 @@ void Effect::PlayEffect_14()
         if (gameLayer->GetSkill()->IsSpiritAlive(2))
             spirit_land->resumeSchedulerAndActions();
         
-        gameLayer->GetFairyLayer()->resumeSchedulerAndActions();
+        if (myInfo->GetActiveFairyId() > 0)
+            gameLayer->GetFairyLayer()->resumeSchedulerAndActions();
     }
 }
 void Effect::Effect14Callback(CCNode* sender, void* data)
@@ -1632,76 +1748,81 @@ void Effect::NewlyMadeConnPiece(int x, int y)
 }
 
 
-
-
-void Effect::ShowStarCandy(std::vector<CCPoint> pos)
+void Effect::ShowStarCandy(CCPoint pos, int size)
 {
-    return;
-    starCandyCallbackCnt = 3;
-    starCandyPos.clear();
-    starCandyPos = pos;
+    CCParticleSystemQuad* m_emitter;
+    if (size <= 5)
+        m_emitter = CCParticleSystemQuad::create("particles/starcandy.plist");
+    else if (size <= 9)
+        m_emitter = CCParticleSystemQuad::create("particles/starcandy_big.plist");
+    else
+        m_emitter = CCParticleSystemQuad::create("particles/starcandy_bigbig.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos.x, (int)pos.y));
+    m_emitter->setScale(1.3f);
+    gameLayer->addChild(m_emitter, 1001);
     
-    for (int i = 3; i < pos.size() ; i++)
+    m_emitter->setDuration(1.0f);
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.05f), CCMoveTo::create(0.65f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
+    m_emitter->runAction(action);
+}
+
+void Effect::ShowStarCandy(bool isCycle, std::vector<CCPoint> pos)
+{
+    int size = pos.size();
+    
+    int z; // 시작 위치
+    if (isCycle) z = 0;
+    else z = size-1;
+    
+    int total; // 별사탕 나올 개수
+    if (size <= 5) total = 1;
+    else if (size <= 9) total = 2;
+    else if (size <= 14) total = 3;
+    else if (size <= 19) total = 4;
+    else total = 5;
+    
+    for (int i = 0 ; i < total ; i++)
     {
-        CCSprite* candy = CCSprite::createWithSpriteFrameName("icon/icon_starcandy_4.png");
-        candy->setPosition(gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
-        candy->setOpacity(0);
-        candy->setScale(1.0f);
-        gameLayer->addChild(candy, 2000);
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/starcandy.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos[z].x, (int)pos[z].y));
+        gameLayer->addChild(m_emitter, 100);
+        m_emitter->setScale(1.5f);
+        m_emitter->setDuration(0.7f + i*0.15f);
         
-        //CCRepeatForever::create(CCRotateBy::create(0.1f, 90))
-        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create( CCFadeIn::create(0.1f), CCEaseOut::create(CCMoveTo::create(0.5f, ccp(gameLayer->m_winSize.width/2, gameLayer->vs.height+gameLayer->vo.y-370)), 0.5f), CCFadeOut::create(0.2f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
-        candy->runAction(action);
+        CCActionInterval* action = CCSequence::create( CCDelayTime::create((i+1)*0.15f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
+        m_emitter->runAction(action);
         
-        /*
-         CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.16f, ccp(0, 50)), CCRotateBy::create(0.16f, 360),
-         CCSequence::create(CCFadeIn::create(0.08f),
-         CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback), this),
-         CCFadeOut::create(0.08f), NULL), NULL),
-         CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
-         candy->runAction(action);
-         */
-        
-        /*
-         // 별 파티클
-         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/basic_starcandy.plist");
-         m_emitter->retain();
-         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-         m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
-         //m_emitter->setStartColor(ccc4f(0.1, 0.1, 0.95, 1));
-         //m_emitter->setEndColor(ccc4f(0.1, 0.1, 0.95, 0));
-         m_emitter->setScale(1.5f);
-         gameLayer->addChild(m_emitter, 1999);
-         
-         CCActionInterval* action2 = CCSequence::create( CCFadeIn::create(0.1f), CCEaseOut::create(CCMoveTo::create(1.0f, ccp(gameLayer->m_winSize.width/2, gameLayer->vs.height+gameLayer->vo.y-370)), 1.0f), CCFadeOut::create(0.3f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
-         m_emitter->runAction(action2);
-         //m_emitter->setDuration(0.2f);
-         //m_emitter->setAutoRemoveOnFinish(true);
-         */
+        z--;
+        if (z < 0)
+            z = size-1;
     }
 }
+
+void Effect::ShowStarCandyAll(std::vector<CCPoint> pos)
+{
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/starcandy.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
+        gameLayer->addChild(m_emitter, 100);
+        m_emitter->setScale(1.5f);
+        m_emitter->setDuration(0.7f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        
+        //CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
+        CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL), NULL );
+        m_emitter->runAction(action);
+    }
+}
+
 void Effect::ShowStarCandy_Callback_Done(CCNode* sender, void* pointer)
 {
-    sender->removeFromParentAndCleanup(true);
+    ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
 }
-/*
-void Effect::ShowStarCandy_Callback(CCNode* sender, void* pointer)
-{
-    Effect* pThis = (Effect*)pointer;
-    pThis->starCandyCallbackCnt++;
-    if (pThis->starCandyCallbackCnt < (int)pThis->starCandyPos.size())
-    {
-        CCSprite* candy = CCSprite::createWithSpriteFrameName("icon/icon_starcandy_4.png");
-        candy->setPosition(pThis->gameLayer->SetTouch8Position((int)pThis->starCandyPos[pThis->starCandyCallbackCnt].x, (int)pThis->starCandyPos[pThis->starCandyCallbackCnt].y));
-        candy->setOpacity(0);
-        candy->setScale(1.0f);
-        pThis->gameLayer->addChild(candy, 2000);
-        
-        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.16f, ccp(0, 50)), CCRotateBy::create(0.16f, 360), CCSequence::create(CCFadeIn::create(0.08f), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback), pThis), CCFadeOut::create(0.08f), NULL), NULL), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), pThis), NULL);
-        candy->runAction(action);
-    }
-}
-*/
+
 
 void Effect::PlayEffect_FeverBg()
 {
@@ -1713,20 +1834,46 @@ void Effect::PlayEffect_FeverBg()
     gameLayer->addChild(fever_black_bg, 5);
     fever_black_bg->runAction(CCFadeTo::create(0.5f, 255));
     
+    // 번쩍
+    CCSprite* W7Start = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, 1080, 1920));
+    W7Start->setAnchorPoint(ccp(0,0));
+    W7Start->setPosition(ccp(0, 0));
+    W7Start->setColor(ccc3(255,255,255));
+    W7Start->setOpacity(0);
+    gameLayer->addChild(W7Start, 5000);
+    CCActionInterval* startAction = CCSequence::create(CCFadeIn::create(0.1f), CCFadeOut::create(0.1f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect14Callback), this), NULL);
+    W7Start->runAction(startAction);
+    
     // 피버타임 배경
     feverBg = CCParticleSystemQuad::create("particles/feverTime_bg.plist");
     feverBg->setAnchorPoint(ccp(0.5, 0.5));
     feverBg->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->m_winSize.height/2));
-    //m_emitter->setScale(1.0f);
     gameLayer->addChild(feverBg, 99);
-    //m_emitter->setAutoRemoveOnFinish(true);
+    
+    // 코코 뒤에 이펙트
+    feverCoco = CCParticleSystemQuad::create("particles/feverTime_coco.plist");
+    feverCoco->setAnchorPoint(ccp(0.5, 0.5));
+    feverCoco->setScale(1.7f);
+    feverCoco->setPosition(ccp(100+120, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+100));
+    gameLayer->addChild(feverCoco, 99);
 }
 void Effect::PlayEffect_FeverBg_Off()
 {
     fever_black_bg->removeFromParentAndCleanup(true);
     feverBg->setDuration(0.1f);
     feverBg->setAutoRemoveOnFinish(true);
-    CCLog("피버타임 이펙트 잘 제거됨.");
+    feverCoco->setDuration(0.1f);
+    feverCoco->setAutoRemoveOnFinish(true);
+    
+    // 번쩍
+    CCSprite* W7Start = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, 1080, 1920));
+    W7Start->setAnchorPoint(ccp(0,0));
+    W7Start->setPosition(ccp(0, 0));
+    W7Start->setColor(ccc3(255,255,255));
+    W7Start->setOpacity(0);
+    gameLayer->addChild(W7Start, 5000);
+    CCActionInterval* startAction = CCSequence::create(CCFadeIn::create(0.1f), CCFadeOut::create(0.1f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect14Callback), this), NULL);
+    W7Start->runAction(startAction);
 }
 
 void Effect::PlayEffect_FeverCircle(CCPoint p, CCPoint bp, int size)
@@ -1754,6 +1901,127 @@ void Effect::PlayEffect_FeverCircle_Callback(CCNode* sender, void* pointer)
 {
     sender->removeFromParentAndCleanup(true);
 }
+
+void Effect::ShowItemPaintArrow(int xx, int yy)
+{
+    itemPaintArrow.clear();
+    for (int x = xx-1 ; x <= xx+1 ; x++)
+    {
+        for (int y = yy-1 ; y <= yy+1 ; y++)
+        {
+            if (x == xx && y == yy)
+                continue;
+            if (x < 0 || x > COLUMN_COUNT-1 || y < 0 || y > ROW_COUNT-1)
+                continue;
+            if ( (x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) || (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1) )
+                continue;
+            
+            CCSprite* sp;
+            int rt, t;
+            if (x == xx && y == yy+1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_s.png"); rt = 0; t = 1; }
+            else if (x == xx+1 && y == yy) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_s.png"); rt = 90; t = 1; }
+            else if (x == xx && y == yy-1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_s.png"); rt = 180; t = 1; }
+            else if (x == xx-1 && y == yy) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_s.png"); rt = -90; t = 1; }
+            
+            else if (x == xx+1 && y == yy-1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_d.png"); rt = 0; t = 2; }
+            else if (x == xx-1 && y == yy-1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_d.png"); rt = 90; t = 2; }
+            else if (x == xx-1 && y == yy+1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_d.png"); rt = 180; t = 2; }
+            else if (x == xx+1 && y == yy+1) { sp = CCSprite::createWithSpriteFrameName("icon/paint_c_d.png"); rt = -90; t = 2; }
+            
+            if (t == 1) sp->setAnchorPoint(ccp(0.5, 0));
+            else if (t == 2) sp->setAnchorPoint(ccp(0, 1));
+            sp->setRotation(rt);
+            sp->setPosition(gameLayer->SetTouch8Position(xx, yy));
+            sp->setTag(rt-t); // rt - t (고유값)
+            sp->setOpacity(180);
+            sp->setColor(ccc3(150,150,150));
+            gameLayer->addChild(sp, 200);
+            itemPaintArrow.push_back(sp);
+        }
+    }
+}
+void Effect::ChangeItemPaintArrow(int dx, int dy)
+{
+    for (int i = 0 ; i < itemPaintArrow.size() ; i++)
+    {
+        itemPaintArrow[i]->setColor(ccc3(150,150,150));
+        if ( (dx == 0 && dy == 1 && itemPaintArrow[i]->getTag() == 0-1) ||
+             (dx == 1 && dy == 0 && itemPaintArrow[i]->getTag() == 90-1) ||
+             (dx == 0 && dy == -1 && itemPaintArrow[i]->getTag() == 180-1) ||
+             (dx == -1 && dy == 0 && itemPaintArrow[i]->getTag() == -90-1) ||
+             (dx == 1 && dy == -1 && itemPaintArrow[i]->getTag() == 0-2) ||
+             (dx == -1 && dy == -1 && itemPaintArrow[i]->getTag() == 90-2) ||
+             (dx == -1 && dy == 1 && itemPaintArrow[i]->getTag() == 180-2) ||
+             (dx == 1 && dy == 1 && itemPaintArrow[i]->getTag() == -90-2) )
+        {
+            itemPaintArrow[i]->setColor(ccc3(255,255,255));
+        }
+    }
+}
+void Effect::RemoveItemPaintArrow()
+{
+    for (int i = 0 ; i < itemPaintArrow.size() ; i++)
+        itemPaintArrow[i]->removeFromParentAndCleanup(true);
+    itemPaintArrow.clear();
+}
+
+//void Effect::PlayEffect_ItemStaff(int x, int y, int type)
+void Effect::PlayEffect_ItemStaff(std::vector<CCPoint> pos, int type)
+{
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        CCParticleSystemQuad* m_emitter;
+        if (type == PIECE_YELLOW)
+            m_emitter = CCParticleSystemQuad::create("particles/item_staff_yellow.plist");
+        else if (type == PIECE_WHITE)
+            m_emitter = CCParticleSystemQuad::create("particles/item_staff_white.plist");
+        m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos[i].x, (int)pos[i].y));
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setScale(2.5f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        gameLayer->addChild(m_emitter, 100);
+    }
+}
+
+void Effect::BonusBomb(std::vector<CCPoint> pos)
+{
+    int x, y, c;
+    int minx = 999, miny = 999, maxx = -1, maxy = -1;
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        x = pos[i].x;
+        y = pos[i].y;
+        
+        minx = std::min(minx, x);
+        miny = std::min(miny, y);
+        maxx = std::max(maxx, x);
+        maxy = std::max(maxy, y);
+        
+        // 기본 이펙트
+        c = rand()%3;
+        CCParticleSystemQuad* m_emitter;
+        if (c == 0) m_emitter = CCParticleSystemQuad::create("particles/fire7_1.plist");
+        else if (c == 1) m_emitter = CCParticleSystemQuad::create("particles/fire7_2.plist");
+        else m_emitter = CCParticleSystemQuad::create("particles/fire7_3.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(1.5f);
+        m_emitter->setAutoRemoveOnFinish(true);
+        gameLayer->addChild(m_emitter, 2000);
+    }
+    /*
+    // 덩어리 기준 이펙트 1개
+    float xx = (float)(maxx+minx)/2.0;
+    float yy = (float)(maxy+miny)/2.0;
+    CCParticleSystemQuad* m_emitter2 = CCParticleSystemQuad::create("particles/fire7_final.plist");
+    m_emitter2->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter2->setPosition(gameLayer->SetTouch8Position(xx, yy));
+    m_emitter2->setScale(1.0f);
+    m_emitter2->setAutoRemoveOnFinish(true);
+    gameLayer->addChild(m_emitter2, 2000);
+    */
+}
+
 
 void Effect::RemoveAllObjects()
 {

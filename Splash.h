@@ -8,10 +8,11 @@
 #define HTTP_JOIN -2
 #define HTTP_VERSION 0
 #define HTTP_LOGIN 1
-#define HTTP_MYINFO 2
-#define HTTP_REWARDWEELYRANK 3
-#define HTTP_FRIENDS 4
-#define HTTP_PROFILE_IMAGE 5
+#define HTTP_NOTICE 2
+#define HTTP_MYINFO 3
+#define HTTP_REWARDWEELYRANK 4
+#define HTTP_FRIENDS 5
+#define HTTP_PROFILE_IMAGE 6
 #define HTTP_NONCONSUMED_GET_FRIEND_ID -10
 #define HTTP_NONCONSUMEDITEMS -100
 
@@ -21,7 +22,7 @@ using namespace cocos2d::extension;
 USING_NS_CC_EXT;
 
 class Splash : public CCLayerColor,
-                public CCIMEDelegate
+                public CCScrollViewDelegate    
 {
 public:
     ~Splash(void);
@@ -29,6 +30,8 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
+    virtual void scrollViewDidScroll(CCScrollView* view);
+    virtual void scrollViewDidZoom(CCScrollView* view);
 
     void onInitComplete();
     void onInitErrorComplete(const char* status, const char* error);
@@ -44,9 +47,8 @@ public:
     void onFriendsErrorComplete(char const* status, char const* error);
     void onLogoutComplete();
     void onLogoutErrorComplete(char const* status, char const* error);
-    void onUnregisterComplete();
-    void onUnregisterErrorComplete(char const* status, char const* error);
-
+    //void onUnregisterComplete();
+    //void onUnregisterErrorComplete(char const* status, char const* error);
 
     virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
@@ -55,14 +57,19 @@ public:
 	static CCScene* scene();
 	CREATE_FUNC(Splash);
     
+    void ShowClause();
+    void ShowKakaoBtn();
+    
     void Callback_Logo_KakaoGame(CCNode* sender, void* p);
     void Callback_Logo_playDANDi(CCNode* sender, void* p);
     void LogoLoadingCompleted();
     void SoundCallback(CCNode* sender, void* p);
     void Button_Callback();
 
-    void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
-    void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
+    //void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
+    //void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
+    
+    void StartLoginProcess();
     
     void TryLogin();
     
@@ -71,11 +78,13 @@ public:
     
     void XmlParseVersion(xml_document *xmlDoc);
     void XmlParseLogin(xml_document *xmlDoc);
+    void XmlParseNotice(xml_document *xmlDoc);
     void XmlParseMyInfo(xml_document *xmlDoc);
     void XmlParseRewardWeeklyRank(xml_document *xmlDoc);
     void XmlParseFriends(xml_document *xmlDoc);
     void CheckFriendList();
     void XmlParseGetFriendKakaoId(xml_document *xmlDoc);
+    void XmlParseServerCheck(void* data, int size);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
@@ -91,8 +100,7 @@ public:
     void EndScene();
     
     RSA* createRSA(unsigned char * key, int pub);
-    
-    
+
 protected:
     CCSize winSize;
     bool isLoading;
@@ -127,7 +135,29 @@ private:
     CCSprite* m_pStartLetter;
     CCSprite* m_pKakaoBtn;
     
-    CCTextFieldTTF* m_pEditName;
+    //CCTextFieldTTF* m_pEditName;
+    
+    // 약관 관련 변수들
+    CCSprite* term1;
+    CCSprite* term2;
+    CCScrollView* view1;
+    CCScrollView* view2;
+    CCLabelTTF* clause1;
+    CCLabelTTF* clause2;
+    CCScale9Sprite* clauseBg1_1;
+    CCScale9Sprite* clauseBg1_2;
+    CCScale9Sprite* clauseBg2_1;
+    CCScale9Sprite* clauseBg2_2;
+    CCLabelTTF* clauseTitle1;
+    CCLabelTTF* clauseTitle2;
+    CCLabelTTF* clauseAgree1;
+    CCLabelTTF* clauseAgree2;
+    CCSprite* agreeBtn1;
+    CCSprite* agreeBtn2;
+    CCSprite* check1;
+    CCSprite* check2;
+    bool isChecked1;
+    bool isChecked2;
 };
 
 

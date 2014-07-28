@@ -1,9 +1,8 @@
 #include "InviteFriend.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
 
 static std::vector<std::string> kakaoIds;
 static std::vector<int> remainTimes;
-static int todayCnt, monthCnt, totalCnt;
-
 
 CCScene* InviteFriend::scene()
 {
@@ -24,17 +23,30 @@ void InviteFriend::onEnter()
     isScrolling = false;
     isScrollViewTouched = false;
     
-    // Loading 화면으로 MESSAGE request 넘기기
-    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-    
-    // 네트워크로 초대할 친구 리스트를 받아온다.
-    httpStatus = 0;
-    char temp[50];
-    std::string params = "";
-    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
-    params += temp;
-    
-    Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
+    if (!isInviteListGathered)
+    {
+        // Loading 화면으로 MESSAGE request 넘기기
+        Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+        
+        // 네트워크로 초대할 친구 리스트를 받아온다.
+        httpStatus = 0;
+        char temp[50];
+        std::string params = "";
+        sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
+        params += temp;
+        
+        Network::HttpPost(params, URL_INVITE_FRIEND_LIST, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
+    }
+    else
+    {
+        // init sprite
+        InitSprites();
+        // scroll을 생성 후 데이터 보여주기
+        MakeScroll();
+        
+        // profile timer 시작
+        this->schedule(schedule_selector(InviteFriend::ProfileTimer), 1.0f);
+    }
     
     // 전체화면 액션
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(InviteFriend::SceneCallback)), NULL );
@@ -57,7 +69,6 @@ void InviteFriend::keyBackClicked()
         return;
     isKeybackTouched = true;
     
-    sound->playClick();
     EndScene();
 }
 
@@ -72,6 +83,8 @@ bool InviteFriend::init()
     isTouched = true;
     isScrolling = true;
     isScrollViewTouched = true;
+    
+    inviteIdx = -1;
     
     // make depth tree
     Depth::AddCurDepth("InviteFriend", this);
@@ -108,7 +121,6 @@ bool InviteFriend::init()
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
     tLayer->addChild(scrollView, 3);
-    //this->addChild(scrollView, 3);
     
     spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
@@ -134,15 +146,32 @@ void InviteFriend::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("InviteFriend : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
     }
+    else if (param->intValue() == 5)
+    {
+        Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+        
+        // 카카오 api 호출 (초대메시지 템플릿 이용)
+        std::string templateId = KAKAO_MSG_TEMPLATE_INVITEFRIEND;
+        std::string executeUrl = "";
+        char temp[100];
+        sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
+        std::string metaInfo = temp;
+        CCLog("metaInfo = %s", metaInfo.c_str());
+        CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
+        
+        KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&InviteFriend::onSendLinkMessageComplete, this), std::bind(&InviteFriend::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, inviteList[inviteIdx]->userId, "", executeUrl, metaInfo);
+    }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -179,13 +208,14 @@ void InviteFriend::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_10.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png1"), CCSize(0, 0), "background/bg_dontknow_1.png1", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_20.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png2"), CCSize(0, 0), "background/bg_dontknow_1.png2", "0", NULL, 2, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invite_30.png", ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_dontknow_1.png3"), CCSize(0, 0), "background/bg_dontknow_1.png3", "0", NULL, 2, 1) );
+    // 보상 그림 3개
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_1.png", ccp(0, 0), ccp(98-ofs+45, 275), CCSize(0,0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_2.png", ccp(0, 0), ccp(390-ofs+45, 275), CCSize(0,0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_3.png", ccp(0, 0), ccp(686-ofs+65, 275), CCSize(0,0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("별사탕 15,000개", fontList[0], 25, ccp(0, 0), ccp(98-ofs+30, 243), ccc3(0,0,0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("토파즈 10개", fontList[0], 25, ccp(0, 0), ccp(390-ofs+55, 243), ccc3(0,0,0), "", "Layer", tLayer, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("토파즈 25개", fontList[0], 25, ccp(0, 0), ccp(686-ofs+80, 243), ccc3(0,0,0), "", "Layer", tLayer, 1) );
     
-    // 그림들
-    /*
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_10.png", ccp(0.5, 0), ccp(98+244/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_20.png", ccp(0.5, 0), ccp(390+244/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_invitefriend_30.png", ccp(0.5, 0), ccp(686+293/2, 226+5), CCSize(700, 30), "", "Layer", tLayer, 2) );
-    */
     
     // progress bar 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_petlevel.png1", ccp(0, 0), ccp(96+10-ofs, 192-15), CCSize(700, 30), "", "Layer", tLayer, 2) );
@@ -206,7 +236,7 @@ void InviteFriend::InitSprites()
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
 }
-
+/*
 bool compareInvite(InviteList *a, InviteList *b)
 {
     int c = a->nickname.compare(b->nickname);
@@ -220,41 +250,10 @@ bool compareInvite(InviteList *a, InviteList *b)
     else
         return (c < 0);
 }
-
+*/
 void InviteFriend::MakeScroll()
 {
-    for (int i = 0 ; i < inviteList.size() ; i++)
-        delete inviteList[i];
-    inviteList.clear();
-    
-    int numOfList = KakaoFriends::getInstance()->friends->count();
-    CCLog("numOfList = %d", numOfList);
-    CCArray* keys = KakaoFriends::getInstance()->friends->allKeys();
-    
-    bool wasInvited;
-    for (int j = 0 ; j < numOfList ; j++)
-    {
-        CCString* k = (CCString*)keys->objectAtIndex(j);
-        std::string userId = k->getCString();
-        CCLog("user id = %s", userId.c_str());
-        KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey(userId.c_str());
-        
-        // 이미 초대되어있는지 서버에서 받아온 정보와 비교한다.
-        wasInvited = false;
-        for (int i = 0 ; i < kakaoIds.size() ; i++)
-        {
-            if (userId == kakaoIds[i] && remainTimes[i] > 0)
-            {
-                wasInvited = true;
-                break;
-            }
-        }
-
-        inviteList.push_back( new InviteList(userId, f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice, wasInvited) );
-    }
-    // 정렬 : 닉네임 순 (단, 초대된 사람은 무조건 뒤로 보낸다)
-    std::sort(inviteList.begin(), inviteList.end(), compareInvite);
-    
+    int numOfList = (int)inviteList.size();
     
     // make scroll
     scrollContainer = CCLayer::create();
@@ -271,10 +270,21 @@ void InviteFriend::MakeScroll()
         scrollContainer->addChild(itemLayer, 2);
         spriteClassScroll->layers.push_back(itemLayer);
         
+        // 프로필 이미지
+        sprintf(name, "background/bg_profile.png%d", i);
+        ProfileSprite* psp = ProfileSprite::GetObj(inviteList[i]->profileUrl);
+        if (inviteList[i]->profileUrl != "" && psp->IsLoadingDone())
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 0.95f) );
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255) );
+        }
+        else
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 0, -777*(i+1)) ); // tag = -777 * (i+1)
+        }
+        inviteList[i]->profile = spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite;
         
-        // profile bg
-        sprintf(name, "background/bg_profile_noimage.png%d", i);
-        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         
         // nickname
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(inviteList[i]->nickname, fontList[0], 48, ccp(0, 0), ccp(196, 118-10), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
@@ -296,6 +306,8 @@ void InviteFriend::MakeScroll()
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
+        CCLog("wasInvited (%d) : %d", i, inviteList[i]->wasInvited);
+        
         // button
         if (!inviteList[i]->wasInvited) // 초대 가능한 경우
         {
@@ -303,6 +315,13 @@ void InviteFriend::MakeScroll()
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3) );
             sprintf(name2, "letter/letter_invite.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name, "0", NULL, 3, 1) );
+            
+            // 메시지 수신거부한 친구 or 지원되지 않는 디바이스 이용중인 친구는 어둡게 만들어서 터치 못하게 하자.
+            if (inviteList[i]->messageBlocked || !inviteList[i]->supportedDevice)
+            {
+                ((CCSprite*)spriteClassScroll->FindSpriteByName(name))->setColor(ccc3(150,150,150));
+                ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setColor(ccc3(150,150,150));
+            }
         }
         else // 이미 초대한 경우
         {
@@ -325,6 +344,83 @@ void InviteFriend::MakeScroll()
     for (int i = 0 ; i < spriteClassScroll->spriteObj.size() ; i++)
         spriteClassScroll->AddChild(i);
 }
+
+void InviteFriend::ProfileTimer(float f)
+{
+    // 프로필 사진 왼쪽 위 지점과 스크롤뷰 위치를 비교한다.
+    // 음수가 되면, 아래에 있던 프로필이 스크롤뷰에 보이기 시작했다는 의미 -> 프로필 로딩 시작.
+    CCPoint p;
+    float h;
+    for (int i = 0 ; i < inviteList.size() ; i++)
+    {
+        ProfileSprite* psp = ProfileSprite::GetObj(inviteList[i]->profileUrl);
+        if (psp->IsLoadingStarted() || psp->IsLoadingDone())
+            continue;
+        
+        p = inviteList[i]->profile->convertToNodeSpace(scrollView->getPosition());
+        h = inviteList[i]->profile->getContentSize().height;
+        
+        if (p.y-h < 0)
+        {
+            //CCLog("%d : loading start", i);
+            psp->SetLoadingStarted(true);
+            
+            char tag[6];
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(psp->GetProfileUrl().c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(InviteFriend::onHttpRequestCompletedNoEncrypt));
+            sprintf(tag, "%d", i);
+            req->setTag(tag);
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+    }
+}
+void InviteFriend::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[110*110*2];
+    
+    // 프로필 사진 받아오기 실패
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(dumpData, (int)buffer->size());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite (profile 모음 리스트에 갱신)
+    int index = atoi(res->getHttpRequest()->getTag());
+    for (int i = 0 ; i < profiles.size() ; i++)
+    {
+        if (profiles[i]->GetProfileUrl() == inviteList[index]->profileUrl)
+        {
+            profiles[i]->SetSprite(texture);
+            profiles[i]->SetLoadingDone(true);
+            // 화면에 보이는 스프라이트 교체
+            if (spriteClassScroll == NULL)
+                return;
+            spriteClassScroll->ChangeSprite(-888*(index+1), profiles[i]->GetProfile());
+            //CCPoint p = ((CCSprite*)spriteClassScroll->FindSpriteByTag(-888*(index+1)))->getPosition();
+            //((CCSprite*)spriteClassScroll->FindSpriteByTag(-888*(index+1)))->setPosition(ccp(p.x+5, p.y+11));
+            ((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
+            break;
+        }
+    }
+}
+
 
 
 bool InviteFriend::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
@@ -374,26 +470,24 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
+                inviteIdx = atoi(spriteClassScroll->spriteObj[i]->name.substr(24).c_str());
+                CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
+                
+                if (totalCnt >= 40) // 최대 초대 수를 넘은 경우
+                {
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_NO_MORE, BTN_1, nullData);
+                    break;
+                }
+                
+                // 메시지 수신거부한 친구 , 지원되지 않는 디바이스 사용중인 친구는 터치 못하게 막아두자.
+                if (inviteList[inviteIdx]->messageBlocked || !inviteList[inviteIdx]->supportedDevice)
+                    break;
+                
                 sound->playClick();
-                int idx = atoi(spriteClassScroll->spriteObj[i]->name.substr(24, 25).c_str());
-                
-                // Loading 화면으로 MESSAGE request 넘기기
-                Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
-                
-                // 친구를 초대한다.
-                httpStatus = 1;
-                char temp[50];
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                param += temp;
-                //sprintf(temp, "friend_kakao_id=%d", kakaoIds[idx]);
-                //param += temp;
-                
-                // tag
-                sprintf(temp, "%d", idx);
-                
-                Network::HttpPost(param, URL_INVITE_FRIEND, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted), temp);
-
+                std::vector<int> data;
+                data.push_back(inviteIdx);
+                Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_TRY, BTN_2, data);
                 break;
             }
         }
@@ -403,6 +497,76 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
 }
+
+
+static int stat;
+
+void InviteFriend::onSendLinkMessageComplete()
+{
+    CCLog("onSendLinkMessageComplete");
+    stat = 0;
+    SendToServer();
+}
+void InviteFriend::onSendLinkMessageErrorComplete(char const *status, char const *error)
+{
+    //CCMessageBox(error, "onSendLinkMessageErrorComplete");
+    CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
+    stat = atoi(status);
+    
+    if (stat != -31)
+        ((Loading*)Depth::GetCurPointer())->EndScene();
+    
+    std::vector<int> nullData;
+    if (stat == -32) // 초대메시지 1일 쿼터 초과
+    {
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_MAX_PER_DAY, BTN_1, nullData);
+    }
+    else if (stat == -14) // 그 유저가 지원되지 않는 device 이용중임.
+    {
+        inviteList[inviteIdx]->supportedDevice = false;
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_NOT_SUPPORTED_DEVICE, BTN_1, nullData);
+    }
+    else if (stat == -17 || stat == -16) // 메시지 수신거부 사용자임. (앱 설치하지 않은 친구(-17) / 앱 설치한 친구(-16))
+    {
+        inviteList[inviteIdx]->messageBlocked = true;
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_BLOCKED, BTN_1, nullData);
+    }
+    else if (stat == -11) // 탈퇴한 사용자
+    {
+        inviteList[inviteIdx]->messageBlocked = true;
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_UNREGISTERED, BTN_1, nullData);
+    }
+    if (stat != 31)
+    
+    // 필요한 상황에서만 스크롤뷰 데이터 갱신을 한다.
+    switch (stat)
+    {
+        case -17:
+        case -16:
+        case -14:
+        case -11:
+            RenewData();
+            break;
+    }
+
+    // 동일 대상자(30일 이내)에게 한 번 더 보낼 경우에만 friend_invite.php를 호출한다.
+    if (stat == -31)
+        SendToServer();
+}
+void InviteFriend::SendToServer()
+{
+    // 친구를 초대한다.
+    httpStatus = 1;
+    char temp[50];
+    std::string param = "";
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+    param += temp;
+    sprintf(temp, "friend_kakao_id=%s", inviteList[inviteIdx]->userId.c_str());
+    param += temp;
+    
+    Network::HttpPost(param, URL_INVITE_FRIEND, this, httpresponse_selector(InviteFriend::onHttpRequestCompleted));
+}
+
 
 void InviteFriend::scrollViewDidScroll(CCScrollView* view)
 {
@@ -417,6 +581,8 @@ void InviteFriend::scrollViewDidZoom(CCScrollView* view)
 void InviteFriend::EndScene()
 {
     sound->playClick();
+    
+    this->unschedule(schedule_selector(InviteFriend::ProfileTimer));
     
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
@@ -435,6 +601,8 @@ void InviteFriend::EndScene()
     delete spriteClass;
     spriteClassScroll->RemoveAllObjects();
     delete spriteClassScroll;
+    spriteClass = NULL;
+    spriteClassScroll = NULL;
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -455,16 +623,20 @@ void InviteFriend::RenewData()
     float size = (float)totalCnt / (float)MAX_NUM_OF_INVITE_FRIEND;
     if (size > 1.0f) size = 1.0f;
     bar->removeFromParentAndCleanup(true);
-    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 48-12));
-    bar->setPosition(ccp(96+5, 192+6));
+    bar = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, size*(700-10), 30-12));
+    bar->setPosition(ccp(96+10+5-ofs, 192+6-15));
     bar->setAnchorPoint(ccp(0, 0));
     bar->setColor(ccc3(255,255,255));
-    this->addChild(bar, 3);
-    
+    tLayer->addChild(bar, 3);
+
     char name[20];
     sprintf(name, "%d명 초대", totalCnt);
     ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(name);
     
+    // 정렬 : 닉네임 순 (단, 초대된 사람은 무조건 뒤로 보낸다)
+    //std::sort(inviteList.begin(), inviteList.end(), compareInvite);
+    
+    // 스크롤뷰 갱신
     spriteClassScroll->RemoveAllObjects();
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -474,24 +646,23 @@ void InviteFriend::RenewData()
 
 void InviteFriend::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    // Loading 창 끄기
-    ((Loading*)Depth::GetCurPointer())->EndScene();
-    
     CCHttpResponse* res = (CCHttpResponse*) data;
     
     xml_document xmlDoc;
     Network::GetXMLFromResponseData(res, xmlDoc);
     
-    //CCLog("http status = %d", httpStatus);
     switch (httpStatus)
     {
         case 0: XmlParseList(&xmlDoc); break;
-        case 1: XmlParseInviteFriend(&xmlDoc, atoi(res->getHttpRequest()->getTag())); break;
+        case 1: XmlParseInviteFriend(&xmlDoc); break;
     }
 }
 
 void InviteFriend::XmlParseList(xml_document *xmlDoc)
 {
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -531,35 +702,69 @@ void InviteFriend::XmlParseList(xml_document *xmlDoc)
         monthCnt = nodeResult.child("count").attribute("month").as_int();
         totalCnt = nodeResult.child("count").attribute("total-invite").as_int();
         
+        // 초대리스트 초기화
+        InitInviteList();
+        
         // init sprite
         InitSprites();
         // scroll을 생성 후 데이터 보여주기
         MakeScroll();
+        
+        // profile timer 시작
+        this->schedule(schedule_selector(InviteFriend::ProfileTimer), 1.0f);
     }
 }
 
-void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc, int idx)
+void InviteFriend::InitInviteList()
 {
+    for (int i = 0 ; i < inviteList.size() ; i++)
+        delete inviteList[i];
+    inviteList.clear();
+    
+    int numOfList = KakaoFriends::getInstance()->friends->count();
+    CCArray* keys = KakaoFriends::getInstance()->friends->allKeys();
+    
+    bool wasInvited;
+    for (int j = 0 ; j < numOfList ; j++)
+    {
+        CCString* k = (CCString*)keys->objectAtIndex(j);
+        std::string userId = k->getCString();
+        //CCLog("user id = %s", userId.c_str());
+        KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey(userId.c_str());
+        
+        // 이미 초대되어있는지 서버에서 받아온 정보와 비교한다.
+        wasInvited = false;
+        for (int i = 0 ; i < kakaoIds.size() ; i++)
+        {
+            if (userId == kakaoIds[i] && remainTimes[i] > 0)
+            {
+                wasInvited = true;
+                break;
+            }
+        }
+        
+        inviteList.push_back( new InviteList(userId, f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice, wasInvited) );
+        
+        if (ProfileSprite::GetProfile(f->profileImageUrl) == NULL) // 프로필 sprite에 모은다.
+            profiles.push_back( new ProfileSprite(f->profileImageUrl, false) );
+    }
+    // 정렬 : 닉네임 순 (단, 초대된 사람은 무조건 뒤로 보낸다)
+    //std::sort(inviteList.begin(), inviteList.end(), compareInvite);
+    
+    isInviteListGathered = true;
+}
+
+
+void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc)
+{
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+    
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
-    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
-    if (code != 0)
-    {
-        std::vector<int> nullData;
-        if (code <= MAX_COMMON_ERROR_CODE)
-            Network::ShowCommonError(code);
-        else if (code == 10)
-            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_MONTH_OVER_30, BTN_1, nullData);
-        else if (code == 11)
-            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_DAY_OVER_20, BTN_1, nullData);
-        else if (code == 12)
-            Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_ALREADY_DID, BTN_1, nullData);
-        else
-            Common::ShowPopup(this, "InviteFriend", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
-    }
-    
-    else if (code == 0)
+    int reward = 0;
+    if (code == 0)
     {
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -573,34 +778,45 @@ void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc, int idx)
         todayCnt = nodeResult.child("friend-invite").attribute("today-count").as_int();
         monthCnt = nodeResult.child("friend-invite").attribute("month-count").as_int();
         totalCnt = nodeResult.child("friend-invite").attribute("total-count").as_int();
-        int reward = nodeResult.child("friend-invite").attribute("special-reward").as_int();
+        reward = nodeResult.child("friend-invite").attribute("special-reward").as_int();
         
         // 리스트 데이터 갱신
-        remainTimes[idx] = 9999999;
+        //remainTimes[idx] = 9999999;
         
-        // scroll을 생성 후 데이터 보여주기
-        RenewData();
+        inviteList[inviteIdx]->wasInvited = true;
         
-        // Ranking scene에 데이터 갱신
+        // Ranking OR CocoRoom 화면에 데이터 갱신
         CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-        
-        // 결과 내용 popup 띄우기
+    }
+    
+    // 에러 코드에 대한 처리
+    std::vector<int> nullData;
+    if (code == 11) // 최대 제한 30명을 넘은 경우
+    {
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_NO_MORE, BTN_1, nullData);
+    }
+    else if (stat == -31 || code == 12) // 동일 대상자에 30일에 한번만 가능
+    {
+        inviteList[inviteIdx]->wasInvited = true;
+        Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_ALREADY_DID, BTN_1, nullData);
+    }
+    else if (stat == 0) // 성공
+    {
+        inviteList[inviteIdx]->wasInvited = true;
         std::vector<int> data;
         data.push_back(reward);
         Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_OK, BTN_1, data);
     }
-}
-
-InviteList::InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi)
-{
-    this->userId = userid;
-    this->nickname = name;
-    this->profileUrl = purl;
-    this->hashedTalkUserId = htuid;
-    this->messageBlocked = msgblocked;
-    this->supportedDevice = supporteddevice;
-    this->wasInvited = wi;
+    
+    CCLog("xml parse (inviteIdx) = %d", inviteIdx);
+    
+    
+    // 스크롤뷰 내용 갱신
+    if (stat == -31 || stat == 0 || code == 12)
+    {
+        RenewData();
+    }
 }
 
 

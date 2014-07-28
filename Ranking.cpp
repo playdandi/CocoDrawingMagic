@@ -41,8 +41,8 @@ void Ranking::onEnter()
     
     if (fromWhere == 1)
         Common::ShowNextScene(this, "Ranking", "GameReady", false);
-    else if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
-        Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
+    else
+        ShowPopup();
 }
 void Ranking::onPause()
 {
@@ -58,6 +58,7 @@ void Ranking::onExit()
 
 void Ranking::keyBackClicked()
 {
+    CCLog("%d %d", isKeybackTouched, isTouched);
     if (isKeybackTouched || isTouched)
         return;
     isKeybackTouched = true;
@@ -79,6 +80,9 @@ bool Ranking::init()
     isScrollViewTouched = true;
     isTouched = true;
     isKeybackTouched = true;
+    
+    popupStatus = 0;
+    menuInSetting = -1;
     
     // make depth tree (처음 시작이니까 clear하고 진행)
     Depth::ClearDepth();
@@ -108,30 +112,30 @@ bool Ranking::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Ranking::Notification), "Ranking", NULL);
     
-    CCLog("1");
-    
     // 인게임에서 돌아온 경우 potion timer 시간 갱신한다.
     if (fromWhere != -1)
         RenewAllTime();
-    // 모든 시간에 대한 타이머 작동
-    this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
     
-    CCLog("2");
+    balloon = NULL;
+    ball = NULL;
+    isHintOfMPShown = false;
+    
     idx = -1;
     InitSprites();
-    CCLog("3");
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
     
-    CCLog("4");
+    // 모든 시간에 대한 타이머 작동
+    this->schedule(schedule_selector(Ranking::PotionTimer), 1.0f);
+    this->schedule(schedule_selector(Ranking::ProfileTimer), 1.0f);
+    
     // 효과음 , 배경음은 클라이언트에 user data로 보관해야 한다. 기본 세팅을 위한 코드.
     bool opt0 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_0", true);
     bool opt1 = CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_0", opt0);
     CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_1", opt1);
     
-    CCLog("5");
     sound = new Sound();
     sound->PreLoadSound();
     if (opt1)
@@ -147,6 +151,7 @@ bool Ranking::init()
 void Ranking::RenewAllTime()
 {
     int deltaTime = time(0) - savedTime;
+    int deltaTime2 = time(0) - savedTime2;
 
     isInGame = false;
     
@@ -164,19 +169,20 @@ void Ranking::RenewAllTime()
             break;
         }
     }
-    myInfo->SetPotion(potion, remainPotionTime);
+    myInfo->SetPotion(potion, std::max(0, remainPotionTime));
     
     // 주간랭킹 남은시간 갱신
     int remainWeeklyRankTime = myInfo->GetRemainWeeklyRankTimeInt() - deltaTime;
     myInfo->SetRemainWeeklyRankTime(std::max(remainWeeklyRankTime, 0));
     
+    
     // 각 친구마다 포션 전송 남은시간 + 포션 요청 남은시간 + 토파즈 요청 남은시간 갱신
     int remainRequestPotionTime, remainRequestTopazTime;
     for (int i = 0 ; i < friendList.size() ; i++)
     {
-        remainPotionTime = friendList[i]->GetRemainPotionTime() - deltaTime;
-        remainRequestPotionTime = friendList[i]->GetRemainRequestPotionTime() - deltaTime;
-        remainRequestTopazTime = friendList[i]->GetRemainRequestTopazTime() - deltaTime;
+        remainPotionTime = friendList[i]->GetRemainPotionTime() - deltaTime2;
+        remainRequestPotionTime = friendList[i]->GetRemainRequestPotionTime() - deltaTime2;
+        remainRequestTopazTime = friendList[i]->GetRemainRequestTopazTime() - deltaTime2;
         friendList[i]->SetRemainPotionTime(std::max(remainPotionTime, 0));
         friendList[i]->SetRemainRequestPotionTime(std::max(remainRequestPotionTime, 0));
         friendList[i]->SetRemainRequestTopazTime(std::max(remainRequestTopazTime, 0));
@@ -201,8 +207,8 @@ void Ranking::Notification(CCObject* obj)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setKeypadEnabled(true);
-        this->setTouchEnabled(true);
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
         this->setTouchPriority(Depth::GetCurPriority());
         scrollView->setTouchEnabled(true);
         isTouched = false;
@@ -247,8 +253,8 @@ void Ranking::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Ranking 터치 비활성");
-        this->setKeypadEnabled(false);
-        this->setTouchEnabled(false);
+        //this->setKeypadEnabled(false);
+        //this->setTouchEnabled(false);
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -317,8 +323,53 @@ void Ranking::Notification(CCObject* obj)
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
         isKeybackTouched = false;
+        //this->setKeypadEnabled(true);
+        //this->setTouchEnabled(true);
         ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
         ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->setColor(ccc3(255,255,255));
+    }
+    else if (param->intValue() == 11)
+    {
+        ShowPopup();
+    }
+}
+
+void Ranking::ShowPopup()
+{
+    if (popupStatus == 0)
+    {
+        popupStatus++;
+        if (!myInfo->IsWeeklyRankReward() && myInfo->GetLastWeeklyHighScore() != -1)
+            Common::ShowNextScene(this, "Ranking", "WeeklyRankResult", false);
+        else
+            ShowPopup();
+    }
+    else if (popupStatus == 1)
+    {
+        for (int i = 0 ; i < noticeList.size() ; i++)
+        {
+            if (noticeList[i]->isShown)
+                continue;
+            noticeList[i]->isShown = true;
+            
+            if (noticeList[i]->link != "")
+                noticeList[i]->message += "\n(확인 버튼을 누르면 웹페이지로 연결합니다)";
+            
+            char s[20];
+            sprintf(s, "noticelist_%d", noticeList[i]->id);
+            long lastTime = CCUserDefault::sharedUserDefault()->getIntegerForKey(s, -1);
+            
+            CCLog("시간차 : %ld", time(0)-lastTime);
+            
+            if (lastTime == -1 || time(0)-lastTime > 60*60*24)
+            {
+                // 한번도 본 적 없거나, 해제 24시간 지난 상황
+                std::vector<int> data;
+                data.push_back(i); // idx
+                Common::ShowPopup(this, "Ranking", "NoImage", false, POPUP_NOTICE, BTN_1, data);
+                break;
+            }
+        }
     }
 }
 
@@ -466,6 +517,101 @@ void Ranking::InitSprites()
     CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.02f, 0.97f), CCScaleTo::create(1.0f, 0.98f, 1.03f), NULL );
     temp->runAction(CCRepeatForever::create(action));
     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gameready.png"))->runAction(CCRepeatForever::create((CCActionInterval*)action->copy()));
+    
+    // 인게임 튜토리얼을 완료하지 않은 경우, 처음에 MP에 대한 말풍선을 보여준다.
+    if (!CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_done", false))
+        ShowHintOfMP();
+}
+
+void Ranking::ProfileTimer(float f)
+{
+    // 프로필 사진 왼쪽 위 지점과 스크롤뷰 위치를 비교한다.
+    // 음수가 되면, 아래에 있던 프로필이 스크롤뷰에 보이기 시작했다는 의미 -> 프로필 로딩 시작.
+    CCPoint p;
+    float h;
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        
+        // 화면에 보이는 스프라이트 교체 (한번만 시행)
+        //CCLog("%d : loadingRanking : %d %d %d", i, psp!=NULL, psp->IsLoadingDone(), psp->IsLoadingDoneForRanking());
+        if (psp != NULL && psp->IsLoadingDone() && !psp->IsLoadingDoneForRanking())
+        {
+            CCLog("ok");
+            if (spriteClass == NULL)
+                return;
+            spriteClass->ChangeSprite(-888*(i+1), profiles[i]->GetProfile());
+            ((CCSprite*)spriteClass->FindSpriteByTag(-777*(i+1)))->setOpacity(255);
+            psp->SetLoadingDoneForRanking(true);
+            continue;
+        }
+        
+        if (psp->IsLoadingStarted() || psp->IsLoadingDone())
+            continue;
+        
+        p = friendList[i]->GetProfile()->convertToNodeSpace(scrollView->getPosition());
+        h = friendList[i]->GetProfile()->getContentSize().height;
+        
+        if (p.y - h < 0)
+        {
+            CCLog("%d : loading start", i);
+            psp->SetLoadingStarted(true);
+            psp->SetLoadingDoneForRanking(true);
+            
+            char tag[6];
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(psp->GetProfileUrl().c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Ranking::onHttpRequestCompletedNoEncrypt));
+            sprintf(tag, "%d", i);
+            req->setTag(tag);
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+    }
+}
+void Ranking::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[110*110*2];
+    
+    // 프로필 사진 받아오기 실패
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    //CCLog("%d", (int)buffer->size());
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(dumpData, (int)buffer->size());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite (profile 모음 리스트에 갱신)
+    int index = atoi(res->getHttpRequest()->getTag());
+    for (int i = 0 ; i < profiles.size() ; i++)
+    {
+        if (profiles[i]->GetProfileUrl() == friendList[index]->GetImageUrl())
+        {
+            profiles[i]->SetSprite(texture);
+            profiles[i]->SetLoadingDone(true);
+            // 화면에 보이는 스프라이트 교체
+            if (spriteClass == NULL)
+                return;
+            spriteClass->ChangeSprite(-888*(index+1), profiles[i]->GetProfile());
+            ((CCSprite*)spriteClass->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
+            break;
+        }
+    }
 }
 
 void Ranking::MakeScroll()
@@ -476,12 +622,11 @@ void Ranking::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     
     int numOfList = friendList.size();
-    CCLog("makescroll : numOfList = %d", numOfList);
     
     char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
-        CCLog("imageurl(%d) : %s", i, friendList[i]->GetImageUrl().c_str());
+        //CCLog("imageurl(%d) : %s", i, friendList[i]->GetImageUrl().c_str());
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
@@ -511,22 +656,23 @@ void Ranking::MakeScroll()
         }
         
         // 프로필 이미지
-        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
-        if (friendList[i]->GetImageUrl() != "")
+        sprintf(name, "background/bg_profile.png%d", i);
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        CCLog("url = %s , %d", friendList[i]->GetImageUrl().c_str(), psp->IsLoadingDone());
+        if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
-            sprintf(name, "background/bg_profile.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.95f) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255) );
         }
         else
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 0, -777*(i+1)) ); // tag = -777 * (i+1)
         }
         // 친구리스트에 포인터 저장.
         friendList[i]->SetProfile( spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite );
         
-        CCLog("nickname = %s", friendList[i]->GetNickname().c_str());
-        
+
         // user name
         friendList[i]->GetNicknameLabel()->setAnchorPoint(ccp(0, 0));
         friendList[i]->GetNicknameLabel()->setPosition(ccp(252, 110));
@@ -550,17 +696,14 @@ void Ranking::MakeScroll()
         friendList[i]->GetPotionLabelSec()->setPosition(ccp(773, 52));
         profileLayer->addChild(friendList[i]->GetPotionLabelSec(), 6);
         friendList[i]->GetPotionLabelSec()->setString("00");
-        if (friendList[i]->GetRemainPotionTime() == 0 || friendList[i]->GetPotionMsgStatus() == 0)
+        if (friendList[i]->GetRemainPotionTime() == 0)
         {
             friendList[i]->GetPotionLabelMin()->setOpacity(0);
             friendList[i]->GetPotionLabelSec()->setOpacity(0);
         }
         
         // dotted line
-        //if (i < numOfList-1)
-        //{
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", profileLayer, 5) );
-        //}
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_dotted_line.png", ccp(0, 0), ccp(0, 5), CCSize(0, 0), "", "Layer", profileLayer, 5) );
     }
     
     // scrollview 내용 전체크기
@@ -578,11 +721,6 @@ void Ranking::MakeScroll()
     scrollView->setContentOffset(ccp(0, 904-80-(numOfList*166)), false);
     this->addChild(scrollView, 5);
 }
-
-/*void Ranking::touchDownAction(CCObject* sender, CCControlEvent controlEvent)
-{
-    CCLog("touch down action!");
-}*/
 
 void Ranking::PotionTimer(float f)
 {
@@ -624,7 +762,7 @@ void Ranking::PotionTimer(float f)
         if (remainTime > 0)
             friendList[i]->SetRemainPotionTime(remainTime-1);
         // 시간을 나타내야 하는 포션은 타이머를 보여준다.
-        if (remainTime-1 > 0 && friendList[i]->GetPotionMsgStatus() == 1)
+        if (remainTime-1 > 0) // && friendList[i]->GetPotionMsgStatus() == 1)
         {
             friendList[i]->GetPotionLabelMin()->setOpacity(255);
             friendList[i]->GetPotionLabelSec()->setOpacity(255);
@@ -652,9 +790,54 @@ void Ranking::PotionTimer(float f)
     }
 }
 
+void Ranking::ShowHintOfMP()
+{
+    if (isHintOfMPShown)
+        return;
+    isHintOfMPShown = true;
+    
+    CCLog("qwe");
+    
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    balloon = NULL;
+    ball = NULL;
+    
+    //ccp(765, 1666), CCSize(290, 75)
+    balloon = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon->setContentSize(CCSize(600, 200));
+    balloon->setAnchorPoint(ccp(1, 1));
+    balloon->setPosition(ccp(765+200, 1666+35));
+    this->addChild(balloon, 100);
+    ball = CCLabelTTF::create("MP로 새로운 마법을 배울 수 있고,\n보너스 점수를 증가시켜줘요.", fontList[0].c_str(), 36);
+    ball->setPosition(ccp(600/2, 200/2-30));
+    ball->setColor(ccc3(255,255,255));
+    balloon->addChild(ball, 101);
+    
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+    balloon->runAction( CCRepeatForever::create(action) );
+}
+
+
 
 bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (isHintOfMPShown) // MP힌트 표시되고 있으면 없애기.
+    {
+        if (balloon != NULL && ball != NULL)
+        {
+            ball->removeFromParentAndCleanup(true);
+            balloon->removeFromParentAndCleanup(true);
+        }
+        balloon = NULL;
+        ball = NULL;
+        isHintOfMPShown = false;
+        //return false;
+    }
+    
     if (isTouched)
         return false;
     isTouched = true;
@@ -683,7 +866,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_GAMEREADY;
                 idx = i;
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png1")
@@ -692,7 +875,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyTopaz", false, 0);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png2")
@@ -701,7 +884,16 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
-                break;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png3") // MP hint 보여주기
+        {
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                ShowHintOfMP();
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_potion_time.png")
@@ -710,7 +902,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyPotion", false, 0);
-                break;
+                return true;
             }
         }
         
@@ -720,7 +912,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "Message", false);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_setting.png")
@@ -729,7 +921,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "Ranking", "Setting", false);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_sketchbook.png")
@@ -744,7 +936,7 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     Common::ShowNextScene(this, "Ranking", "T_Sketchbook", false, 0);
                 else
                     Common::ShowNextScene(this, "Ranking", "Sketchbook", false, 0);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_addfriend.png")
@@ -752,8 +944,15 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                Common::ShowNextScene(this, "Ranking", "InviteFriend", false);
-                break;
+                
+                if (myInfo->GetHashedTalkUserId() == "") // 카카오톡 탈퇴한 경우 친구초대 못함.
+                {
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "Ranking", "NoImage", false, KAKAOTALK_UNKNOWN, BTN_1, nullData);
+                }
+                else
+                    Common::ShowNextScene(this, "Ranking", "InviteFriend", false);
+                return true;
             }
         }
     }
@@ -794,7 +993,7 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             CCSize size = friendList[i]->GetPotionSprite()->getContentSize();
             if (isScrollViewTouched && !isScrolling &&
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height &&
-                friendList[i]->GetPotionMsgStatus() == 1 && friendList[i]->GetRemainPotionTime() == 0)
+                friendList[i]->GetRemainPotionTime() == 0)
             {
                 sound->playClick();
                 std::vector<int> data;
@@ -815,7 +1014,10 @@ void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         switch (kind)
         {
             case BTN_MENU_GAMEREADY:
-                Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
+                if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
+                    Common::ShowNextScene(this, "Ranking", "SelectProperty", false, 0);
+                else
+                    Common::ShowNextScene(this, "Ranking", "GameReady", false, -1);
                 break;
         }
     }
@@ -840,12 +1042,24 @@ void Ranking::EndScene()
     this->setTouchEnabled(false);
     
     this->unschedule(schedule_selector(Ranking::PotionTimer));
+    this->unschedule(schedule_selector(Ranking::ProfileTimer));
+    
+    // MP 힌트 있으면 지운다.
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    balloon = NULL;
+    ball = NULL;
     
     // remove all CCNodes
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     spriteClassProperty->RemoveAllObjects();
     delete spriteClassProperty;
+    spriteClass = NULL;
+    spriteClassProperty = NULL;
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -864,7 +1078,7 @@ void Ranking::EndScene()
     
     // PotionTimer scheduler가 딱 정지된 시점에서 현재 시간을 저장해 둔다.
     // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.
-    savedTime = time(0);
+    savedTime = savedTime2 = time(0);
     isInGame = true;
     
     if (!isRebooting)
@@ -877,7 +1091,7 @@ void Ranking::EndScene()
             Common::ShowNextScene(this, "Ranking", "T_Puzzle", true);
         }
         else
-            Common::ShowNextScene(this, "Ranking", "Loading", true);
+            Common::ShowNextScene(this, "Ranking", "LoadingPuzzle", true);
     }
 }
 
@@ -889,6 +1103,8 @@ CCScrollView* Ranking::GetScrollView()
 void Ranking::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
+    //CCLog("min %f", scrollView->minContainerOffset().y);
+    //CCLog("max %f", scrollView->maxContainerOffset().y);
 }
 
 void Ranking::scrollViewDidZoom(CCScrollView* view)

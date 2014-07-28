@@ -64,7 +64,7 @@ bool T_SketchDetail::init()
     
     
     ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-    ttrPos = CCSprite::create("images/tutorial_position.png");
+    ttrPos = CCScale9Sprite::create("images/tutorial_position.png");
     
     // 760, 673 (0, 0)
     ttrArrow->setAnchorPoint(ccp(0.5, 0));
@@ -75,8 +75,9 @@ bool T_SketchDetail::init()
     
     ttrPos->setAnchorPoint(ccp(0, 0));
     ttrPos->setPosition(ccp(760, 673));
-    ttrPos->setScaleX( (float)233 / (float)162 );
-    ttrPos->setScaleY( (float)115 / (float)89 );
+    //ttrPos->setScaleX( (float)233 / (float)782 );
+    //ttrPos->setScaleY( (float)115 / (float)177 );
+    ttrPos->setContentSize(CCSize(233-5, 110));
     this->addChild(ttrPos, 101);
     
     return true;

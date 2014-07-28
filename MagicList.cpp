@@ -39,12 +39,32 @@ void MagicList::Scene_Callback()
 void MagicList::onExit()
 {
     CCLog("MagicList :: onExit");
-    if (code != 0)
-    {
+    //if (code != 0)
+    //{
         CCDirector* pDirector = CCDirector::sharedDirector();
         pDirector->getTouchDispatcher()->removeDelegate(this);
-    }
+    //}
     CCLayer::onExit();
+    
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
+    CCString* param = CCString::create("0");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    // remove all objects
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    spriteClassSlot->RemoveAllObjects();
+    delete spriteClassSlot;
+    spriteClassBtn->RemoveAllObjects();
+    delete spriteClassBtn;
+    
+    layer->removeAllChildren();
+    layer->removeFromParentAndCleanup(true);
 }
 
 void MagicList::keyBackClicked()
@@ -128,15 +148,13 @@ void MagicList::Notification(CCObject* obj)
     
     if (param->intValue() == -1)
     {
-        //if (code != 0) // 성공적으로 네트워크가 마무리되면, 터치를 활성화시키지 않는다. (어차피 끄니까)
-        //{
-            // 터치 활성
-            CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-            this->setTouchPriority(Depth::GetCurPriority());
-            isTouched = false;
-            scrollViewSlot->setTouchEnabled(true);
-            CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
-        //}
+        // 터치 활성
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
+        this->setTouchPriority(Depth::GetCurPriority());
+        isTouched = false;
+        isKeybackTouched = false;
+        scrollViewSlot->setTouchEnabled(true);
+        CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -159,6 +177,7 @@ void MagicList::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("MagicList 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollViewSlot->setTouchEnabled(false);
@@ -167,6 +186,7 @@ void MagicList::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -254,10 +274,18 @@ void MagicList::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_plus_big.png", ccp(0, 0), ccp(896, 572+offset), CCSize(0, 0), "", "MagicList", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png4", ccp(0, 0), ccp(867, 497+offset), CCSize(136, 63), "", "MagicList", this, 1) );
     
+    /*
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 505+offset), ccc3(255,219,53), "", "MagicList", this, 5, 0, 255, 100) ); // 현재 슬롯 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 505+offset), ccc3(182,142,142), "", "MagicList", this, 5) ); // 젼체 슬롯 개수
+    
+    */
+    // 슬롯 옆의 {현재 구입한 슬롯수} / {구입 가능한 max 슬롯수}
+    sprintf(name, "%d", (int)myInfo->GetSlot().size());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 44, ccp(1, 0), ccp(892+30, 505+offset), ccc3(255,219,53), "", "MagicList", this, 5, 0, 255, 100) ); // 현재 슬롯 개수
+    sprintf(name, "/ %d", (int)skillSlotInfo.size());
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 34, ccp(0, 0), ccp(927+3, 505+offset), ccc3(182,142,142), "", "MagicList", this, 5) ); // 젼체 슬롯 개수
     
     // add child
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -555,6 +583,8 @@ void MagicList::SendToParent() // 슬롯 정보 갱신
 
 void MagicList::EndScene()
 {
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
     CCFiniteTimeAction* action =
     CCSequence::create(CCMoveTo::create(0.2f, ccp(0, winSize.height)),
                        CCCallFunc::create(this, callfunc_selector(MagicList::EndSceneCallback)), NULL);
@@ -563,29 +593,6 @@ void MagicList::EndScene()
 
 void MagicList::EndSceneCallback()
 {
-    // remove this notification
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
-    // release depth tree
-    Depth::RemoveCurDepth();
-    
-    // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
-    CCString* param = CCString::create("0");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
-    
-    // remove all objects
-    spriteClass->RemoveAllObjects();
-    delete spriteClass;
-    spriteClassSlot->RemoveAllObjects();
-    delete spriteClassSlot;
-    spriteClassBtn->RemoveAllObjects();
-    delete spriteClassBtn;
-    
-    layer->removeAllChildren();
-    layer->removeFromParentAndCleanup(true);
-    
     this->removeFromParentAndCleanup(true);
 }
 

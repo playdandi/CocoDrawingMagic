@@ -1,4 +1,6 @@
 #include "RankUp.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
+
 
 CCScene* RankUp::scene()
 {
@@ -23,10 +25,11 @@ void RankUp::onEnter()
 void RankUp::Callback(CCNode* sender, void* p)
 {
     sender->removeFromParentAndCleanup(true);
-    CCActionInterval* action = CCEaseElasticOut::create( CCMoveTo::create(1.0f, ccp(-700, 0)), 1.0f );
+    CCActionInterval* action = CCEaseElasticOut::create( CCMoveTo::create(2.0f, ccp(-700, 0)), 2.0f );
     ((RankUp*)p)->spriteClass->layers[1]->runAction(action);
     
     isTouched = false;
+    isBoasted = false;
 }
 void RankUp::onExit()
 {
@@ -49,6 +52,7 @@ bool RankUp::init()
     
     idx = -1;
     isTouched = true;
+    isBoasted = true;
     
     // make depth tree
     Depth::AddCurDepth("RankUp", this);
@@ -77,14 +81,22 @@ void RankUp::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() == 10)
+    if (param->intValue() == 5)
+    {
+        // 자랑하기 블록
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png1"))->setColor(ccc3(150,150,150));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_boast.png"))->setColor(ccc3(150,150,150));
+        isBoasted = true;
+    }
+    
+    else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
         if (idx > -1)
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-            ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
         }
     }
 }
@@ -107,22 +119,22 @@ void RankUp::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap_title_rankup.png", ccp(0.5, 0), ccp(winSize.width/2, 1552), CCSize(0, 0), "", "RankUp", this, 1) );
 
     // pop-up 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "RankUp", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "RankUp", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "RankUp", this, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "RankUp", this, 1) );
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "RankUp", this, 1) );
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "RankUp", this, 1) );
     
     // 자랑하기 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "btn_red_mini.png1", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "RankUp", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter_boast.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2-1, 24), CCSize(0, 0), "btn_red_mini.png1", "0", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png1", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "RankUp", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_boast.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2-1, 24), CCSize(0, 0), "button/btn_red_mini.png1", "0", NULL, 5, 1) );
     
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "btn_red_mini.png2", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "RankUp", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "btn_red_mini.png2", "0", NULL, 5, 1) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png2", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "RankUp", this, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png2", "0", NULL, 5, 1) );
     
     // 내 순위와 점수 찾기
-    int myScore;
     int myRank;
+    int myScore;
     for (int i = 0 ; i < friendList.size() ; i++)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
@@ -140,7 +152,7 @@ void RankUp::InitSprites()
     pScoreLayer->setAnchorPoint(ccp(0, 0));
     pScoreLayer->setPosition(ccp(winSize.width/2-offset, 840));
     spriteClass->layers.push_back(pScoreLayer);
-    this->addChild(pScoreLayer, 500);
+    this->addChild(pScoreLayer, 6);
     
     // 순위
     sprintf(number, "%d위", myRank);
@@ -149,37 +161,38 @@ void RankUp::InitSprites()
     // 프로필
     CCLayer* profileLayer = CCLayer::create();
     spriteClass->layers.push_back(profileLayer);
-    this->addChild(profileLayer, 3000);
+    this->addChild(profileLayer, 6);
     
-    CCLog("%d %d", myScore, myRank);
     
     int height = 1100;
-    char name[25];
-    CCSprite* profile = ProfileSprite::GetProfile(friendList[myRank]->GetImageUrl()); // 나보다 아래 등수 사람
-    if (friendList[myRank]->GetImageUrl() != "")
+    char name[40];
+    ProfileSprite* psp = ProfileSprite::GetObj(friendList[myRank]->GetImageUrl());
+
+    if (friendList[myRank]->GetImageUrl() != "" && psp->IsLoadingDone())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), ccp(winSize.width/2, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.2f) );
-        sprintf(name, "bg_profile.png1");
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), ccp(winSize.width/2, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.45f*0.95f) );
+        sprintf(name, "background/bg_profile.png1");
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), ccp(winSize.width/2, height), CCSize(0,0), "", "Layer", profileLayer, 6, 1) );
         ((CCSprite*)spriteClass->FindSpriteByName(name))->setScale(1.45f);
     }
     else
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0.5, 0.5), ccp(winSize.width/2, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.2f) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), ccp(winSize.width/2, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.2f) );
     }
     
     int dist = 700;
-    CCSprite* myProfile = ProfileSprite::GetProfile(friendList[myRank-1]->GetImageUrl()); // 나보다 아래 등수 사람
-    if (friendList[myRank-1]->GetImageUrl() != "")
+    psp = ProfileSprite::GetObj(friendList[myRank-1]->GetImageUrl());
+
+    if (friendList[myRank-1]->GetImageUrl() != "" && psp->IsLoadingDone())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, myProfile, ccp(0.5, 0.5), ccp(winSize.width/2+dist, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.2f) );
-        sprintf(name, "bg_profile.png2");
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), ccp(winSize.width/2+dist, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.45f*0.95f) );
+        sprintf(name, "background/bg_profile.png2");
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), ccp(winSize.width/2+dist, height), CCSize(0,0), "", "Layer", profileLayer, 6, 1) );
         ((CCSprite*)spriteClass->FindSpriteByName(name))->setScale(1.45f);
     }
     else
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, myProfile, ccp(0.5, 0.5), ccp(winSize.width/2+dist, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.2f) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0.5, 0.5), ccp(winSize.width/2+dist, height), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.3f) );
     }
     
     pBlackOpen = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, winSize.width, winSize.height));
@@ -278,15 +291,28 @@ bool RankUp::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "btn_red_mini.png2")
+        if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png2") // 확인
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
                 spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
-                ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
+            }
+        }
+        else if (!isBoasted && spriteClass->spriteObj[i]->name == "button/btn_red_mini.png1") // 자랑하기
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_boast.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_BOAST;
                 idx = i;
                 return true;
             }
@@ -311,7 +337,9 @@ void RankUp::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (idx > -1)
     {
         spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-        ((CCSprite*)spriteClass->FindSpriteByName("letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+        if (!isBoasted)
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_boast.png"))->setColor(ccc3(255,255,255));
     }
     if (rect.containsPoint(point))
     {
@@ -319,11 +347,48 @@ void RankUp::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             EndScene();
         }
+        else if (kind == BTN_MENU_BOAST)
+        {
+            int idx;
+            for (int i = 0 ; i < friendList.size() ; i++)
+            {
+                if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+                {
+                    idx = i+1; // 추월한 사람의 idx
+                    break;
+                }
+            }
+            
+            if (friendList[idx]->GetPotionMsgStatus() > 0 && !friendList[idx]->IsMessageBlocked())
+            {
+                std::vector<int> data;
+                data.push_back(idx);
+                Common::ShowPopup(this, "RankUp", "NoImage", false, RANKUP_BOAST, BTN_1, data);
+            }
+            else
+            {
+                // 카카오톡 안에서 수신거부 or 환경설정 내 거부 <- 둘 중 하나라도 하면 수신거부를 시켜야 한다.
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "RankUp", "NoImage", false, RANKUP_BOAST_REJECTED, BTN_1, nullData);
+            }
+        }
     }
             
     isTouched = false;
 }
 
+void RankUp::onSendLinkMessageComplete()
+{
+    CCLog("onSendLinkMessageComplete");
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+}
+void RankUp::onSendLinkMessageErrorComplete(char const *status, char const *error)
+{
+    CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
+    // Loading 창 끄기
+    ((Loading*)Depth::GetCurPointer())->EndScene();
+}
 
 void RankUp::EndScene()
 {
@@ -339,6 +404,28 @@ void RankUp::EndScene()
     
     CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.0f), CCCallFuncND::create(this, callfuncND_selector(RankUp::EndSceneCallback), this), NULL);
     pBlackClose->runAction(action);
+}
+
+void RankUp::EndSceneFromReboot() // 강제 리부팅 시
+{
+    // remove this notification
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
+    // release depth tree
+    Depth::RemoveCurDepth();
+    
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    
+    // remove all CCNodes
+    spriteClass->RemoveAllObjects();
+    delete spriteClass;
+    //pBlackClose->removeFromParentAndCleanup(true);
+    pBackground->removeFromParentAndCleanup(true);
+    
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
 }
 
 void RankUp::EndSceneCallback(CCNode* sender, void* pointer)

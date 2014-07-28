@@ -82,6 +82,7 @@ void GetDegree::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("GetDegree : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -89,6 +90,7 @@ void GetDegree::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
@@ -155,7 +157,11 @@ void GetDegree::InitDegree()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(nickname, fontList[0], 56, ccp(0.5,0.5), ccp(winSize.width/2, 1050), ccc3(78,47,8), "", "GetDegree", this, 5, 0, 0, 2) ); // tag = 2
     
     // 학위 명칭
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("이 시대 최고의 지성, 마법박사!", fontList[0], 64, ccp(0.5,0.5), ccp(winSize.width/2, 900), ccc3(78,47,8), "", "GetDegree", this, 5, 0, 0, 3) ); // tag = 3
+    std::string message = "";
+    if (certificateType == 1) message = "Bachelor of Magic";
+    else if (certificateType == 2) message = "Master of Magic";
+    else if (certificateType == 3) message = "Doctor of Magic";
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(message, fontList[0], 64, ccp(0.5,0.5), ccp(winSize.width/2, 900), ccc3(78,47,8), "", "GetDegree", this, 5, 0, 0, 3) ); // tag = 3
     
     // 확인 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0.5, 0.5), ccp(winSize.width/2, 275), CCSize(0, 0), "", "GetDegree", this, 5, 0, 0, 10) );

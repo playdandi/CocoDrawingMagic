@@ -18,9 +18,12 @@ void WeeklyRankResult::onEnter()
     
     isTouched = false;
     
-    //if (학위받았으면)
-    std::vector<int> nullData;
-    Common::ShowPopup(this, "WeeklyRankResult", "NoImage", false, GET_DEGREE, BTN_1, nullData);
+    // 학위를 받았다면 학위수여 화면으로 이동.
+    if (certificateType > 0)
+    {
+        std::vector<int> nullData;
+        Common::ShowPopup(this, "WeeklyRankResult", "NoImage", false, GET_DEGREE, BTN_1, nullData);
+    }
 }
 void WeeklyRankResult::onExit()
 {
@@ -87,6 +90,7 @@ void WeeklyRankResult::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("WeeklyRankResult : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -94,6 +98,7 @@ void WeeklyRankResult::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red.png"))->setColor(ccc3(255,255,255));
@@ -164,7 +169,7 @@ void WeeklyRankResult::InitSprites()
             // 프로필 사진
             if (lastWeeklyRank[i]->GetProfileUrl() != "")
             {
-                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, ProfileSprite::GetProfile(lastWeeklyRank[i]->GetProfileUrl()), ccp(0.5, 0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 5, 0, 255, 0.85f) );
+                spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, ProfileSprite::GetProfile(lastWeeklyRank[i]->GetProfileUrl()), ccp(0.5, 0.5), p1[i], CCSize(0,0), "", "WeeklyRankResult", this, 5, 0, 255, 0.95f) );
                 sprintf(name, "background/bg_profile.png%d", i);
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0.5, 0.5), p1[i], CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
             }
@@ -178,6 +183,7 @@ void WeeklyRankResult::InitSprites()
             sprintf(name, "background/bg_dontknow_1.png%d", i);
             spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0.5,0.5), p3[i], s[i], "", "WeeklyRankResult", this, 5, 0, 210) );
             p = spriteClass->FindParentCenterPos(name);
+            
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(lastWeeklyRank[i]->GetScore()), fontList[0], 30, ccp(0.5,0.5), p, ccc3(255,255,255), name, "1", NULL, 5, 1) );
             
             if (myRank == i+1) // 내 등수가 3등 이내일 경우, 프로필 위치에 이펙트 빔을 쏜다.
@@ -212,11 +218,6 @@ void WeeklyRankResult::InitSprites()
     this->addChild(lastWeekHighScore, 6);
     spriteClass->layers.push_back(lastWeekHighScore);
     
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 56, ccp(0.5, 0.5), ccp(300, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600+3, 698.5f-3), ccc3(0,0,0), "", "WeeklyRankResult", this, 5) );
-    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myLastWeekHighScore), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 698.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
-    
     if (rewardType > 0)
     {
         // 보상 (opt.) : 배경 + 보상그림 + 보상 숫자
@@ -242,7 +243,10 @@ void WeeklyRankResult::InitSprites()
     // 1~3등 중에 내가 있다면, 축하 이펙트 rotation 하기 + 색종이 떨어뜨리기
 
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        CCLog("%d : %s", i, spriteClass->spriteObj[i]->name.c_str());
         spriteClass->AddChild(i);
+    }
 }
 
 
@@ -332,9 +336,12 @@ void WeeklyRankResult::EndScene()
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
     
-    //Common::ShowNextScene(this->getParent(), "Ranking", "GetDegree", false);
-    
     this->removeFromParentAndCleanup(true);
+    
+    
+    // 다른 팝업창 관련 (Ranking)
+    param = CCString::create("11");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
 }
 
 

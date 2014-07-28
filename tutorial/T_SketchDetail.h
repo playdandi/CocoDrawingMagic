@@ -47,7 +47,7 @@ private:
     CCSprite* bar;
     SpriteClass* spriteClass;
     
-    CCSprite* ttrPos;
+    CCScale9Sprite* ttrPos;
     CCSprite* ttrArrow;
 };
 

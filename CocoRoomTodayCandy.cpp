@@ -92,6 +92,8 @@ bool CocoRoomTodayCandy::init()
     scrollView->setTouchPriority(Depth::GetCurPriority());
     tLayer->addChild(scrollView, 3);
     
+    this->schedule(schedule_selector(CocoRoomTodayCandy::ProfileTimer), 1.0f);
+    
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -121,6 +123,7 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoomTodayCandy : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -130,6 +133,7 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -162,7 +166,7 @@ void CocoRoomTodayCandy::InitSprites()
     
     // bottom 5 profile 중에 내 프로필
     
-    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.85f) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, MyInfo::GetProfile(), ccp(0, 0), ccp(100+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.95f) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png1", ccp(0, 0), ccp(100, 254), CCSize(0, 0), "", "Layer", tLayer, 5) );
     
     // bottom button
@@ -201,19 +205,23 @@ void CocoRoomTodayCandy::MakeScroll()
         spriteClass->layers.push_back(itemLayer);
         height++;
         
+        
         // 프로필 이미지
-        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
-        if (friendList[i]->GetImageUrl() != "")
+        sprintf(fname, "background/bg_profile.png%d", i);
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(50+5, 46+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
             sprintf(fname, "background/bg_profile.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(50, 46), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
         else
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(50, 46), CCSize(0,0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 1.0f, -888*(numOfList-i)) ); // tag = -888 * (i+1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0, -777*(numOfList-i)) ); // tag = -777 * (i+1)
         }
     
+        
         // name (text)
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         
@@ -222,6 +230,12 @@ void CocoRoomTodayCandy::MakeScroll()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34+3), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255) );
         sprintf(fname2, "letter/letter_select.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), fname, "0", NULL, 3, 1, 255) );
+        
+        /*if (friendList[i]->GetPotionMsgStatus() == 0)
+        {
+            ((CCSprite*)spriteClass->FindSpriteByName(fname))->setColor(ccc3(150,150,150));
+            ((CCSprite*)spriteClass->FindSpriteByName(fname2))->setColor(ccc3(150,150,150));
+        }*/
         
         sprintf(fname, "button/btn_skill_master.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(635, 34+6), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0) );
@@ -239,11 +253,6 @@ void CocoRoomTodayCandy::MakeScroll()
     }
     
     // container 생성 + offset
-    //scrollView->setContainer(scrollContainer);
-    //scrollView->setContentSize(scrollContainer->getContentSize());
-    //scrollView->setContentOffset(ccp(0, 904-80-((numOfList-1)*166)), false);
-    
-    //scrollContainer->setContentSize(CCSizeMake(862, (numOfList-1)*166));
     scrollContainer->setContentSize(CCSizeMake(862, height*166));
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
@@ -315,16 +324,16 @@ void CocoRoomTodayCandy::RefreshProfileList()
     {
         if (selected[i])
         {
-            CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
-            if (friendList[i]->GetImageUrl() != "")
+            ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+            if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.85f) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(230+cnt*130+5, 254+11), CCSize(0,0), "", "Layer", tLayer, 5, 0, 255, 0.95f) );
                 sprintf(name, "background/bg_profile.png%d", cnt);
                 spriteClassList->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0, 0), "", "Layer", tLayer, 5) );
             }
             else
             {
-                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0,0), "", "Layer", tLayer, 5) );
+                spriteClassList->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(230+cnt*130, 254), CCSize(0,0), "", "Layer", tLayer, 5) );
             }
 
             cnt++;
@@ -379,9 +388,9 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 char name[15];
                 for (int i = 1 ; i < todayCandyKakaoId.size() ; i++)
                 {
-                    //CCLog("%d", todayCandyKakaoId[i]);
-                    //sprintf(name, "todayCandy_%d", i);
-                    //CCUserDefault::sharedUserDefault()->setIntegerForKey(name, todayCandyKakaoId[i]);
+                    CCLog("%s", todayCandyKakaoId[i].c_str());
+                    sprintf(name, "todayCandy_%d", i);
+                    CCUserDefault::sharedUserDefault()->setStringForKey(name, todayCandyKakaoId[i].c_str());
                 }
                 
                 EndScene();
@@ -409,6 +418,8 @@ void CocoRoomTodayCandy::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             continue;
+        //if (friendList[i]->GetPotionMsgStatus() == 0)
+        //    continue;
         
         sprintf(fname, "button/btn_blue_mini.png%d", i); // 이름은 이걸로 하는데, 사실 선택됨/선택안됨 sprite 모두 같은 위치라 그냥 이거 하나로 쓰자.
         CCSprite* temp = (CCSprite*)spriteClass->FindSpriteByName(fname);
@@ -459,6 +470,8 @@ void CocoRoomTodayCandy::EndScene()
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
+    this->unschedule(schedule_selector(CocoRoomTodayCandy::ProfileTimer));
+    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
@@ -467,6 +480,8 @@ void CocoRoomTodayCandy::EndScene()
     delete spriteClass;
     spriteClassList->RemoveAllObjects();
     delete spriteClassList;
+    spriteClass = NULL;
+    spriteClassList = NULL;
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -481,3 +496,77 @@ void CocoRoomTodayCandy::EndScene()
     this->removeFromParentAndCleanup(true);
 }
 
+
+
+void CocoRoomTodayCandy::ProfileTimer(float f)
+{
+    // 프로필 사진 왼쪽 위 지점과 스크롤뷰 위치를 비교한다.
+    // 음수가 되면, 아래에 있던 프로필이 스크롤뷰에 보이기 시작했다는 의미 -> 프로필 로딩 시작.
+    CCPoint p;
+    float h;
+    int numOfList = friendList.size();
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        if (psp->IsLoadingStarted() || psp->IsLoadingDone())
+            continue;
+        
+        if (spriteClass == NULL)
+            return;
+        p = ((CCSprite*)spriteClass->FindSpriteByTag(-888*(numOfList-i)))->convertToNodeSpace(scrollView->getPosition());
+        h = friendList[i]->GetProfile()->getContentSize().height;
+        
+        if (p.y - h < 0)
+        {
+            psp->SetLoadingStarted(true);
+            
+            char tag[6];
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(psp->GetProfileUrl().c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(CocoRoomTodayCandy::onHttpRequestCompletedNoEncrypt));
+            sprintf(tag, "%d", i);
+            req->setTag(tag);
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+    }
+}
+void CocoRoomTodayCandy::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[110*110*2];
+    
+    // 프로필 사진 받아오기 실패
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(dumpData, (int)buffer->size());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite (profile 모음 리스트에 갱신)
+    int numOfList = friendList.size();
+    int index = atoi(res->getHttpRequest()->getTag());
+    
+    ProfileSprite* psp = ProfileSprite::GetObj(friendList[index]->GetImageUrl());
+    psp->SetSprite(texture);
+    psp->SetLoadingDone(true);
+    
+    // 화면에 보이는 스프라이트 교체
+    if (spriteClass == NULL)
+        return;
+    spriteClass->ChangeSprite(-888*(numOfList-index), psp->GetProfile());
+    ((CCSprite*)spriteClass->FindSpriteByTag(-777*(numOfList-index)))->setOpacity(255);
+}

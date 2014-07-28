@@ -108,6 +108,7 @@ void SketchDetail::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("SketchDetail : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -115,6 +116,7 @@ void SketchDetail::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
@@ -260,7 +262,7 @@ void SketchDetail::MakeOpenedSkillSprites()
     //SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
     MySkill* ms = MySkill::GetObj(scid);
     
-    if (!(scid == 13 || scid == 23 || scid == 26 || scid == 33))
+    if (!(scid == 14 || scid == 24 || scid == 26 || scid == 34))
     {
         // 내가 원하는 그림
         char temp[30];
@@ -309,14 +311,12 @@ void SketchDetail::MakeOpenedSkillSprites()
     {
         btnStatus = 1;
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_red.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_buildup_red.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     }
     // 일반적인 경우
     else
     {
         btnStatus = 2;
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     }
     
     // 버튼 젤리 움직임
@@ -335,25 +335,25 @@ std::string SketchDetail::SkillDescription(int scid)
     {
         case 21: return "빨간 피스를 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 22: return "빨간 피스를 사이클로 그리면 개수에 비례해, 주변 피스를 더 터뜨릴 수 있어요\n(강화시키면 추가점수를\n더 획득해요)"; break;
-        case 23: return "빨간 피스를 한번에\n10개 이상 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 확득해요)"; break;
-        case 24: return "사랑의 불꽃으로\n빨간 피스를 만들어요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
-        case 25: return "빨간 피스를 한번에\n6개 이상 그리면\n불꽃으로 한번 더 터뜨려요.\n(강화시키면 발동확률과\n추가점수가 증가해요)"; break;
+        case 23: return "사랑의 불꽃으로\n빨간 피스를 만들어요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
+        case 24: return "빨간 피스를 한번에\n8개 이상 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 확득해요)"; break;
+        case 25: return "빨간 피스를 한번에\n6개 이상 그리면\n불꽃으로 한번 더 터뜨려요.\n(강화시키면 추가점수가\n증가해요)"; break;
         case 26: return "피버타임 게이지가\n더 빨리 차요.\n(강화시키면 더 자주\n시전되요)"; break;
         case 27: return "빨간 피스를 한번에\n10개 이상 그리면\n드래곤을 소환해요!\n(강화시키면 운석이 더 많이\n떨어져요)"; break;
 
         case 11: return "파란 피스를 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 12: return "파란 피스를 사이클로 그리면 파도가 피스를 터뜨려요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
-        case 13: return "10콤보마다 추가점수를\n획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
-        case 14: return "파란 나비가 날아와\n파란 피스를 만들어요.\n(강화시키면 더 많은 피스를\n생성해요)"; break;
-        case 15: return "파란 피스를 한번에\n6개 이상 그리면\n얼음비가 한번 더 터뜨려요.\n(강화시키면 발동확률과\n추가점수가 증가해요)"; break;
+        case 13: return "나비가 날아와서\n흰색, 노란색 피스를\n파란 피스로 만들어요.\n(강화시키면 더 많은 피스를\n생성해요)"; break;
+        case 14: return "10콤보마다 추가점수를\n획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
+        case 15: return "파란 피스를 한번에\n6개 이상 그리면\n얼음비가 한번 더 터뜨려요.\n(강화시키면 추가점수가\n증가해요)"; break;
         case 16: return "코코가 시간을 얼려\n잠깐 시간이 가지 않아요.\n(강화시키면 더 자주\n발동해요)"; break;
         case 17: return "파란 피스를 한번에\n10개 이상 그리면\n여신을 소환해요!\n(강화시키면 지속시간이\n늘어나요)"; break;
 
         case 31: return "초록 피스를 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 32: return "초록 피스를 사이클로 그리면 개수에 비례해, 무작위로 피스를 터뜨려요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
-        case 33: return "마법지팡이로 추가별사탕을\n획득해요.\n(강화시키면 추가별사탕을\n더 획득해요)"; break;
-        case 34: return "마법 잎사귀가 초록피스를\n모두 모아줘요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
-        case 35: return "초록 피스를 한번에\n6개 이상 그리면\n바람으로 한번 더 터뜨려요.\n(강화시키면 발동확률과\n추가점수가 증가해요)"; break;
+        case 33: return "마법 잎사귀가 초록피스를\n모두 모아줘요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
+        case 34: return "마법지팡이로 추가별사탕을\n획득해요.\n(강화시키면 추가별사탕을\n더 획득해요)"; break;
+        case 35: return "초록 피스를 한번에\n6개 이상 그리면\n바람으로 한번 더 터뜨려요.\n(강화시키면 추가점수가\n증가해요)"; break;
         case 36: return "가끔씩 포션 1개를 얻을 수\n있어요.\n(강화시키면 더 자주\n발동해요)"; break;
         case 37: return "초록 피스를 한번에\n10개 이상 그리면\n고대나무를 소환해요!\n(강화시키면 더 강력해져요)"; break;
     }
@@ -401,7 +401,7 @@ void SketchDetail::MakeClosedSkillSprites()
     }
     else
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 모두 갖추면 이 마법을 배울 수 있어요.\n조금만 더 힘내면 더 강해진 코코를 볼 수 있어요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 모두 갖추면 별사탕으로 이 마법을 배울 수 있어요.\n조금만 힘내면 더 강해진 코코를 볼 수 있어요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
     }
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
@@ -458,14 +458,13 @@ void SketchDetail::MakeClosedSkillSprites()
     {
         btnStatus = 3;
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
     }
     // 아닌 경우
     else
     {
         btnStatus = 4;
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp((int)pos.x, (int)pos.y+2), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
     }
     
     // 버튼 젤리 움직임
@@ -507,10 +506,10 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_buildup_red.png"))->setColor(ccc3(170,170,170));
                 else if (btnStatus == 2)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
-                else if (btnStatus == 3)
+                else if (btnStatus == 3 || btnStatus == 4)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->setColor(ccc3(170,170,170));
-                else if (btnStatus == 4)
-                    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(170,170,170));
+                //else if (btnStatus == 4)
+                //((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(170,170,170));
                 
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_CONFIRM;
@@ -539,10 +538,10 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_buildup_red.png"))->setColor(ccc3(255,255,255));
         else if (btnStatus == 2)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
-        else if (btnStatus == 3)
+        else if (btnStatus == 3 || btnStatus == 4)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->setColor(ccc3(255,255,255));
-        else if (btnStatus == 4)
-            ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(255,255,255));
+        //else if (btnStatus == 4)
+        //    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(255,255,255));
     }
     if (rect.containsPoint(point))
     {
@@ -594,6 +593,13 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 //param += temp;
                 
                 Network::HttpPost(param, URL_PURCHASE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "1");
+            }
+            else if (btnStatus == 4) // '?'스킬 요구조건 미충족 -> 토파즈로 살 수 있는 경우
+            {
+                //std::vector<int> data;
+                //data.push_back(skill_common_id); // 스킬 common id
+                //data.push_back(200); // 토파즈 비용
+                //Common::ShowPopup(this, "SketchDetail", "NoImage", false, PURCHASE_SKILL_BY_TOPAZ_TRY, BTN_2, data);
             }
         }
     }
@@ -741,6 +747,9 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
         param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
+        // 게임준비 연습스킬 정보 갱신
+        param = CCString::create("5");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
 
         // 성공/실패 팝업창 띄우기
         std::vector<int> data;

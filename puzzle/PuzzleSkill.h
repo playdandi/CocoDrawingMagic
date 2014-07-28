@@ -39,6 +39,7 @@ public:
     
     void A1(int num, int queue_pos);
     void A2(int num, int queue_pos);
+    bool Check_A2(int num, int queue_pos);
     std::vector<CCPoint> A2GetPos();
     void A2Clear();
     void F3(int num, int queue_pos);
@@ -125,23 +126,27 @@ public:
     void M4(int num);
     void M5(int num);
     
+    /*
     void FT_StartEnd(int queue_pos);
     void FT_Bomb(std::vector<CCPoint> p);
     void FT_Callback(CCNode* sender, void* pointer);
     //void FT_CreatePiece(int pos);
     //void FT_Create_Recur(int x, int y, int cnt, int minx, int maxx);
     bool IsFTBombing();
+    */
     
     void ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos);
     void ApplyItemPaint_Change(CCNode* sender, void* pointer);
     void ApplyItemPaint_Callback(CCNode* sender, void* pointer);
     void ApplyItemPaint_Done();
     void ApplyItemPaint_Bomb(int x, int y, int queue_pos);
+    
     void ApplyItemStaff(int x, int y, int dx, int dy, int queue_pos);
+    void ApplyItemStaff_Callback(CCNode* sender, void* pointer);
     void SequenceBomb(CCNode* sender, void* pointer);
     std::vector<CCPoint> GetPieces(int x, int y, int dx, int dy);
     
-    //void LastItems();
+    void BonusBomb(int queue_pos);
     void LastItems(int type, int queue_pos);
     
     

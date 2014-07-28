@@ -38,7 +38,6 @@ void Setting::keyBackClicked()
         return;
     isKeybackTouched = true;
     
-    sound->playClick();
     EndScene();
 }
 
@@ -80,11 +79,15 @@ bool Setting::init()
     InitSprites();
     
     // 팝업창을 나갈 때 서버 저장용 예비 변수들
-    kakaoMsgReserved = myInfo->GetKakaoMsg();
+    //kakaoMsgReserved = myInfo->GetKakaoMsg();
     pushNotiReserved = myInfo->GetPushNotification();
     potionMsgReserved = myInfo->GetPotionMsg();
     
     selectedBtn = -1;
+    
+    code = -1;
+    
+    kind = -1;
     
     return true;
 }
@@ -101,6 +104,7 @@ void Setting::Notification(CCObject* obj)
             CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
             this->setTouchPriority(Depth::GetCurPriority());
             isTouched = false;
+            isKeybackTouched = false;
             CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
         }
     }
@@ -117,6 +121,7 @@ void Setting::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Setting : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -124,11 +129,15 @@ void Setting::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+            //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }
     }
 }
@@ -168,30 +177,32 @@ void Setting::InitSprites()
     sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     
+    int offset = 30;
+    
     // 버튼 : 만든 사람들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png1",
-                    ccp(0, 0), ccp(737, 633), CCSize(0, 0), "", "Layer", tLayer, 1) );
+                    ccp(0, 0), ccp(737, 633-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_maker.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 36), CCSize(0, 0), "button/btn_purple_mini.png1", "0", NULL, 1) );
 
     // 버튼 : 쿠폰등록
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png2",
-                ccp(0, 0), ccp(96, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
+                ccp(0, 0), ccp(96, 492-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_coupon.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png2", "0", NULL, 1) );
     
     // 버튼 : 튜토리얼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png3",
-                ccp(0, 0), ccp(423, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
+                ccp(0, 0), ccp(423, 492-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_tutorial.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png3", "0", NULL, 1) );
     
     // 버튼 : ?
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png4",
-                ccp(0, 0), ccp(737, 492), CCSize(0, 0), "", "Layer", tLayer, 1) );
+                ccp(0, 0), ccp(737, 492-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_service.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png4", "0", NULL, 1) );
@@ -206,54 +217,53 @@ void Setting::InitSprites()
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite-> getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
     
     // 버튼 : id복사
+    float w = m_pLogoutBtn->getContentSize().width;
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("탈퇴하기", fontList[0], 36, ccp(0, 0), ccp(82+w+15, 192+5), ccc3(78,47,8), "", "Layer", tLayer, 1, 0, 255, -100) );
+    /*
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png2",
                     ccp(0, 0), ccp(779, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_idcopy.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 36), CCSize(0, 0), "button/btn_system.png2", "0", NULL, 1) );
-    
+    */
     // text
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("효과음", fontList[0], 48, ccp(0, 0), ccp(162, 1277), ccc3(78,47,8), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("배경음", fontList[0], 48, ccp(0, 0), ccp(162, 1168), ccc3(78,47,8), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카톡메시지수신", fontList[0], 48, ccp(0, 0), ccp(162, 1057), ccc3(78,47,8), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸시알림", fontList[0], 48, ccp(0, 0), ccp(162, 942), ccc3(78,47,8), "", "Layer", tLayer, 2) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션,그룹메시지", fontList[0], 48, ccp(0, 0), ccp(162, 829), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("효과음", fontList[0], 48, ccp(0, 0), ccp(162, 1277-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("배경음", fontList[0], 48, ccp(0, 0), ccp(162, 1168-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("푸시알림", fontList[0], 48, ccp(0, 0), ccp(162, 1057-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("카톡메시지수신", fontList[0], 48, ccp(0, 0), ccp(162, 942-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("(포션,자랑하기,오늘의별사탕)", fontList[0], 32, ccp(0, 0), ccp(162, 829+50-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("포션,그룹메시지", fontList[0], 48, ccp(0, 0), ccp(162, 829), ccc3(78,47,8), "", "Layer", tLayer, 2) );
     
     
     // on-off button
     char name[50], name2[50], key[20];
     bool status;
     CCPoint pos;
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 4; i++)
     {
         sprintf(name, "background/bg_degree_desc.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, name,
-                ccp(0, 0), ccp(627, 1261-i*112), CCSize(300, 82), "", "Layer", tLayer, 2) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(627, 1261-i*112-offset), CCSize(300, 82), "", "Layer", tLayer, 2) );
         sprintf(name2, "letter/letter_on.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0, 0), ccp(38, 18), CCSize(0, 0), name, "1", NULL, 2) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(38, 18), CCSize(0, 0), name, "1", NULL, 2) );
         sprintf(name2, "letter/letter_off.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0, 0), ccp(168, 18), CCSize(0, 0), name, "1", NULL, 2) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(168, 18), CCSize(0, 0), name, "1", NULL, 2) );
       
         if (i < 2) // 클라이언트에서 들고오는 정보 (효과음, 배경음)
         {
             sprintf(key, "setting_option_%d", i);
             status = CCUserDefault::sharedUserDefault()->getBoolForKey(key);
         }
-        else // 서버에서 들고오는 정보 (카카오, 푸시, 포션)
+        else // 서버에서 들고오는 정보 (카카오, 푸시)
         {
-            if (i == 2)      status = myInfo->GetKakaoMsg();
-            else if (i == 3) status = myInfo->GetPushNotification();
-            else if (i == 4) status = myInfo->GetPotionMsg();
+            if (i == 2) status = myInfo->GetPushNotification();
+            else if (i == 3) status = (myInfo->GetPotionMsg() && !myInfo->IsMessageBlocked());
         }
         if (status)
-            pos = ccp(627, 1261-i*112);
+            pos = ccp(627, 1261-i*112-offset);
         else
-            pos = ccp(627+150, 1261-i*112);
+            pos = ccp(627+150, 1261-i*112-offset);
         sprintf(name2, "button/btn_option.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2,
-                ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), pos, CCSize(0, 0), "", "Layer", tLayer, 3) );
     }
     standardBtnPos = ccp(627, 0);
     
@@ -281,15 +291,22 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                if (kakaoMsgReserved)
-                    kakaoMsgReserved = true;
-                else if (selectedBtn == 3)
+                CCLog("kind = %d", kind);
+                CCLog("x yellow");
+                /*
+                //if (kakaoMsgReserved)
+                //    kakaoMsgReserved = true;
+                // else if (selectedBtn == 3)
+                if (selectedBtn == 2)
                     pushNotiReserved = true;
-                else if (selectedBtn == 4)
+                //else if (selectedBtn == 4)
+                else if (selectedBtn == 3)
                     potionMsgReserved = true;
+                */
                 
                 // 카카오메시지, 푸시메시지, 포션수신 중 하나라도 바뀐 게 있다면 서버에 전송.
-                if (kakaoMsgReserved != myInfo->GetKakaoMsg() || pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
+                //if (kakaoMsgReserved != myInfo->GetKakaoMsg() || pushNotiReserved != myInfo->GetPushNotification() ||
+                if (pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
                 {
                     // Loading 화면으로 MESSAGE request 넘기기
                     Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
@@ -298,8 +315,8 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::string param = "";
                     sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
-                    sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
-                    param += temp;
+                    //sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
+                    //param += temp;
                     sprintf(temp, "push_notification=%d&", pushNotiReserved);
                     param += temp;
                     sprintf(temp, "potion_message=%d", potionMsgReserved);
@@ -320,11 +337,34 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
+                
+                // 카카오톡에서 메시지 수신 차단한 경우, 게임 내에서 바꿀 수 없다. (안내메시지를 띄우자)
+                int number = atoi(spriteClass->spriteObj[i]->name.substr(21).c_str());
+                if (number == 3 && myInfo->IsMessageBlocked())
+                {
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_MSG_BLOCKED, BTN_1, nullData);
+                    return true;
+                }
+                
                 selectedSprite = spriteClass->spriteObj[i]->sprite;
                 selectedBtn = spriteClass->spriteObj[i]->name[spriteClass->spriteObj[i]->name.size()-1] - '0';
                 selectedPos = spriteClass->spriteObj[i]->sprite->getPosition();
                 standardBtnPos.y = selectedPos.y;
                 selectedTouchPos = point;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_purple_mini.png1") // 만든사람들 버튼
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CREDIT;
+                idx = i;
                 return true;
             }
         }
@@ -345,6 +385,8 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                CCLog("tutorial ");
+                CCLog("kind = %d", kind);
                 sound->playClick();
                 spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
                 ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(170,170,170));
@@ -367,17 +409,13 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
-        
-        else if (spriteClass->spriteObj[i]->name == "btn_system.png2") // 로그아웃
+        else if (spriteClass->spriteObj[i]->type == 2 && spriteClass->spriteObj[i]->label->getTag() == -100)
         {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            if (spriteClass->spriteObj[i]->label->boundingBox().containsPoint(point))
             {
                 sound->playClick();
-                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
-                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(170,170,170));
-                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
-                kind = BTN_MENU_UNREGISTER;
-                idx = i;
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_UNREGISTER, BTN_2, nullData);
                 return true;
             }
         }
@@ -445,11 +483,11 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
                 sound->PlayBackgroundSound();
             }
+            //else if (selectedBtn == 2)
+            //    kakaoMsgReserved = true;
             else if (selectedBtn == 2)
-                kakaoMsgReserved = true;
-            else if (selectedBtn == 3)
                 pushNotiReserved = true;
-            else if (selectedBtn == 4)
+            else if (selectedBtn == 3)
                 potionMsgReserved = true;
         }
         else
@@ -468,11 +506,11 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
                 sound->StopBackgroundSound();
             }
+            //else if (selectedBtn == 2)
+            //    kakaoMsgReserved = false;
             else if (selectedBtn == 2)
-                kakaoMsgReserved = false;
-            else if (selectedBtn == 3)
                 pushNotiReserved = false;
-            else if (selectedBtn == 4)
+            else if (selectedBtn == 3)
                 potionMsgReserved = false;
         }
     }
@@ -488,8 +526,9 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
-            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
+            //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }
     }
     if (rect.containsPoint(point))
@@ -508,10 +547,29 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 Common::ShowNextScene(this, "Setting", "Coupon", false);
                 break;
             case BTN_MENU_LOGOUT:
-                Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_LOGOUT, BTN_2, nullData);
+                if (pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
+                {
+                    // Loading 화면으로 MESSAGE request 넘기기
+                    Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+                    
+                    char temp[50];
+                    std::string param = "";
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+                    param += temp;
+                    //sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
+                    //param += temp;
+                    sprintf(temp, "push_notification=%d&", pushNotiReserved);
+                    param += temp;
+                    sprintf(temp, "potion_message=%d", potionMsgReserved);
+                    param += temp;
+                    
+                    Network::HttpPost(param, URL_SETTING, this, httpresponse_selector(Setting::onHttpRequestCompleted));
+                }
+                else
+                    Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_LOGOUT, BTN_2, nullData);
                 break;
-            case BTN_MENU_UNREGISTER:
-                Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_UNREGISTER, BTN_2, nullData);
+            case BTN_MENU_CREDIT:
+                Common::ShowPopup(this, "Setting", "NoImage", false, CREDIT, BTN_1, nullData);
                 break;
         }
     }
@@ -548,7 +606,14 @@ void Setting::XmlParseResult(xml_document *xmlDoc)
     else if (code == 0)
     {
         myInfo->SetSettingVariables(kakaoMsgReserved, pushNotiReserved, potionMsgReserved);
-        EndScene();
+        
+        if (kind == BTN_MENU_LOGOUT)
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "Setting", "NoImage", false, KAKAO_LOGOUT, BTN_2, nullData);
+        }
+        else
+            EndScene();
     }
 }
 

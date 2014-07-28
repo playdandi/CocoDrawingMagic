@@ -122,6 +122,9 @@ bool Sketchbook::init()
     scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     tLayer->addChild(scrollViewSlot, 5);
     
+    balloon = NULL;
+    ball = NULL;
+    
     spriteClass = new SpriteClass();
     spriteClassBook = new SpriteClass();
     spriteClassSlot = new SpriteClass();
@@ -182,6 +185,7 @@ void Sketchbook::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Sketchbook : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -229,6 +233,8 @@ void Sketchbook::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+        
+        ShowHintOfBuyingSlot();
     }
     else if (param->intValue() == -1)
     {
@@ -244,6 +250,7 @@ void Sketchbook::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -319,15 +326,19 @@ void Sketchbook::InitSprites()
                     ccp(0, 0), ccp(896, 312), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png0",
                     ccp(0, 0), ccp(867, 237), CCSize(136, 63), "", "Layer", tLayer, 1) );
-    // 슬롯 개수 숫자
+    
+    // 슬롯 옆의 {현재 구입한 슬롯수} / {구입 가능한 max 슬롯수}
     char name[7];
     sprintf(name, "%d", (int)myInfo->GetSlot().size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 48, ccp(0, 0), ccp(892, 245), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 44, ccp(1, 0), ccp(892+30, 245), ccc3(255,219,53), "", "Layer", tLayer, 5, 0, 255, 100) ); // 현재 개수
     sprintf(name, "/ %d", (int)skillSlotInfo.size());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(927, 245), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 젼체 개수
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 34, ccp(0, 0), ccp(927+3, 245), ccc3(182,142,142), "", "Layer", tLayer, 5) ); // 젼체 개수
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
+    
+    // 슬롯구입 힌트
+    ShowHintOfBuyingSlot();
 }
 
 void Sketchbook::CheckProperties()
@@ -518,7 +529,8 @@ void Sketchbook::MakeScrollBook(int idx)
         if (!sInfo->IsActive() && i < numOfList-1)
         {
             sprintf(name2, "icon/icon_auto_effect.png%d", i+3);
-            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(114, 163), CCSize(0, 0), "", "Layer", itemLayer, 6) );
+            spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(114-12, 163), CCSize(0, 0), "", "Layer", itemLayer, 6) );
+            ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setScale(1.2f);
         }
         
         // 연습량 프로그레스바
@@ -581,16 +593,19 @@ void Sketchbook::MakeScrollBook(int idx)
             {
                 sprintf(name, "button/btn_red_mini.png%d", i+3);
                 spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(633, 51), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -ms[i]->GetUserId()) ); // 태그에 user_id를 음수로 둔다.
-                sprintf(name2, "letter/letter_practice.png%d", i+3);
-                spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                 
-                // 연습중인 스킬임을 표시하자.
-                if (ms[i]->GetCommonId() == myInfo->GetPracticeSkillId())
+                if (ms[i]->GetCommonId() != myInfo->GetPracticeSkillId()) // 연습중이 아님.
                 {
+                    sprintf(name2, "letter/letter_practice.png%d", i+3);
+                    spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
+                }
+                else // 연습중인 스킬임을 표시하자.
+                {
+                    sprintf(name2, "letter/letter_practicing.png%d", i+3);
+                    spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
                     //CCLog("연습 스킬? %d , %d", ms[i]->GetCommonId(), myInfo->GetPracticeSkillId());
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setColor(ccc3(140,140,140));
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setColor(ccc3(140,140,140));
-                    
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setTag(0); // 클릭하지 못하도록 함
                 }
                 
@@ -646,6 +661,42 @@ void Sketchbook::MakeScrollBook(int idx)
     scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
 }
 
+void Sketchbook::ShowHintOfBuyingSlot()
+{
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    balloon = NULL;
+    ball = NULL;
+    bool flag = false;
+    for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+    {
+        if (myInfo->GetSkillList()[i]->GetCommonId() % 10 == 3) // 정령 스킬이 있는가?
+        {
+            flag = true;
+            break;
+        }
+    }
+    if (myInfo->GetSlot().size() == 1 && flag)
+    {
+        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon->setContentSize(CCSize(600, 140));
+        balloon->setAnchorPoint(ccp(1, 0));
+        balloon->setPosition(ccp(896+100, 312+55));
+        this->addChild(balloon, 100);
+        ball = CCLabelTTF::create("여기서 슬롯을 구매하여\n두번째 발동스킬을 장착하세요!", fontList[0].c_str(), 36);
+        ball->setPosition(ccp(600/2, 140/2+30));
+        ball->setColor(ccc3(255,255,255));
+        balloon->addChild(ball, 101);
+        
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+        balloon->runAction( CCRepeatForever::create(action) );
+    }
+}
+
+
 void Sketchbook::MakeScrollSlot()
 {
     int numOfList = myInfo->GetSlot().size();
@@ -692,9 +743,14 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
     
-    //CCLog("touch began");
-    
     CCPoint point = pTouch->getLocation();
+    
+    // 슬롯구매 힌트 있으면 안 보이게 한다.
+    if (balloon != NULL && ball != NULL)
+    {
+        balloon->setOpacity(0);
+        ball->setOpacity(0);
+    }
     
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isSlotTouched = true;
@@ -734,6 +790,15 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                         std::vector<int> data;
                         data.push_back(number); // 불(1), 물(2), 땅(3), 마스터(4)
                         data.push_back(SkillPropertyInfo::GetCost(number)); // 가격
+                        // 토파즈로 구매한 속성 개수
+                        int count = 0;
+                        if (myInfo->IsFireByTopaz()) count++;
+                        if (myInfo->IsWaterByTopaz()) count++;
+                        if (myInfo->IsLandByTopaz()) count++;
+                        if (count+1 == 1)
+                            data.push_back( SkillBuildupMPInfo::GetObj(1)->GetDiscount1() );
+                        else if (count+1 == 2)
+                            data.push_back( SkillBuildupMPInfo::GetObj(1)->GetDiscount2() );
                         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_TRY, BTN_2, data);
                     }
                 }
@@ -923,6 +988,15 @@ void Sketchbook::EndScene()
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+    
+    // 슬롯구매 힌트 있으면 지운다.
+    if (balloon != NULL && ball != NULL)
+    {
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+    }
+    ball = NULL;
+    balloon = NULL;
 
     // remove all objects
     spriteClass->RemoveAllObjects();

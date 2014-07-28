@@ -34,12 +34,21 @@ public:
     
     void Notification(CCObject* obj);
     
+    void ProfileTimer(float f);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseList(xml_document *xmlDoc);
-    void XmlParseInviteFriend(xml_document *xmlDoc, int idx);
+    void XmlParseInviteFriend(xml_document *xmlDoc);
+    
+    void InitInviteList();
+    
+    void onSendLinkMessageComplete();
+    void onSendLinkMessageErrorComplete(char const *status, char const *error);
     
     void InitSprites();
     void MakeScroll();
+    
+    void SendToServer();
     
     void RenewData();
     
@@ -55,6 +64,8 @@ protected:
     
     float ofs;
     
+    int inviteIdx;
+    
 private:
     CCLayer* tLayer;
     CCSprite* bar;
@@ -64,22 +75,6 @@ private:
     
     SpriteClass* spriteClass;
     SpriteClass* spriteClassScroll;
-    
-    std::vector<class InviteList*> inviteList;
-};
-
-
-class InviteList
-{
-public:
-    InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi);
-    std::string userId;
-    std::string nickname;
-    std::string profileUrl;
-    std::string hashedTalkUserId;
-    bool messageBlocked;
-    bool supportedDevice;
-    bool wasInvited;
 };
 
 #endif /* defined(__CocoMagic__InviteFriend__) */

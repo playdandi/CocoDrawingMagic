@@ -20,6 +20,7 @@ using namespace CocosDenshion;
 #define VOICE_MISSIONSUCCESS 8
 #define VOICE_EIT2 9
 #define VOICE_EIT3 10
+#define VOICE_COCOTIME 11
 
 
 class Sound
@@ -51,18 +52,29 @@ public:
     
     void UnLoadSound();
     
+    void PlayCycle();
+    
     ////////////////////////////////////////////////////////////////
     void PreLoadInGameSound();
     
-    void PlayBackgroundInGameSound();
+    //void PlayBackgroundInGameSound(bool isFeverTime);
+    void ReduceBackgroundMusicVolume(int volCnt);
+    void GainBackgroundMusicVolume(int volCnt);
+    
+    void PlayBackgroundInGameSound(int type);
     void PauseBackgroundInGameSound();
     void ResumeBackgroundInGameSound();
     void StopBackgroundInGameSound();
+    int GetVolumeCnt();
     
     void PlayClock();
     void StopClock();
     
+    void PlayItemPaint();
+    void PlayItemStaff();
+    
     void PlayGameResult();
+    void StopGameResult();
     
     void PlayPieceClick(int idx);
     void PlayBomb();
@@ -72,6 +84,8 @@ public:
     
 protected:
     int nClockSoundId;
+    int nGameResultId;
+    //int volCnt;
     
 private:
     SimpleAudioEngine* engine;

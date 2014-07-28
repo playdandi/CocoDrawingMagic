@@ -111,6 +111,7 @@ void Profile::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Profile : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -118,6 +119,7 @@ void Profile::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -165,16 +167,17 @@ void Profile::InitSprites()
 
     int idx = profile_index;
    
-    
-    CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
-    if (friendList[idx]->GetImageUrl() != "")
+    // 프로필
+    //CCSprite* profile = ProfileSprite::GetProfile(friendList[idx]->GetImageUrl());
+    ProfileSprite* psp = ProfileSprite::GetObj(friendList[idx]->GetImageUrl());
+    if (friendList[idx]->GetImageUrl() != "" && psp->IsLoadingDone())
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.85f) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.95f) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_profile.png", ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5) );
     }
     else
     {
-        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5) );
     }
 
     // nickname
@@ -331,7 +334,7 @@ void Profile::InitFairy()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 7) );
 
     if (fid == 0) sprintf(fname, "요정 없음");
-    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType()).c_str());
+    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false).c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 7) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 7) );
 }

@@ -2,6 +2,9 @@
 #include "Kakao/Plugins/KakaoNativeExtension.h"
 #include <algorithm>
 
+// 서버 점검중일 경우 나오는 메시지
+std::string serverCheckMsg;
+
 int iGameVersion;
 int iBinaryVersion;
 class MyInfo* myInfo;
@@ -22,6 +25,13 @@ std::vector<class SkillBuildUpInfo*> skillBuildUpInfo;
 std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
 std::vector<class LastWeeklyRank*> lastWeeklyRank;
+std::vector<class TipContent*> tipContent;
+std::vector<class NoticeList*> noticeList;
+
+// 친구초대리스트
+std::vector<class InviteList*> inviteList;
+int todayCnt, monthCnt, totalCnt;
+bool isInviteListGathered;
 
 std::vector<class Depth*> depth;
 std::vector<int> inGameSkill;
@@ -31,9 +41,12 @@ bool isRebooting; // 시스템 재부팅 중일 시 true
 bool isInGamePause; // 인게임 중에 pause되었는지 여부
 bool isInGame; // 인게임 중이면 true
 bool isInGameTutorial; // 인게임의 튜토리얼 중이면 true
-int savedTime; // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
+bool isStartGameEnd = false; // 인게임 오버하고, game_end.php 를 시작했는지에 대한 flag
+int savedTime;  // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
+int savedTime2; // 똑같은데, 친구관계에서 필요한 시간(시점)
 
-// item cost
+// item type&cost (type = 1(별사탕), 2(토파즈))
+int itemType[5];
 int itemCost[5];
 
 // 환경설정 메뉴
@@ -43,6 +56,7 @@ int menuInSetting = -1;
 int myRank;
 int myLastWeekHighScore;
 int rewardType;
+int certificateType;
 
 // 게임에 필요한 미션 내용
 int missionType;
@@ -54,6 +68,12 @@ int binaryVersion_current;
 
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
+
+// 초보유저 보상 관련
+bool isStartUser = false;
+
+bool isPossibleBuyFairyShown = false;
+
 
 // rsa 관련
 RSA* rsa;
@@ -130,10 +150,26 @@ void Depth::DumpDepth()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-ProfileSprite::ProfileSprite(std::string profileUrl)
+ProfileSprite::ProfileSprite(std::string profileUrl, bool preload)
 {
     this->profileUrl = profileUrl;
-    this->profile = NULL;
+    this->SetSpriteNoImage();
+    this->preload = preload;
+    this->isLoadingStarted = (profileUrl == "") ? true : false;
+    this->isLoadingDone = (profileUrl == "") ? true : false;
+
+    this->isLoadingDoneForRanking = preload;
+    if (profileUrl == "")
+        this->isLoadingDoneForRanking = true;
+}
+ProfileSprite* ProfileSprite::GetObj(std::string profileUrl)
+{
+    for (int i = 0 ; i < profiles.size(); i++)
+    {
+        if (profiles[i]->GetProfileUrl() == profileUrl)
+            return profiles[i];
+    }
+    return NULL;
 }
 CCSprite* ProfileSprite::GetProfile(std::string profileUrl)
 {
@@ -143,6 +179,34 @@ CCSprite* ProfileSprite::GetProfile(std::string profileUrl)
             return profiles[i]->GetProfile();
     }
     return NULL;
+}
+bool ProfileSprite::IsPreload()
+{
+    return preload;
+}
+bool ProfileSprite::IsLoadingStarted()
+{
+    return isLoadingStarted;
+}
+void ProfileSprite::SetLoadingStarted(bool flag)
+{
+    isLoadingStarted = flag;
+}
+bool ProfileSprite::IsLoadingDone()
+{
+    return isLoadingDone;
+}
+void ProfileSprite::SetLoadingDone(bool flag)
+{
+    isLoadingDone = flag;
+}
+bool ProfileSprite::IsLoadingDoneForRanking()
+{
+    return isLoadingDoneForRanking;
+}
+void ProfileSprite::SetLoadingDoneForRanking(bool flag)
+{
+    isLoadingDoneForRanking = flag;
 }
 CCSprite* ProfileSprite::GetProfile()
 {
@@ -164,12 +228,13 @@ void ProfileSprite::SetSprite(CCTexture2D* texture)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text)
+MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, float addedPercent, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text)
 {
     this->getTopaz = topaz;
     this->getStarCandy = starcandy;
     this->getPotion = potion;
     this->getMP = mp;
+    this->addedMPPercent = addedPercent;
     this->score = score;
     this->totalScore = totalscore;
     this->combo = combo;
@@ -198,17 +263,19 @@ void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg
     int pos = sessionId.find("|");
     this->keyValue = atoi(sessionId.substr(0, pos).c_str());
     this->userId = atoi(sessionId.substr(pos+1, sessionId.size()-1).c_str());
+    
+    this->isPotionMax = 0;
+    this->addedTopaz = 0;
 }
 
 void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
 {
-    this->topaz = topaz;
-    this->starcandy = starcandy;
-    this->mp = mp;
-    this->mpStaffPercent = mpStaffPercent;
-    //this->mpStaff = (int)(floor((double)(mp*mpStaffPercent)/(double)100 + 0.50));
-    this->mpStaff = (int) ((float)(mp * mpStaffPercent) / (float)100);
-    this->mpFairy = mpFairy;
+    this->topaz = topaz * 3 + 1892;
+    this->starcandy = starcandy * 2 + 179805;
+    this->mp = mp * 4 + 34890;
+    this->mpStaffPercent = mpStaffPercent + 189;
+    this->mpStaff = (int)((float)(GetMP() * GetMPStaffPercent()) / (float)100) + 718933 ;
+    this->mpFairy = mpFairy * 2 + 22902;
     this->staffLv = staffLv;
     this->highScore = highScore;
     this->weeklyHighScore = weeklyHighScore;
@@ -222,7 +289,7 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->item[2] = item3;
     this->item[3] = item4;
     this->item[4] = item5;
-    this->potion = potion;
+    this->potion = potion * 5 + 11789;
     this->remainPotionTime = remainPotionTime;
     
     this->propertyFire = (fire == 1);
@@ -311,32 +378,32 @@ bool MyInfo::GetPotionMsg()
 
 int MyInfo::GetTopaz()
 {
-    return topaz;
+    return (topaz-1892)/3;
 }
 int MyInfo::GetStarCandy()
 {
-    return starcandy;
+    return (starcandy-179805)/2;
 }
 
 int MyInfo::GetMPTotal()
 {
-    return mp + mpStaff + mpFairy;
+    return GetMP() + GetMPStaff() + GetMPFairy();
 }
 int MyInfo::GetMP()
 {
-    return mp;
+    return (mp-34890)/4;
 }
 int MyInfo::GetMPStaffPercent()
 {
-    return mpStaffPercent;
+    return mpStaffPercent-189;
 }
 int MyInfo::GetMPStaff()
 {
-    return mpStaff;
+    return mpStaff-718933;
 }
 int MyInfo::GetMPFairy()
 {
-    return mpFairy;
+    return (mpFairy-22902)/2;
 }
 int MyInfo::GetStaffLv()
 {
@@ -369,7 +436,7 @@ int MyInfo::GetItem(int idx)
 }
 int MyInfo::GetPotion()
 {
-    return potion;
+    return (potion-11789)/5;
 }
 
 
@@ -404,10 +471,10 @@ std::string MyInfo::GetRemainPotionTime()
     std::string res = ":";
     char min[3], sec[3];
     
-    if (potion >= 5)
+    if (GetPotion() >= 5)
     {
         res = "총";
-        sprintf(min, "%d", potion);
+        sprintf(min, "%d", GetPotion());
         sprintf(sec, "개");
         res = res + min + sec;
     }
@@ -498,21 +565,21 @@ void MyInfo::SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, b
 
 void MyInfo::SetMoney(int topaz, int starcandy)
 {
-    this->topaz = topaz;
-    this->starcandy = starcandy;
+    this->topaz = topaz * 3 + 1892;
+    this->starcandy = starcandy * 2 + 179805;
 }
 void MyInfo::SetPotion(int potion, int remainPotionTime)
 {
-    this->potion = potion;
+    this->potion = potion * 5 + 11789;
     if (remainPotionTime != -1)
         this->remainPotionTime = remainPotionTime;
 }
 void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
 {
-    this->mp = mp;
-    this->mpStaffPercent = mpStaffPercent;
-    this->mpStaff = (int)((float)(mp*mpStaffPercent)/(float)100);
-    this->mpFairy = mpFairy;
+    this->mp = mp * 4 + 34890;
+    this->mpStaffPercent = mpStaffPercent + 189;
+    this->mpStaff = (int)((float)(GetMP()*GetMPStaffPercent())/(float)100) + 718933;
+    this->mpFairy = mpFairy * 2 + 22902;
     this->staffLv = staffLv;
 }
 void MyInfo::SetItem(std::vector<int> items)
@@ -573,10 +640,11 @@ int MyInfo::GetPracticeSkillLv()
     return practiceSkillLv;
 }
 
-void MyInfo::SetTodayCandy(int todayCandyType, int todayCandyValueChoice, int todayCandyValueMiss, int istodayCandyUsed)
+void MyInfo::SetTodayCandy(int todayCandyTypeChoice, int todayCandyValueChoice, int todayCandyTypeMiss, int todayCandyValueMiss, int istodayCandyUsed)
 {
-    this->todayCandyType = todayCandyType;
+    this->todayCandyTypeChoice = todayCandyTypeChoice;
     this->todayCandyValueChoice = todayCandyValueChoice;
+    this->todayCandyTypeMiss = todayCandyTypeMiss;
     this->todayCandyValueMiss = todayCandyValueMiss;
     this->istodayCandyUsed = (istodayCandyUsed == 1);
 }
@@ -584,13 +652,17 @@ void MyInfo::SetTodayCandy(int isTodayCandyUsed)
 {
     this->istodayCandyUsed = (isTodayCandyUsed == 1);
 }
-int MyInfo::GetTodayCandyType()
+int MyInfo::GetTodayCandyTypeChoice()
 {
-    return todayCandyType;
+    return todayCandyTypeChoice;
 }
 int MyInfo::GetTodayCandyValueChoice()
 {
     return todayCandyValueChoice;
+}
+int MyInfo::GetTodayCandyTypeMiss()
+{
+    return todayCandyTypeMiss;
 }
 int MyInfo::GetTodayCandyValueMiss()
 {
@@ -681,6 +753,22 @@ void MyInfo::ClearSkillSlot() // 내 스킬 슬롯 갱신할 때 clear하기 위
     mySkillSlot.clear();
 }
 
+void MyInfo::SetReward(int potion, int topaz)
+{
+    isPotionMax = potion;
+    addedTopaz = topaz;
+}
+bool MyInfo::IsRewardPotion()
+{
+    return (isPotionMax == 1);
+}
+int MyInfo::GetRewardTopaz()
+{
+    return addedTopaz;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 MySkillSlot::MySkillSlot(int id, int csi, int usi)
 {
@@ -867,19 +955,10 @@ void Friend::SetProfile(CCSprite* sp)
 {
     this->profile = sp;
 }
-/*
-void Friend::SetSprite(CCTexture2D* texture)
+void Friend::SetProfileUrl(std::string url)
 {
-    this->profile = new CCSprite();
-    this->profile->initWithTexture(texture);
+    this->imageUrl = url;
 }
-
-void Friend::SetSprite()
-{
-    this->profile = CCSprite::createWithSpriteFrameName("background/bg_profile_noimage.png");
-    this->profile->retain();
-}
-*/
 
 void Friend::SetProperties(int fire, int water, int land, int master)
 {
@@ -895,15 +974,15 @@ void Friend::SetPotionSprite()
     if (kakaoId != myInfo->GetKakaoId())
     {
         CCSprite* potion;
-        if (potionMsgStatus == POTION_SEND)
-        {
+        //if (potionMsgStatus == POTION_SEND)
+        //{
             if (remainPotionTime == 0)
                 potion = CCSprite::createWithSpriteFrameName("icon/icon_potion_send.png");
             else
                 potion = CCSprite::createWithSpriteFrameName("icon/icon_potion_remain.png");
-        }
-        else
-            potion = CCSprite::createWithSpriteFrameName("icon/icon_potion_x.png");
+        //}
+        //else
+        //    potion = CCSprite::createWithSpriteFrameName("icon/icon_potion_x.png");
         
         potion->setAnchorPoint(ccp(0, 0));
         potion->setPosition(ccp(724, 24));
@@ -1061,6 +1140,28 @@ int Friend::GetSkillLv()
     return skillLevel;
 }
 
+void Friend::SetKakaoVariables(std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice)
+{
+    this->nickname = name;
+    this->nicknameLabel->setString(name.c_str());
+    //this->imageUrl = purl;
+    this->hashedTalkUserId = htuid;
+    this->messageBlocked = msgblocked;
+    this->supportedDevice = supporteddevice;
+}
+std::string Friend::GetHashedTalkUserId()
+{
+    return hashedTalkUserId;
+}
+bool Friend::IsMessageBlocked()
+{
+    return messageBlocked;
+}
+bool Friend::IsSupportedDevice()
+{
+    return supportedDevice;
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 bool compare(Friend *f1, Friend *f2)
@@ -1068,9 +1169,9 @@ bool compare(Friend *f1, Friend *f2)
     if (f1->GetWeeklyHighScore() == f2->GetWeeklyHighScore())
     {
         if (f2->GetWeeklyHighScore() == -1 && f2->GetKakaoId() == myInfo->GetKakaoId())
-        {
             return false;
-        }
+        if (f1->GetWeeklyHighScore() == -1 && f1->GetKakaoId() == myInfo->GetKakaoId())
+            return true;
         return f1->GetScoreUpdateTime() < f2->GetScoreUpdateTime();
     }
     return f1->GetWeeklyHighScore() > f2->GetWeeklyHighScore();
@@ -1110,6 +1211,7 @@ Msg::Msg(int id, int type, int rewardCount, std::string content, std::string pro
     this->profileUrl = profileUrl;
     this->noticeUrl = noticeUrl;
     this->friendKakaoId = friendKakaoId;
+    this->profile = NULL;
 }
 int Msg::GetId()
 {
@@ -1138,6 +1240,14 @@ std::string Msg::GetNoticeUrl()
 std::string Msg::GetFriendKakaoId()
 {
     return friendKakaoId;
+}
+CCSprite* Msg::GetProfile()
+{
+    return profile;
+}
+void Msg::SetProfile(CCSprite* sp)
+{
+    profile = sp;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -1194,10 +1304,11 @@ int PriceStarCandy::GetBonus()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-MagicStaffBuildUpInfo::MagicStaffBuildUpInfo(int level, int bonusMP, int cs, int ct)
+MagicStaffBuildUpInfo::MagicStaffBuildUpInfo(int level, int bonusMPPercent, int bonusMPPlus, int cs, int ct)
 {
     this->nLevel = level;
-    this->nBonusMP_percent = bonusMP;
+    this->nBonusMP_percent = bonusMPPercent;
+    this->nBonusMP_plus = bonusMPPlus;
     this->nCost_starcandy = cs;
     this->nCost_topaz = ct;
 }
@@ -1216,6 +1327,10 @@ int MagicStaffBuildUpInfo::GetLevel()
 int MagicStaffBuildUpInfo::GetBonusMPPercent()
 {
     return nBonusMP_percent;
+}
+int MagicStaffBuildUpInfo::GetBonusMPPlus()
+{
+    return nBonusMP_plus;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1292,18 +1407,32 @@ std::string FairyInfo::GetAbilityName(FairyInfo* f, int level) // 추가속성 �
     std::string res = temp;
     return res;
 }
-std::string FairyInfo::GetAbilityDesc(int type) // 특수능력
+std::string FairyInfo::GetAbilityDesc(int type, bool newline) // 특수능력
 {
-    switch (type)
+    if (newline)
     {
-        case 1: return "연결피스 더 많이!"; break;
-        case 2: return "미션 추가 경험치"; break;
-        case 3: return "착용스킬 능력향상"; break;
+        switch (type)
+        {
+            case 1: return "연결피스\n확률증가"; break;
+            case 9: return "피버타임\n시간증가"; break;
+            case 10: return "별사탕\n추가획득"; break;
+            /*
         case 4: return "보너스 점수"; break;
         case 5: return "보너스 시간"; break;
         case 6: return "아이템 더 쓴다!"; break;
         case 7: return "지팡이 강화 좋게!"; break;
         case 8: return "MP 증가"; break;
+             */
+        }
+    }
+    else
+    {
+        switch (type)
+        {
+            case 1: return "연결피스 확률증가"; break;
+            case 9: return "피버타임 시간증가"; break;
+            case 10: return "별사탕 추가획득"; break;
+        }
     }
     return "";
 }
@@ -1399,6 +1528,16 @@ int FairyBuildUpInfo::GetMaxLevel(int id)
     }
     return ret;
 }
+int FairyBuildUpInfo::GetTotalMP(int id, int level)
+{
+    int mp = 0;
+    for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++)
+    {
+        if (fairyBuildUpInfo[i]->nId == id && fairyBuildUpInfo[i]->nLevel <= level)
+            mp += fairyBuildUpInfo[i]->nAbility;
+    }
+    return mp;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1423,36 +1562,33 @@ SkillInfo* SkillInfo::GetSkillInfo(int sid)
     }
     return NULL;
 }
-std::string SkillInfo::GetShortDesc(int sid)
+std::string SkillInfo::GetShortDesc(int sid) // 스케치북에 나오는 설명
 {
     switch (sid)
     {
-        case 21: return "빨간구슬을 터뜨리면 추가점수"; break;
-        case 22: return "빨간구슬 사이클로 추가폭발"; break;
-        case 23: return "8개 이상 제거 시 추가점수"; break;
-        //case 24: return "매직타임의 마법진 폭발 2회"; break;
-        case 24: return "불의 정령 : 빨간구슬 복제"; break;
-        case 25: return "6개 이상 제거 시 두 번 폭발"; break;
-        case 26: return "코코의 자동 한붓그리기"; break;
-        case 27: return "10개 이상 제거 시 용의 출현"; break;
+        case 21: return "빨간피스 그리면 추가점수"; break;
+        case 22: return "싸이클로 그리면 추가피스 제거"; break;
+        case 23: return "하트로 빨간피스 생성"; break;
+        case 24: return "8개 이상 그리면 추가점수"; break;
+        case 25: return "6개 이상 그리면 두배 제거"; break;
+        case 26: return "확률로 Fever Time 모드 전환"; break;
+        case 27: return "10개 이상 그리면 붉은 용 소환"; break;
             
-        case 11: return "푸른구슬을 터뜨리면 추가점수"; break;
-        case 12: return "푸른구슬 사이클로 추가폭발"; break;
-        case 13: return "콤보에 비례한 추가점수"; break;
-        //case 14: return "콤보에 비례한 추가별사탕"; break;
-        case 14: return "물의 정령 : 푸른구슬 생성"; break;
-        case 15: return "6개 이상 제거 시 두 번 폭발"; break;
-        case 16: return "5초 동안 시간 멈추기"; break;
-        case 17: return "10개 이상 제거 시 여신 출현"; break;
+        case 11: return "파란피스 그리면 추가점수"; break;
+        case 12: return "싸이클로 그리면 파도 발생"; break;
+        case 13: return "흰색,노란색 피스를 파란피스로"; break;
+        case 14: return "10 Combo 마다 추가점수"; break;
+        case 15: return "6개 이상 그리면 두배 제거"; break;
+        case 16: return "시간을 얼려 5초간 시간 정지"; break;
+        case 17: return "10개 이상 그리면 여신 소환"; break;
             
-        case 31: return "초록구슬을 터뜨리면 추가점수"; break;
-        case 32: return "초록구슬 사이클로 추가폭발"; break;
-        case 33: return "지팡이 레벨에 따른 추가별사탕"; break;
-        //case 34: return "10개 이상 제거 시 추가별사탕"; break;
-        case 34: return "땅의 정령 : 초록구슬 모으기"; break;
-        case 35: return "6개 이상 제거 시 두 번 폭발"; break;
+        case 31: return "초록피스 그리면 추가점수"; break;
+        case 32: return "싸이클로 그리면 추가피스 제거"; break;
+        case 33: return "마법잎사귀가 초록피스를 모음"; break;
+        case 34: return "보너스타임 때 추가별사탕 획득"; break;
+        case 35: return "6개 이상 그리면 두배 제거"; break;
         case 36: return "확률적으로 포션 1개 획득"; break;
-        case 37: return "10개 이상 제거 시 나무 출현"; break;
+        case 37: return "10개 이상 그리면 고대나무 소환"; break;
     }
     return "";
 }
@@ -1461,33 +1597,90 @@ std::string SkillInfo::GetFullDesc(int sid)
     switch (sid)
     {
         case 21: return "빨간 피스를 그리면 추가 점수를 획득해요."; break;
-        case 22: return "빨간 피스를 사이클로 그리면 주변 피스를 터뜨릴 수 있어요"; break;
-        case 23: return "빨간 피스를 한 번에 8개 이상 그리면 추가 점수를 획득해요."; break;
-        //case 24: return "MagicTime 때 마법진을 두 번 터뜨려요."; break;
-        case 24: return "사랑의 불꽃으로 빨간 피스를 여러 개 만들어요."; break;
+        case 22: return "빨간 피스를 사이클로 그리면 주변 피스를 터뜨릴 수 있어요."; break;
+        case 23: return "사랑의 불꽃으로 빨간 피스를 여러 개 만들어요."; break;
+        case 24: return "빨간 피스를 한 번에 8개 이상 그리면 추가 점수를 획득해요."; break;
         case 25: return "빨간 피스를 한 번에 6개 이상 그리면 불꽃으로 한 번 더 터뜨려요."; break;
         case 26: return "가끔 코코가 스스로 피스들을 터뜨려요."; break;
         case 27: return "빨간 피스를 한 번에 10개 이상 그리면 드래곤을 소환해요!"; break;
             
         case 11: return "파란 피스를 그리면 추가 점수를 획득해요."; break;
         case 12: return "파란 피스를 사이클로 그리면 파도가 피스를 터뜨려요."; break;
-        case 13: return "10콤보마다 추가 점수를 획득해요."; break;
-        //case 14: return "50콤보마다 추가 별사탕을 획득해요."; break;
-        case 14: return "파란 나비가 날아와 파란 피스를 만들어요."; break;
+        case 13: return "파란 나비가 날아와 파란 피스를 만들어요."; break;
+        case 14: return "10콤보마다 추가 점수를 획득해요."; break;
         case 15: return "파란 피스를 한 번에 6개 이상 그리면 얼음비가 한 번 더 터뜨려요."; break;
         case 16: return "코코가 시간을 얼려 잠시 동안 시간이 가지 않아요."; break;
         case 17: return "파란 피스를 한 번에 10개 이상 그리면 여신을 소환해요!"; break;
             
         case 31: return "초록 피스를 그리면 추가 점수를 획득해요."; break;
         case 32: return "초록 피스를 사이클로 그리면 무작위로 피스를 터뜨려요."; break;
-        case 33: return "지팡이의 레벨만큼 별사탕을 추가로 획득해요."; break;
-        //case 34: return "초록 피스를 한 번에 10개 이상 그리면 추가 별사탕을 획득해요."; break;
-        case 34: return "마법 잎사귀가 초록 피스를 모두 모아줘요."; break;
+        case 33: return "마법 잎사귀가 초록 피스를 모두 모아줘요."; break;
+        case 34: return "지팡이의 레벨만큼 별사탕을 추가로 획득해요."; break;
         case 35: return "초록 피스를 한 번에 6개 이상 그리면 상쾌한 바람으로 한 번 더 터뜨려요."; break;
         case 36: return "가끔씩 포션 1개를 얻을 수 있어요."; break;
         case 37: return "초록 피스를 한 번에 10개 이상 그리면 고대나무를 소환해요!"; break;
     }
     return "";
+}
+int SkillInfo::Converted(int id) // 인게임에서 사용되는 스킬 id로 conversion
+{
+    switch(id)
+    {
+        case 11: return 8; break;
+        case 12: return 9; break;
+        case 13: return 12; break;
+        case 14: return 10; break;
+        case 15: return 13; break;
+        case 16: return 14; break;
+        case 17: return 15; break;
+            
+        case 21: return 0; break;
+        case 22: return 1; break;
+        case 23: return 4; break;
+        case 24: return 2; break;
+        case 25: return 5; break;
+        case 26: return 6; break;
+        case 27: return 7; break;
+            
+        case 31: return 16; break;
+        case 32: return 17; break;
+        case 33: return 20; break;
+        case 34: return 18; break;
+        case 35: return 21; break;
+        case 36: return 22; break;
+        case 37: return 23; break;
+    }
+    return -1;
+}
+int SkillInfo::ConvertedToOriginal(int skillId) // 인게임의 스킬id를 다시 원래 id로 conversion
+{
+    switch(skillId)
+    {
+        case 8: return 11; break;
+        case 9: return 12; break;
+        case 12: return 13; break;
+        case 10: return 14; break;
+        case 13: return 15; break;
+        case 14: return 16; break;
+        case 15: return 17; break;
+            
+        case 0: return 21; break;
+        case 1: return 22; break;
+        case 4: return 23; break;
+        case 2: return 24; break;
+        case 5: return 25; break;
+        case 6: return 26; break;
+        case 7: return 27; break;
+            
+        case 16: return 31; break;
+        case 17: return 32; break;
+        case 20: return 33; break;
+        case 18: return 34; break;
+        case 21: return 35; break;
+        case 22: return 36; break;
+        case 23: return 37; break;
+    }
+    return -1;
 }
 int SkillInfo::GetId()
 {
@@ -1539,24 +1732,35 @@ SkillBuildupMPInfo* SkillBuildupMPInfo::GetObj(int skillCount)
     }
     return NULL;
 }
-int SkillBuildupMPInfo::RequiredMP(std::vector<MySkill*> sList, int scid)
+int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
 {
-    // '?' 스킬이 몇 번째로 등장한 것인지 알아내자.
+    // '?' 직전 스킬의 common-id가 뭔지 찾기.
     int p;
     for (int i = 0 ; i < sList.size() ; i++)
     {
-        if (sList[i]->GetCommonId() == scid-1) // '?' 직전 스킬의 common-id가 뭔지 찾기.
+        if (sList[i]->GetCommonId() == scid-1)
             p = i;
     }
     
+    // [처음 배운 스킬 ~ '?' 직전 스킬]을 속성별로 몇 개씩인지 분류한다.
+    // (단, 속성별 첫 번째 스킬은 직접 배우는 것이 아니므로 개념상 제외한다)
     int eachPropertyCnt[5] = {0,};
-    for (int i = 0 ; i <= p ; i++) // [처음 배운 스킬 ~ '?' 직전 스킬]을 속성별로 몇 개씩인지 분류한다.
+    for (int i = 0 ; i <= p ; i++)
+        //if (sList[i]->GetCommonId() % 10 != 1)
         eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
     
-    // 각 속성마다 그것+1개만큼 개수를 계산한다. (+1하는 이유는, 예를 들어 불 속성이 2개 있다면 필연적으로 불의 3번째 '?' 스킬이 등장했기 때문)
+    // 각 속성마다 그것+1개만큼 개수를 계산한다. (+1 하는 이유는, 예를 들어 불 속성이 2개 있다면 필연적으로 불의 3번째 '?' 스킬이 등장했기 때문)
     int orderNumber = 0;
     for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
-        orderNumber += ( (eachPropertyCnt[i]) + (0 < eachPropertyCnt[i] && eachPropertyCnt[i] < 7) );
+        orderNumber += (eachPropertyCnt[i]) - (eachPropertyCnt[i] == 7);
+    
+    return orderNumber;
+}
+int SkillBuildupMPInfo::RequiredMP(std::vector<MySkill*> sList, int scid)
+{
+    // '?' 스킬이 몇 번째로 등장한 것인지 알아내자.
+    
+    int orderNumber = SkillBuildupMPInfo::GetOrder(sList, scid);
     
     // finally, {orderNumber}번째 스킬 (우리가 원하는 '?' 스킬) 의 요구 MP를 구한다.
     SkillBuildupMPInfo* sInfoMP = SkillBuildupMPInfo::GetObj( orderNumber );
@@ -1686,6 +1890,53 @@ int SkillPropertyInfo::GetCost(int id)
     return -1;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TipContent::TipContent(int id, int type, std::string script)
+{
+    this->nId = id;
+    this->nCategory = type;
+    this->content = script;
+}
+int TipContent::GetId()
+{
+    return nId;
+}
+int TipContent::GetCategory()
+{
+    return nCategory;
+}
+std::string TipContent::GetContent()
+{
+    return content;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+InviteList::InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi)
+{
+    this->userId = userid;
+    this->nickname = name;
+    this->profileUrl = purl;
+    this->hashedTalkUserId = htuid;
+    this->messageBlocked = msgblocked;
+    this->supportedDevice = supporteddevice;
+    this->wasInvited = wi;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+NoticeList::NoticeList(int i, int pf, std::string t, std::string m, std::string l)
+{
+    this->id = i;
+    this->platform = pf;
+    this->title = t;
+    this->message = m;
+    this->link = l;
+    this->isShown = false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 난독화 public keys
 std::string obfuscationKey[30] = {
@@ -1720,3 +1971,5 @@ std::string obfuscationKey[30] = {
  "mvjc82387d",
  "nn27d72g4h",
 };
+
+std::string basicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANTPl77S5NRHJlyVXiZIv36bpkX8m+5A\na0NM3S+BliP3l8LntujYQtT/uelabrfDGwgbbhcaqfU06AwbYA7R4jECAwEAAQ==\n-----END PUBLIC KEY-----";

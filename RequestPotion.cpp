@@ -88,6 +88,8 @@ bool RequestPotion::init()
     scrollView->setDelegate(this);
     scrollView->setTouchPriority(Depth::GetCurPriority());
     tLayer->addChild(scrollView, 3);
+    
+    this->schedule(schedule_selector(RequestPotion::ProfileTimer), 1.0f);
 
     spriteClass = new SpriteClass();
     spriteClassScroll = new SpriteClass();
@@ -112,29 +114,23 @@ void RequestPotion::Notification(CCObject* obj)
         CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // scroll 갱신
+        //if (param->intValue() == 0)
         RenewScroll();
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
         CCLog("RequestPotion 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollView->setTouchEnabled(false);
-    }
-    else if (param->intValue() == -1)
-    {
-        // 터치 활성
-        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
-        this->setTouchPriority(Depth::GetCurPriority());
-        isTouched = false;
-        scrollView->setTouchEnabled(true);
-        CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -179,11 +175,12 @@ void RequestPotion::MakeScroll()
     char fname[50], fname2[50];
 
     for (int i = numOfList-1 ; i >= 0 ; i--)
+    //for (int i = 0 ; i < numOfList ; i++)
     {
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             continue;
-        // 수신거부한 친구 or 요청시간이 아직 남아있는 친구도 모두 리스트에 보이지 않게 한다.
-        if (friendList[i]->GetPotionMsgStatus() == 0 || friendList[i]->GetRemainRequestPotionTime() > 0)
+        // 요청시간이 아직 남아있는 친구도 모두 리스트에 보이지 않게 한다.
+        if (friendList[i]->GetRemainRequestPotionTime() > 0)
             continue;
         
         CCLayer* itemLayer = CCLayer::create();
@@ -193,11 +190,31 @@ void RequestPotion::MakeScroll()
         spriteClassScroll->layers.push_back(itemLayer);
         height++;
         
+        
         // 프로필 이미지
-        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
+        sprintf(fname, "background/bg_profile.png%d", i);
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        CCLog("%d : %d", numOfList-i, psp->IsLoadingDone());
+        if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
+            sprintf(fname, "background/bg_profile.png%d", i);
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        }
+        else
+        {
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 1.0f, -888*(numOfList-i)) ); // tag = -888 * (i+1)
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0, -777*(numOfList-i)) ); // tag = -777 * (i+1)
+        }
+        // 친구리스트에 포인터 저장.
+        //friendList[i]->SetProfile( spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite );
+        
+        /*
+        // 프로필 이미지
+        //CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
         if (friendList[i]->GetImageUrl() != "")
         {
-            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
             sprintf(fname, "background/bg_profile.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
@@ -205,6 +222,7 @@ void RequestPotion::MakeScroll()
         {
             spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3) );
         }
+        */
         
         // name (text)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196-10, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
@@ -337,6 +355,8 @@ void RequestPotion::EndScene()
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
+    this->unschedule(schedule_selector(RequestPotion::ProfileTimer));
+    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
@@ -345,6 +365,8 @@ void RequestPotion::EndScene()
     delete spriteClass;
     spriteClassScroll->RemoveAllObjects();
     delete spriteClassScroll;
+    spriteClass = NULL;
+    spriteClassScroll = NULL;
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -420,3 +442,75 @@ void RequestPotion::XmlParseResult(xml_document *xmlDoc, std::string friendKakao
 
 
 
+void RequestPotion::ProfileTimer(float f)
+{
+    // 프로필 사진 왼쪽 위 지점과 스크롤뷰 위치를 비교한다.
+    // 음수가 되면, 아래에 있던 프로필이 스크롤뷰에 보이기 시작했다는 의미 -> 프로필 로딩 시작.
+    CCPoint p;
+    float h;
+    int numOfList = friendList.size();
+    for (int i = numOfList-1 ; i >= 0 ; i--)
+    {
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        if (psp->IsLoadingStarted() || psp->IsLoadingDone())
+            continue;
+        
+        if (spriteClassScroll == NULL)
+            return;
+        p = ((CCSprite*)spriteClassScroll->FindSpriteByTag(-888*(numOfList-i)))->convertToNodeSpace(scrollView->getPosition());
+        h = friendList[i]->GetProfile()->getContentSize().height;
+        
+        if (p.y - h < 0)
+        {
+            psp->SetLoadingStarted(true);
+            
+            char tag[6];
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(psp->GetProfileUrl().c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(RequestPotion::onHttpRequestCompletedNoEncrypt));
+            sprintf(tag, "%d", i);
+            req->setTag(tag);
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+    }
+}
+void RequestPotion::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[110*110*2];
+    
+    // 프로필 사진 받아오기 실패
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(dumpData, (int)buffer->size());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite (profile 모음 리스트에 갱신)
+    int numOfList = friendList.size();
+    int index = atoi(res->getHttpRequest()->getTag());
+    
+    ProfileSprite* psp = ProfileSprite::GetObj(friendList[index]->GetImageUrl());
+    psp->SetSprite(texture);
+    psp->SetLoadingDone(true);
+    
+    // 화면에 보이는 스프라이트 교체
+    if (spriteClassScroll == NULL)
+        return;
+    spriteClassScroll->ChangeSprite(-888*(numOfList-index), psp->GetProfile());
+    ((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(numOfList-index)))->setOpacity(255);
+}

@@ -5,17 +5,6 @@ PuzzleP4* PuzzleP4::CreateP4(void* parent, int zOrder, int type, int designatedT
 {
     PuzzleP4* puzzleP4 = new PuzzleP4();
     
-    /*
-    if (type != -100)
-        puzzleP4->type = type;
-    else
-    {
-        if (designatedType != -1) // 게임중 요정에 의해 새로 만들어졌을 떄 (보통 designatedType == CONNECTED)
-            puzzleP4->type = designatedType;
-        else
-            puzzleP4->type = (rand()%100 < 60) ? CONNECTED : BLOCKED;
-    }
-    */
     puzzleP4->type = -1;
     puzzleP4->parent = parent;
     puzzleP4->zOrder = zOrder;
@@ -36,29 +25,37 @@ void PuzzleP4::SetRemoved(bool flag)
     isRemoved = flag;
 }
 
-void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint pos, float half_width, int decidedType)
+void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoint pos, float half_width, int prob, int decidedType)
 {
     if (decidedType != -1)
         type = decidedType;
     else
-        type = (rand()%100 < 60) ? CONNECTED : BLOCKED;
+        type = (rand()%100 < prob) ? CONNECTED : BLOCKED;
     
     isRemoved = false;
+    
+    /*
+    if (type == CONNECTED)
+        CCLog("%d %d (CONNECTED): %d %d %d %d", x, y, lu, rd, ru, ld);
+    else
+        CCLog("%d %d (BLOCKED): %d %d %d %d", x, y, lu, rd, ru, ld);
+    */
     
     if (type != BLOCKED)
     {
         InitChild();
         
         char name[25];
-
+        
         if (lu == rd && (lu >= PIECE_RED && lu <= PIECE_WHITE))
         {
+            //CCLog("(%d, %d) : lu와 rd (%d / %d)", x, y, lu, rd);
             sprintf(name, "pieces/%d_link_lu.png", lu);
             leftup = CCSprite::createWithSpriteFrameName(name);
             sprintf(name, "pieces/%d_link_rd.png", rd);
             rightdown = CCSprite::createWithSpriteFrameName(name);
             
-            if (ru != ld)
+            if (ru != ld || !(ru >= PIECE_RED && ru <= PIECE_WHITE))
             {
                 sprintf(name, "pieces/%d_link_ru.png", lu);
                 rightup = CCSprite::createWithSpriteFrameName(name);
@@ -72,7 +69,8 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
             rightup = CCSprite::createWithSpriteFrameName(name);
             sprintf(name, "pieces/%d_link_ld.png", ld);
             leftdown = CCSprite::createWithSpriteFrameName(name);
-            if (lu != rd)
+            
+            if (lu != rd || !(lu >= PIECE_RED && lu <= PIECE_WHITE))
             {
                 sprintf(name, "pieces/%d_link_lu.png", ru);
                 leftup = CCSprite::createWithSpriteFrameName(name);

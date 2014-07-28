@@ -38,6 +38,9 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseResult(xml_document *xmlDoc, std::string friendKakaoId);
     
+    void ProfileTimer(float f);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    
     CREATE_FUNC(RequestPotion);
     
 protected:

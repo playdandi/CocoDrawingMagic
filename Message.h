@@ -38,12 +38,13 @@ public:
     void EndScene();
     void EndSceneCallback();
     
-    void onHttpRequestCompleted(CCNode *sender, void *data);
+    void ProfileTimer(float f);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    void onHttpRequestCompleted(CCNode *sender, void *data);
     
     void XmlParseMsg(xml_document *xmlDoc);
     void XmlParseMsgReceiveOne(xml_document *xmlDoc);
-    void ParseProfileImage(char* data, int size, int idx);
+    //void ParseProfileImage(char* data, int size, int idx);
     
 protected:
     CCSize winSize;

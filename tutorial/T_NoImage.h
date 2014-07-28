@@ -32,7 +32,7 @@ private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;
     
-    CCSprite* ttrPos;
+    CCScale9Sprite* ttrPos;
     CCSprite* ttrArrow;
 };
 

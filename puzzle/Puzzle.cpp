@@ -60,7 +60,7 @@ void Puzzle::onExit()
 
 void Puzzle::keyBackClicked()
 {
-    if (isKeybackTouched || m_bTouchStarted)
+    if (isKeybackTouched || m_bTouchStarted || isGameOver)
         return;
     isKeybackTouched = true;
     
@@ -85,6 +85,8 @@ bool Puzzle::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Puzzle::Notification), "Puzzle", NULL);
     
+    // action set
+    //runningActions = CCSet::create();
     
     sound = new Sound();
     sound->PreLoadInGameSound();
@@ -93,16 +95,18 @@ bool Puzzle::init()
     
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
     // game3.plist는 loading화면에서 preload했음.
     
     
     // item 사용 여부
-    item_clear = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_0");
-    item_time = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_1");
-    item_paint = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_2");
-    item_staff = CCUserDefault::sharedUserDefault()->getIntegerForKey("item_3");
+    item_clear = CCUserDefault::sharedUserDefault()->getBoolForKey("item_00", false);
+    item_time = CCUserDefault::sharedUserDefault()->getBoolForKey("item_01", false);
+    item_paint = CCUserDefault::sharedUserDefault()->getBoolForKey("item_02", false);
+    item_staff = CCUserDefault::sharedUserDefault()->getBoolForKey("item_03", false);
+    
     totalCnt_paint = (item_paint) ? 2+rand()%5 : 0; // 2~6개
-    totalCnt_staff = (item_staff) ? 2+rand()%5 : 0;
+    totalCnt_staff = (item_staff) ? 2+rand()%5 : 0; // 2~6개
     if (item_paint && item_staff && totalCnt_staff == totalCnt_paint)
     {
         totalCnt_staff--;
@@ -116,7 +120,23 @@ bool Puzzle::init()
     iNumOfStaffItemNeeded = 0; // staff item 발동 횟수
 
     iNumOfFairySkillStart = 0; // 요정 스킬 발동해야 하는 횟수
-
+    
+    // 장착한 요정의 능력치 실행
+    CONN_PIECE_PROB = 60;               // 연결피스 확률
+    FEVER_TIME_MAX = FEVER_TIME*1000;   // feverTime 시간
+    ADD_STARCANDY_PERCENT = 0;          // 추가별사탕 %
+    if (myInfo->GetActiveFairyId() > 0)
+    {
+        switch (FairyInfo::GetObj(myInfo->GetActiveFairyId())->GetType())
+        {
+            case 1:  CONN_PIECE_PROB += 10; break;
+            case 9:  FEVER_TIME_MAX += (1*1000); break;
+            case 10: ADD_STARCANDY_PERCENT += 10; break;
+        }
+    }
+    CCLog("요정능력 : %d %d %d", CONN_PIECE_PROB, FEVER_TIME_MAX, ADD_STARCANDY_PERCENT);
+    
+    feverStartCnt = FEVER_START_COMBO;
     
     spriteClassInfo = new SpriteClass();
     spriteClass = new SpriteClass();
@@ -147,6 +167,7 @@ bool Puzzle::init()
     
     PlayEffect(100, NULL);
     
+    isStartGameEnd = false;
     isMagicTime = false;
     isFeverTime = false;
     
@@ -160,7 +181,7 @@ bool Puzzle::init()
     pBlackOpen->setAnchorPoint(ccp(0, 0));
     pBlackOpen->setPosition(ccp(0, 0));
     pBlackOpen->setColor(ccc3(0,0,0));
-    this->addChild(pBlackOpen, 3000);
+    this->addChild(pBlackOpen, 199);
     
     isFalling = false;
     isGameStarted = false;
@@ -181,15 +202,15 @@ bool Puzzle::init()
     
     bonusTimeState = -999;
     
-    feverStartCnt = FEVER_START_COMBO; // 피버타임에 들어가기 위해 필요한 마법발동횟수
-    magicCnt = 0; // 마법발동 횟수 (피버타임 끝나면 0으로 초기화)
+    //magicCnt = 0; // 마법발동 횟수 (피버타임 끝나면 0으로 초기화)
     
     pPuzzlePtr = this;
     
     m_bIsItemPossible = true;
-    bFreezeFlag = false;
     
     readySprite = NULL;
+    
+    dragScore = 0;
     
 	return true;
 }
@@ -224,8 +245,10 @@ void Puzzle::Notification(CCObject* obj)
             effect->GetSpirit(2)->resumeSchedulerAndActions();
         
         // '레디' sprite의 action resume
-        if (readySprite != NULL)
-            CCDirector::sharedDirector()->getActionManager()->resumeTarget(readySprite);
+        //if (readySprite != NULL)
+        //    CCDirector::sharedDirector()->getActionManager()->resumeTarget(readySprite);
+        CCDirector::sharedDirector()->getActionManager()->resumeTargets(runningActions);
+        runningActions->release();
     }
     else if (param->intValue() == 1)
     {
@@ -256,6 +279,7 @@ void Puzzle::InitSkills()
 {
     std::vector<int> skillNum, skillProb, skillLv;
 
+    spirit_scid = -1;
     int id;
     for (int i = 0 ; i < inGameSkill.size() ; i++)
     {
@@ -263,43 +287,13 @@ void Puzzle::InitSkills()
         MySkill* ms = MySkill::GetObj(id);
         if (ms != NULL)
         {
-            if (id / 10 == 2) // 불
-            {
-                // 21 22 23 24 25 26 27
-                //  0  1  2  4  5  6  7
-                if (id <= 23)
-                    skillNum.push_back(id-21);
-                else
-                    skillNum.push_back(id-20);
-                //if (id == 26) skillProb.push_back(10);
-                //else skillProb.push_back(100);
-            }
-            else if (id / 10 == 1) // 물
-            {
-                // 11 12 13 14 15 16 17
-                // 8  9  10 12 13 14 15
-                if (id <= 13)
-                    skillNum.push_back(id-3);
-                else
-                    skillNum.push_back(id-2);
-                //if (id == 17) skillProb.push_back(10);
-                //else skillProb.push_back(100);
-            }
-            else if (id / 10 == 3) // 땅
-            {
-                // 31 32 33 34 35 36 37
-                // 16 17 18 20 21 22 23
-                if (id <= 33)
-                    skillNum.push_back(id-15);
-                else
-                    skillNum.push_back(id-14);
-                //if (id == 38) skillProb.push_back(100);
-                //else skillProb.push_back(100);
-            }
-
+            skillNum.push_back( SkillInfo::Converted(id) );
             skillProb.push_back(SkillBuildUpInfo::GetObj(id, ms->GetLevel())->GetProb());
-            CCLog("%d(%d) : %d", id, skillNum[skillNum.size()-1], ms->GetLevel());
+            //CCLog("%d(%d) : %d, %d", id, skillNum[skillNum.size()-1], ms->GetLevel(), skillProb[skillProb.size()-1]);
             skillLv.push_back(ms->GetLevel());
+            
+            if (id % 10 == 3) // 정령 스킬이 있다면 저장해 둔다. (튜토리얼 위해)
+                spirit_scid = id;
         }
     }
     
@@ -475,7 +469,7 @@ void Puzzle::InitSprites()
     //tbSize = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize();
     
     // timer clock icon
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/clock.png", ccp(0.5, 0.5), ccp(m_winSize.width/2 + 1000/2 - 20-17-57/(float)2, vo.y+31.5f+5), CCSize(0,0), "", "Puzzle", this, 1001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/clock.png", ccp(0.5, 0.5), ccp(m_winSize.width/2 + 1000/2 - 20-17-57/(float)2, vo.y+31.5f+5), CCSize(0,0), "", "Puzzle", this, 196) );
     pClock = ((CCSprite*)spriteClass->FindSpriteByName("icon/clock.png"));
     
     // timer bar에 clipping node 만들기
@@ -485,7 +479,7 @@ void Puzzle::InitSprites()
     timerStencil->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
     timerClip = CCClippingNode::create(timerStencil);
     timerClip->addChild(timerLayer);
-    this->addChild(timerClip, 1000);
+    this->addChild(timerClip, 195);
     
     // 화면 비율에 맞춰 board size 만들기
     boardSize = CCSize(vs.height*1.920/2.920 - tbSize.height, vs.height*1.920/2.920 - tbSize.height);
@@ -531,11 +525,8 @@ void Puzzle::InitSprites()
     // 성
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_castle.png", ccp(0, 0), ccp(0, vo.y+tbSize.height+boardSize.height+floorSize.height-35), CCSize(0, 0), "", "Puzzle", this, 2) );
     
-    // 코코 그림자, 요정 그림자
-    //vs.height+vo.y-480
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/coco_shadow.png", ccp(0.5, 0.5), ccp(215, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "sun/sun_shadow.png", ccp(0.5, 0.5), ccp(m_winSize.width-170, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20) );
-    ((CCSprite*)spriteClass->FindSpriteByName("sun/sun_shadow.png"))->setScale(1.25f);
+    // 코코 그림자
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/coco_shadow.png", ccp(0.5, 0.5), ccp(215, vo.y+tbSize.height+boardSize.height+95), CCSize(0, 0), "", "Puzzle", this, 20, 0, 255, -2) ); // tag = -2 (피버타임 때 없애기)
     
     // 마법진
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 6) );
@@ -742,88 +733,43 @@ void Puzzle::CocoAnim(float f)
 
 void Puzzle::InitFairy()
 {
-    /*
-    fairyLayer = CCLayer::create();
-    
-    CCSprite* face = CCSprite::createWithSpriteFrameName("sun/sun_face.png");
-    face->setAnchorPoint(ccp(0.5, 0.5));
-    face->setPosition(ccp(0, 0));
-    fairyLayer->addChild(face, 1000);
-    CCSprite* mouth = CCSprite::createWithSpriteFrameName("sun/sun_mouth.png");
-    mouth->setAnchorPoint(ccp(0.5, 0.5));
-    mouth->setPosition(ccp(0, -30));
-    fairyLayer->addChild(mouth, 1000);
-    
-    CCLayer* eyeLayer = CCLayer::create();
-    CCSprite* eye1 = CCSprite::createWithSpriteFrameName("sun/sun_eye.png");
-    eye1->setAnchorPoint(ccp(0.5, 0.5));
-    eye1->setPosition(ccp(0, 0));
-    eyeLayer->addChild(eye1, 1000);
-    CCSprite* eye2 = CCSprite::createWithSpriteFrameName("sun/sun_eye.png");
-    eye2->setAnchorPoint(ccp(0.5, 0.5));
-    eye2->setPosition(ccp(70, 0));
-    eyeLayer->addChild(eye2, 1000);
-    eyeLayer->setPosition(ccp(-50, 0));
-    eyeLayer->setTag(0);
-    fairyLayer->addChild(eyeLayer, 1000);
-    
-    fairy_sp.clear();
-    fairy_sp.push_back(face);
-    fairy_sp.push_back(mouth);
-    fairy_sp.push_back(eye1);
-    fairy_sp.push_back(eye2);
-    
-    float r = 110.0;
-    float x, y;
-    for (int i = 0 ; i < 8 ; i++)
+    if (myInfo->GetActiveFairyId() > 0)
     {
-        CCSprite* temp = CCSprite::createWithSpriteFrameName("sun/sun_head.png");
-        temp->setAnchorPoint(ccp(0.5, 0.5));
-        if (i == 0)      { x = 0; y = r; }
-        else if (i == 1) { x = r/sqrt(2); y = r/sqrt(2); }
-        else if (i == 2) { x = r; y = 0; }
-        else if (i == 3) { x = r/sqrt(2); y = -r/sqrt(2); }
-        else if (i == 4) { x = 0; y = -r; }
-        else if (i == 5) { x = -r/sqrt(2); y = -r/sqrt(2); }
-        else if (i == 6) { x = -r; y = 0; }
-        else if (i == 7) { x = -r/sqrt(2); y = r/sqrt(2); }
-        temp->setPosition(ccp(x, y));
-        temp->setRotation(45*i);
-        fairy_sp.push_back(temp);
-        fairyLayer->addChild(temp, 1000);
+        fairyTimer = 0; // 요정 액션 타이머
+        switch (myInfo->GetActiveFairyId())
+        {
+            case 1:
+                CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_flower.plist");
+                fairyLayer = Fairy::MakeFlowerNew();
+                fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60+30));
+                break;
+            case 2:
+                fairyLayer = Fairy::MakeSun();
+                fairyLayer->setPosition(ccp(m_winSize.width-280+100, vo.y+tbSize.height+boardSize.height+60+30+135));
+                break;
+            case 3:
+                CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_cloud.plist");
+                fairyLayer = Fairy::MakeCloud();
+                fairyLayer->setPosition(ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30+30));
+                break;
+            default:
+                fairyLayer = CCLayer::create();
+                break;
+        }
+        this->addChild(fairyLayer, 100);
+        
+        // 요정 그림자
+        fairyShadow = CCSprite::createWithSpriteFrameName("sun/sun_shadow.png");
+        fairyShadow->setPosition(ccp(m_winSize.width-170, vo.y+tbSize.height+boardSize.height+95));
+        fairyShadow->setScale(1.25f);
+        fairyShadow->setTag(-1); // tag = -1 (그림자 피버타임 때 지우기 위해서)
+        this->addChild(fairyShadow, 20);
+        
+        // action
+        CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
+        CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
+        fairyLayer->runAction(rep);
     }
-    */
-    
-    fairyTimer = 0; // 요정 액션 타이머
-    
-    switch (myInfo->GetActiveFairyId())
-    {
-        case 1:
-            CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_flower.plist");
-            fairyLayer = Fairy::MakeFlowerNew();
-            fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60));
-            break;
-        case 2:
-            fairyLayer = Fairy::MakeSun();
-            fairyLayer->setPosition(ccp(m_winSize.width-280+100, vo.y+tbSize.height+boardSize.height+60+135));
-            break;
-        case 3:
-            CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_cloud.plist");
-            fairyLayer = Fairy::MakeCloud();
-            fairyLayer->setPosition(ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30));
-            break;
-        default:
-            fairyLayer = CCLayer::create();
-            break;
-    }
-
-    this->addChild(fairyLayer, 100);
-    
-    // action
-    CCFiniteTimeAction* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, +5)), NULL);
-    CCAction* rep = CCRepeatForever::create((CCActionInterval*)action);
-    fairyLayer->runAction(rep);
-    
 }
 
 void Puzzle::AnimFairy_Callback(CCNode* sender, void* pointer)
@@ -858,7 +804,7 @@ void Puzzle::ChangeAnimFairy(float f)
                     CCSize s = fairyLayer->getContentSize();
                     float w = s.width * 0.5f;
                     float h = s.height * 0.5f;
-                    pos = ccp(m_winSize.width-280 + w-18, vo.y+tbSize.height+boardSize.height+60 + h-5);
+                    pos = ccp(m_winSize.width-280 + w-18, vo.y+tbSize.height+boardSize.height+60+30 + h-5);
                     
                     if (n == 0) // 꽃 접었다 펴기
                         Fairy::Anim_Flower_Hide(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
@@ -883,7 +829,7 @@ void Puzzle::ChangeAnimFairy(float f)
                 
             case 3:
                 fairyLayer->setVisible(false);
-                pos = ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30);
+                pos = ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30+30);
                 Fairy::Anim_Cloud_Curl(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
                 break;
 
@@ -917,8 +863,8 @@ void Puzzle::InitBoard()
         for (int y = 1 ; y < ROW_COUNT ; y++)
         {
             puzzleP4set->CreateObject(x, y);
-            puzzleP4set->CreatePiece(x, y);
-            puzzleP4set->AddChild(x, y);
+            if (puzzleP4set->CreatePiece(x, y))
+                puzzleP4set->AddChild(x, y);
         }
     }
     
@@ -971,99 +917,211 @@ void Puzzle::InitBoard()
 
 void Puzzle::SetScoreAndStarCandy()
 {
-    iScore = 0;
-    char n[10];
-    sprintf(n, "%d", iScore);
-    pScoreLayer = Common::MakeScoreLayer(iScore);
+    //iScore = 0;
+    iScore = FakeScore(0);
+    //char n[10];
+    //sprintf(n, "%d", RealScore());
+    pScoreLayer = Common::MakeScoreLayer(RealScore());
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93-7));
     //pScoreLayer->setVisible(false);
     this->addChild(pScoreLayer, 6);
     
-    iStarCandy = 0;
+    iStarCandy = FakeStarCandy(0);
     pStarCandyLabel = (CCLabelTTF*)spriteClassInfo->FindLabelByTag(1);
+}
+
+int Puzzle::FakeScore(int score)
+{
+    return score*2 + 3982;
+}
+int Puzzle::RealScore()
+{
+    return (iScore-3982)/2;
+}
+int Puzzle::FakeStarCandy(int candy)
+{
+    return candy*3 + 271064;
+}
+int Puzzle::RealStarCandy()
+{
+    return (iStarCandy-271064)/3;
 }
 
 void Puzzle::UpdateScore(int type, int data)
 {
-    //CCLog("before : %d %d", iScore, data);
+    int score;
     if (type == 0)
     {
-        if (data < 3)
-            iScore += data * 1000;
-        else
-            // 기본점수 : (50 + 15(n-3)^1.6) * n
-            iScore += ( (50 + 15*pow(data-3, 1.6f)) * data );
+        /*
+        score = ( (50 + 15*pow(data-3, 1.6f)) * data );
+        if (m_bIsCycle[(touch_cnt-1)%QUEUE_CNT])
+            score *= 3;
+        */
+        // 기본점수 : (50 + 15(n-3)^1.6) * n
+        // 기본드래그 개수, 피버로 터진 추가개수 따로 구하기
+        int dragNum_basic = data;
+        int dragNum_fever = 0;
+        if (IsRoundInFeverTime(true))
+        {
+            dragNum_fever = dragNum_basic - GetPosForFeverTime(true).size();
+            dragNum_basic = GetPosForFeverTime(true).size();
+        }
+        //CCLog("%d %d", dragNum_basic, dragNum_fever);
+        // 한붓그리기 기본점수 계산 (사이클이면 3배)
+        score = ((50 + 15*pow(dragNum_basic-3, 1.6f)) * dragNum_basic); // 순수 드래그 개수로 따지는 기본점수
+        if (m_bIsCycle[(touch_cnt-1)%QUEUE_CNT])
+            score *= 3;
+        // 피버타임 때 추가 개수로 따지는 기본점수
+        if (dragNum_fever > 0)
+        {
+            if (dragNum_fever <= 3)
+                score += 150;
+            else
+                score += ((50 + 15*pow(dragNum_fever-3, 1.6f)) * dragNum_fever);
+        }
     }
     else if (type == 1)
     {
         // 기본 스킬에 의한 추가점수 (A1)
-        iScore += data;
+        score = data;
     }
-    //CCLog("after : %d", iScore);
+    
+    iScore = FakeScore( RealScore() + score );
 
     pScoreLayer->removeAllChildren();
     pScoreLayer->removeFromParentAndCleanup(true);
     
-    char n[12];
-    sprintf(n, "%d", iScore);
-    pScoreLayer = Common::MakeScoreLayer(iScore);
+    pScoreLayer = Common::MakeScoreLayer(RealScore());
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93-7));
     this->addChild(pScoreLayer, 6);
+    
+    // show score (type이 0이란 말은 기본 한붓그리기 점수를 의미함)
+    // 각 1번스킬 때 보여주지 마라!
+    int queue_pos = (touch_cnt-1)%QUEUE_CNT;
+    if (!isGameOver && type == 0 && !isFeverTime &&
+         (!skill->IsApplied(0, queue_pos) && !(skill->IsApplied(8, queue_pos)) && !(skill->IsApplied(16, queue_pos))) )
+    {
+        int idx = piece8xy[(touch_cnt-1)%QUEUE_CNT].size() - 1;
+        if (m_bIsCycle[(touch_cnt-1)%QUEUE_CNT])
+            idx = 0;
+        ShowBasicScore(score, piece8xy[(touch_cnt-1)%QUEUE_CNT][idx], piece8xy[(touch_cnt-1)%QUEUE_CNT].size());
+    }
 }
 
-void Puzzle::ShowSkillScore(int score, int queue_pos, int etc)
+void Puzzle::ShowBasicScore(int score, CCPoint pos, int size) // 한붓그리기 기본점수
 {
-    return;
-    char name[15];
-    sprintf(name, "+ %s", Common::MakeComma(score).c_str());
-    CCLabelTTF* label = CCLabelTTF::create(name, fontList[0].c_str(), 56);
-    label->setAnchorPoint(ccp(0.5, 0.5));
-    label->setOpacity(0);
-    label->setColor(ccc3(255,255,0));
-    this->addChild(label, 6000);
+    float scale = GetScoreBasicScale(size);
+    CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(score), scale);
+    this->addChild(layer, 100);
+    
+    pos = SetTouch8Position(pos.x, pos.y);
+    layer->setPosition(ccp(pos.x+layer->getContentSize().width/2, pos.y));
+    
+    int cnt = layer->getChildrenCount();
+    for (int i = 0 ; i < cnt ; i++)
+    {
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), (void*)layer->getChildrenCount()), NULL );
+        layer->getChildByTag(i)->runAction(action);
+    }
+}
+void Puzzle::ShowSkillScore(int score, float scale, int queue_pos, int etc, int etc2, int height) // 스킬로 인한 발동점수 (+가중치)
+{
+    //CCLog("%d %.2f %d %d %d %d", score, scale, queue_pos, etc, etc2, height);
+    CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(score), scale);
+    this->addChild(layer, 100);
+    
     CCPoint pos;
-    if (queue_pos == -2) // 떡갈나무지팡이 (마법진 위 표시)
+    if (queue_pos == -2) // 마법진 위 표시 (ex : 떡갈나무지팡이, 궁극스킬들)
         pos = ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120+30);
-    else if (etc == -1) // 기본 경우
+    else if (queue_pos == -1) // 코코 머리 위 (ex : 한방울한방울)
+        pos = ccp(130, vo.y+tbSize.height+boardSize.height+60+220); //ccp(150, 1600);
+    else if (etc == -1) // 기본 경우 (마지막 피스)
         pos = SetTouch8Position(lastPosition[queue_pos].x, lastPosition[queue_pos].y);
-    else if (queue_pos == -1) // W3 (콤보에따른스킬)
-        pos = ccp(150, 1600);
     else // (x, y)를 직접 받은 경우
-        pos = SetTouch8Position(queue_pos, etc);
+        pos = SetTouch8Position(etc, etc2);
     
-    CCLog("%d %d", (int)pos.x, (int)pos.y);
-    label->setPosition( ccp(pos.x, pos.y+10) );
+    layer->setPosition(ccp(pos.x+layer->getContentSize().width/2, pos.y+height));
     
-    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), NULL), NULL );
-    label->runAction(action);
+    bool flag = false;
+    float fadeInTime = 0.3f;
+    float fadeOutTime = 0.3f;
+    
+    if (height > 0)
+    {
+        fadeInTime = 0.7f;
+        fadeOutTime = 0.3f;
+        flag = true;
+    }
+    else if (queue_pos >= 0 && m_iState[queue_pos] == SKILL_DOUBLESIX && globalType[queue_pos] != PIECE_RED)
+    {
+        // 얼음비, 상쾌한 바람 => fade_in을 길게 끌자.
+        fadeInTime = 0.6f;
+        flag = true;
+    }
+    
+    if (!flag) // scale마다 fade in/out time 조절하기 (클수록 오래 보임)
+    {
+        if (scale < 1.5f) { fadeInTime = 0.3f; fadeOutTime = 0.3f; }
+        else if (scale < 2.0f) { fadeInTime = 0.4f; fadeOutTime = 0.4f; }
+        else if (scale < 2.5f) { fadeInTime = 0.5f; fadeOutTime = 0.5f; }
+        else { fadeInTime = 0.6f; fadeOutTime = 0.6f; }
+    }
+    
+    int cnt = layer->getChildrenCount();
+    for (int i = 0 ; i < cnt ; i++)
+    {
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(fadeInTime), CCFadeOut::create(fadeOutTime), NULL), CCMoveBy::create(fadeInTime+fadeOutTime, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), (void*)layer->getChildrenCount()), NULL );
+        layer->getChildByTag(i)->runAction(action);
+    }
 }
 void Puzzle::ShowSkillScore_Callback(CCNode* sender, void* data)
 {
-    sender->removeFromParentAndCleanup(true);
+    //sender->removeAllChildren();
+    if ((int)data == sender->getTag())
+    {
+        sender->removeFromParentAndCleanup(true);
+        sender->getParent()->removeFromParentAndCleanup(true);
+    }
+    else
+        sender->removeFromParentAndCleanup(true);
+    //sender->removeFromParentAndCleanup(true);
 }
-
+/*
 void Puzzle::ShowSkillAddedScore(int score, int queue_pos, int height, int x, int y)
 {
-    return;
-    char name[15];
-    sprintf(name, "+ %s", Common::MakeComma(score).c_str());
-    CCLabelTTF* label = CCLabelTTF::create(name, fontList[0].c_str(), 56);
-    label->setAnchorPoint(ccp(0.5, 0.5));
-    label->setOpacity(0);
-    label->setColor(ccc3(255,0,255));
-    this->addChild(label, 6000);
+    CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(score), 2);
+    this->addChild(layer, 6000);
 
     CCPoint pos;
     if (x != -1 && y != -1) // '파도타기'
         pos = SetTouch8Position(x, y);
     else
         pos = SetTouch8Position(lastPosition[queue_pos].x, lastPosition[queue_pos].y);
-    label->setPosition(ccp(pos.x, pos.y+height*50));
+    //label->setPosition(ccp(pos.x, pos.y+height*50));
+    layer->setPosition(ccp(pos.x+layer->getContentSize().width/2, pos.y+height*110));
     
-    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), NULL), NULL );
-    label->runAction(action);
+    int cnt = layer->getChildrenCount();
+    for (int i = 0 ; i < cnt ; i++)
+    {
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(Puzzle::ShowSkillScore_Callback), (void*)layer->getChildrenCount()), NULL );
+        layer->getChildByTag(i)->runAction(action);
+    }
+}
+*/
+float Puzzle::GetScoreBasicScale(int size) // 한붓그리기한 개수에 따라 점수 크기 조정
+{
+    if (isFeverTime)
+        size = GetPosForFeverTime(true).size();
+    float scale = 1.0f;
+    if (size <= 5) scale = 1.0f;
+    else if (size <= 9) scale = 1.3f;
+    else if (size <= 14) scale = 1.5f;
+    else if (size <= 19) scale = 2.0f;
+    else if (size >= 20) scale = 3.0f;
+    CCLog("Size = %d , scale = %f", size, scale);
+    return scale;
 }
 
 
@@ -1071,16 +1129,21 @@ void Puzzle::UpdateStarCandy(int type, int data)
 {
     if (type == 0)
     {
-        if (data <= 3)
-            return;
-        iStarCandy += ((data-3)*(data-4)/2 + 1);
+        int basic;
+        if (data <= 5) basic = 0;
+        else if (data <= 9) basic = 3;
+        else if (data <= 14) basic = 6;
+        else if (data <= 19) basic = 9;
+        else basic = 12;
+        
+        iStarCandy = FakeStarCandy( RealStarCandy() + (basic + data) );
     }
     else if (type == 1)
     {
-        iStarCandy += data;
+        iStarCandy = FakeStarCandy( RealStarCandy() + data );
     }
-    char s[5];
-    sprintf(s, "%d", iStarCandy);
+    char s[8];
+    sprintf(s, "%d", RealStarCandy());
     pStarCandyLabel->setString(s);
 }
 
@@ -1115,7 +1178,7 @@ void Puzzle::UpdateCombo()
         CCActionInterval* action = CCMoveBy::create(0.1f, ccp(149.0f / (float)feverStartCnt, 0));
         ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->runAction(action);
     
-        if (iFeverCombo == feverStartCnt && !isGameOver) // 15콤보가 되면 피버타임!
+        if (iFeverCombo >= feverStartCnt && !isGameOver) // 15콤보가 되면 피버타임!
         {
             StartFeverTime();
         }
@@ -1167,18 +1230,6 @@ void Puzzle::ComboTimer(float f)
         
         maxCombo = std::max(maxCombo, iCombo);
         iCombo = 0;
-        
-        /*
-        iFeverCombo = 0;
-        if (!isFeverTime && !isGameOver)
-        {
-            //spriteClassInfo->spriteObj.push_back( SpriteObject::Create(1, "background/bg_bar_gauge.png", ccp(0.5, 0.5), ccp(m_winSize.width-170 - 149, vo.y+vs.height-45+2-offset/2-7 ), CCSize(149, 35+offset/2), "", "Layer", gaugeLayer, 7, 0, 255, 98765) );
-            //CCActionInterval* action = CCMoveTo::create(0.01f, ccp(149.0f / (float)feverStartCnt, 0));
-            //((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->runAction(action);
-            int offset = 20;
-            ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->setPosition(ccp(m_winSize.width-170 - 149, vo.y+vs.height-45+2-offset/2-7 ));
-        }
-        */
     }
 }
 
@@ -1186,7 +1237,10 @@ void Puzzle::HintTimer(float f)
 {
     // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중, 터치 중, 게임이 끝났을 때 -> 시간을 정지시킨다.
     if (isRenewing || isInGamePause || m_iSkillSP > 0 || m_bTouchStarted || isGameOver)
+    {
+        iHintTime = 0;
         return;
+    }
     
     iHintTime += 100;
     if (!isHintShown && iHintTime >= 2500) // 2.5초 동안
@@ -1202,45 +1256,119 @@ bool Puzzle::IsHintShown()
 
 void Puzzle::FeverTimer(float f)
 {
-    // 용, 나무 발동 중이면 중지 + Pause 상태면, 게임이 끝났다면 중지
-    if (skill->F8_IsActive() || skill->E8_IsActive() || isInGamePause || isGameOver)
+    // 스킬발동중 + Pause 상태 + 게임오버 + 리뉴잉 때는 중지
+    if (m_iSkillSP > 0 || isGameOver || isInGamePause || isRenewing)
         return;
     
     iFeverTime -= 100;
     CCLog("fever time = %d", iFeverTime);
     
-    // 피버 게이지 줄이기
-    CCPoint p = ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->getPosition();
-    float changed_x = p.x - (149.0f * (100.0f / (float)(FEVER_TIME*1000)));
-    ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->setPosition(ccp(changed_x, p.y));
-    
-    if (iFeverTime <= 0)
+    if (iFeverTime < 1000) // 1초 남은 시점에서부터 소리를 서서히 줄인다.
     {
-        CCLog("피버타임 끝.................");
+        sound->ReduceBackgroundMusicVolume(iFeverTime/100);
+    }
+    
+    // 피버 게이지 줄이기
+    if (iFeverTime > 0)
+    {
+        CCPoint p = ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->getPosition();
+        float changed_x = p.x - (149.0f * (100.0f / (float)(FEVER_TIME*1000)));
+        ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->setPosition(ccp(changed_x, p.y));
+    }
+    // 피버타임 끝
+    else //if (iFeverTime <= 0)
+    {
+        if (isGameOver || isInGamePause || isRenewing)
+            return;
         this->unschedule(schedule_selector(Puzzle::FeverTimer));
         effect->PlayEffect_FeverBg_Off();
-        //feverStartCnt += 2;
-        //magicCnt = 0;
         iFeverCombo = 0;
         isFeverTime = false;
+        CCLog("피버타임 끝.................");
+        
+        // 그림자 없애기
+        ((CCSprite*)spriteClass->FindSpriteByTag(-2))->setOpacity(255);
+        if (myInfo->GetActiveFairyId() > 0)
+            fairyShadow->setOpacity(255);
+        
+        if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
+        {
+            volumeCnt = 0;
+            if (!isInGamePause)
+                sound->PlayBackgroundInGameSound(2);
+        }
     }
 }
 
 void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
 {
-    sender->removeFromParentAndCleanup(true); // pBlackOpen 제거
+    if (sender != NULL)
+        sender->removeFromParentAndCleanup(true); // pBlackOpen 제거
     
-    sound->PlayVoice(VOICE_READY);
-
-    readySprite = CCSprite::createWithSpriteFrameName("letter_ready.png");
-    readySprite->setAnchorPoint(ccp(0.5, 0.5));
-    readySprite->setPosition(ccp(m_winSize.width/2+20, vo.y+tbSize.height+boardSize.height+120+180));
-    readySprite->setScale(1.2f);
-    readySprite->setOpacity(0);
-    this->addChild(readySprite, 5000);
-
-    CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(0.8f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::Ready_C), NULL), NULL);
-    readySprite->runAction(action);
+    // 정령 튜토리얼을 실행해야 한다면, 그것부터!
+    CCLog("spirit_scid = %d", spirit_scid);
+    CCLog("client data = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("spirit_tutorial", false));
+    if (spirit_scid != -1 && !CCUserDefault::sharedUserDefault()->getBoolForKey("spirit_tutorial", false))
+    {
+        CCPoint p;
+        if (spirit_scid == 23)
+        {
+            spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_fire.png");
+            p = SetTouch8Position(COLUMN_COUNT-1, 0);
+            balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+            balloon->setAnchorPoint(ccp(1, 0));
+            balloon->setPosition(ccp(m_winSize.width-10, p.y));
+            ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n사랑의 불꽃으로 붉은 피스를 퍼뜨릴 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
+        }
+        else if (spirit_scid == 13)
+        {
+            spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_water.png");
+            p = SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1);
+            balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+            balloon->setAnchorPoint(ccp(1, 0));
+            balloon->setPosition(ccp(m_winSize.width-10, p.y));
+            ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n흰색/노란색 피스를 파란 피스로 바꿀 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
+        }
+        else if (spirit_scid == 33)
+        {
+            spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_land.png");
+            p = SetTouch8Position(0, ROW_COUNT-1);
+            balloon = CCScale9Sprite::create("images/tutorial_balloon.png");
+            balloon->setAnchorPoint(ccp(0, 0));
+            balloon->setPosition(ccp(10, p.y));
+            ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n초록색 피스를 모을 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
+        }
+        spirit_sp->setPosition(p);
+        this->addChild(spirit_sp, 100);
+        
+        balloon->setContentSize(CCSize(650, 240));
+        this->addChild(balloon, 100);
+        ball->setPosition(ccp(650/2, 240/2+30));
+        ball->setColor(ccc3(255,255,255));
+        balloon->addChild(ball, 101);
+        
+        CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+        balloon->runAction( CCRepeatForever::create(action) );
+    }
+    
+    else // 게임 준비
+    {
+        //for (int i = 0 ; i < spriteClassInfo->spriteObj.size(); i++)
+        //    spriteClassInfo->SetOpacity(i, 255);
+        
+        
+        sound->PlayVoice(VOICE_READY);
+        
+        readySprite = CCSprite::createWithSpriteFrameName("letter_ready.png");
+        readySprite->setAnchorPoint(ccp(0.5, 0.5));
+        readySprite->setPosition(ccp(m_winSize.width/2+20, vo.y+tbSize.height+boardSize.height+120+180));
+        readySprite->setScale(1.2f);
+        readySprite->setOpacity(0);
+        this->addChild(readySprite, 5000);
+        
+        CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(0.8f), CCCallFuncND::create(this, callfuncND_selector(Puzzle::Ready_C), NULL), NULL);
+        readySprite->runAction(action);
+    }
 }
 void Puzzle::Ready_C(CCNode* sender, void* p)
 {
@@ -1290,13 +1418,15 @@ void Puzzle::ReadyCallback(CCNode* sender, void* pointer)
     // 배경음 재생
     if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
     {
+        volumeCnt = 10;
         if (!isInGamePause)
-            sound->PlayBackgroundInGameSound();
+            sound->PlayBackgroundInGameSound(0);
     }
     
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::UpdateTimer), 0.1f);
     ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::HintTimer), 0.1f);
-    ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::ChangeAnimFairy), 0.1f);
+    if (myInfo->GetActiveFairyId() > 0)
+        ((Puzzle*)pointer)->schedule(schedule_selector(Puzzle::ChangeAnimFairy), 0.1f);
 }
 
 void Puzzle::SetTimer()
@@ -1305,7 +1435,7 @@ void Puzzle::SetTimer()
     CCPoint p = timerbar->getPosition();
     CCSize s = timerbar->getContentSize();
     
-    feverRemainTime = 0;
+    //feverRemainTime = 0;
     
     iTimer = 1000 * PUZZLE_TIME;
     if (item_time)
@@ -1322,10 +1452,6 @@ void Puzzle::SetTimer()
 
 void Puzzle::UpdateTimer(float f)
 {
-    feverRemainTime -= 100;
-    //if (isFeverTime && feverRemainTime == 0)
-    //    EndFeverTime();
-    
     //////////////////////////////////////// 시간을 정지해야 하는 상황들 ////////////////////////////////////
     // 피스 renew 중, Pause 상태, 액티브 스킬 발동 중, 게임이 끝났을 때
     if (isRenewing || isInGamePause || m_iSkillSP > 0 || isGameOver)
@@ -1358,15 +1484,9 @@ void Puzzle::UpdateTimer(float f)
     timerClip->setPosition(ccp(tp.x-delta, tp.y));
     timerLayer->setPosition(ccp(tl.x+delta, tl.y)); // timer bar
     
-    /*
-    // 시간을 얼리다 발동!
-    if (iTimer == skill->W7_GetSlotTime()*1000)
-    {
-        CCLog("시간을 얼리다!!!!!!");
-        bFreezeFlag = true;
-        skill->W7_IncreaseSlotIdx();
-    }
-    */
+
+    if (volumeCnt < 10) // 1초동안 소리를 서서히 높인다.
+        sound->GainBackgroundMusicVolume(++volumeCnt);
     
     if (iTimer > 5000)
     {
@@ -1424,11 +1544,7 @@ void Puzzle::UpdateTimer(float f)
         if (iTimer == 0) // game over
         {
             isGameOver = true;
-            
-            this->unschedule(schedule_selector(Puzzle::UpdateTimer));
-            this->unschedule(schedule_selector(Puzzle::HintTimer));
-            this->unschedule(schedule_selector(Puzzle::ComboTimer));;
-            this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
+            isKeybackTouched = true;
             if (isFeverTime)
             {
                 this->unschedule(schedule_selector(Puzzle::FeverTimer));
@@ -1436,9 +1552,18 @@ void Puzzle::UpdateTimer(float f)
                 iFeverCombo = 0;
                 isFeverTime = false;
             }
+            this->unschedule(schedule_selector(Puzzle::UpdateTimer));
+            this->unschedule(schedule_selector(Puzzle::HintTimer));
+            this->unschedule(schedule_selector(Puzzle::ComboTimer));;
+            if (myInfo->GetActiveFairyId() > 0)
+                this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
             this->setTouchEnabled(false);
             this->setKeypadEnabled(false);
             sound->StopBackgroundSound();
+            
+            // hint 취소
+            if (isHintShown)
+                StopAllActionsAtPieces();
             
             // 그리고 있던 것들 모두 취소
             CancelDrawing();
@@ -1454,12 +1579,12 @@ void Puzzle::UpdateTimer(float f)
             overBg->setPosition(ccp(0, 0));
             overBg->setColor(ccc3(0,0,0));
             overBg->setOpacity(220);
-            this->addChild(overBg, 5000);
+            this->addChild(overBg, 198);
             
             CCSprite* sprite = CCSprite::createWithSpriteFrameName("icon_gameover.png");
             sprite->setAnchorPoint(ccp(0.5, 0.5));
             sprite->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
-            this->addChild(sprite, 5000);
+            this->addChild(sprite, 199);
             
             CCActionInterval* action = CCSequence::create(CCDelayTime::create(2.0f), CCCallFuncND::create((CCObject*)Depth::GetCurPointer(), callfuncND_selector(Puzzle::GameOver_Callback), this), NULL);
             sprite->runAction(action);
@@ -1483,16 +1608,12 @@ void Puzzle::UpdateTimer(float f)
         CCLog("요정이 연결피스 하나 생성하라고 함");
         iNumOfFairySkillStart++;
     }
-    //else if (iTimer % 15000 == 0 && IsItemStaff()) // 45, 30, 15초
-    //CCLog("staff(%d) : %d, (%d %% %d)", IsItemStaff(), iNumOfStaffItemRemained, (PUZZLE_TIME*1000-iTimer), Time100(totalCnt_staff));
     if (IsItemStaff() && iNumOfStaffItemRemained > 0 && (PUZZLE_TIME*1000 - iTimer) % Time100(totalCnt_staff) == 0)
     {
         CCLog("staff 아이템 +1 , (%d)", (PUZZLE_TIME*1000-iTimer));
         iNumOfStaffItemRemained--;
         iNumOfStaffItemNeeded++;
     }
-    //else if (IsItemPaint() && (iTimer + 5000) % 20000 == 0) // 55, 35, 15초
-    //CCLog("staff(%d) : %d, (%d %% %d)", IsItemPaint(), iNumOfPaintItemRemained, (PUZZLE_TIME*1000-iTimer), Time100(totalCnt_paint));
     if (IsItemPaint() && iNumOfPaintItemRemained > 0 && (PUZZLE_TIME*1000 - iTimer) % Time100(totalCnt_paint) == 0)
     {
         CCLog("paint 아이템 +1 , (%d)", (PUZZLE_TIME*1000-iTimer));
@@ -1521,7 +1642,7 @@ void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
     CCSprite* sprite = CCSprite::createWithSpriteFrameName("icon_bonustime.png");
     sprite->setAnchorPoint(ccp(0.5, 0.5));
     sprite->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
-    this->addChild(sprite, 5000);
+    this->addChild(sprite, 199);
     
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create((Puzzle*)pointer, callfuncND_selector(Puzzle::BonusTime), pointer), NULL);
     sprite->runAction(action);
@@ -1529,14 +1650,14 @@ void Puzzle::GameOver_Callback(CCNode* sender, void* pointer)
     // sound
     sound->PlayVoice(VOICE_BONUS);
     
-    bonusTimeState = -1;
+    bonusTimeState = -2;
 }
 
 void Puzzle::BonusTime(CCNode* sender, void* pointer)
 {
     Puzzle* pThis = (Puzzle*)pointer;
     
-    if (pThis->bonusTimeState == -1)
+    if (pThis->bonusTimeState == -2)
     {
         pThis->overBg->removeFromParentAndCleanup(true);
         sender->removeFromParentAndCleanup(true);
@@ -1548,24 +1669,20 @@ void Puzzle::BonusTime(CCNode* sender, void* pointer)
     // 기본스킬마법??? + 남은아이템 + 떡갈나무지팡이 + 끈질긴생명력 순서로 실행
     switch (pThis->bonusTimeState)
     {
-        case 0:
-            // item (paint)
-            //pThis->globalType[0] = ITEM_PAINT_RED;
+        case -1:
+            bonusBombCnt = rand()%5 + 3;
+            if (skill->IsSkillNumberExists(18)) // 떡갈나무지팡이 스킬 발동
+                skill->Invoke(18, NULL);
+            pThis->skill->BonusBomb(0); // 보너스 폭발 (3~7회 랜덤 덩어리) => 떡갈나무지팡이 발동한 경우 별사탕 이펙트도 같이!
+            break;
+        case 0: // item (paint)
             pThis->skill->LastItems(pThis->bonusTimeState, 0);
             break;
-        case 1:
-            // item (staff)
-            //pThis->globalType[0] = ITEM_STAFF;
+        case 1: // item (staff)
             pThis->skill->LastItems(pThis->bonusTimeState, 0);
             break;
-        case 2: // 떡갈나무 지팡이
-            if (pThis->skill->IsSkillNumberExists(18))
-                pThis->skill->Invoke(18, NULL);
-            else
-                pThis->BonusTime(NULL, pThis);
-            break;
-        case 3: // 끈질긴 생명력
-            if (addedPotion)
+        case 2: // 끈질긴 생명력
+            if (addedPotion > 0)
                 pThis->skill->Invoke(22, NULL);
             else
                 pThis->GameEnd(NULL, pThis);
@@ -1581,32 +1698,38 @@ void Puzzle::SetGlobalType(int queue_pos, int pieceType)
     globalType[queue_pos] = pieceType;
 }
 
-void Puzzle::StartFeverTime()
+void Puzzle::StartFeverTime() // feverTime 시작 세팅
 {
     if (!isFeverTime && !isGameOver && !isInGamePause)
     {
+        if (CCUserDefault::sharedUserDefault()->getBoolForKey("setting_option_1", true))
+        {
+            volumeCnt = 10;
+            if (!isInGamePause)
+                sound->PlayBackgroundInGameSound(1);
+        }
+        
         CCLog("피버타임 시작!!!");
         ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->stopAllActions();
         int offset = 20;
         ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->setPosition(ccp(m_winSize.width-170, vo.y+vs.height-45+2-offset/2-7 ));
         
+        // 그림자 없애기
+        ((CCSprite*)spriteClass->FindSpriteByTag(-2))->setOpacity(0);
+        if (myInfo->GetActiveFairyId() > 0)
+            fairyShadow->setOpacity(0);
+        
         effect->PlayEffect_FeverBg();
         
         iFeverCombo = 0;
-        iFeverTime = FEVER_TIME * 1000;
+        iFeverTime = FEVER_TIME_MAX;
         isFeverTime = true;
         this->schedule(schedule_selector(Puzzle::FeverTimer), 0.1f);
     }
-    
-    /*
-    feverRemainTime = 1000 * 5;
-    isFeverTime = true;
-    forFeverTimeCnt = 0;
-    skill->FT_StartEnd(touch_cnt%QUEUE_CNT);
-    */
 }
 void Puzzle::EndFeverTime()
 {
+    /*
     if (!skill->IsFTBombing())
     {
     isFeverTime = false;
@@ -1615,6 +1738,7 @@ void Puzzle::EndFeverTime()
     feverRemainTime = 0;
     forFeverTimeCnt = 0;
     }
+     */
 }
 bool Puzzle::IsFeverTime()
 {
@@ -1634,6 +1758,10 @@ int Puzzle::GetFeverRemainTime()
 // 연결피스 하나 생성하기 by 요정
 void Puzzle::FairySkillAction()
 {
+    // 요정이 없으면 행하지 않는다.
+    if (myInfo->GetActiveFairyId() <= 0)
+        return;
+    
     std::vector<CCPoint> pos;
     pos.clear();
     
@@ -1815,13 +1943,19 @@ void Puzzle::PauseGame()
     isInGamePause = true;
     
     // '레디'->'고' 사이가 문제가 되기 때문에, 그 액션을 pause 시키자.
-    CCDirector::sharedDirector()->getActionManager()->pauseTarget(readySprite);
+    //CCDirector::sharedDirector()->getActionManager()->pauseTarget(readySprite);
+    
+    runningActions = CCDirector::sharedDirector()->getActionManager()->pauseAllRunningActions();
+    runningActions->retain();
+    CCLog("러닝액션 개수 : %d", runningActions->count());
     
     sound->PauseBackgroundInGameSound();
     sound->PauseAllEffects();
     
     CancelDrawing();
     
+    if (isHintShown)
+        StopAllActionsAtPieces();
     // 정령 멈추기
     if (skill->IsSpiritAlive(0))
         effect->GetSpirit(0)->pauseSchedulerAndActions();
@@ -1863,11 +1997,27 @@ void Puzzle::StopAllActionsAtPieces() // 힌트액션 초기화를 위해~!
 
 bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //if (isGameOver | !isGameStarted)
     if (isGameOver)
         return false;
     CCPoint point = pTouch->getLocation();
-    //CCLog("Puzzle :: %d , %d", (int)point.x, (int)point.y);
+    
+    if (spirit_sp != NULL) // 정령 튜토리얼 중이었으면 튜토리얼을 모두 지우고, '레디~고'로 넘어간다.
+    {
+        if (!spirit_sp->boundingBox().containsPoint(point))
+            return false;
+        
+        spirit_sp->removeFromParentAndCleanup(true);
+        ball->removeFromParentAndCleanup(true);
+        balloon->removeFromParentAndCleanup(true);
+        spirit_sp = NULL;
+        ball = NULL;
+        balloon = NULL;
+        
+        spirit_scid = -1;
+        CCUserDefault::sharedUserDefault()->setBoolForKey("spirit_tutorial", true);
+        
+        ReadyAndStart(NULL, this);
+    }
     
 
     // 보드판과 상관없는 것들 (lock에 제한받지 않는 것들)
@@ -1921,11 +2071,11 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             else if (x == COLUMN_COUNT-1 && y == 0 && !skill->IsSpiritAlive(0)) // 불의 정령 (오른쪽 아래)
                 return (m_bTouchStarted = false);
             
-            m_bTouchStarted = false;
-            
             // semaphore 1 증가 + 실행상태 lock 걸기
             m_iSpiritSP++;
             m_bIsSpiritExecuted = true;
+            
+            m_bTouchStarted = false;
             
             // 각 정령에 관련된 스킬 발동!
             if (x == 0 && y == ROW_COUNT-1) // 땅
@@ -1968,6 +2118,8 @@ bool Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 m_bLockP8[x][y]--; // lock 다시 풀기
             return (m_bTouchStarted = false);
         }
+        
+        effect->ShowItemPaintArrow(x, y); // 화살표 나타내기
         
         item_dx = -999;
         item_dy = -999;
@@ -2065,7 +2217,7 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
             {
                 item_dx = dx;
                 item_dy = dy;
-                //CCLog("아이템 델타값 : %d %d", item_dx, item_dy);
+                effect->ChangeItemPaintArrow(item_dx, item_dy);
             }
             return;
         }
@@ -2138,10 +2290,18 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
                 if (iCombo > 0 && iComboTimer < MAX_COMBO_TIME)
                     iComboTimer = 0;
                 
-                if (m_bIsCycle[touch_cnt%QUEUE_CNT])
+                if (m_bIsCycle[touch_cnt%QUEUE_CNT]) // cycle을 표시해주는 액션이 들어간다.
                 {
-                    // cycle을 표시해주는 액션이 들어간다.
                     sound->PlayPieceClick(piece8xy[touch_cnt%QUEUE_CNT].size()+1);
+                    sound->PlayCycle();
+                    
+                    CCSprite* sp = CCSprite::create("images/cycle.png");
+                    CCPoint p = SetTouch8Position(x, y);
+                    sp->setPosition(ccp(p.x, p.y-100));
+                    sp->setOpacity(0);
+                    this->addChild(sp, 30);
+                    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.6f, ccp(0, 50)), CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), NULL), CCCallFuncND::create(this, callfuncND_selector(Puzzle::Cycle_Callback), this), NULL );
+                    sp->runAction(action);
                 }
                 else
                 {
@@ -2175,6 +2335,11 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
 	}
+}
+
+void Puzzle::Cycle_Callback(CCNode* sender, void* p)
+{
+    sender->removeFromParentAndCleanup(true);
 }
 
 void Puzzle::CheckUselessDiaPieces()
@@ -2234,6 +2399,8 @@ void Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
     if (m_bTouchStarted)
     {
+        effect->RemoveItemPaintArrow();  // 화살표 없앤다.
+        
         // 아이템을 선택했었다면, 아이템을 행한다. (페인트, 스태프 아이템)
         if ((item_dx != -999 && item_dy != -999) && !(item_dx == 0 && item_dy == 0))
         {
@@ -2410,6 +2577,10 @@ void Puzzle::AddPiecesByFeverTime(std::vector<CCPoint> &p, int queue_pos)
             if (x < 0 || y < 0 || x > COLUMN_COUNT-1 || y > ROW_COUNT-1)
                 continue;
             
+            // lock 걸린 피스도 제외한다. (직전 한붓그리기에서 터지고 아직 안떨어진 것이기에)
+            if (m_bLockP8[x][y])
+                continue;
+            
             pieceType = puzzleP8set->GetType(x, y);
             if (!(pieceType >= PIECE_RED && pieceType <= PIECE_WHITE)) // 일반 피스가 아니면 제외한다.
                 continue;
@@ -2528,16 +2699,14 @@ void Puzzle::InvokeSkills(int queue_pos)
             m_iNextState[queue_pos] = SKILL_DOUBLESIX; // 그게 아니면 바로 6개이상*2 state로 넘어가자.
         }
         
-        //if (m_iSkillSP == 0) // 스킬 semaphore가 1 이상이면, 굳이 터치lock을 할 필요가 없다. (전체 lock이 되어있으니까)
-            Lock(queue_pos);
+        Lock(queue_pos);
+        Bomb(queue_pos, piece8xy[queue_pos]);
         
         // 추가점수 적용되었다면 실행한 후, 한붓그리기 한 것을 터뜨리기
         skill->Invoke(0, queue_pos); skill->Invoke(8, queue_pos); skill->Invoke(16, queue_pos); // 추가점수
         
         // 10개이상제거시추가점수(F3), //10개이상제거시추가별사탕(E4)
         skill->Invoke(2, queue_pos); //skill->Invoke(19, queue_pos);
-        
-        Bomb(queue_pos, piece8xy[queue_pos]);
     }
     else if (m_iState[queue_pos] == SKILL_CYCLE) // 사이클 주변부 터뜨리기
     {
@@ -2591,7 +2760,8 @@ void Puzzle::InvokeSkills(int queue_pos)
             skill->Invoke(6, queue_pos);
         }
         
-        m_iState[queue_pos] = SKILL_DONE;
+        m_iNextState[queue_pos] = SKILL_DONE;
+        m_iState[queue_pos] = m_iNextState[queue_pos];
         InvokeSkills(queue_pos);
     }
     
@@ -2619,20 +2789,6 @@ void Puzzle::InvokeSkills(int queue_pos)
         iTouchRound--;
         
         m_bIsItemPossible = true;
-        
-        /*
-        // 피버타임 발동 검사
-        if (magicCnt >= feverStartCnt)
-        {
-            CCLog("피버타임 시작!!!");
-            effect->PlayEffect_FeverBg();
-            
-            magicCnt = 0;
-            iFeverTime = FEVER_TIME * 1000;
-            isFeverTime = true;
-            this->schedule(schedule_selector(Puzzle::FeverTimer), 0.1f);
-        }
-        */
     }
 }
 
@@ -2806,16 +2962,19 @@ void Puzzle::UnLockEach(int x, int y)
 {
     m_bLockP8[x][y]--;
 }
+bool Puzzle::IsLocked(int x, int y)
+{
+    return m_bLockP8[x][y];
+}
 
 void Puzzle::RemoveConnectPieces(std::vector<CCPoint> pos)
 {
     // 연결피스를 삭제한다. (단, 연결피스 기준으로 두 대각선 중 한 쌍의 피스가 터지면 없애도록 한다)
-    
+    /*
     // 1) 변수 초기화
     for (int x = 0; x < COLUMN_COUNT ; x++)
         for (int y = 0 ; y < ROW_COUNT ; y++)
             P8Bombed[x][y] = false;
-    //P8Bombed[0][0] = P8Bombed[0][ROW_COUNT-1] = P8Bombed[COLUMN_COUNT-1][0] = P8Bombed[COLUMN_COUNT-1][ROW_COUNT-1] = true;
     for (int i = 0 ; i < pos.size() ; i++)
         P8Bombed[(int)pos[i].x][(int)pos[i].y] = true;
     
@@ -2825,37 +2984,32 @@ void Puzzle::RemoveConnectPieces(std::vector<CCPoint> pos)
         for (int y = 1 ; y < ROW_COUNT ; y++)
         {
             if (P8Bombed[x-1][y] || P8Bombed[x][y-1] || P8Bombed[x-1][y-1] || P8Bombed[x][y])
-                //if (!puzzleP4set->IsRemoved(x, y))
                 puzzleP4set->RemoveChild(x, y);
         }
     }
-    /*
-    for (int x = 1; x < COLUMN_COUNT ; x++)
-    {
-        for (int y = 1 ; y < ROW_COUNT ; y++)
-        {
-            if ( (P8Bombed[x-1][y] && P8Bombed[x][y-1]) || (P8Bombed[x-1][y-1] && P8Bombed[x][y]) )
-                puzzleP4set->RemoveChild(x, y);
-        }
-    }
-    */
+     */
+    for (int i = 0 ; i < pos.size() ; i++)
+        RemoveConnectPiecesXY((int)pos[i].x, (int)pos[i].y);
 }
 void Puzzle::CreateConnectPieces()
 {
+    // 지워진 연결피스를 새로 만든다
     for (int x = 1; x < COLUMN_COUNT ; x++)
     {
         for (int y = 1 ; y < ROW_COUNT ; y++)
         {
             if (puzzleP4set->IsRemoved(x, y))
             {
-                puzzleP4set->CreatePiece(x, y);
-                puzzleP4set->AddChild(x, y);
+                if (puzzleP4set->CreatePiece(x, y))
+                    puzzleP4set->AddChild(x, y);
             }
         }
     }
 }
+/*
 void Puzzle::ReplaceConnectPieces()
 {
+    // 모든 연결피스를 새로 만든다.
     for (int x = 1 ; x < COLUMN_COUNT ; x++)
     {
         for (int y = 1 ; y < ROW_COUNT ; y++)
@@ -2863,57 +3017,43 @@ void Puzzle::ReplaceConnectPieces()
             puzzleP4set->RemoveChild(x, y);
             puzzleP4set->CreatePiece(x, y);
             puzzleP4set->AddChild(x, y);
-            //CCLog("%d %d : %d", x, y, puzzleP4set->GetObject(x, y)->IsRemoved());
         }
     }
-    
-    
+}
+*/
+void Puzzle::RemoveConnectPiecesXY(int x, int y)
+{
+    if (x > 0 && y > 0 && x < COLUMN_COUNT && y < ROW_COUNT)
+        puzzleP4set->RemoveChild(x, y);
+    if (x+1 > 0 && y > 0 && x+1 < COLUMN_COUNT && y < ROW_COUNT)
+        puzzleP4set->RemoveChild(x+1, y);
+    if (x > 0 && y+1 > 0 && x < COLUMN_COUNT && y+1 < ROW_COUNT)
+        puzzleP4set->RemoveChild(x, y+1);
+    if (x+1 > 0 && y+1 > 0 && x+1 < COLUMN_COUNT && y+1 < ROW_COUNT)
+        puzzleP4set->RemoveChild(x+1, y+1);
 }
 
-void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)//, int F8_idx)
+
+void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
 {
     int original_bomb_size = bomb_pos.size();
     if (feverBombOrderCnt[(int)queue_pos] == 0)
     {
+        m_bIsItemPossible = false;
         bomb_pos = posForFeverTime[queue_pos];
     }
     
     CCLog("Bomb(%d) start : size = %d", queue_pos, (int)bomb_pos.size());
     
-    int x, y;
-    
-    /*
-    // 연결피스를 삭제한다. (단, 연결피스 기준으로 두 대각선 중 한 쌍의 피스가 터지면 없애도록 한다)
-    // 1) 변수 초기화
-    for (int x = 0; x < COLUMN_COUNT ; x++)
-        for (int y = 0 ; y < ROW_COUNT ; y++)
-            P8Bombed[x][y] = false;
-    P8Bombed[0][0] = P8Bombed[0][ROW_COUNT-1] = P8Bombed[COLUMN_COUNT-1][0] = P8Bombed[COLUMN_COUNT-1][ROW_COUNT-1] = true;
-    for (int i = 0 ; i < bomb_pos.size() ; i++)
-        P8Bombed[(int)bomb_pos[i].x][(int)bomb_pos[i].y] = true;
-    // 2) 검사
-    for (int x = 1; x < COLUMN_COUNT ; x++)
-    {
-        for (int y = 1 ; y < ROW_COUNT ; y++)
-        {
-            if ( (P8Bombed[x-1][y] && P8Bombed[x][y-1]) || (P8Bombed[x-1][y-1] && P8Bombed[x][y]) )
-                puzzleP4set->RemoveChild(x, y);
-        }
-    }
-     */
-    
+    // 연결피스를 삭제한다.
     RemoveConnectPieces(bomb_pos);
+    
   
-    // sound bomb
+    // 폭발 사운드
     if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(0, queue_pos) && globalType[queue_pos] == PIECE_RED)
-        sound->PlaySkillSound(0); //sound->PlayVoice(VOICE_EIT2);
-    //else if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(8, queue_pos) && globalType[queue_pos] == PIECE_BLUE)
-    //    sound->PlaySkillSound(8); //sound->PlayVoice(VOICE_EIT3);
+        sound->PlaySkillSound(0);
     else if (skill->W8_IsActive())
         sound->PlayDesignatedSound(153);
-    //else if (m_iState[queue_pos] == SKILL_FINAL && skill->IsApplied(7, queue_pos) && globalType[queue_pos] == PIECE_RED) // 붉.용.숨
-    //else if (F8_idx != -1)
-    //    ;
     else
         sound->PlayBomb();
     
@@ -2922,7 +3062,7 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)//, int F8_idx)
     effect->PlayEffect(-100, NULL, bomb_pos);
     
     // 피버타임 이펙트 적용 (마법진)
-    if (feverBombOrderCnt[(int)queue_pos] == 0)
+    if (feverBombOrderCnt[(int)queue_pos] == 0 && bonusTimeState == -999)
     {
         int size = bomb_pos.size();
         if (m_bIsCycle[(int)queue_pos])
@@ -2932,6 +3072,7 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)//, int F8_idx)
     }
     
     // 8각형들을 터뜨린다.
+    int x, y;
     m_iBombCallbackCnt[queue_pos] = 0;
     m_iBombCallbackCntMax[queue_pos] = bomb_pos.size();
     for (int i = 0 ; i < bomb_pos.size() ; i++)
@@ -2943,15 +3084,16 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)//, int F8_idx)
         feverBombOrder[queue_pos][x][y] = 0;
         
         // 폭파 개수 갱신
-        UpdatePieceBombCnt(puzzleP8set->GetType(x, y), 1);
+        if (!skill->F8_IsReady()) // 붉은용의숨결 시작 떄 싹쓸이하는데, 이 때는 개수를 갱신하면 안 된다.
+            UpdatePieceBombCnt(puzzleP8set->GetType(x, y), 1);
         
         // 폭파 시간
         float bombTime = 0.15f;
-        //if (feverBombOrderCnt[queue_pos] >= 0)
-        //    bombTime = 0.40f;
-        if (m_iState[queue_pos] == SKILL_CYCLE && (globalType[queue_pos] == PIECE_RED || globalType[queue_pos] == PIECE_BLUE))
+        if (bonusTimeState == 0 || bonusTimeState == -1) // 보너스폭발 중이면 시간을 2배 늦춘다.
+            bombTime = 0.3f;
+        else if (m_iState[queue_pos] == SKILL_CYCLE && (globalType[queue_pos] == PIECE_RED || globalType[queue_pos] == PIECE_BLUE))
             bombTime = 0.60f;
-
+        
         
         float delayTime = 0.0f;
         if (feverBombOrderCnt[queue_pos] >= 0)
@@ -2988,27 +3130,33 @@ void Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)//, int F8_idx)
         spriteP8[x][y]->runAction(action);
     }
 
-    
-    /*
-    if (!skill->W8_IsActive()) // 여신일 때는 별사탕 움직임이 보이지 않게.
-    {
-        // show starcandy
-        effect->ShowStarCandy(bomb_pos);
-    }
-    */
-
     // 용의숨결 시작할 때 전체 폭발은 점수와 관련없으니 무시하자.
     if (skill->F8_IsReady())
         return;
+    
+    if (bonusTimeState == -1) // 게임이 끝났고, 보너스 폭발
+    {
+        // update score (피스당 10*MP)
+        UpdateScore(1, original_bomb_size * 10*myInfo->GetMPTotal());
+        
+        if (skill->IsSkillNumberExists(18))
+        {
+            //CCLog("떡갈나무 지팡이!!! 추가 별사탕 : %d", original_bomb_size*5);
+            UpdateStarCandy(1, original_bomb_size*5);
+            effect->ShowStarCandyAll(bomb_pos);
+        }
+    }
         
     // 피버타임이 아니거나, 피버타임이라도 첫 폭발일 때만 
-    if (!isFeverTime || (isFeverTime && feverBombOrderCnt[(int)queue_pos] == 0))
+    else if (!isFeverTime || (isFeverTime && feverBombOrderCnt[(int)queue_pos] == 0))
     {
-        // update score
-        UpdateScore(0, original_bomb_size);
+        // update score (1번 스킬 발동 시에는 하면 안 된다)
+        if (!skill->IsApplied(0, (int)queue_pos) && !skill->IsApplied(8, (int)queue_pos) && !skill->IsApplied(16, (int)queue_pos))
+            UpdateScore(0, original_bomb_size);
     
         // update starcandy
         UpdateStarCandy(0, original_bomb_size);
+        effect->ShowStarCandy(m_bIsCycle[queue_pos], bomb_pos);
 
         // update combo
         UpdateCombo();
@@ -3030,10 +3178,22 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
     
     if (m_iBombCallbackCnt[(int)queue_pos] == m_iBombCallbackCntMax[(int)queue_pos])
     {
-        if (feverBombOrderCnt[(int)queue_pos] >= 0) // 피버타임 때의 순차폭발이 진행 중일 때
+        if (bonusTimeState == -1) // 보너스타임 폭발
+        {
+            std::vector<CCPoint> temp = skill->GetResult();
+            for (int i = 0 ; i < temp.size() ; i++)
+            {
+                int x = (int)temp[i].x;
+                int y = (int)temp[i].y;
+                puzzleP8set->RemoveChild(x, y);
+                spriteP8[x][y] = NULL;
+            }
+            temp.clear();
+        }
+        else if (feverBombOrderCnt[(int)queue_pos] >= 0) // 피버타임 때의 순차폭발이 진행 중일 때
         {
             feverBombOrderCnt[(int)queue_pos]++;
-            CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
+            //CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
             
             std::vector<CCPoint> next_bomb_pos;
             while (feverBombOrderCnt[(int)queue_pos] <= feverBombOrderMax[(int)queue_pos])
@@ -3050,15 +3210,15 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                     feverBombOrderCnt[(int)queue_pos]++;
                 else
                     break;
-                CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
+                //CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
             }
             
-            CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
+            //CCLog("callback FEVER : %d , %d", feverBombOrderCnt[(int)queue_pos], feverBombOrderMax[(int)queue_pos]);
             // 다음이 마지막 순차폭발이면 미리 flag를 바꿔 놓는다. (callback 진행하도록)
             if (feverBombOrderCnt[(int)queue_pos] >= feverBombOrderMax[(int)queue_pos])
                 feverBombOrderCnt[(int)queue_pos] = -1;
             
-            CCLog("callback FEVER : done ? (%d)", feverBombOrderCnt[(int)queue_pos]);
+            //CCLog("callback FEVER : done ? (%d)", feverBombOrderCnt[(int)queue_pos]);
             
             // 터뜨릴 피스가 없는데 순차폭발 횟수가 이미 다 끝났다면? 바로 fallingCallback 진행해서 다음으로 넘어간다.
             if ((int)next_bomb_pos.size() == 0 && feverBombOrderCnt[(int)queue_pos] == -1)
@@ -3071,8 +3231,8 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                     spriteP8[x][y] = NULL;
                 }
                 
-                if (!isFeverRound[(int)queue_pos])
-                {
+                //if (!isFeverRound[(int)queue_pos])
+                //{
                     if (m_iNextState[(int)queue_pos] == SKILL_CYCLE) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
                     {
                         m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
@@ -3082,9 +3242,9 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                         
                         return; // drop을 하지 않고 바로 터뜨려야 하므로, Falling()으로 넘어가지 않는다.
                     }
-                    else
-                        piece8xy[(int)queue_pos].clear();
-                }
+                    //else
+                    //    piece8xy[(int)queue_pos].clear();
+                //}
                 piece8xy[(int)queue_pos].clear();
             }
             else
@@ -3132,8 +3292,8 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                 spriteP8[x][y] = NULL;
             }
             
-            if (!isFeverRound[(int)queue_pos])
-            {
+            //if (!isFeverRound[(int)queue_pos])
+            //{
                 if (m_iNextState[(int)queue_pos] == SKILL_CYCLE) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
                 {
                     m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
@@ -3143,9 +3303,9 @@ void Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                 
                     return; // drop을 하지 않고 바로 터뜨려야 하므로, Falling()으로 넘어가지 않는다.
                 }
-                else
-                    piece8xy[(int)queue_pos].clear();
-            }
+                //else
+                //    piece8xy[(int)queue_pos].clear();
+            //}
             piece8xy[(int)queue_pos].clear();
         }
         else if (m_iState[(int)queue_pos] == SKILL_DOUBLESIX)
@@ -3255,8 +3415,10 @@ void Puzzle::Falling(int queue_pos, int xx)
         }
     }
     
+    // 실제로 떨어지게 한다. (action)
 	for (int x = 0 ; x < COLUMN_COUNT ; x++)
 	{
+        int miny = 999;
         for (int y = 0 ; y < ROW_COUNT ; y++)
 		{
             // board의 모서리에 있는 4개는 취급하지 않는다.
@@ -3266,6 +3428,8 @@ void Puzzle::Falling(int queue_pos, int xx)
             
 			if (spriteP8[x][y] == NULL)
 			{
+                miny = std::min(miny, y);
+                
                 int pos;
                 int end = (x == 0 || x == COLUMN_COUNT-1) ? ROW_COUNT-1 : ROW_COUNT;
                 for (pos = y ; pos < end ; pos++)
@@ -3277,7 +3441,6 @@ void Puzzle::Falling(int queue_pos, int xx)
                 if (pos >= end)
                 {
                     // 더 이상 내려야 할 8각형이 없는 경우 (새로 만들어서 drop시킨다)
-                    
                     if (!isGameOver && iNumOfPaintItemNeeded > 0 && y+1 == end) // paint item 필요할 때
                     {
                         iNumOfPaintItemNeeded--;
@@ -3307,6 +3470,14 @@ void Puzzle::Falling(int queue_pos, int xx)
                 }
 			}
 		}
+        
+        // 떨어지는 모든 피스의 주위 연결피스를 제거한다.
+        int maxy = (x == 0 || x == COLUMN_COUNT-1) ? ROW_COUNT-1 : ROW_COUNT;
+        //CCLog("x(%d) : %d , %d", x, miny, maxy);
+        for (int y = miny ; y < maxy ; y++)
+        {
+            RemoveConnectPiecesXY(x, y);
+        }
 	}
 }
 
@@ -3322,24 +3493,8 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
 	{
         CCLog("Falling Callback : %d", (int)queue_pos);
         // drop이 모두 끝나면, diamond들을 다시 검사해서 적절히 바꿔준다.
-        //CreateConnectPieces();
-        ReplaceConnectPieces();
-        /*
-		for (int x = 1 ; x < COLUMN_COUNT ; x++)
-        {
-            for (int y = 1 ; y < ROW_COUNT ; y++)
-            {
-                if (puzzleP4set->GetType(x, y) == CONNECTED && puzzleP4set->IsRemoved(x, y))
-                {
-                    //if (puzzleP4set->GetObject(x, y) != NULL)
-                    //    puzzleP4set->RemoveChild(x, y);
-                    //puzzleP4set->CreatePiece(x, y, puzzleP4set->GetType(x, y));
-                    puzzleP4set->CreatePiece(x, y);
-                    puzzleP4set->AddChild(x, y);
-                }
-            }
-        }
-         */
+        CreateConnectPieces();
+        //ReplaceConnectPieces();
         
         // lock을 모두 해제한다. (semaphore를 1씩 감소시킨다)
         int x, y;
@@ -3367,8 +3522,16 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
             FairySkillAction();
         }
         
-        
-        if (bonusTimeState == 0 || bonusTimeState == 1) // 라스트 아이템 폭발
+        if (bonusTimeState == -1) // 보너스 폭발
+        {
+            FallingProcess();
+            bonusBombCnt--;
+            if (bonusBombCnt > 0)
+                skill->BonusBomb(0);
+            else
+                BonusTime(NULL, this); // 다음 보너스 스킬로 넘어가자.
+        }
+        else if (bonusTimeState == 0 || bonusTimeState == 1) // 라스트 아이템 폭발
         {
             FallingProcess();
             skill->LastItems(bonusTimeState, 0);
@@ -3476,6 +3639,8 @@ bool Puzzle::IsRenewing()
 
 void Puzzle::GameEnd(CCNode* sender, void* pointer)
 {
+    isStartGameEnd = true;
+    
     // 인포메이션 바 삭제
     spriteClassInfo->RemoveAllObjects();
     delete spriteClassInfo;
@@ -3496,12 +3661,7 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
         if (skill->GetSkillAppliedCount(i) > 0)
         {
             flag = true;
-            if (i <= 2) num = i+21;
-            else if (i < 8) num = i+20;
-            else if (i <= 10) num = i+3;
-            else if (i < 16) num = i+2;
-            else if (i <= 18) num = i+15;
-            else if (i < 24) num = i+14;
+            num = SkillInfo::ConvertedToOriginal(i);
             sprintf(temp, "using_skill_count_list[%d]=%d&", num, skill->GetSkillAppliedCount(i));
             param += temp;
         }
@@ -3537,10 +3697,10 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     
     sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
     param += temp;
-    sprintf(temp, "score=%d&", iScore);
+    sprintf(temp, "score=%d&", RealScore());
     param += temp;
-    iStarCandy = 400;
-    sprintf(temp, "starcandy=%d&", iStarCandy);
+    iStarCandy = FakeStarCandy( (int)((float)RealStarCandy() + (float)RealStarCandy()*ADD_STARCANDY_PERCENT/100.0f) );
+    sprintf(temp, "starcandy=%d&", RealStarCandy());
     param += temp;
     sprintf(temp, "combo=%d", maxCombo);
     param += temp;
@@ -3570,7 +3730,7 @@ void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
     }
     XMLStatus++;
 }
-
+/*
 void Puzzle::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
@@ -3594,7 +3754,7 @@ void Puzzle::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     
     XMLStatus++;
 }
-
+*/
 void Puzzle::XmlParseFriends(xml_document *xmlDoc)
 {
     xml_node nodeResult = xmlDoc->child("response");
@@ -3612,6 +3772,15 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
     
     else if (code == 0)
     {
+        // 친구관계에서 시간이 중요한 것들 : 포션요청남은시간, 포션보내기남은시간, 토파즈요청남은시간
+        // 여기서 지금 시간을 저장해둔다.
+        savedTime2 = time(0);
+        
+        // clear friend-list
+        for (int i = 0 ; i < friendList.size() ; i++)
+            delete friendList[i];
+        friendList.clear();
+        
         std::string kakaoId;
         std::string nickname;
         std::string imageUrl;
@@ -3631,13 +3800,6 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
         int fairyLevel;
         int skillId;
         int skillLevel;
-        
-        // clear friend-list
-        for (int i = 0 ; i < friendList.size() ; i++)
-            delete friendList[i];
-        friendList.clear();
-        
-        profileCnt = profiles.size();
         
         xml_object_range<xml_named_node_iterator> friends = nodeResult.child("friend-list").children("friend");
         for (xml_named_node_iterator it = friends.begin() ; it != friends.end() ; ++it)
@@ -3666,15 +3828,34 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
                 else if (name == "skill-level") skillLevel = ait->as_int();
             }
             
+            // nickname 너무 길면 자르자.
+            nickname = SubstrNickname(nickname);
+            
             friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
-            
-            if (ProfileSprite::GetProfile(imageUrl) == NULL) // 프로필 sprite에 모은다.
-                profiles.push_back( new ProfileSprite(imageUrl) );
         }
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
+        
+        
+        // 카카오 친구리스트에서 필요한 변수들을 집어넣는다.
+        int cnt = KakaoFriends::getInstance()->appFriends->count();
+        CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
+        std::string id;
+        for (int i = 0 ; i < friendList.size() ; i++)
+        {
+            for (int j = 0 ; j < cnt ; j++)
+            {
+                id = ((CCString*)keys->objectAtIndex(j))->getCString();
+                if (friendList[i]->GetKakaoId() == id)
+                {
+                    KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->appFriends->objectForKey(id.c_str());
+                    friendList[i]->SetKakaoVariables( f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice );
+                    break;
+                }
+            }
+        }
         
         
         // 본인이 몇 등인지 검사해서, 기존 순위보다 높으면 랭킹변동 UI를 띄운다.
@@ -3688,56 +3869,32 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
                 break;
             }
         }
-        CCLog ("IS RANK UP ? = %d", isRankUp);
+        //CCLog ("IS RANK UP ? = %d", isRankUp);
 
-        
-        // get image by url
-        char tag[5];
-        bool flag = true;
-        for (int i = 0 ; i < profiles.size() ; i++)
-        {
-            if (profiles[i]->GetProfileUrl() != "" && profiles[i]->GetProfile() == NULL)
-            {
-                flag = false;
-                // get profile image sprite from URL
-                CCHttpRequest* req = new CCHttpRequest();
-                req->setUrl(profiles[i]->GetProfileUrl().c_str());
-                req->setRequestType(CCHttpRequest::kHttpGet);
-                req->setResponseCallback(this, httpresponse_selector(Puzzle::onHttpRequestCompletedNoEncrypt));
-                sprintf(tag, "%d", i);
-                req->setTag(tag);
-                CCHttpClient::getInstance()->send(req);
-                req->release();
-            }
-        }
-    
-        
-        // 새로 받을 프로필 이미지가 없다면, 바로 게임결과 화면으로 넘어가자.
-        if (flag)
-        {
-            Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
-        }
-    }
-}
-
-void Puzzle::ParseProfileImage(char* data, int size, int idx)
-{
-    // make texture2D
-    CCImage* img = new CCImage;
-    img->initWithImageData(data, size);
-    CCTexture2D* texture = new CCTexture2D();
-    texture->initWithImage(img);
-    
-    // set CCSprite
-    profiles[idx]->SetSprite(texture);
-    
-    // 새 프로필을 다 받으면, 게임결과 화면으로 넘어가자.
-    profileCnt++;
-    if (profileCnt == (int)profiles.size())
-    {
         Common::ShowNextScene(this, "Puzzle", "PuzzleResult", false);
     }
 }
+
+std::string Puzzle::SubstrNickname(std::string nickname)
+{
+    if (nickname.size() > 20)
+    {
+        //CCLog("%s", nickname.c_str());
+        int i;
+        for (i = 0 ; i < nickname.size() ; i++)
+        {
+            if (i >= 20)
+                break;
+            if (isascii(nickname[i]) != 1)
+                i += 2;
+        }
+        nickname = nickname.substr(0, i);
+        nickname += "...";
+    }
+    return nickname;
+}
+
+
 
 void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
 {
@@ -3774,8 +3931,11 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         
         // 포션 갱신
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
-        //int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
-        myInfo->SetPotion(potion, myInfo->GetRemainPotionTimeNumber());
+        int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        if (potionRemainTime > 0)
+            myInfo->SetPotion(potion, myInfo->GetRemainPotionTimeNumber());
+        else
+            myInfo->SetPotion(potion, 0);
         
         // 코코 정보 갱신
         int mp = nodeResult.child("coco").attribute("magic-point").as_int();
@@ -3783,6 +3943,23 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         int staffMP = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int fairyMP = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
         myInfo->SetCoco(mp, staffMP, fairyMP, staffLv);
+        
+        // 시작 유저 보상 관련
+        isStartUser = (nodeResult.child("start-user").text().as_int() == 1);
+        
+        // 포션 보상에 따른 개수 변화
+        //int potion = nodeResult.child("potion").attribute("potion-count").as_int();
+        //int potionRemainTime = nodeResult.child("potion").attribute("remain-time").as_int();
+        //myInfo->SetPotion(potion, potionRemainTime);
+        
+        // MP 보상에 따른 변화
+        int isPotionMax = nodeResult.child("mp-reward").attribute("potion-max").as_int();
+        int addTopazNum = nodeResult.child("mp-reward").attribute("add-topaz-num").as_int();
+        //CCLog("%d %d", isPotionMax, addTopazNum);
+        myInfo->SetReward(isPotionMax, addTopazNum);
+        
+        // 추가 점수 % 계산
+        float addedMPPercent = ((float)(myInfo->GetMPTotal())/100.0f) + 1.0f;
         
         int practiceUserSkillId = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
         
@@ -3821,23 +3998,13 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         std::string text = nodeResult.child("script").text().as_string();
         
         // 결과화면에 보낼 데이터 class 생성
-        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, iScore, totalScore, maxCombo, bestCombo, isMissionSuccess, isNewRecord, text);
+        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, addedMPPercent, RealScore(), totalScore, maxCombo, bestCombo, isMissionSuccess, isNewRecord, text);
         int num;
         for (int i = 0 ; i < NUMOFSKILL ; i++)
         {
             if (skill->GetSkillAppliedCount(i) > 0)
             {
-                /*
-                if (i < 8) num = i+21;
-                else if (i < 16) num = i+3;
-                else if (i < 24) num = i+15;
-                 */
-                if (i <= 2) num = i+21;
-                else if (i < 8) num = i+20;
-                else if (i <= 10) num = i+3;
-                else if (i < 16) num = i+2;
-                else if (i <= 18) num = i+15;
-                else if (i < 24) num = i+14;
+                num = SkillInfo::ConvertedToOriginal(i);
                 myGameResult->skillNum.push_back(num);
                 myGameResult->skillCnt.push_back(skill->GetSkillAppliedCount(i));
             }
@@ -3965,10 +4132,22 @@ void Puzzle::EndScene()
     // 일시정지 화면에서 바로 종료하는 상황일 경우
     if (isInGamePause)
     {
+        if (skill->W8_IsActive())
+        {
+            CCLog("여신 스케줄러 종료");
+            this->unschedule(schedule_selector(PuzzleSkill::W8_Timer));
+            this->unschedule(schedule_selector(PuzzleSkill::W8_AccelTimer));
+        }
+        if (skill->F8_IsActive())
+            this->unschedule(schedule_selector(PuzzleSkill::F8_Comet));
+        if (skill->E8_IsActive())
+            this->unschedule(schedule_selector(PuzzleSkill::E8_Timer));
+        
         this->unschedule(schedule_selector(Puzzle::UpdateTimer));
         this->unschedule(schedule_selector(Puzzle::HintTimer));
         this->unschedule(schedule_selector(Puzzle::ComboTimer));
-        this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
+        if (myInfo->GetActiveFairyId() > 0)
+            this->unschedule(schedule_selector(Puzzle::ChangeAnimFairy));
         
         spriteClassInfo->RemoveAllObjects();
         delete spriteClassInfo;
@@ -3986,9 +4165,12 @@ void Puzzle::EndScene()
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game3.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/popup.plist");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game3.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/popup.png");
+    
     switch (myInfo->GetActiveFairyId())
     {
         case 1:
@@ -4000,6 +4182,10 @@ void Puzzle::EndScene()
             CCTextureCache::sharedTextureCache()->removeTextureForKey("images/fairy_cloud");
             break;
     }
+    
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
+    
+    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
     
     // delete all objects
     effect->RemoveAllObjects();
@@ -4067,8 +4253,12 @@ void Puzzle::EndScene()
 
     cocoLayer->removeAllChildren();
     cocoLayer->removeFromParentAndCleanup(true);
-    fairyLayer->removeAllChildren();
-    fairyLayer->removeFromParentAndCleanup(true);
+    if (myInfo->GetActiveFairyId() > 0)
+    {
+        fairyShadow->removeFromParentAndCleanup(true);
+        fairyLayer->removeAllChildren();
+        fairyLayer->removeFromParentAndCleanup(true);
+    }
 
     if (!isRebooting)
     {
@@ -4183,6 +4373,10 @@ CCClippingNode* Puzzle::GetBoardClip()
 {
     return boardClip;
 }
+bool Puzzle::IsGameOver()
+{
+    return isGameOver;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4210,15 +4404,21 @@ CCSprite* PuzzleP8Set::GetSprite(int x, int y)
 void PuzzleP8Set::AddChild(int x, int y)
 {
     gameLayer->GetBoardClip()->addChild(object[x][y]->GetPiece(), object[x][y]->GetZOrder());
-    //puzzleLayer->addChild(object[x][y]->GetPiece(), object[x][y]->GetZOrder());
 }
 
 void PuzzleP8Set::RemoveChild(int x, int y)
 {
-    object[x][y]->GetPiece()->removeFromParentAndCleanup(true);
-    //puzzleLayer->removeChild(object[x][y]->GetPiece(), true);
-    object[x][y]->RemovePiece();
-    delete object[x][y];
+    if (gameLayer->GetSpriteP8(x, y) != NULL)
+    {
+        object[x][y]->GetPiece()->removeFromParentAndCleanup(true);
+        object[x][y]->RemovePiece();
+        gameLayer->SetSpriteP8Null(x, y);
+    }
+    if (object[x][y] != NULL)
+    {
+        delete object[x][y];
+        object[x][y] = NULL;
+    }
 }
 
 int PuzzleP8Set::GetType(int x, int y)
@@ -4252,7 +4452,7 @@ void PuzzleP8Set::SwapObject(int x1, int y1, int x2, int y2)
 }
 void PuzzleP8Set::Falling(int x, int y, int targetX, int targetY, int queue_pos, int vertical_idx)
 {
-    CCMoveTo* moveTo = CCMoveTo::create(0.1f, gameLayer->SetPiece8Position(targetX, targetY));
+    CCMoveTo* moveTo = CCMoveTo::create(0.05f, gameLayer->SetPiece8Position(targetX, targetY));
     CCFiniteTimeAction* action = CCSequence::create(
             moveTo,
             CCCallFuncND::create(gameLayer, callfuncND_selector(Puzzle::FallingCallback), (void*)queue_pos),
@@ -4291,13 +4491,14 @@ void PuzzleP4Set::CreateObject(int x, int y)
 {
     object[x][y] = PuzzleP4::CreateP4(gameLayer, zGameObjectSP);
 }
-//void PuzzleP4Set::CreatePiece(int x, int y, int type, int designatedType)
-void PuzzleP4Set::CreatePiece(int x, int y, int type)
+bool PuzzleP4Set::CreatePiece(int x, int y, int type)
 {
-    // 처음에만 object를 생성한다.
-    //if (type == -100)
-    //    object[x][y] = PuzzleP4::CreateP4(gameLayer, zGameObjectSP, type, designatedType);
-
+    if ( (gameLayer->GetPuzzleP8Set()->GetObject(x-1, y) == NULL && !(x-1 == 0 && y == ROW_COUNT-1)) ||
+         (gameLayer->GetPuzzleP8Set()->GetObject(x, y) == NULL && !(x == COLUMN_COUNT-1 && y == ROW_COUNT-1)) ||
+         (gameLayer->GetPuzzleP8Set()->GetObject(x-1, y-1) == NULL && !(x-1 == 0 && y-1 == 0)) ||
+         (gameLayer->GetPuzzleP8Set()->GetObject(x, y-1) == NULL && !(x == COLUMN_COUNT-1 && y-1 == 0)) )
+        return false;
+    
     // 4각형의 4방향에 있는 8각형들의 type을 구해서 삼각형을 어떻게 만들지 결정한다.
     // 가장자리는 그 주위의 P8 type이 존재하지 않을 수도 있으므로 조건문을 잘 쓰자.
     int lu = (x == 1 && y == ROW_COUNT-1) ? -1 : gameLayer->GetPuzzleP8Set()->GetType(x-1, y);
@@ -4305,10 +4506,12 @@ void PuzzleP4Set::CreatePiece(int x, int y, int type)
     int ld = (x == 1 && y == 1) ? -3 : gameLayer->GetPuzzleP8Set()->GetType(x-1, y-1);
     int rd = (x == COLUMN_COUNT-1 && y == 1) ? -4 : gameLayer->GetPuzzleP8Set()->GetType(x, y-1);
     
-    // scale
+    // scale & probability
     float diaHalfWidth = gameLayer->GetPieceWidth() / (2.0f + sqrt(2.0f));
+    int prob = gameLayer->CONN_PIECE_PROB;
     
-    object[x][y]->CreateSprites(x, y, lu, ru, ld, rd, gameLayer->SetPiece4Position(x, y), diaHalfWidth, type);
+    object[x][y]->CreateSprites(x, y, lu, ru, ld, rd, gameLayer->SetPiece4Position(x, y), diaHalfWidth, prob, type);
+    return true;
 }
 int PuzzleP4Set::GetType(int x, int y)
 {
@@ -4324,12 +4527,6 @@ void PuzzleP4Set::SetOpacity(int x, int y, int alpha)
         object[x][y]->GetLeftDown()->setColor(ccc3(alpha,alpha,alpha));
     if (object[x][y]->GetRightDown() != NULL)
         object[x][y]->GetRightDown()->setColor(ccc3(alpha,alpha,alpha));
-    /*
-    object[x][y]->GetLeftUp()->setOpacity(alpha);
-    object[x][y]->GetRightUp()->setOpacity(alpha);
-    object[x][y]->GetLeftDown()->setOpacity(alpha);
-    object[x][y]->GetRightDown()->setOpacity(alpha);
-     */
 }
 void PuzzleP4Set::AddChild(int x, int y)
 {

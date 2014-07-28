@@ -34,10 +34,10 @@ USING_NS_CC;
 #define ITEM_PAINT_WHITE 14
 #define ITEM_STAFF 20
 
-
+// 인게임 기본 구성 변수
 #define PUZZLE_TIME 60
-#define FEVER_TIME 7
-#define FEVER_START_COMBO 10
+#define FEVER_TIME 8
+#define FEVER_START_COMBO 15
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
@@ -56,8 +56,11 @@ USING_NS_CC;
 // 팝업창에서 버튼 개수를 구분하기 위한 predefined type
 #define BTN_1 0
 #define BTN_2 1
+
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
+#define FUCKING_APP_DETECTED -99
+#define SERVER_CHECK -8
 #define WILL_BE_UPDATED -7
 #define ERROR_IN_APP_BILLING -6
 #define NEED_TO_UPDATE -5
@@ -151,6 +154,26 @@ USING_NS_CC;
 #define KAKAO_UNREGISTER 85
 #define SERVICE 86
 #define KAKAO_TOKEN_ERROR 87
+#define INVITE_FRIEND_TRY 88
+#define INVITE_FRIEND_MAX_PER_DAY 89
+#define INVITE_FRIEND_BLOCKED 90
+#define INVITE_FRIEND_NOT_SUPPORTED_DEVICE 91
+#define INVITE_FRIEND_UNREGISTERED 92
+#define INVITE_FRIEND_NO_MORE 93
+#define SEND_TOPAZ_OK_NOKAKAOMSG 94
+#define MP_REWARD_50 95
+#define MP_REWARD_100 96
+#define RANKUP_BOAST 97
+#define RANKUP_BOAST_REJECTED 98
+#define KAKAOTALK_UNKNOWN 99
+#define KAKAO_MSG_BLOCKED 100
+#define CREDIT 101
+#define TUTORIAL_START 102
+#define COUPON_SAME_TYPE 103
+#define POTION_REWARD 104
+#define POSSIBLE_BUY_FAIRY 105
+#define POPUP_NOTICE 106
+#define PURCHASE_SKILL_BY_TOPAZ_TRY 107
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -166,6 +189,21 @@ USING_NS_CC;
 #define BTN_MENU_LOGOUT 7
 #define BTN_MENU_UNREGISTER 8
 #define BTN_MENU_SERVICE 9
+#define BTN_MENU_BOAST 10
+#define BTN_MENU_CREDIT 11
+
+// 카카오톡 메시지 관련
+#define KAKAO_MSG_TEMPLATE_SENDPOTION   "1766"
+#define KAKAO_MSG_TEMPLATE_SENDTOPAZ    "1765"
+#define KAKAO_MSG_TEMPLATE_INVITEFRIEND "1767"
+#define KAKAO_MSG_TEMPLATE_BOAST        "1763"
+#define KAKAO_MSG_TEMPLATE_TODAYCANDY   "1764"
+
+// 아이템 타입 관련
+#define ITEM_STARCANDY 1
+#define ITEM_TOPAZ 2
+
+
 
 using namespace pugi;
 using namespace cocos2d;
@@ -191,7 +229,7 @@ public:
     static CCLayer* MakeCombo(int num);
     static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
-    static CCLayer* MakeItemNumberLayer(std::string number);
+    static CCLayer* MakeItemNumberLayer(std::string number, float scale = 1.0f);
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1, int etc3 = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
@@ -203,7 +241,7 @@ public:
     //static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
     //static void VerifyPayloadAndProvideItem(int type, int topazId, const char* kakaoid, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
     static std::string GetVerifyParams(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
-    static void XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx);
+    static void XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx, const char* fkid);
     //void XmlParseVerifyPurchaseResult(xml_document *xmlDoc, int type, int consumeIdx);
     //void onHttpRequestCompleted(CCNode *sender, void *data);
 };
@@ -246,7 +284,9 @@ public:
     CCSize GetContentSizeByName(std::string name);
     void* FindLabelByTag(int tag);
     void* FindSpriteByTag(int tag);
-    
+    //void ChangeSprite(int tag, CCTexture2D* texture);
+    void ChangeSprite(int tag, CCSprite* sp);
+
     void RemoveAllObjects();
     
     std::vector<SpriteObject*> spriteObj;

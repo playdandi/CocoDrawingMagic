@@ -127,20 +127,36 @@ bool T_Puzzle::init()
 
 void T_Puzzle::InitTutorial()
 {
+    ttrBg1 = CCScale9Sprite::create("images/tutorial_balloon.png");
+    ttrBg1->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130));
+    ttrBg1->setContentSize(CCSize(800, 200));
+    ttrBg1->setOpacity(0);
+    this->addChild(ttrBg1, 3001);
+    ttrBg2 = CCScale9Sprite::create("images/tutorial_balloon2.png");
+    ttrBg2->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130));
+    ttrBg2->setContentSize(CCSize(800, 200));
+    ttrBg2->setOpacity(0);
+    this->addChild(ttrBg2, 3001);
+    
+    /*
     ttrBg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width-250, 150));
     ttrBg->setAnchorPoint(ccp(0.5, 1));
     ttrBg->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120-30));
     ttrBg->setColor(ccc3(0,0,0));
     ttrBg->setOpacity(0);
     this->addChild(ttrBg, 3001);
+     */
     
-    CCSize size = ttrBg->getContentSize();
-    ttrMsg = CCLabelTTF::create("", fontList[0].c_str(), 32, CCSize(700, 150), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
+    CCSize size = ttrBg1->getContentSize();
+    ttrMsg = CCLabelTTF::create("", fontList[0].c_str(), 34, CCSize(700, 150), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
     ttrMsg->setAnchorPoint(ccp(0.5, 0.5));
-    ttrMsg->setPosition(ccp(size.width/2, size.height/2));
+    ttrMsg->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130+30));
     ttrMsg->setColor(ccc3(255,255,255));
-    ttrBg->addChild(ttrMsg, 3002);
-    ttrBg->setOpacity(0);
+    this->addChild(ttrMsg, 3002);
+    //ttrMsg->setPosition(ccp(size.width/2, size.height/2));
+    
+    //ttrBg->addChild(ttrMsg, 3002);
+    //ttrBg->setOpacity(0);
     
     //ttrArrow = CCSprite::create("images/tutorial_arrow.png");
     //ttrArrow->setRotation(180);
@@ -160,11 +176,11 @@ void T_Puzzle::InitTutorial()
     //if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
     //{
         isSkipPossible = true;
-        ttrSkip = CCSprite::create("images/tutorial_explain.png");
+        ttrSkip = CCSprite::create("images/tutorial_skip.png");
         ttrSkip->setAnchorPoint(ccp(1, 0));
         ttrSkip->setPosition(ccp(m_winSize.width, vo.y));
-        ttrSkip->setScaleX((float)400 / (float)637);
-        ttrSkip->setScaleY((float)100 / (float)130);
+        //ttrSkip->setScaleX((float)400 / (float)637);
+        //ttrSkip->setScaleY((float)100 / (float)130);
         this->addChild(ttrSkip, 3001);
     //}
     #endif
@@ -209,6 +225,7 @@ void T_Puzzle::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
+        CCLog("2222222");
         //sound->StopBackgroundInGameSound();
         sound->ResumeAllEffects();
         
@@ -768,7 +785,7 @@ void T_Puzzle::TutorialStart(CCNode* sender, void* pointer)
     sender->removeFromParentAndCleanup(true);
     T_Puzzle* pThis = (T_Puzzle*)pointer;
     
-    ttrBg->setOpacity(255);
+    ttrBg1->setOpacity(255);
     ttrMsg->setOpacity(255);
     
     pThis->ttrState = -1;
@@ -786,30 +803,46 @@ void T_Puzzle::TutorialNextState()
 {
     ttrState++;
     
+    CCActionInterval* action = NULL;
+    
     CCLog("인게임 튜토리얼 이번 상태 : %d", ttrState);
     switch (ttrState)
     {
         case 0:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("안녕, 난 코코라고 해. 넌 누구니? 이상하게 생겼네 ㅋ");
             break;
         case 1:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("너라니! 난 너의 마법 선생님이라구! 지금은 이상한 마법에 걸려서 이렇게 됐지만...");
             break;
         case 2:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("난 마법을 배우고 싶어서 여기 왔는데...");
             break;
         case 3:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("괜찮아. 비록 나에게 걸린 마법을 풀 수 없지만, 마법을 가르쳐 줄 수는 있지!");
             break;
         case 4:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("정말? 와~ 다행이다. 어떻게 해야 해?");
             break;
         case 5:
-            ttrMsg->setString("먼저 피스를 그리는 방법을 보여줄게.");
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
+            ttrMsg->setString("먼저 그리는 방법을 보여줄게.");
             break;
         case 6: // 피스 그리기
             ttrFinger->setOpacity(255);
             ttrFinger->setPosition( SetTouch8Position(2, 3) );
+            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(3, 3)), CCMoveTo::create(0.5f, SetTouch8Position(4, 4)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(2, 3)), NULL);
+            ttrFinger->runAction(CCRepeatForever::create(action));
             spriteP8[2][3]->setColor(ccc3(255,255,255));
             spriteP8[3][3]->setColor(ccc3(255,255,255));
             spriteP8[4][4]->setColor(ccc3(255,255,255));
@@ -822,17 +855,23 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString("같은 색깔 피스를 3개 이상 따라 그리면 피스를 터뜨릴 수 있어.");
             break;
         case 8:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("아하, 그렇구나!");
             break;
         case 9:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("나는 불 속성 마법사라서 붉은 피스를 그리면 마법을 시전할 수 있어!");
             break;
         case 10:
-            ttrMsg->setString("붉은색 피스를 따라 그려봐.");
+            ttrMsg->setString("빨간색 피스를 따라 그려봐.");
             break;
         case 11: // 붉은색 기본 마법 위한 한붓그리기
             ttrFinger->setOpacity(255);
             ttrFinger->setPosition( SetTouch8Position(5, 4) );
+            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(4, 5)), CCMoveTo::create(0.5f, SetTouch8Position(3, 5)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(5, 4)), NULL);
+            ttrFinger->runAction(CCRepeatForever::create(action));
             spriteP8[3][5]->setColor(ccc3(255,255,255));
             spriteP8[4][5]->setColor(ccc3(255,255,255));
             spriteP8[5][4]->setColor(ccc3(255,255,255));
@@ -842,9 +881,11 @@ void T_Puzzle::TutorialNextState()
             UnLockEach(5, 4);
             break;
         case 12:
-            ttrMsg->setString("잘했어! 마법을 사용해서 추가점수를 얻었어!");
+            ttrMsg->setString("잘했어! 마법이 발동되어 추가점수를 얻었어!");
             break;
         case 13:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             char temp[150];
             if (myInfo->IsFire())
                 sprintf(temp, "그렇구나! 나는 불 속성 마법사니까, 너처럼 붉은색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
@@ -855,14 +896,20 @@ void T_Puzzle::TutorialNextState()
             ttrMsg->setString(temp);
             break;
         case 14:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("너 생각보다 똑똑하구나? 좋아! 그럼 마법을 하나 더 보여줄게.");
             break;
         case 15:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("아래에 보이는 붉은 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
             break;
         case 16: // 사이클 한붓그리기
             ttrFinger->setOpacity(255);
             ttrFinger->setPosition( SetTouch8Position(4, 1) );
+            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(5, 1)), CCMoveTo::create(0.5f, SetTouch8Position(5, 2)), CCMoveTo::create(0.5f, SetTouch8Position(4, 1)), NULL);
+            ttrFinger->runAction(CCRepeatForever::create(action));
             spriteP8[4][1]->setColor(ccc3(255,255,255));
             spriteP8[5][1]->setColor(ccc3(255,255,255));
             spriteP8[5][2]->setColor(ccc3(255,255,255));
@@ -872,25 +919,34 @@ void T_Puzzle::TutorialNextState()
             UnLockEach(5, 2);
             break;
         case 17:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("우와~ 나도 이런 마법을 쓸 수 있어?");
             break;
         case 18:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("하하, 물론이지. 이것 말고도 세상에는 숨겨진 마법이 무궁무진하다구!");
             break;
         case 19:
+            ttrBg1->setOpacity(255);
+            ttrBg2->setOpacity(0);
             ttrMsg->setString("이야, 신난다!");
             break;
         case 20:
+            ttrBg1->setOpacity(0);
+            ttrBg2->setOpacity(255);
             ttrMsg->setString("그럼 나는 내게 걸린 저주를 푸는 마법을 연구하러 가야 해. 나머지 마법은 스스로 찾아봐!");
             break;
         case 21:
-            ttrMsg->setString("마지막으로 화려한 마법을 보여주고 갈게. 그럼 안녕!");
+            ttrMsg->setString("그럼 다음에 봐~ 안녕!");
             break;
         case 22: // 붉은 용의 숨결 시전
             m_bTouchStarted = true;
             // tutorial object delete
             ttrMsg->removeFromParentAndCleanup(true);
-            ttrBg->removeFromParentAndCleanup(true);
+            ttrBg1->removeFromParentAndCleanup(true);
+            ttrBg2->removeFromParentAndCleanup(true);
             ttrFinger->removeFromParentAndCleanup(true);
             #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
             ttrSkip->removeFromParentAndCleanup(true);
@@ -1021,7 +1077,7 @@ CCPoint T_Puzzle::BoardMovePosition(CCPoint point)
 
 void T_Puzzle::PauseGame()
 {
-    CancelDrawing();
+    //CancelDrawing();
     
     // 정령 멈추기
     /*
@@ -1032,7 +1088,6 @@ void T_Puzzle::PauseGame()
     if (skill->IsSpiritAlive(2))
         effect->GetSpirit(2)->pauseSchedulerAndActions();
     */
-    
     Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60);
 }
 void T_Puzzle::SkipGame()
@@ -1088,6 +1143,7 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     CCLog("ttrState = %d", ttrState);
     CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);
+    
     
     // 아래의 튜토리얼 상태일 때는 대화만 넘긴다.
     if (ttrState <= 5 || (ttrState >= 7 && ttrState <= 10) || (ttrState >= 12 && ttrState <= 15) || (ttrState >= 17 && ttrState <= 21) )
@@ -1158,10 +1214,16 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (!(x == 5 && y == 4))
             return (m_bTouchStarted = false);
     }
+    /*
     else if (ttrState == 16)
     {
         if (!(x == 4 && y == 1))
             return (m_bTouchStarted = false);
+    }
+    */
+    if (ttrState == 6 || ttrState == 11 || ttrState == 16) // 화살표 액션 정지
+    {
+        ttrFinger->stopAllActions();
     }
     
     ttrFinger->setOpacity(0);
@@ -1510,6 +1572,16 @@ void T_Puzzle::CancelDrawing()
     m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
     
     isCancelling = false;
+    
+    // action (finger) 재시작
+    CCActionInterval* action;
+    if (ttrState == 6)
+        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(3, 3)), CCMoveTo::create(0.5f, SetTouch8Position(4, 4)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(2, 3)), NULL);
+    else if (ttrState == 11)
+        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(4, 5)), CCMoveTo::create(0.5f, SetTouch8Position(3, 5)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(5, 4)), NULL);
+    else if (ttrState == 16)
+        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(5, 1)), CCMoveTo::create(0.5f, SetTouch8Position(5, 2)), CCMoveTo::create(0.5f, SetTouch8Position(4, 1)), NULL);;
+    ttrFinger->runAction(CCRepeatForever::create(action));
 }
 
 
@@ -2031,13 +2103,15 @@ void T_Puzzle::EndScene()
     // release depth tree
     Depth::RemoveCurDepth();
     
-    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "Puzzle");
+    CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "T_Puzzle");
     
     // layer 배경색을 검은색으로 바꾼다.
     this->setColor(ccc3(0,0,0));
     
     // 일시정지 화면에서 바로 종료하는 상황일 경우
     isInGamePause = false;
+    
+    CCLog("@#@!#@!#");
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
@@ -2120,7 +2194,7 @@ void T_Puzzle::EndScene()
             Common::ShowNextScene(this, "T_Puzzle", "Ranking", true, 0);
         // 처음 튜토리얼에 들어왔다는 의미. 실제 인게임을 시작한다.
         else
-            Common::ShowNextScene(this, "T_Puzzle", "Loading", true);
+            Common::ShowNextScene(this, "T_Puzzle", "LoadingPuzzle", true);
         
         CCUserDefault::sharedUserDefault()->setBoolForKey("is_inGameTutorial_done", true);
         isInGameTutorial = false;

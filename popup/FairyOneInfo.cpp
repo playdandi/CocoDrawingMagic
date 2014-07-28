@@ -103,6 +103,7 @@ void FairyOneInfo::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("FairyOneInfo : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -115,6 +116,7 @@ void FairyOneInfo::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
         if (idx > -1)
         {
             if (isAlreadyBought)
@@ -182,18 +184,16 @@ void FairyOneInfo::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fi->GetName(), fontList[0], 52, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_cocoroom_desc.png1"), ccc3(255,255,255), "background/bg_cocoroom_desc.png1", "1", NULL, 5) );
     
     // 기본속성
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png2",
-                    ccp(0, 0), ccp(404, 1036), CCSize(440, 58), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png2", ccp(0, 0), ccp(404, 1036), CCSize(520, 58), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(424, 1042), ccc3(121,71,0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("기본속성", fontList[2], 36, ccp(0, 0), ccp(424, 1042+3), ccc3(255,219,53), "", "Layer", tLayer, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("MP + 100", fontList[0], 36, ccp(0, 0), ccp(574, 1042), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("보너스 MP", fontList[0], 36, ccp(0, 0), ccp(574, 1042+3), ccc3(0,167,222), "", "Layer", tLayer, 5) );
     
     // 특수능력
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png3",
-                    ccp(0, 0), ccp(404, 971), CCSize(440, 58), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png3", ccp(0, 0), ccp(404, 971), CCSize(520, 58), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977), ccc3(121,71,0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977+3), ccc3(255,219,53), "", "Layer", tLayer, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::GetAbilityDesc(fi->GetType()), fontList[0], 36, ccp(0, 0), ccp(574, 977), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::GetAbilityDesc(fi->GetType(), false), fontList[0], 36, ccp(0, 0), ccp(574, 977+3), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     
     // 요정 묘사
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(fi->GetDescription(), fontList[0], 36, ccp(0, 0), ccp(210, 875), ccc3(117,86,47), CCSize(730, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
@@ -218,8 +218,17 @@ void FairyOneInfo::InitSprites()
         if (isByTopaz)
         {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0, 0), ccp(141, 822), CCSize(0, 0), "", "Layer", tLayer, 5) );
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("도전 : 8레벨 달성", fontList[0], 36, ccp(0, 0), ccp(230, 830), ccc3(255,255,255), "", "Layer", tLayer, 5) );
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("/ 달성시 별사탕으로 구매가능", fontList[2], 30, ccp(0, 0), ccp(505, 835), ccc3(255,255,255), "", "Layer", tLayer, 5, 170) );
+            
+            int requireMP;
+            if (abs(common_fairy_id) == 1) requireMP = 500;
+            else if (abs(common_fairy_id) == 2) requireMP = 30;
+            else if (abs(common_fairy_id) == 3) requireMP = 300;
+            char name[100];
+            sprintf(name, "도전 : MP %d 달성", requireMP);
+            
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(230, 830), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+            CCSize s = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->label->getContentSize();
+            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("/ 달성시 별사탕으로 구매가능", fontList[2], 30, ccp(0, 0), ccp(230+s.width+10, 835), ccc3(255,255,255), "", "Layer", tLayer, 5, 170) );
         }
         else
         {
@@ -421,6 +430,11 @@ void FairyOneInfo::EndScene()
     tLayer->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
+    
+    
+    // 보상 관련 notification
+    param = CCString::create("11");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
 }
 
 

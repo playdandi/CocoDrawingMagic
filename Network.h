@@ -12,8 +12,11 @@ using namespace cocos2d::extension;
 #define RSA_BIT 512
 
 // pre-defined URLs
+#define URL_MT                      "http://14.63.212.106/cogma/game/mt.php?"
+#define URL_JOIN                    "http://14.63.212.106/cogma/game/join.php?"
 #define URL_VERSION                 "http://14.63.212.106/cogma/game/get_version.php"
 #define URL_LOGIN                   "http://14.63.212.106/cogma/game/login.php"
+#define URL_NOTICE                  "http://14.63.212.106/cogma/game/notice.php"
 #define URL_USERINFO                "http://14.63.212.106/cogma/game/user_info.php?"
 #define URL_WEEKLYRANK              "http://14.63.212.106/cogma/game/reward_weekly_rank.php?"
 #define URL_FRIENDLIST              "http://14.63.212.106/cogma/game/get_friendslist.php?"
@@ -50,20 +53,22 @@ using namespace cocos2d::extension;
 #define URL_SEND_TOPAZ              "http://14.63.212.106/cogma/game/send_topaz_google.php?"
 #define URL_FRIENDADD               "http://14.63.212.106/cogma/game/friend_add.php?"
 #define URL_FRIENDDEL               "http://14.63.212.106/cogma/game/friend_del.php?"
-#define URL_JOIN                    "http://14.63.212.106/cogma/game/join.php?"
+#define URL_QUIT                    "http://14.63.212.106/cogma/game/quit_user.php?"
+#define URL_GET_POTION_STATUS       "http://14.63.212.106/cogma/game/get_user_potion_setting.php?"
 
 class Network
 {
 public:
-    static void HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag = "", std::string etc = "");
+    static void HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag = "", std::string etc = "", bool isBasic = false);
     static void replaceAll(std::string& str, const std::string& from, const std::string& to);
-    static std::string Encrypt_PS();
-    static std::string Encrypt_a(std::string data);
+    static std::string Encrypt_PS(bool isBasic = false);
+    static std::string Encrypt_a(std::string data, bool isBasic = false);
     
     static int GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfuscate = true);
     static int DeObfuscation(std::string obfuscatedStr, char* data);
     
     static void GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc);
+    static std::string GetXMLFromResponseDataForAndroid(const char* resData);
     static void ShowCommonError(int code);
 };
 

@@ -81,7 +81,7 @@ bool T_MagicList::init()
     
     ttrArrow = CCSprite::create("images/tutorial_arrow.png");
     ttrArrow->retain();
-    ttrPos = CCSprite::create("images/tutorial_position.png");
+    ttrPos = CCScale9Sprite::create("images/tutorial_position.png");
     ttrPos->retain();
     
     InitSprites();
@@ -211,9 +211,10 @@ void T_MagicList::InitSprites()
                 layer->addChild(ttrArrow, 5005);
                 
                 ttrPos->setAnchorPoint(ccp(0, 0));
-                ttrPos->setPosition(ccp(127+j*229+12-10, 1451-i*160+offset+12-10));
-                ttrPos->setScaleX( (float)156 / (float)162 );
-                ttrPos->setScaleY( (float)156 / (float)89 );
+                ttrPos->setPosition(ccp(127+j*229+12-14, 1451-i*160+offset+12-10));
+                //ttrPos->setScaleX( (float)156 / (float)782 );
+                //ttrPos->setScaleY( (float)156 / (float)177 );
+                ttrPos->setContentSize(CCSize(153, 153));
                 layer->addChild(ttrPos, 5005);
             }
         }
@@ -321,8 +322,9 @@ bool T_MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 
                 ttrPos->setAnchorPoint(ccp(0, 0));
                 ttrPos->setPosition(ccp(77, 228));
-                ttrPos->setScaleX( (float)792 / (float)162 );
-                ttrPos->setScaleY( (float)187 / (float)89 );
+                //ttrPos->setScaleX( (float)792 / (float)782 );
+                //ttrPos->setScaleY( (float)187 / (float)177 );
+                ttrPos->setContentSize(CCSize(792, 187));
                 
                 ttrArrow->removeFromParent();
                 ttrArrow->setAnchorPoint(ccp(0.5, 0));

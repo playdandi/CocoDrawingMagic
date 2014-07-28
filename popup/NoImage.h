@@ -28,6 +28,13 @@ public:
     
     void onLogoutComplete();
     void onLogoutErrorComplete(char const* status, char const* error);
+    void onUnregisterComplete();
+    void onUnregisterErrorComplete(char const* status, char const* error);
+    void onAuthComplete(bool result);
+    void onAuthErrorComplete(char const* status, char const* error);
+    void onSendLinkMessageComplete();
+    void onSendLinkMessageErrorComplete(char const *status, char const *error);
+
     
     void ReplaceScene(std::string to, int type, int btnType);
     void EndScene();
@@ -50,6 +57,10 @@ public:
     void XmlParseBuySkillSlot(xml_document *xmlDoc);
     void XmlParseBuySkillProperty(xml_document *xmlDoc);
     void XmlParseGetFirstSkill(xml_document *xmlDoc);
+    void XmlParseKakaoUnregister(xml_document *xmlDoc);
+    void XmlParseGetPotionStatus(xml_document *xmlDoc);
+    
+    void ShowHintOfUpgrade();
     
 protected:
     CCSize winSize;
@@ -68,6 +79,9 @@ private:
     CCRect rect;
     int kind;
     int idx;
+    
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
 };
 
 #endif /* defined(__CocoMagic__NoImage__) */

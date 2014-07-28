@@ -41,11 +41,12 @@ bool T_Skip::init()
 	{
 		return false;
 	}
-    
+    CCLog("98");
     // make depth tree
     Depth::AddCurDepth("T_Skip", this);
     
-    //this->setKeypadEnabled(true);
+    CCLog("99");
+    this->setKeypadEnabled(false);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
     
@@ -53,12 +54,13 @@ bool T_Skip::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("T_Puzzle", param);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/tutorial.plist");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     
+CCLog("100");
     InitSprites();
-
+CCLog("101");
     return true;
 }
 
@@ -81,25 +83,26 @@ void T_Skip::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_cont.png", ccp(1, 0.5), ccp(m_winSize.width/2-10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_end.png", ccp(0, 0.5), ccp(m_winSize.width/2+10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
      */
+CCLog("1");
     
     // pop-up 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "T_Skip", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "T_Skip", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "T_Skip", this, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "T_Skip", this, 1) );
-    
+CCLog("2");
     // 텍스트
     std::string text = "튜토리얼을 넘기시겠습니까?";
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), ccc3(78,47,8), CCSize(829-20, 250), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "T_Skip", this, 5) );
-    
+CCLog("3");
     // 확인 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "T_Skip", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-    
+CCLog("4");
     // 취소 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "T_Skip", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_cancel.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 5, 1) );
-    
+CCLog("5");
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
 }
@@ -111,7 +114,6 @@ bool T_Skip::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        //if (spriteClass->spriteObj[i]->name == "button/btn_pause_cont.png")
         if (spriteClass->spriteObj[i]->name == "button/btn_system.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -120,7 +122,6 @@ bool T_Skip::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 return true;
             }
         }
-        //else if (spriteClass->spriteObj[i]->name == "button/btn_pause_end.png")
         else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
@@ -168,8 +169,8 @@ void T_Skip::EndScene()
     Depth::RemoveCurDepth();
     
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/tutorial.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/tutorial.png");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/popup.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/popup.png");
     
     // remove all objects
     spriteClass->RemoveAllObjects();
@@ -177,6 +178,8 @@ void T_Skip::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
+    
+    CCLog("t skip endScene done");
 }
 
 

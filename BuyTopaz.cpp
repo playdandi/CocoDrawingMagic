@@ -93,7 +93,7 @@ void BuyTopaz::Notification(CCObject* obj)
 {
     CCString* param = (CCString*)obj;
     
-    if (param->intValue() <= 0)
+    if (param->intValue() == 0 || param->intValue() == -1)
     {
         // 터치 활성
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
@@ -106,6 +106,7 @@ void BuyTopaz::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("BuyTopaz : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -113,11 +114,12 @@ void BuyTopaz::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
-        CCLog("BuyTopaz : noti 10");
+        isKeybackTouched = false;
+        CCLog("BuyTopaz : noti 10 ( tryingPurchase = %d )", isTryingPurchase);
         
-        // 안드로이드 결제 과정 거친 후 돌아온 경우! (여기 왔다는 것 = 에러가 났음을 의미)
         if (isTryingPurchase)
         {
+            // 안드로이드 결제 과정 거친 후 돌아온 경우! (여기 왔다는 것 = 결제에 승인했으나 그 후 에러가 났음을 의미)
             std::vector<int> nullData;
             Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurName(), "NoImage", false, ERROR_IN_APP_BILLING, BTN_1, nullData);
         }
@@ -139,7 +141,7 @@ void BuyTopaz::Notification(CCObject* obj)
         verifyStatusScene = this;
         
         std::string param = "";
-        char temp[30];
+        char temp[100];
         sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
         param += temp;
         sprintf(temp, "friend_kakao_id=%s", friendKakaoId.c_str());
@@ -480,9 +482,18 @@ void BuyTopaz::EndScene()
 
 void BuyTopaz::SetErrorFlag(bool flag)
 {
-    CCLog("BuyTopaz : error flag to FALSE");
-    isTryingPurchase = flag;
+    //CCLog("BuyTopaz : error flag to FALSE // flag = %d", flag);
+    ((BuyTopaz*)Depth::GetCurPointer())->isTryingPurchase = flag;
 }
 
 
+void BuyTopaz::onSendLinkMessageComplete()
+{
+    CCLog("BuyTopaz :: onSendLinkMessageComplete");
+}
+void BuyTopaz::onSendLinkMessageErrorComplete(char const *status, char const *error)
+{
+    //CCMessageBox(error, "onSendLinkMessageErrorComplete");
+    CCLog("BuyTopaz :: onSendLinkMessageErrorComplete : %s, %s", status, error);
+}
 

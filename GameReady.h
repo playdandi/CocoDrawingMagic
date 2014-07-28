@@ -34,6 +34,13 @@ public:
     void InitFairy();
     void InitSkill();
     void MakeScrollSlot();
+
+    std::string ItemDesc(int idx);
+    
+    void ShowHintOfBuyingSlot();
+    
+    void RenewInfo();
+    void ShowRewardPopup();
     
     void PotionTimer(float f);
     
@@ -57,6 +64,9 @@ protected:
     int kind;
     int idx;
     
+    int popupStatus;
+    bool doNotShowExpPopup;
+    
 private:
     CCLayer* tLayer;
     
@@ -79,6 +89,9 @@ private:
     CCScale9Sprite* sp9;
     CCDrawNode* stencil;
     CCClippingNode* clip;
+    
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */

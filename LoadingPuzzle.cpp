@@ -1,40 +1,32 @@
-#include "Loading.h"
+#include "LoadingPuzzle.h"
 
-static int status;
 
-Loading::~Loading(void)
+LoadingPuzzle::~LoadingPuzzle(void)
 {
-    CCLog("Loading 소멸자");
+    CCLog("LoadingPuzzle 소멸자");
 }
 
-CCScene* Loading::scene(int stat)
+CCScene* LoadingPuzzle::scene()
 {
-    status = stat;
-    
 	CCScene* pScene = CCScene::create();
-	Loading* pLayer = Loading::create();
+	LoadingPuzzle* pLayer = LoadingPuzzle::create();
 	pScene->addChild(pLayer);
     
 	return pScene;
 }
 
-void Loading::onEnter()
+void LoadingPuzzle::onEnter()
 {
-    CCLog("Loading :: onEnter");
+    CCLog("LoadingPuzzle :: onEnter");
     CCLayer::onEnter();
     
-    if (status == -1)
-    {
-        CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(Loading::AAA), this), NULL);
-        pCoco->runAction(action);
-    }
+    CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(LoadingPuzzle::AAA), this), NULL);
+    pCoco->runAction(action);
 }
 
-void Loading::AAA(CCNode* sender, void* p)
+void LoadingPuzzle::AAA(CCNode* sender, void* p)
 {
     Loading* pThis = (Loading*)p;
-    
-    //Common::ShowNextScene(this, "Loading", "Loading_GameStart", false);
     
     char temp[255];
     std::string param = "";
@@ -46,41 +38,30 @@ void Loading::AAA(CCNode* sender, void* p)
     int c = CCUserDefault::sharedUserDefault()->getBoolForKey("item_02", false);
     int d = CCUserDefault::sharedUserDefault()->getBoolForKey("item_03", false);
     int e = CCUserDefault::sharedUserDefault()->getBoolForKey("item_04", false);
-
+    
     sprintf(temp, "item_a=%d&item_b=%d&item_c=%d&item_d=%d&item_e=%d", a, b, c, d, e);
-    //sprintf(temp, "item_a=1&item_b=1&item_c=1&item_d=1&item_e=0");
     param += temp;
     
-    Network::HttpPost(param, URL_GAMESTART, pThis, httpresponse_selector(Loading::onHttpRequestCompleted));
+    Network::HttpPost(param, URL_GAMESTART, pThis, httpresponse_selector(LoadingPuzzle::onHttpRequestCompleted));
 }
 
-void Loading::onExit()
+void LoadingPuzzle::onExit()
 {
-    CCLog("Loading :: onExit");
+    CCLog("LoadingPuzzle :: onExit");
     CCLayer::onExit();
     
-    if (loadingSprites)
-    {
-        pCoco->removeFromParentAndCleanup(true);
-        pTip->removeFromParentAndCleanup(true);
-        pTipMsg->removeFromParentAndCleanup(true);
-    }
+    pCoco->removeFromParentAndCleanup(true);
+    pTip->removeFromParentAndCleanup(true);
+    pTipMsg->removeFromParentAndCleanup(true);
     pLoading->removeFromParentAndCleanup(true);
-    
-    // release depth tree
-    Depth::RemoveCurDepth();
-    
-    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
-    CCString* param = CCString::create("-1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
 }
 
-bool Loading::init()
+bool LoadingPuzzle::init()
 {
 	if (!CCLayer::init())
 		return false;
     
-    Depth::DumpDepth();
+    //Depth::DumpDepth();
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     loadingSprites = false;
@@ -88,36 +69,13 @@ bool Loading::init()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    if (status == -1)
-    {
-        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
-        LoadingSprites();
-    }
-    else if (status == LOADING_PUZZLEEND)
-    {
-        // make depth tree
-        Depth::AddCurDepth("Loading", this);
-        
-        LoadingSprites();
-    }
-    else
-    {
-        // make depth tree
-        Depth::AddCurDepth("Loading", this);
-    
-        // notification post
-        CCString* param = CCString::create("1");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
-        pLoading = CCSprite::createWithSpriteFrameName("icon/icon_loading_android.png");
-        pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2));
-        this->addChild(pLoading, 5000);
-        pLoading->runAction(CCRepeatForever::create(CCRotateBy::create(0.2f, 72)));
-    }
-    
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
+    LoadingSprites();
+
 	return true;
 }
 
-void Loading::LoadingSprites()
+void LoadingPuzzle::LoadingSprites()
 {
     loadingSprites = true;
     
@@ -130,7 +88,7 @@ void Loading::LoadingSprites()
     CCPoint vo = CCDirector::sharedDirector()->getVisibleOrigin();
     pTip = CCSprite::createWithSpriteFrameName("loading/tip.png");
     pTip->setAnchorPoint(ccp(0.5, 0));
-    pTip->setPosition(ccp(m_winSize.width/2, vo.y+100));
+    pTip->setPosition(ccp(m_winSize.width/2, vo.y+200));
     this->addChild(pTip, 5);
     
     CCSize t = pTip->getContentSize();
@@ -139,27 +97,9 @@ void Loading::LoadingSprites()
     pTipMsg = CCLabelTTF::create(Common::GetTip().c_str(), fontList[0].c_str(), 32, CCSize(774, 126), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
     pTipMsg->setColor(ccc3(255,255,255));
     pTipMsg->setAnchorPoint(ccp(0, 0.5));
-    pTipMsg->setPosition(ccp(m_winSize.width/2-t.width/2+170, vo.y+100+t.height/2-10));
+    pTipMsg->setPosition(ccp(m_winSize.width/2-t.width/2+170, vo.y+200+t.height/2-10));
     this->addChild(pTipMsg, 6);
     
-    /*
-    pLoading = CCSprite::createWithSpriteFrameName("loading/loading1.png");
-    pLoading->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
-    //pLoading->setTag(1);
-    this->addChild(pLoading, 5);
-    pLoading2 = CCSprite::createWithSpriteFrameName("loading/loading2.png");
-    pLoading2->setPosition(ccp(m_winSize.width/2, m_winSize.height/2-150));
-    //pLoading2->setTag(2);
-    pLoading2->setOpacity(0);
-    this->addChild(pLoading2, 5);
-    */
-    
-    //spriteStatus = 0;
-    //timerStop = false;
-    //this->schedule(schedule_selector(Loading::LoadingSpriteTimer), 0.1f);
-    
-    //CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.3f), CCCallFuncND::create(this, callfuncND_selector(Loading::Callback), this), NULL);
-    //pLoading->runAction(action);
     
     char name[25];
     CCArray* animFrames = CCArray::createWithCapacity(2);
@@ -183,27 +123,8 @@ void Loading::LoadingSprites()
     animFrames->removeAllObjects();
 }
 
-void Loading::LoadingSpriteTimer(float f)
-{
-    //CCLog("hahaha = %d", spriteStatus);
-    if (spriteStatus % 2 == 0)
-    {
-        if (timerStop)
-            return;
-        pLoading->setOpacity(0);
-        pLoading2->setOpacity(255);
-    }
-    else
-    {
-        if (timerStop)
-            return;
-        pLoading->setOpacity(255);
-        pLoading2->setOpacity(0);
-    }
-    spriteStatus++;
-}
 
-void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
+void LoadingPuzzle::onHttpRequestCompleted(CCNode *sender, void *data)
 {
     // Loading_GameStart 창 끄기
     //((Loading_GameStart*)Depth::GetCurPointer())->EndScene();
@@ -216,7 +137,7 @@ void Loading::onHttpRequestCompleted(CCNode *sender, void *data)
     XmlParseGameStart(&xmlDoc);
 }
 
-void Loading::XmlParseGameStart(xml_document *xmlDoc)
+void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
 {
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
@@ -226,18 +147,18 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
     {
         Common::RebootSystem(this);
         /*
-        std::vector<int> nullData;
-        if (code <= MAX_COMMON_ERROR_CODE)
-            Network::ShowCommonError(code);
-        else if (code == 10) // 포션 부족함.
-            Common::ShowPopup(this, "Loading", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
-        else
-            Common::ShowPopup(this, "Loading", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
-        */
+         std::vector<int> nullData;
+         if (code <= MAX_COMMON_ERROR_CODE)
+         Network::ShowCommonError(code);
+         else if (code == 10) // 포션 부족함.
+         Common::ShowPopup(this, "Loading", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
+         else
+         Common::ShowPopup(this, "Loading", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+         */
     }
-
+    
     else if (code == 0)
-    {        
+    {
         xml_node gameInfo = nodeResult.child("game-info");
         
         // item 사용/미사용 결과 받아서 client에 저장해 두기
@@ -254,10 +175,10 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
         
         // 미션
         /*
-        type : 1-한개피스, 2-특정마법, 3-모든마법, 4-모든피스
-        value : 피스(터트려야하는 수), 마법(시전마법수)
-        reference-value : type1일때-1:물피스, 2:불피스, 3:땅피스
-        (type 2일때 : 시전해야하는 스킬 ID)
+         type : 1-한개피스, 2-특정마법, 3-모든마법, 4-모든피스
+         value : 피스(터트려야하는 수), 마법(시전마법수)
+         reference-value : type1일때-1:물피스, 2:불피스, 3:땅피스
+         (type 2일때 : 시전해야하는 스킬 ID)
          */
         missionType = gameInfo.child("mission").attribute("type").as_int();
         missionVal = gameInfo.child("mission").attribute("value").as_int();
@@ -325,31 +246,7 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
         int numOfCocoTime = gameInfo.child("coco-time").attribute("add-number").as_int();
         
         //return;
-        Common::ShowNextScene(this, "Loading", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime);
+        Common::ShowNextScene(this, "LoadingPuzzle", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime);
     }
 }
 
-void Loading::EndScene()
-{
-    //CCLog("Loading : EndScene");
-    /*
-    if (loadingSprites)
-    {
-        pCoco->removeFromParentAndCleanup(true);
-        pTip->removeFromParentAndCleanup(true);
-        pTipMsg->removeFromParentAndCleanup(true);
-    }
-    pLoading->removeFromParentAndCleanup(true);
-    */
-    
-    this->removeFromParentAndCleanup(true);
-    
-    /*
-    // release depth tree
-    Depth::RemoveCurDepth();
-    
-    // touch 넘겨주기 (GetCurName = 위에서 remove 했기 때문에 결국 여기 입장에서는 부모다)
-    CCString* param = CCString::create("-1");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    */
-}

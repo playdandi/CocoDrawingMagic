@@ -80,8 +80,10 @@ void KakaoNativeExtension::init(std::function<void()> _callback, std::function<v
     const char *param;
     if (access_token.length()) {
         param = cocos2d::CCString::createWithFormat("{\"action\":\"Init\", \"access_token\":\"%s\", \"refresh_token\":\"%s\"}", access_token.c_str(), refresh_token.c_str())->getCString();
+        CCLog("ready token");
     } else {
         param = cocos2d::CCString::createWithFormat("{\"action\":\"Init\"}")->getCString();
+        CCLog("init token");
     }
 
     runAction(param);
@@ -134,10 +136,9 @@ void KakaoNativeExtension::unregister(std::function<void ()> _callback, std::fun
     KakaoResponseHandler::getInstance()->onUnregisterErrorComplete = error_callback;
     const char *param;
     param = "{\"action\": \"Unregister\"}";
-
     runAction(param);
-    param = "{\"action\": \"DeleteUser\"}";
-    runAction(param);
+    //param = "{\"action\": \"DeleteUser\"}";
+    //runAction(param);
 }
 
 void KakaoNativeExtension::friends(std::function<void ()> _callback, std::function<void (char const*, char const*)> error_callback) {

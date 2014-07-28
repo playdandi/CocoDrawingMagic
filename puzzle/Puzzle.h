@@ -51,11 +51,19 @@ public:
     void SetScoreAndStarCandy();
     void UpdateScore(int type, int data);
     void UpdateStarCandy(int type, int data);
-    void ShowSkillScore(int score, int queue_pos, int etc = -1);
+    void ShowBasicScore(int score, CCPoint pos, int size);
+    void ShowSkillScore(int score, float scale, int queue_pos, int etc = -1, int etc2 = -1, int height = 0);
     void ShowSkillScore_Callback(CCNode* sender, void* data);
-    void ShowSkillAddedScore(int score, int queue_pos, int height, int x = -1, int y = -1);
+    //void ShowSkillAddedScore(int score, int queue_pos, int height, int x = -1, int y = -1);
+    float GetScoreBasicScale(int size);
+    
+    int FakeScore(int score);
+    int RealScore();
+    int FakeStarCandy(int candy);
+    int RealStarCandy();
     
     void ShowStarCandy(std::vector<CCPoint> pos);
+    //void ShowStarCandy(bool isCycle, std::vector<CCPoint> pos);
     void ShowStarCandy_Callback(CCNode* sender, void* data);
     void SetCombo();
     int GetCombo();
@@ -98,17 +106,22 @@ public:
     CCPoint SetPiece8Position(int x, int y);
     CCPoint SetPiece4Position(int x, int y);
     
+    void Cycle_Callback(CCNode* sender, void* p);
+    
     void CancelDrawing();
     void InvokeSkills(int queue_pos);
     void Lock(int queue_pos);
     void LockEach(int x, int y);
     void UnLockEach(int x, int y);
+    bool IsLocked(int x, int y);
     void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);//, int F8_idx = -1);
     void BombCallback(CCNode* sender, void *queue_pos);
     
     void RemoveConnectPieces(std::vector<CCPoint> pos);
     void CreateConnectPieces();
-    void ReplaceConnectPieces();
+    void RemoveConnectPiecesXY(int x, int y);
+    //void ReplaceConnectPieces();
+    
     
     void FallingProcess();
     void Falling(int queue_pos, int xx = -1);
@@ -207,13 +220,24 @@ public:
     void GameEnd(CCNode* sender, void* pointer);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
-    void XmlParseGameStart(xml_document *xmlDoc);
+    //void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    //void XmlParseGameStart(xml_document *xmlDoc);
     void XmlParseFriends(xml_document *xmlDoc);
     void XmlParseGameEnd(xml_document *xmlDoc);
-    void ParseProfileImage(char* data, int size, int idx);
+    std::string SubstrNickname(std::string nickname);
+    //void ParseProfileImage(char* data, int size, int idx);
     
     CCClippingNode* GetBoardClip();
+    
+    bool IsGameOver();
+    
+    // 요정능력 관련 변수
+    int CONN_PIECE_PROB;        // 연결피스 확률
+    int FEVER_TIME_MAX;         // feverTime 시간
+    int ADD_STARCANDY_PERCENT;  // 추가별사탕 %
+    
+    // 한붓그리기 기본 점수
+    int dragScore;
     
 protected:
     bool isKeybackTouched;
@@ -333,7 +357,17 @@ protected:
     
     CCSprite* readySprite; // '레디' sprite (pause후 인게임 끝낼 때 필요해서)
     
-    bool bFreezeFlag;
+    int fairyId;
+    int fairyLv;
+    
+    int volumeCnt;
+    
+    int bonusBombCnt; // 보너스타임 때 터지는 덩어리 개수
+    
+    int spirit_scid; // 정령스킬 튜토리얼에 쓰이는 정령 스킬 common id
+    CCSprite* spirit_sp;
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
     
 private:
     Sound* sound;
@@ -374,6 +408,7 @@ private:
     CCSprite* timelimit;
     
     CCLayer* fairyLayer;
+    CCSprite* fairyShadow;
     std::vector<CCSprite*> fairy_sp;
     CCLayer* cocoLayer;
     int cocoFrameNumber;
@@ -399,6 +434,8 @@ private:
     
     CCSprite* boardSP;
     CCClippingNode* boardClip;
+    
+    CCSet* runningActions;
 };
 
 class PuzzleP8Set
@@ -430,7 +467,7 @@ public:
     void SetPuzzleLayer(CCLayer* layer);
     void CreateObject(int x, int y);
     //void CreatePiece(int x, int y, int type = -100, int designatedType = -1);
-    void CreatePiece(int x, int y, int type = -1);
+    bool CreatePiece(int x, int y, int type = -1);
     int GetType(int x, int y);
     void SetType(int x, int y, int type);
     void SetOpacity(int x, int y, int alpha);

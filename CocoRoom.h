@@ -35,6 +35,8 @@ public:
     void EndScene();
     void EndSceneCallback();
     
+    void RenewAllData();
+    
     void InitSprites();
     void MakeSprites(int state);
     
@@ -46,11 +48,13 @@ public:
     
     void MakeSpritesFairy();
     void SetFairyBuildUp();
+    void ShowHintOfFairy();
     void MakeScrollFairy();
     
     void MakeSpritesCandy();
     void SetTodayCandyList();
-    void DecideUser(char* selectedKakaoId);
+
+    void DecideUser();
     void TodayCandy_Result(char* selectedKakaoId);
     void Callback(CCNode* sender, void* data);
     void Callback2(CCNode* sender, void* kakaoId);
@@ -90,6 +94,8 @@ private:
     CCScrollView* scrollView;
     CCLayer* containerCoco;
     CCLayer* containerFairy;
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
     
     CCLayer* coco;
     CCLayer* fairy;

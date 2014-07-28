@@ -97,6 +97,8 @@ bool SendTopaz::init()
     scrollView->setTouchPriority(Depth::GetCurPriority());
     tLayer->addChild(scrollView, 3);
     
+    this->schedule(schedule_selector(SendTopaz::ProfileTimer), 1.0f);
+    
     InitSprites();
     MakeScroll();
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
@@ -123,6 +125,7 @@ void SendTopaz::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("SendTopaz 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         scrollView->setTouchEnabled(false);
@@ -132,7 +135,7 @@ void SendTopaz::Notification(CCObject* obj)
         // '토파즈 선물하기'에서 선물할 때 (팝업창에서 돌아왔음)
         EndScene();
         
-        char p[30];
+        char p[40];
         sprintf(p, "%s/%d", friendKakaoId.c_str(), topazId-1);
         CCString* param = CCString::create(p);
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
@@ -141,6 +144,7 @@ void SendTopaz::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -173,39 +177,40 @@ void SendTopaz::MakeScroll()
     int numOfList = friendList.size();
     
     scrollContainer = CCLayer::create();
-    scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     
     int height = 0;
     char fname[50], fname2[50];
-    for (int i = 0 ; i < numOfList ; i++)
+    for (int i = numOfList-1 ; i >= 0 ; i--)
     {
         // 본인은 리스트 제외
         if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
             continue;
+        // 수신 차단한 친구도 제외
+        //if (friendList[i]->IsMessageBlocked())
+        //    continue;
         
         CCLayer* itemLayer = CCLayer::create();
         itemLayer->setContentSize(CCSizeMake(862, 166));
-        itemLayer->setPosition(ccp(34, (numOfList-height-1)*166));
+        itemLayer->setPosition(ccp(34, height*166));
         scrollContainer->addChild(itemLayer, 2);
         spriteClass->layers.push_back(itemLayer);
         height++;
         
-        // profile bg
-        //spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, friendList[i]->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        
         // 프로필 이미지
-        CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
-        if (friendList[i]->GetImageUrl() != "")
+        sprintf(fname, "background/bg_profile.png%d", i);
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(45+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.85f) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
             sprintf(fname, "background/bg_profile.png%d", i);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         }
         else
         {
-            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 3) );
+            spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 1.0f, -888*(numOfList-i)) ); // tag = -888 * (i+1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0, -777*(numOfList-i)) ); // tag = -777 * (i+1)
         }
-        
-        
         
         // name (text)
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
@@ -227,9 +232,11 @@ void SendTopaz::MakeScroll()
     }
     
     // container 설정
+    scrollContainer->setContentSize(CCSizeMake(862, height*166));
     scrollView->setContainer(scrollContainer);
     scrollView->setContentSize(scrollContainer->getContentSize());
-    scrollView->setContentOffset(ccp(0, 904+243+45-100-(numOfList*166)), false);
+    //scrollView->setContentOffset(ccp(0, 904+243+45-100-(height*166)), false);
+    scrollView->setContentOffset(ccp(0, scrollView->minContainerOffset().y), false);
 }
 
 
@@ -319,12 +326,15 @@ void SendTopaz::EndScene()
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     
+    this->unschedule(schedule_selector(SendTopaz::ProfileTimer));
+    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
     // remove all objects
     spriteClass->RemoveAllObjects();
     delete spriteClass;
+    spriteClass = NULL;
     
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
@@ -339,3 +349,76 @@ void SendTopaz::EndScene()
 }
 
 
+
+void SendTopaz::ProfileTimer(float f)
+{
+    // 프로필 사진 왼쪽 위 지점과 스크롤뷰 위치를 비교한다.
+    // 음수가 되면, 아래에 있던 프로필이 스크롤뷰에 보이기 시작했다는 의미 -> 프로필 로딩 시작.
+    CCPoint p;
+    float h;
+    int numOfList = friendList.size();
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
+        if (psp->IsLoadingStarted() || psp->IsLoadingDone())
+            continue;
+        
+        if (spriteClass == NULL)
+            return;
+        p = ((CCSprite*)spriteClass->FindSpriteByTag(-888*(numOfList-i)))->convertToNodeSpace(scrollView->getPosition());
+        h = friendList[i]->GetProfile()->getContentSize().height;
+        
+        if (p.y - h < 0)
+        {
+            psp->SetLoadingStarted(true);
+            
+            char tag[6];
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(psp->GetProfileUrl().c_str());
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(SendTopaz::onHttpRequestCompletedNoEncrypt));
+            sprintf(tag, "%d", i);
+            req->setTag(tag);
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+    }
+}
+void SendTopaz::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
+{
+    CCHttpResponse* res = (CCHttpResponse*) data;
+    char dumpData[110*110*2];
+    
+    // 프로필 사진 받아오기 실패
+    if (!res || !res->isSucceed())
+    {
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = res->getResponseData();
+    for (unsigned int i = 0 ; i < buffer->size() ; i++)
+        dumpData[i] = (*buffer)[i];
+    dumpData[buffer->size()] = NULL;
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageData(dumpData, (int)buffer->size());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    // set CCSprite (profile 모음 리스트에 갱신)
+    int numOfList = friendList.size();
+    int index = atoi(res->getHttpRequest()->getTag());
+    
+    ProfileSprite* psp = ProfileSprite::GetObj(friendList[index]->GetImageUrl());
+    psp->SetSprite(texture);
+    psp->SetLoadingDone(true);
+    
+    // 화면에 보이는 스프라이트 교체
+    if (spriteClass == NULL)
+        return;
+    spriteClass->ChangeSprite(-888*(numOfList-index), psp->GetProfile());
+    ((CCSprite*)spriteClass->FindSpriteByTag(-777*(numOfList-index)))->setOpacity(255);
+}

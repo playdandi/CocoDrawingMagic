@@ -179,8 +179,14 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500, 1088+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
     // MP 추가점수 값
     sprintf(number, "+ %s", Common::MakeComma(myGameResult->totalScore - myGameResult->score).c_str());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500+2, 1018+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500+2, 1018+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005, 0, 255, 101010) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500, 1018+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
+    // MP 추가점수를 %로 환산
+    CCSize si = ((CCLabelTTF*)spriteClass->FindLabelByTag(101010))->getContentSize();
+    sprintf(number, "(%.2f%%)", myGameResult->addedMPPercent);
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(500+2+si.width+5, 1018+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 36, ccp(0, 0.5), ccp(500+si.width+5, 1018+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
+    
     // 콤보 값
     sprintf(number, "%d", myGameResult->combo);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 42, ccp(0, 0.5), ccp(500+2, 958+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
@@ -480,6 +486,7 @@ void PuzzleResult::ScoreTimer(float f)
     {
         this->unschedule(schedule_selector(PuzzleResult::ScoreTimer));
         varScore = myGameResult->totalScore;
+        ((Puzzle*)Depth::GetParentPointer())->GetSound()->StopGameResult();
     }
     
     pScoreLayer->removeAllChildren();

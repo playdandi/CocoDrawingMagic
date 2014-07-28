@@ -1,6 +1,6 @@
 #include "Common.h"
 #include "Loading.h"
-//#include "Loading_GameStart.h"
+#include "LoadingPuzzle.h"
 #include "Ranking.h"
 #include "GameReady.h"
 #include "Sound.h"
@@ -38,6 +38,7 @@
 #include "tutorial/puzzle/T_Skip.h"
 #include "Splash.h"
 #include "RankUp.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
 
 Sound* sound;
 
@@ -124,17 +125,24 @@ CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B colo
 
 std::string Common::GetTip()
 {
-    int c = rand() % 3;
-    switch (c)
-    {
-        case 0:
-            return "미션을 성공하면 연습중인 스킬의 경험치가 증가해요."; break;
-        case 1:
-            return "피스를 최소 6개 이상, 가능하다면 10개 이상 한붓그리기를 하는 게 좋아요."; break;
-        case 2:
-            return "요정을 장착하고 있으면 연결피스가 점점 많아져요."; break;
-    }
-    return "";
+    int c = rand()%100;
+    int category;
+    if (c < 10) category = 1; // 개소리 : 10%
+    else category = 2; // 게임팁 : 90%
+    
+    // 카테고리의 idx를 모은다.
+    std::vector<int> ids;
+    for (int i = 0 ; i < tipContent.size() ; i++)
+        if (tipContent[i]->GetCategory() == category)
+            ids.push_back(i);
+    
+    // 랜덤하게 선택한다.
+    c = rand() % (int)(ids.size());
+    
+    int p = ids[c];
+    ids.clear();
+    
+    return tipContent[p]->GetContent();
 }
 
 CCLayer* Common::MakeCombo(int num)
@@ -269,37 +277,57 @@ std::string Common::InsertComma(std::string number)
     return result;
 }
 
-CCLayer* Common::MakeItemNumberLayer(std::string number)
+CCLayer* Common::MakeItemNumberLayer(std::string number, float scale)
 {
     CCLayer* layer = CCLayer::create();
     
-    int offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
-    int offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
+    float offset[] = {0, 1, 1, 0, 0, 0, -1, 1, -1, 0};
+    float offsetX[] = {2, 0, 2, 2, 2, 2, 2, 2, 2, 2};
     char name[30];
     int totalWidth = 0;
-
+    int tag = 0;
+    
     std::vector<CCSprite*> sprites;
     for (int i = number.size()-1 ; i >= 0 ; i--)
     {
-        sprintf(name, "number/count_%c.png", number[i]);
+        if (number[i] == ',')
+            sprintf(name, "number/count_comma.png");
+        else
+            sprintf(name, "number/count_%c.png", number[i]);
         CCSprite* temp = CCSprite::createWithSpriteFrameName(name);
+        
+        //float scale = 1.0f;
+        //if (type == 1) scale = 1.2f;
+        //else if (type == 2) scale = 1.44f;
+        temp->setScale(scale);
         
         temp->setAnchorPoint(ccp(1, 0));
         if (i == number.size()-1)
         {
-            temp->setPosition(ccp(0, offset[number[i]-'0']));
-            totalWidth -= (int)temp->getContentSize().width;
+            temp->setPosition(ccp(0, offset[number[i]-'0']*scale));
+            totalWidth -= (temp->getContentSize().width*scale);
         }
         else
         {
-            temp->setPosition(ccp(totalWidth + offsetX[number[i]-'0'], offset[number[i]-'0']));
-            totalWidth -= ((int)temp->getContentSize().width - offsetX[number[i]-'0']);
+            if (number[i] == ',')
+            {
+                temp->setPosition(ccp(totalWidth-2, 0));
+                totalWidth -= (temp->getContentSize().width*scale);
+            }
+            else
+            {
+                temp->setPosition(ccp(totalWidth + offsetX[number[i]-'0']*scale, offset[number[i]-'0']*scale));
+                totalWidth -= (temp->getContentSize().width*scale - offsetX[number[i]-'0']*scale);
+            }
         }
 
         layer->addChild(temp, 100);
+        temp->setTag(tag++);
         sprites.push_back(temp);
     }
     sprites.clear();
+    
+    layer->setContentSize(CCSize(-totalWidth, 0));
     
     return layer;
 }
@@ -436,7 +464,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "SelectProperty") nextScene = SelectProperty::scene(etc);
     
     else if (to == "Loading") nextScene = Loading::scene(etc);
-    //else if (to == "Loading_GameStart") nextScene = Loading_GameStart::scene();
+    else if (to == "LoadingPuzzle") nextScene = LoadingPuzzle::scene();
 
     else if (to == "RankUp") nextScene = RankUp::scene();
     
@@ -465,11 +493,17 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     }
     else if (from == "Loading")
     {
-        if (isReplaced) // to Puzzle
-            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
-        else
+        //if (isReplaced) // to Puzzle
+        //    CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
+        //else
             ((Loading*)obj)->addChild(nextScene, 200, 200);
     }
+    else if (from == "LoadingPuzzle")
+    {
+        if (isReplaced) // to Puzzle
+            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
+    }
+        
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(nextScene, 200, 200);
     else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(nextScene, 200, 200);
@@ -541,7 +575,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
 
     CCNode* parent;
     // replace = true 면, 순서상 EndScene을 먼저 해 줘야한다... (나중에 다시 리팩토링 해야 함)
-    if (from == "SketchDetail") {
+    if (from == "SketchDetail" && isReplaced) {
         parent = ((SketchDetail*)obj)->getParent();
         ((SketchDetail*)obj)->EndScene(false);
     }
@@ -588,10 +622,10 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
         else
             ((T_SketchDetail*)obj)->addChild(popup, 200, 200);
     }
-    else if (from == "NoImage")
-        ((NoImage*)obj)->addChild(popup, 200, 200);
-    else if (from == "Puzzle")
-        ((Puzzle*)obj)->addChild(popup, 200, 200);
+    else if (from == "T_Sketchbook") ((T_Sketchbook*)obj)->addChild(popup, 200, 200);
+    else if (from == "NoImage") ((NoImage*)obj)->addChild(popup, 200, 200);
+    else if (from == "Puzzle") ((Puzzle*)obj)->addChild(popup, 200, 200);
+    else if (from == "PuzzlePause") ((PuzzlePause*)obj)->addChild(popup, 200, 200);
 }
 
 
@@ -676,6 +710,36 @@ SpriteObject* SpriteObject::CreateFromSprite(int spriteType, CCSprite* spr, CCPo
     return obj;
 }
 
+void SpriteClass::ChangeSprite(int tag, CCSprite* sp) // 스프라이트 바꿔치기
+{
+    SpriteObject* so = NULL;
+    for (int i = 0 ; i < spriteObj.size() ; i++)
+    {
+        if (spriteObj[i] == NULL)
+            return;
+        if (spriteObj[i]->type == 0 && spriteObj[i]->sprite->getTag() == tag)
+            so = spriteObj[i];
+        else if (spriteObj[i]->type == 1 && spriteObj[i]->sprite9->getTag() == tag)
+            so = spriteObj[i];
+        else if (spriteObj[i]->type == 2 && spriteObj[i]->label->getTag() == tag)
+            so =spriteObj[i];
+        if (so != NULL)
+            break;
+    }
+    
+    if (so != NULL)
+    {
+        if (so->type == 0)
+        {
+            so->sprite->setDisplayFrame(sp->displayFrame());
+            CCPoint p = so->sprite->getPosition();
+            so->sprite->setPosition(ccp(p.x+5, p.y+11));
+            so->sprite->setScale(0.95f);
+        }
+    }
+}
+
+
 SpriteObject* SpriteObject::CreateLabel(std::string text, std::string font, int size, CCPoint ap, CCPoint pos, ccColor3B color, std::string parentName, std::string parentType, void* parent, int zOrder, int priority, int alpha, int tag)
 {
     SpriteObject* obj = new SpriteObject();
@@ -723,6 +787,8 @@ SpriteObject* SpriteObject::CreateLabelArea(std::string text, std::string font, 
     
     return obj;
 }
+
+
 
 CCPoint SpriteClass::FindParentCenterPos(std::string parentName)
 {
@@ -1010,7 +1076,7 @@ void Common::RebootSystem(void* p)
         else if (Depth::GetCurNameString() == "Puzzle") ((Puzzle*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "PuzzleResult") ((PuzzleResult*)cur)->EndSceneCallback(NULL, cur);
         else if (Depth::GetCurNameString() == "PuzzlePause") ((PuzzlePause*)cur)->EndScene();
-        else if (Depth::GetCurNameString() == "RankUp") ((RankUp*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "RankUp") ((RankUp*)cur)->EndSceneFromReboot();
         else if (Depth::GetCurNameString() == "T_Sketchbook") ((T_Sketchbook*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "T_SketchDetail") ((T_SketchDetail*)cur)->EndScene(true);
         else if (Depth::GetCurNameString() == "T_MagicList") ((T_MagicList*)cur)->EndScene();
@@ -1032,8 +1098,6 @@ void Common::RebootSystem(void* p)
     magicStaffBuildupInfo.clear();
     for (int i = 0 ; i < skillSlotInfo.size() ; i++) delete skillSlotInfo[i];
     skillSlotInfo.clear();
-    //for (int i = 0 ; i < prerequisiteInfo.size() ; i++) delete prerequisiteInfo[i];
-    //prerequisiteInfo.clear();
     for (int i = 0 ; i < fairyInfo.size() ; i++) delete fairyInfo[i];
     fairyInfo.clear();
     for (int i = 0 ; i < fairyBuildUpInfo.size() ; i++) delete fairyBuildUpInfo[i];
@@ -1183,7 +1247,37 @@ std::string Common::base64_decode(std::string const& encoded_string)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx)
+
+std::string Common::GetVerifyParams(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx)
+{
+    // parameter 만들기
+    char temp[1024];
+    std::string param = "";
+    sprintf(temp, "kakao_id=%s&", kakaoId);
+    param += temp;
+    sprintf(temp, "topaz_id=%d&", topazId);
+    param += temp;
+    sprintf(temp, "purchase_data=%s&", purchaseData);
+    param += temp;
+    sprintf(temp, "signature=%s", dataSignature);
+    //sprintf(temp, "signature=gwhuighwugi1237494174169789");
+    param += temp;
+    if (type == 2) // 선물하기
+    {
+        sprintf(temp, "&friend_kakao_id=%s", friendkakaoId);
+        param += temp;
+    }
+    
+    std::string encrypted = Network::Encrypt_PS() + "#@!!@#" + Network::Encrypt_a(param);
+    
+    std::string url;
+    if (type == 1) url = URL_PURCHASE_TOPAZ;
+    else if (type == 2) url = URL_SEND_TOPAZ;
+    
+    return encrypted + "#@!!@#" + url;
+}
+
+void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx, const char* fkid)
 {
     CCLog("start verify purchase result xml parse");
     // xml parsing
@@ -1214,14 +1308,14 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
         CCLog("토파즈 = %d", topaz);
         CCLog("별사탕 = %d", starcandy);
         myInfo->SetMoney(topaz, starcandy);
-        CCLog("after 토파즈 = %d", myInfo->GetTopaz());
-        CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
+        //CCLog("after 토파즈 = %d", myInfo->GetTopaz());
+        //CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
         
         // 부모 scene에 갱신
-        CCString* param = CCString::create("2");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
+        //CCString* param = CCString::create("2");
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         
         // Android에서 Consume하기
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -1236,6 +1330,27 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
             t.env->DeleteLocalRef(t.classID);
         }
         #endif
+        
+        /*
+        // 카카오 메시지 보내기
+        std::vector<int> nullData;
+        std::string friendKakaoId = fkid;
+        if (!Friend::GetObj(friendKakaoId)->IsMessageBlocked())
+        {
+            // 카카오 api 호출
+            std::string templateId = KAKAO_MSG_TEMPLATE_SENDTOPAZ;
+            std::string executeUrl = "";
+            char temp[128];
+            sprintf(temp, "{\"sender_name\":\"%s\"}", friendKakaoId.c_str());
+            std::string metaInfo = temp;
+            CCLog("metaInfo = %s", metaInfo.c_str());
+            KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&BuyTopaz::onSendLinkMessageComplete, (BuyTopaz*)Depth::GetCurPointer()), std::bind(&BuyTopaz::onSendLinkMessageErrorComplete, (BuyTopaz*)Depth::GetCurPointer(), std::placeholders::_1, std::placeholders::_2), templateId, friendKakaoId, "", executeUrl, metaInfo);
+            
+            Common::ShowPopup(Depth::GetCurPointer(), "BuyTopaz", "NoImage", false, SEND_TOPAZ_OK, BTN_1, nullData);
+        }
+        else
+            Common::ShowPopup(Depth::GetCurPointer(), "BuyTopaz", "NoImage", false, SEND_TOPAZ_OK_NOKAKAOMSG, BTN_1, nullData);
+        */
     }
     else
     {
@@ -1253,157 +1368,3 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
 }
 
 
-
-/*
-void Common::VerifyPayloadAndProvideItem(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx)
-{
-    // parameter 만들기
-    char temp[1024];
-    std::string param = "";
-    sprintf(temp, "kakao_id=%s&", kakaoId);
-    param += temp;
-    sprintf(temp, "topaz_id=%d&", topazId);
-    param += temp;
-    sprintf(temp, "purchase_data=%s&", purchaseData);
-    param += temp;
-    //sprintf(temp, "signature=%s", dataSignature);
-    sprintf(temp, "signature=gwhuighwugi");
-    param += temp;
-    if (type == 2) // 선물하기
-    {
-        sprintf(temp, "&friend_kakao_id=%s", friendkakaoId);
-        param += temp;
-    }
-
-    sprintf(temp, "%d", consumeIdx);
-    if (type == 1) // 일반구매
-        Network::HttpPost(param, URL_PURCHASE_TOPAZ, Depth::GetCurPointer(),
-                          httpresponse_selector(Common::onHttpRequestCompleted), "1", temp);
-    else if (type == 2) // 선물하기
-        Network::HttpPost(param, URL_SEND_TOPAZ, Depth::GetCurPointer(),
-                          httpresponse_selector(Common::onHttpRequestCompleted), "2", temp);
-}
-
-void Common::onHttpRequestCompleted(CCNode *sender, void *data)
-{
-    CCHttpResponse* res = (CCHttpResponse*) data;
-    
-    xml_document xmlDoc;
-    Network::GetXMLFromResponseData(res, xmlDoc);
-    
-    std::string tag = res->getHttpRequest()->getTag();
-    int type = atoi(tag.substr(0, tag.find("@")).c_str());
-    int consumeIdx = atoi(tag.substr(tag.find("@")+1).c_str());
-  
-    // parse xml data
-    XmlParseVerifyPurchaseResult(&xmlDoc, type, consumeIdx);
-}
-
-//void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx)
-void Common::XmlParseVerifyPurchaseResult(xml_document *xmlDoc, int type, int consumeIdx)
-{
-    CCLog("result xml parse");
-    
-    xml_node nodeResult = xmlDoc->child("response");
-    int code = nodeResult.child("code").text().as_int();
-    CCLog("CODE = %d", code);
-    
-    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
-    if (code != 0)
-    {
-        //std::vector<int> nullData;
-        //if (code <= MAX_COMMON_ERROR_CODE)
-        //    Network::ShowCommonError(code);
-        //else
-        //    Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
-        
-        if (code == 10) CCLog("서버인증실패"); // 서버인증실패
-        else if (code == 11) CCLog("페이로드 다름"); // payload 다름
-        else if (code == 12) CCLog("이미 지급한 상품"); // 이미 지급한 상품
-        else if (code == 13) CCLog("토파즈 id 이상함"); // 토파즈 id 이상함
-        else if (code == 14) CCLog("친구관계가 아님"); // 친구관계가 아님 (선물하기 결제의 경우에만 나올 수 있음)
-        else CCLog("기타 다른 에러");
-        
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-        JniMethodInfo t;
-        if (JniHelper::getStaticMethodInfo(t,
-                                           "com/playDANDi/CocoMagic/InAppBilling",
-                                           "PurchaseError",
-                                           "()V"))
-        {
-            t.env->CallStaticVoidMethod(t.classID, t.methodID);
-            // Release
-            t.env->DeleteLocalRef(t.classID);
-        }
-        #endif
-        
-        // 결제 에러 팝업창 띄우기 (강제 재부팅)
-        std::vector<int> nullData;
-        Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurName(), "NoImage", false, ERROR_IN_APP_BILLING, BTN_1, nullData);
-    }
-    else
-    {
-        CCLog("구매 성공!");
-        
-        // 토파즈, 별사탕을 갱신한다.
-        int topaz = nodeResult.child("money").attribute("topaz").as_int();
-        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-        CCLog("토파즈 = %d", topaz);
-        CCLog("별사탕 = %d", starcandy);
-        myInfo->SetMoney(topaz, starcandy);
-        CCLog("after 토파즈 = %d", myInfo->GetTopaz());
-        CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
-        
-        // 부모 scene에 갱신
-        CCString* param = CCString::create("2");
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
-        
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-        JniMethodInfo t;
-        if (JniHelper::getStaticMethodInfo(t,
-                                           "com/playDANDi/CocoMagic/InAppBilling",
-                                           "Consume",
-                                           "(I)V"))
-        {
-            t.env->CallStaticVoidMethod(t.classID, t.methodID, consumeIdx);
-            // Release
-            t.env->DeleteLocalRef(t.classID);
-        }
-        #endif
-    }
-}
-*/
-
-
-
-
-std::string Common::GetVerifyParams(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx)
-{
-    // parameter 만들기
-    char temp[1024];
-    std::string param = "";
-    sprintf(temp, "kakao_id=%s&", kakaoId);
-    param += temp;
-    sprintf(temp, "topaz_id=%d&", topazId);
-    param += temp;
-    sprintf(temp, "purchase_data=%s&", purchaseData);
-    param += temp;
-    //sprintf(temp, "signature=%s", dataSignature);
-    sprintf(temp, "signature=gwhuighwugi");
-    param += temp;
-    if (type == 2) // 선물하기
-    {
-        sprintf(temp, "&friend_kakao_id=%s", friendkakaoId);
-        param += temp;
-    }
-    
-    std::string encrypted = Network::Encrypt_PS() + "#@!!@#" + Network::Encrypt_a(param);
-    
-    std::string url;
-    if (type == 1) url = URL_PURCHASE_TOPAZ;
-    else if (type == 2) url = URL_SEND_TOPAZ;
-
-    return encrypted + "#@!!@#" + url;
-}

@@ -14,14 +14,14 @@ void Network::replaceAll(std::string& str, const std::string& from, const std::s
     }
 }
 
-void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc)
+void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc, bool isbasic)
 {
     CCLog("HttpPost : url = %s", url.c_str());
     CCLog("param length = %d", (int)data.size());
     CCLog("param = %s", (unsigned char*)(data.c_str()));
     
-    std::string encoded_a = Encrypt_a(data);
-    std::string encoded_ps = Encrypt_PS();
+    std::string encoded_a = Encrypt_a(data, isbasic);
+    std::string encoded_ps = Encrypt_PS(isbasic);
     
     // 이제 파라미터를 만든다. (필요 파라미터 : PS, a)
     std::string postData = "";
@@ -51,15 +51,19 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     }
     CCHttpClient::getInstance()->send(req);
     req->release();
+    //CCLog("final");
 }
 
-std::string Network::Encrypt_PS()
+std::string Network::Encrypt_PS(bool isBasic)
 {
     unsigned char encrypted[1024];
     int result;
-    
-    char ps_param[30];
-    sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
+
+    char ps_param[100];
+    if (isBasic)
+        sprintf(ps_param, "0|%d|%d", CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
+    else
+        sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
     std::string ps_param_s = ps_param;
     
     result = RSA_public_encrypt((int)ps_param_s.size(), (unsigned char*)(ps_param_s.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
@@ -78,13 +82,16 @@ std::string Network::Encrypt_PS()
             encoded_ps[i] = '-';
     
     char temp[5];
-    sprintf(temp, "%d", publicKeyIndex);
+    if (isBasic)
+        sprintf(temp, "10");
+    else
+        sprintf(temp, "%d", publicKeyIndex);
     std::string number = temp;
     
     return number + encoded_ps;
 }
 
-std::string Network::Encrypt_a(std::string data)
+std::string Network::Encrypt_a(std::string data, bool isBasic)
 {
     // & -> || 형태로 바꿔 놓자.
     Network::replaceAll(data, "&", "||");
@@ -158,6 +165,7 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     if (!res || !res->isSucceed())
     {
         CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        CCLog("%d", res->getResponseCode());
         return;
     }
     
@@ -166,7 +174,7 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     std::string dumpData = "";
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData.push_back( (*buffer)[i] );
-    
+
     char decryptedData[BUFFER_SIZE];
     int bufferSize = Network::DeObfuscation(dumpData, decryptedData);
    
@@ -181,6 +189,16 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     }
 }
 
+std::string Network::GetXMLFromResponseDataForAndroid(const char* resData)
+{
+    char decryptedData[BUFFER_SIZE];
+    Network::DeObfuscation(resData, decryptedData);
+    CCLog("FOR ANDROID : %s", decryptedData);
+
+    std::string result = decryptedData;
+    return result;
+}
+
 int Network::DeObfuscation(std::string obfuscatedStr, char* data)
 {
     int obfKey = atoi(obfuscatedStr.substr(0, 2).c_str()) - 10; // 앞 두자리는 key값이므로 분리한다.
@@ -190,7 +208,6 @@ int Network::DeObfuscation(std::string obfuscatedStr, char* data)
     Network::replaceAll(obfuscatedStr, "-", "+");
     // base64_decode
     obfuscatedStr = Common::base64_decode(obfuscatedStr);
-    
     // xor operation with a key
     int keyLen = obfuscationKey[obfKey].size();
     std::string decryptedKey = "";

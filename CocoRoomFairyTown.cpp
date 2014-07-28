@@ -133,6 +133,7 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("CocoRoomFairyTown : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -147,6 +148,20 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
+    }
+    else if (param->intValue() == 11) // MP 관련 보상
+    {
+        if (myInfo->GetRewardTopaz() > 0)
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_100, BTN_1, nullData);
+        }
+        else if (myInfo->IsRewardPotion())
+        {
+            std::vector<int> nullData;
+            Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_50, BTN_1, nullData);
+        }
     }
 }
 
@@ -401,6 +416,18 @@ void CocoRoomFairyTown::onHttpRequestCompleted(CCNode *sender, void *data)
     XmlParseFairyList(&xmlDoc);
 }
 
+bool compareFairy(FairyEach* f1, FairyEach* f2)
+{
+    if (f1->GetCommonId() == -1)
+        return false;
+    else if (f2->GetCommonId() == -1)
+        return false;
+    
+    FairyInfo* fi1 = FairyInfo::GetObj(f1->GetCommonId());
+    FairyInfo* fi2 = FairyInfo::GetObj(f2->GetCommonId());
+    
+    return fi1->GetCostTopaz() > fi2->GetCostTopaz();
+}
 void CocoRoomFairyTown::XmlParseFairyList(xml_document *xmlDoc)
 {
     xml_node nodeResult = xmlDoc->child("response");
@@ -437,6 +464,8 @@ void CocoRoomFairyTown::XmlParseFairyList(xml_document *xmlDoc)
         
         for (int i = 0 ; i < 10 ; i++)
             fairyData.push_back( new FairyEach(-1, -1, -1) );
+        
+        std::sort(fairyData.begin(), fairyData.end(), compareFairy);
         
         // 스크롤에 정보 표시
         MakeScroll();

@@ -99,6 +99,7 @@ void Coupon::Notification(CCObject* obj)
     {
         // 터치 비활성
         CCLog("Coupon : 터치 비활성");
+        isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
@@ -110,6 +111,7 @@ void Coupon::Notification(CCObject* obj)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
+        isKeybackTouched = false;
     }
 }
 
@@ -397,6 +399,8 @@ void Coupon::XmlParseCouponResult(xml_document *xmlDoc)
             Common::ShowPopup(this, "Coupon", "NoImage", false, COUPON_EXPIRED, BTN_1, nullData);
         else if (code == 12) // 이미 사용한 쿠폰
             Common::ShowPopup(this, "Coupon", "NoImage", false, COUPON_ALREADY_USED, BTN_1, nullData);
+        else if (code == 13) // 같은 유형의 쿠폰
+            Common::ShowPopup(this, "Coupon", "NoImage", false, COUPON_SAME_TYPE, BTN_1, nullData);
         else
             Common::ShowPopup(this, "Coupon", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }

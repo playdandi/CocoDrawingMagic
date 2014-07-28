@@ -247,7 +247,9 @@ private:
     
     // 튜토리얼 변수들
     CCLabelTTF* ttrMsg;
-    CCSprite* ttrBg;
+    CCScale9Sprite* ttrBg1;
+    CCScale9Sprite* ttrBg2;
+    //CCSprite* ttrBg;
     //CCSprite* ttrArrow;
     CCSprite* ttrSkip;
     CCSprite* ttrFinger;

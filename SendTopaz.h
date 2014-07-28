@@ -34,6 +34,9 @@ public:
     
     void EndScene();
     
+    void ProfileTimer(float f);
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    
 protected:
     CCSize winSize;
     bool isKeybackTouched;

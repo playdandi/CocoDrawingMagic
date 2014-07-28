@@ -22,6 +22,10 @@ public:
 
     void Callback(CCNode* sender, void* p);
     
+    void onSendLinkMessageComplete();
+    void onSendLinkMessageErrorComplete(char const *status, char const *error);
+    
+    void EndSceneFromReboot();
     void EndScene();
     void EndSceneCallback(CCNode* sender, void* pointer);
     
@@ -31,6 +35,7 @@ protected:
     CCSize winSize;
     bool isKeybackTouched;
     bool isTouched;
+    bool isBoasted;
     
     CCRect rect;
     int kind;

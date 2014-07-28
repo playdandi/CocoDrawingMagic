@@ -38,6 +38,9 @@ public:
     
     void EndScene();
     
+    void onSendLinkMessageComplete();
+    void onSendLinkMessageErrorComplete(char const *status, char const *error);
+    
 protected:
     CCSize winSize;
     bool isKeybackTouched;

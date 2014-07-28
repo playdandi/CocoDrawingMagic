@@ -24,19 +24,24 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent* event);
     virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view);
-    //virtual void registerWithTouchDispatcher();
     
     void RenewAllTime();
     void Notification(CCObject* obj);
+    
+    void ShowPopup();
     
     void InitSprites();
     void InitProperties();
     void MakeScroll();
     
     void PotionTimer(float f);
+    void ProfileTimer(float f);
+    
+    void ShowHintOfMP();
     
     CCScrollView* GetScrollView();
     
+    void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     
     void EndScene();
     
@@ -49,6 +54,9 @@ protected:
     bool isScrolling;
     bool isScrollViewTouched;
     bool isOnceScrollViewTouched;
+    bool isHintOfMPShown;
+    
+    int popupStatus;
     
     CCRect rect;
     int kind;
@@ -62,6 +70,9 @@ private:
     SpriteClass* spriteClassProperty;
     
     CCScrollView* scrollView;
+    
+    CCScale9Sprite* balloon;
+    CCLabelTTF* ball;
 };
 
 #endif /* defined(__CocoMagic__Ranking__) */
