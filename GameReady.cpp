@@ -134,6 +134,9 @@ bool GameReady::init()
     
     balloon = NULL;
     ball = NULL;
+    balloon2 = NULL;
+    ball2 = NULL;
+    isHintOfMPShown = false;
     
     // item select init.
     for (int i = 0 ; i < 5 ; i++)
@@ -248,7 +251,8 @@ void GameReady::ShowRewardPopup()
         {
             if (isStartUser)
             {
-                myInfo->SetMsgCnt(myInfo->GetMsgCnt()+1); // 메시지함 개수 1개 추가
+                //myInfo->SetMsgCnt(myInfo->GetMsgCnt()+1); // 메시지함 개수 1개 추가
+                myInfo->SetPotion(5, 0);
                 isStartUser = false;
                 Common::ShowPopup(this, "GameReady", "NoImage", false, POTION_REWARD, BTN_1, nullData);
                 return;
@@ -666,6 +670,34 @@ void GameReady::ShowHintOfBuyingSlot()
     }
 }
 
+void GameReady::ShowHintOfMP()
+{
+    if (isHintOfMPShown)
+        return;
+    isHintOfMPShown = true;
+    
+    if (balloon2 != NULL && ball2 != NULL)
+    {
+        ball2->removeFromParentAndCleanup(true);
+        balloon2->removeFromParentAndCleanup(true);
+    }
+    balloon2 = NULL;
+    ball2 = NULL;
+    
+    balloon2 = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon2->setContentSize(CCSize(600, 200));
+    balloon2->setAnchorPoint(ccp(1, 1));
+    balloon2->setPosition(ccp(765+200, 1666+35));
+    this->addChild(balloon2, 100);
+    ball2 = CCLabelTTF::create("MP로 새로운 마법을 배울 수 있고,\n보너스 점수를 증가시켜줘요.", fontList[0].c_str(), 36);
+    ball2->setPosition(ccp(600/2, 200/2-30));
+    ball2->setColor(ccc3(255,255,255));
+    balloon2->addChild(ball2, 101);
+    
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+    balloon2->runAction( CCRepeatForever::create(action) );
+}
+
 void GameReady::InitProperties()
 {
     spriteClassProperty->RemoveAllObjects();
@@ -947,6 +979,18 @@ void GameReady::PotionTimer(float f)
 
 bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (isHintOfMPShown) // MP힌트 표시되고 있으면 없애기.
+    {
+        if (balloon2 != NULL && ball2 != NULL)
+        {
+            ball2->removeFromParentAndCleanup(true);
+            balloon2->removeFromParentAndCleanup(true);
+        }
+        balloon2 = NULL;
+        ball2 = NULL;
+        isHintOfMPShown = false;
+    }
+    
     if (isTouched || isStarting)
         return false;
     isTouched = true;
@@ -998,6 +1042,15 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Ranking", "BuyStarCandy", false, 0);
                 break;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png3") // MP hint 보여주기
+        {
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                ShowHintOfMP();
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "background/bg_potion_time.png")
@@ -1339,14 +1392,22 @@ void GameReady::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->setKeypadEnabled(false);
     pThis->setTouchEnabled(false);
 
-    // 슬롯구매 힌트 있으면 지운다.
-    if (balloon != NULL && ball != NULL)
+    
+    if (balloon != NULL && ball != NULL) // 슬롯구매 힌트 있으면 지운다.
     {
         ball->removeFromParentAndCleanup(true);
         balloon->removeFromParentAndCleanup(true);
     }
     ball = NULL;
     balloon = NULL;
+    
+    if (balloon2 != NULL && ball2 != NULL) // MP 힌트 있으면 지운다.
+    {
+        ball2->removeFromParentAndCleanup(true);
+        balloon2->removeFromParentAndCleanup(true);
+    }
+    balloon2 = NULL;
+    ball2 = NULL;
     
     // remove all CCNodes
     for (int i = 0 ; i < 5 ; i++)

@@ -1,5 +1,6 @@
 #include "NoImage.h"
 #include "BuyPotion.h"
+#include "SketchDetail.h"
 #include "Kakao/Plugins/KakaoNativeExtension.h"
 
 static int type;
@@ -239,6 +240,7 @@ void NoImage::InitSprites()
         int off = 0;
         CCPoint p;
         std::string e;
+        char txt[50];
         switch (type)
         {
             case UPGRADE_STAFF_BY_TOPAZ_TRY:
@@ -251,8 +253,8 @@ void NoImage::InitSprites()
                 if (type != UPGRADE_STAFF_OK)
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png", ccp(0, 0), ccp(903, 710+115), CCSize(0, 0), "", "Layer", tLayer, 10001) );
-                    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("강화포인트 : (20/100)", fontList[0], 30, ccp(1, 0), ccp(903-10, 710+115), ccc3(78,47,8), "", "Layer", tLayer, 10001) );
-                    //ShowHintOfUpgrade();
+                    sprintf(txt, "강화포인트 : (%d/100)", myInfo->GetStaffFailPoint());
+                    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(txt, fontList[0], 30, ccp(1, 0), ccp(903-10, 710+115), ccc3(78,47,8), "", "Layer", tLayer, 10001) );
                 }
                 break;
             case NEED_TO_BUY_TOPAZ:
@@ -283,8 +285,15 @@ void NoImage::InitSprites()
                 if (type != UPGRADE_FAIRY_OK)
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png", ccp(0, 0), ccp(903, 710+115), CCSize(0, 0), "", "Layer", tLayer, 10001) );
-                    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("강화포인트 : (20/100)", fontList[0], 30, ccp(1, 0), ccp(903-10, 710+115), ccc3(78,47,8), "", "Layer", tLayer, 10001) );
-                    //ShowHintOfUpgrade();
+                    for (int i = 0 ; i < myInfo->GetFairyList().size() ; i++)
+                    {
+                        if (myInfo->GetFairyList()[i]->GetId() == myInfo->GetActiveFairyId())
+                        {
+                            sprintf(txt, "강화포인트 : (%d/100)", myInfo->GetFairyList()[i]->GetFailPoint());
+                            break;
+                        }
+                    }
+                    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(txt, fontList[0], 30, ccp(1, 0), ccp(903-10, 710+115), ccc3(78,47,8), "", "Layer", tLayer, 10001) );
                 }
                 break;
             case BUY_PROPERTY_TRY:
@@ -473,11 +482,11 @@ void NoImage::InitSprites()
         case UPGRADE_STAFF_OK:
             sound->playLvUpSuccess();
             title = "지팡이 강화하기";
-            sprintf(text, "강화 성공!\nMP가 많이 증가했어요!"); break;
+            sprintf(text, "지팡이의 MP가 증가했어요!"); break;
         case UPGRADE_STAFF_FAIL:
             title = "지팡이 강화하기";
             sound->playLvUpFail();
-            sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
+            sprintf(text, "실패는 성공의 어머니입니다.\n강화포인트가 1 증가했어요!"); break;
         case UPGRADE_STAFF_INSUFFICIENT_MP:
             title = "지팡이 강화하기";
             sprintf(text, "MP가 200이상이 되어야 강화를 할 수 있어요."); break;
@@ -499,11 +508,11 @@ void NoImage::InitSprites()
         case UPGRADE_FAIRY_OK:
             title = "요정 강화하기";
             sound->playLvUpSuccess();
-            sprintf(text, "강화 성공!\n 요정의 능력치가 증가했어요!"); break;
+            sprintf(text, "요정이 힘을 내어\nMP가 증가했어요!"); break;
         case UPGRADE_FAIRY_FAIL:
             title = "요정 강화하기";
             sound->playLvUpFail();
-            sprintf(text, "강화 실패...\n한 번 더 시도해 보세요~"); break;
+            sprintf(text, "실패는 성공의 어머니입니다.\n강화포인트가 5 증가했어요!"); break;
         case UPGRADE_FAIRY_FULL_LEVEL:
             title = "요정 강화하기";
             sprintf(text, "이미 최고 레벨입니다."); break;
@@ -734,7 +743,7 @@ void NoImage::InitSprites()
             break;
         case POTION_REWARD:
             title = "초보 유저 보상";
-            sprintf(text, "초보 유저를 위한 선물!\n메시지함으로 포션이 지급되었어요!");
+            sprintf(text, "초보 유저를 위한 선물!\n포션을 가득 채웠어요!");
             break;
         case POSSIBLE_BUY_FAIRY:
             title = "요정 구입 가능";
@@ -758,20 +767,23 @@ void NoImage::InitSprites()
             break;
         case PURCHASE_SKILL_BY_TOPAZ_TRY:
             title = "즉시 마법 구매하기";
-            sprintf(text, "%d번째 스킬인\n%s를\n구매하시겠습니까?", SkillBuildupMPInfo::GetOrder(myInfo->GetSkillList(), d[0])+1, SkillInfo::GetSkillInfo(d[0])->GetName().c_str());
+            sprintf(text, "%d번째 스킬인\n\"%s\"을(를)\n구매하시겠습니까?", d[2], SkillInfo::GetSkillInfo(d[0])->GetName().c_str());
             break;
         case POPUP_NOTICE:
             title = noticeList[d[0]]->title;
             sprintf(text, "%s", noticeList[d[0]]->message.c_str());
             
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("24시간 동안 보지 않습니다.", fontList[0], 32, ccp(0, 0), ccp(76+40+80+20, 711+20), ccc3(78,47,8), "", "Layer", tLayer, 10005) );
+            if (noticeList[d[0]]->oneTime != 1) // 1회성 공지의 경우 '24시간 보지않기' 문구를 표시하지 않는다.
+            {
+                spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("24시간 동안 보지 않습니다.", fontList[0], 32, ccp(0, 0), ccp(76+40+80+20, 711+20), ccc3(78,47,8), "", "Layer", tLayer, 10005) );
             
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_clause_agree2.png", ccp(0, 0), ccp(76+40, 711), CCSize(0,0), "", "Layer", tLayer, 10005) );
-            float w = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->getContentSize().width;
-            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setScale(80 / w);
-            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setContentSize(CCSize(80, 80));
-            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setColor(ccc3(120,120,120));
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png", ccp(0.5, 0.5), ccp(76+40+40, 711+40), CCSize(0,0), "", "Layer", tLayer, 10005, 0, 0) );
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_clause_agree2.png", ccp(0, 0), ccp(76+40, 711), CCSize(0,0), "", "Layer", tLayer, 10005) );
+                float w = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->getContentSize().width;
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setScale(80 / w);
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setContentSize(CCSize(80, 80));
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setColor(ccc3(120,120,120));
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png", ccp(0.5, 0.5), ccp(76+40+40, 711+40), CCSize(0,0), "", "Layer", tLayer, 10005, 0, 0) );
+            }
             break;
     }
     
@@ -1050,6 +1062,10 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                             // Release
                             t.env->DeleteLocalRef(t.classID);
                         }
+                        #endif
+                        
+                        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+                        EndScene();
                         #endif
                     }
                     else
@@ -1460,7 +1476,6 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     CCLog("url = %s", url.c_str());
                     HttpRequest(url, param);
                 }
-                //return true;
             }
             else if (type == INVITE_FRIEND_TRY)
             {
@@ -1471,9 +1486,21 @@ void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             else if (type == PURCHASE_SKILL_BY_TOPAZ_TRY)
             {
                 // 스킬 즉시 구매하기 (토파즈로)
-                
-                //char temp[255];
-                //std::string url = URL_PURCHASE_SKILL;
+                if (myInfo->GetTopaz() < d[1])
+                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+                else
+                {
+                    char temp[255];
+                    std::string url = URL_PURCHASE_SKILL;
+                    std::string param = "";
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+                    param += temp;
+                    sprintf(temp, "skill_id=%d&", d[0]);
+                    param += temp;
+                    sprintf(temp, "cost_type=2"); // 1 : 별사탕, 2 : 토파즈
+                    param += temp;
+                    HttpRequest(url, param);
+                }
             }
         }
     }
@@ -1549,8 +1576,10 @@ void NoImage::EndScene()
     // 공지사항 팝업창일 때 24시간 보여주기 체크
     if (type == POPUP_NOTICE)
     {
-        int alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
-        if (alpha == 255)
+        int alpha = -1;
+        if (noticeList[d[0]]->oneTime != 1)
+            alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
+        if (alpha == 255 || noticeList[d[0]]->oneTime == 1) // 체크를 했거나, 1회성 공지의 경우
         {
             CCLog("24시간동안 안 보여줌!");
             char s[20];
@@ -1647,6 +1676,8 @@ void NoImage::onHttpRequestCompleted(CCNode *sender, void *data)
             XmlParseKakaoUnregister(&xmlDoc); break;
         case RANKUP_BOAST:
             XmlParseGetPotionStatus(&xmlDoc); break;
+        case PURCHASE_SKILL_BY_TOPAZ_TRY:
+            XmlParsePurchaseSkill(&xmlDoc); break;
     }
 }
 
@@ -1941,7 +1972,8 @@ void NoImage::XmlParseUpgradeStaff(xml_document *xmlDoc)
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
         int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
-        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv);
+        int staffFailPoint = nodeResult.child("coco").attribute("magic-staff-fail-point").as_int();
+        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv, staffFailPoint);
         
         // 포션 보상에 따른 개수 변화
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
@@ -2002,7 +2034,7 @@ void NoImage::XmlParseUpgradeFairy(xml_document *xmlDoc)
         // fairy list 갱신
         myInfo->ClearFairyList();
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("fairy-list").children("fairy");
-        int cfi, ufi, level, isUse;
+        int cfi, ufi, level, isUse, failPoint;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -2012,8 +2044,9 @@ void NoImage::XmlParseUpgradeFairy(xml_document *xmlDoc)
                 else if (name == "user-fairy-id") ufi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "is-use") isUse = ait->as_int();
+                else if (name == "fairy-fail-point") failPoint = ait->as_int();
             }
-            myInfo->AddFairy(cfi, ufi, level, isUse);
+            myInfo->AddFairy(cfi, ufi, level, isUse, failPoint);
         }
         
         // 코코 정보 갱신
@@ -2021,7 +2054,8 @@ void NoImage::XmlParseUpgradeFairy(xml_document *xmlDoc)
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
         int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
-        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv);
+        int staffFailPoint = nodeResult.child("coco").attribute("magic-staff-fail-point").as_int();
+        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv, staffFailPoint);
         
         // 포션 보상에 따른 개수 변화
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
@@ -2084,7 +2118,7 @@ void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
         myInfo->ClearFairyList();
         
         std::string name;
-        int cfi, ufi, level, isUse;
+        int cfi, ufi, level, isUse, failPoint;
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("fairy-list").children("fairy");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {
@@ -2095,8 +2129,9 @@ void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
                 else if (name == "level") level = ait->as_int();
                 else if (name == "user-fairy-id") ufi = ait->as_int();
                 else if (name == "is-use") isUse = ait->as_int();
+                else if (name == "fairy-fail-point") failPoint = ait->as_int();
             }
-            myInfo->AddFairy(cfi, ufi, level, isUse);
+            myInfo->AddFairy(cfi, ufi, level, isUse, failPoint);
         }
         
         // 코코 정보 갱신
@@ -2104,7 +2139,8 @@ void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
         int mpStaffPercent = nodeResult.child("coco").attribute("magic-staff-bonus-mp").as_int();
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
-        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv);
+        int staffFailPoint = nodeResult.child("coco").attribute("magic-staff-fail-point").as_int();
+        myInfo->SetCoco(mp, mpStaffPercent, mpFairy, staffLv, staffFailPoint);
         
         // 포션 보상에 따른 개수 변화
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
@@ -2172,7 +2208,7 @@ void NoImage::XmlParseUsingFairy(xml_document *xmlDoc)
         myInfo->ClearFairyList();
         
         xml_object_range<xml_named_node_iterator> its = nodeResult.child("fairy-list").children("fairy");
-        int cfi, ufi, level, isUse;
+        int cfi, ufi, level, isUse, failPoint;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -2182,8 +2218,9 @@ void NoImage::XmlParseUsingFairy(xml_document *xmlDoc)
                 else if (name == "user-fairy-id") ufi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "is-use") isUse = ait->as_int();
+                else if (name == "fairy-fail-point") failPoint = ait->as_int();
             }
-            myInfo->AddFairy(cfi, ufi, level, isUse);
+            myInfo->AddFairy(cfi, ufi, level, isUse, failPoint);
         }
         
         // 정보 갱신 (게임준비, 코코방_요정, 친구리스트의 내정보)
@@ -2343,6 +2380,9 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
         // 부모의 스킬 슬롯 UI 갱신
         param = CCString::create("9");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        
+        // 프로필 문구를 정하기 위해 서버로 업데이트
+        Common::UpdateProfileTitle();
 
         // OK 창으로 넘어가자.
         if (type == BUY_PROPERTY_TRY)
@@ -2433,3 +2473,90 @@ void NoImage::XmlParseGetPotionStatus(xml_document *xmlDoc) // 친구의 카톡�
         EndScene();
     }
 }
+
+
+void NoImage::XmlParsePurchaseSkill(xml_document *xmlDoc) // 토파즈로 스킬 구매
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE && code != 3) // '돈 모자람'의 경우는 따로 처리한다.
+            Network::ShowCommonError(code);
+        else if (code == 3) // 돈 모자람.
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else if (code >= 10 && code <= 15)
+        {
+            // code 10 : 존재하지 않는 스킬 ID.
+            // code 11 : 해당 스킬 속성을 지닌 마법사가 아님.
+            // code 12 : 요구 MP 미달.
+            // code 13 : 요구 지팡이의 레벨 미달.
+            // code 14 : 요구 스킬의 소유or레벨 미달.
+            // code 15 : 이미 배운 스킬임.
+            ReplaceScene("NoImage", PURCHASE_SKILL_FAIL, BTN_1);
+        }
+        else
+            ReplaceScene("NoImage", NETWORK_FAIL, BTN_1);
+    }
+    
+    else if (code == 0)
+    {
+        // 돈 갱신
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        // 나의 스킬 리스트 갱신
+        myInfo->ClearSkillList();
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child("skill-list").children("skill");
+        int csi, usi, level, exp, learntime;
+        for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
+        {
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "common-skill-id") csi = ait->as_int();
+                else if (name == "user-skill-id") usi = ait->as_int();
+                else if (name == "level") level = ait->as_int();
+                else if (name == "exp") exp = ait->as_int();
+                else if (name == "learn-time") learntime = ait->as_int();
+            }
+            myInfo->AddSkill(csi, usi, level, exp, learntime);
+        }
+        myInfo->SortMySkillByCommonId(); // common-skill-id 오름차순 정렬
+        
+        // 돈 정보 화면 갱신
+        //CCString* param = CCString::create("2");
+        //int from = ((Sketchbook*)this->getParent())->FromWhere();
+        //if (from == 0) // Ranking의 돈 정보 갱신
+        //    CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+        //else if (from == 1) // GameReady의 돈 정보 갱신
+        //    CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        
+        // 스케치북 돈+MP 정보 갱신
+        CCString* param = CCString::create("3");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        
+        // 스케치북 스킬리스트 화면 정보 갱신
+        param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        
+        // 게임준비 연습스킬 정보 갱신
+        //param = CCString::create("5");
+        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        
+        // 현재 팝업창, 부모(스케치북상세화면)팝업창 모두 날린다.
+        EndScene();
+        void* p = Depth::GetCurPointer();
+        ((SketchDetail*)p)->EndScene(true);
+        
+        // 성공/실패 팝업창 띄우기
+        std::vector<int> data;
+        data.push_back(d[0]); // 스킬 common id
+        Common::ShowPopup(Depth::GetCurPointer(), "Sketchbook", "NoImage", false, PURCHASE_SKILL_OK, BTN_1, data);
+    }
+}
+

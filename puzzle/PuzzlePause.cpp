@@ -245,11 +245,10 @@ void PuzzlePause::XmlParseSessionCheck(xml_document *xmlDoc)
     else if (code == 0)
     {
         EndScene();
+        isInGamePause = false;
         
         CCString* param = CCString::create("0");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
-        
-        isInGamePause = false;
     }
 }
 

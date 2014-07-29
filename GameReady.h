@@ -38,6 +38,7 @@ public:
     std::string ItemDesc(int idx);
     
     void ShowHintOfBuyingSlot();
+    void ShowHintOfMP();
     
     void RenewInfo();
     void ShowRewardPopup();
@@ -56,6 +57,8 @@ protected:
     bool isScrolling;
     bool isScrollViewTouched;
     bool isStarting;
+    
+    bool isHintOfMPShown;
     
     bool itemSelected[5];
     int callbackType;
@@ -92,6 +95,8 @@ private:
     
     CCScale9Sprite* balloon;
     CCLabelTTF* ball;
+    CCScale9Sprite* balloon2;
+    CCLabelTTF* ball2;
 };
 
 #endif /* defined(__CocoMagic__GameReady__) */

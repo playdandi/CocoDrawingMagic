@@ -796,8 +796,6 @@ void Ranking::ShowHintOfMP()
         return;
     isHintOfMPShown = true;
     
-    CCLog("qwe");
-    
     if (balloon != NULL && ball != NULL)
     {
         ball->removeFromParentAndCleanup(true);
@@ -806,7 +804,6 @@ void Ranking::ShowHintOfMP()
     balloon = NULL;
     ball = NULL;
     
-    //ccp(765, 1666), CCSize(290, 75)
     balloon = CCScale9Sprite::create("images/tutorial_balloon3.png");
     balloon->setContentSize(CCSize(600, 200));
     balloon->setAnchorPoint(ccp(1, 1));
@@ -835,7 +832,6 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         balloon = NULL;
         ball = NULL;
         isHintOfMPShown = false;
-        //return false;
     }
     
     if (isTouched)
@@ -1075,6 +1071,8 @@ void Ranking::EndScene()
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
+    
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
     
     // PotionTimer scheduler가 딱 정지된 시점에서 현재 시간을 저장해 둔다.
     // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.

@@ -127,7 +127,10 @@ void SketchDetail::Notification(CCObject* obj)
             else if (btnStatus == 3)
                 ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->setColor(ccc3(255,255,255));
             else if (btnStatus == 4)
-                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(255,255,255));
+            {
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_purchase.png"))->setColor(ccc3(255,255,255));
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green_mini.png"))->setColor(ccc3(255,255,255));
+            }
         }
     }
 }
@@ -241,54 +244,47 @@ void SketchDetail::InitSprites()
     {
         MakeClosedSkillSprites();
     }
-    
-    // 가격표 (스킬을 마스터했을 경우 표시하지 않는다)
-    if ( (isOpened && !SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel())) ||
-          !isOpened )
-    {
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "Layer", tLayer, 5) );
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        if (isOpened)
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, ms->GetLevel()+1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
-        else
-            spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
-    }
 }
 
 
 void SketchDetail::MakeOpenedSkillSprites()
 {
     int scid = skill_common_id;
-    //SkillInfo* sInfo = SkillInfo::GetSkillInfo(scid);
     MySkill* ms = MySkill::GetObj(scid);
     
-    if (!(scid == 14 || scid == 24 || scid == 26 || scid == 34))
+    // 내가 원하는 그림
+    char temp[30];
+    sprintf(temp, "images/skilldetail/%d.png", scid);
+    sp = CCSprite::create(temp);
+    sp->setPosition(ccp(120+360/2, 684+360/2));
+    
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120-3, 684-3), CCSize(360+6, 360+6), "", "Layer", tLayer, 3) );
+    
+    // mask sprite
+    mask = CCScale9Sprite::createWithSpriteFrameName("background/bg_degree_desc.png");
+    mask->setPosition(120, 684);
+    mask->setAnchorPoint(ccp(0, 0));
+    mask->setContentSize(CCSize(360, 360));
+    
+    clip = CCClippingNode::create();
+    clip->setInverted(false);
+    clip->setAlphaThreshold(0);
+    clip->addChild(sp);
+    
+    node = CCNode::create();
+    node->addChild(mask);
+    clip->setStencil(node);
+    tLayer->addChild(clip, 5);
+    
+    
+    // 가격표 (스킬을 마스터했을 경우 표시하지 않는다)
+    if (!SkillBuildUpInfo::IsMastered(ms->GetCommonId(), ms->GetLevel()))
     {
-        // 내가 원하는 그림
-        char temp[30];
-        sprintf(temp, "images/skilldetail/%d.png", scid);
-        sp = CCSprite::create(temp);
-        sp->setPosition(ccp(120+360/2, 684+360/2));
-        
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120-3, 684-3), CCSize(360+6, 360+6), "", "Layer", tLayer, 3) );
-        
-        // mask sprite
-        mask = CCScale9Sprite::createWithSpriteFrameName("background/bg_degree_desc.png");
-        mask->setPosition(120, 684);
-        mask->setAnchorPoint(ccp(0, 0));
-        mask->setContentSize(CCSize(360, 360));
-        
-        clip = CCClippingNode::create();
-        clip->setInverted(false);
-        clip->setAlphaThreshold(0);
-        clip->addChild(sp);
-        
-        node = CCNode::create();
-        node->addChild(mask);
-        clip->setStencil(node);
-        tLayer->addChild(clip, 5);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, ms->GetLevel()+1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     }
-        
+    
     // 문구
     CCLayer* descLayer = CCLayer::create();
     descLayer->setAnchorPoint(ccp(0, 0));
@@ -296,7 +292,6 @@ void SketchDetail::MakeOpenedSkillSprites()
     tLayer->addChild(descLayer, 5);
     spriteClass->layers.push_back(descLayer);
    
-    
     // 스킬 설명
     std::string desc = SkillDescription(scid);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(desc, fontList[0], 36, ccp(0, 1), ccp(540, 1020), ccc3(78,47,8), CCSize(430, 600), kCCTextAlignmentLeft, kCCVerticalTextAlignmentTop, "", "Layer", tLayer, 5) );
@@ -320,12 +315,12 @@ void SketchDetail::MakeOpenedSkillSprites()
     }
     
     // 버튼 젤리 움직임
-    CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"));
-    CCSize t = temp->getContentSize();
-    temp->setAnchorPoint(ccp(0.5, 0.5));
-    temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+    CCSprite* temp2 = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_red_mini.png"));
+    CCSize t = temp2->getContentSize();
+    temp2->setAnchorPoint(ccp(0.5, 0.5));
+    temp2->setPosition(ccp(temp2->getPosition().x+t.width/2, temp2->getPosition().y+t.height/2));
     CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.03f, 0.96f), CCScaleTo::create(1.0f, 0.97f, 1.04f), NULL );
-    temp->runAction(CCRepeatForever::create(action));
+    temp2->runAction(CCRepeatForever::create(action));
 }
 
 
@@ -398,10 +393,23 @@ void SketchDetail::MakeClosedSkillSprites()
         myInfo->GetMPTotal() >= requiredMP)
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 충족하여 새로운 마법을 배울 준비가 다 되었어요.\n'배움' 버튼을 클릭해 보세요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+        
+        // 가격 표시
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildUpInfo::GetCost(scid, 1)), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     }
     else
     {
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 요건을 모두 갖추면 별사탕으로 이 마법을 배울 수 있어요.\n조금만 힘내면 더 강해진 코코를 볼 수 있어요!", fontList[0], 28, ccp(0, 1), ccp(150, 1115), ccc3(0,0,0), CCSize(779, 180), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+        
+        // 가격 표시
+        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        int number = SkillBuildupMPInfo::GetOrder(sList, skill_common_id);
+        number += (myInfo->GetNumOfProperties() - 1);
+        CCLog("scid = %d / number = %d", skill_common_id, number);
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildupMPInfo::GetObj(number)->GetTopazCostValue()), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     }
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
@@ -463,8 +471,17 @@ void SketchDetail::MakeClosedSkillSprites()
     else
     {
         btnStatus = 4;
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_get.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        ((CCSprite*)spriteClass->FindSpriteByTag(scid))->setOpacity(0);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green_mini.png", ccp(0, 0), ccp(760, 673), CCSize(0, 0), "", "Layer", tLayer, 7, 0, 255, scid) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_purchase.png", ccp(0.5, 0.5), ccp(760+pos.x, 673+pos.y+2), CCSize(0, 0), "", "Layer", tLayer, 7) );
+        
+        // 버튼 젤리 움직임
+        CCSprite* temp = ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green_mini.png"));
+        CCSize t = temp->getContentSize();
+        temp->setAnchorPoint(ccp(0.5, 0.5));
+        temp->setPosition(ccp(temp->getPosition().x+t.width/2, temp->getPosition().y+t.height/2));
+        CCActionInterval* action = CCSequence::create( CCScaleTo::create(1.0f, 1.03f, 0.96f), CCScaleTo::create(1.0f, 0.97f, 1.04f), NULL );
+        temp->runAction(CCRepeatForever::create(action));
     }
     
     // 버튼 젤리 움직임
@@ -506,10 +523,13 @@ bool SketchDetail::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_buildup_red.png"))->setColor(ccc3(170,170,170));
                 else if (btnStatus == 2)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
-                else if (btnStatus == 3 || btnStatus == 4)
+                else if (btnStatus == 3)
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->setColor(ccc3(170,170,170));
-                //else if (btnStatus == 4)
-                //((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(170,170,170));
+                else if (btnStatus == 4)
+                {
+                    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_purchase.png"))->setColor(ccc3(170,170,170));
+                    ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green_mini.png"))->setColor(ccc3(170,170,170));
+                }
                 
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();
                 kind = BTN_MENU_CONFIRM;
@@ -538,10 +558,13 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_buildup_red.png"))->setColor(ccc3(255,255,255));
         else if (btnStatus == 2)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
-        else if (btnStatus == 3 || btnStatus == 4)
+        else if (btnStatus == 3)
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_get.png"))->setColor(ccc3(255,255,255));
-        //else if (btnStatus == 4)
-        //    ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_lock_white.png"))->setColor(ccc3(255,255,255));
+        else if (btnStatus == 4)
+        {
+            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_purchase.png"))->setColor(ccc3(255,255,255));
+            ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green_mini.png"))->setColor(ccc3(255,255,255));
+        }
     }
     if (rect.containsPoint(point))
     {
@@ -568,8 +591,6 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     param += temp;
                     sprintf(temp, "user_skill_id=%d", ms->GetUserId());
                     param += temp;
-                    //sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, ms->GetLevel()+1)); // 레벨+1
-                    //param += temp;
                     
                     Network::HttpPost(param, URL_UPGRADE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "0");
                 }
@@ -587,19 +608,22 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 std::string param = "";
                 sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                 param += temp;
-                sprintf(temp, "skill_id=%d", skill_common_id);
+                sprintf(temp, "skill_id=%d&", skill_common_id);
                 param += temp;
-                //sprintf(temp, "cost_value=%d", SkillBuildUpInfo::GetCost(skill_common_id, 1)); // 새로 배우니 당연히 레벨 1
-                //param += temp;
+                sprintf(temp, "cost_type=1"); // 1 : 별사탕, 2 : 토파즈
+                param += temp;
                 
                 Network::HttpPost(param, URL_PURCHASE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "1");
             }
             else if (btnStatus == 4) // '?'스킬 요구조건 미충족 -> 토파즈로 살 수 있는 경우
             {
-                //std::vector<int> data;
-                //data.push_back(skill_common_id); // 스킬 common id
-                //data.push_back(200); // 토파즈 비용
-                //Common::ShowPopup(this, "SketchDetail", "NoImage", false, PURCHASE_SKILL_BY_TOPAZ_TRY, BTN_2, data);
+                std::vector<int> data;
+                data.push_back(skill_common_id); // 스킬 common id
+                int number = SkillBuildupMPInfo::GetOrder(sList, skill_common_id);
+                number += (myInfo->GetNumOfProperties() - 1);
+                data.push_back(SkillBuildupMPInfo::GetObj(number)->GetTopazCostValue()); // 토파즈 비용
+                data.push_back(SkillBuildupMPInfo::GetRealOrder(sList, skill_common_id)); // 스킬 몇 번째인지.
+                Common::ShowPopup(this, "SketchDetail", "NoImage", false, PURCHASE_SKILL_BY_TOPAZ_TRY, BTN_2, data);
             }
         }
     }
@@ -625,7 +649,6 @@ void SketchDetail::EndScene(bool isNoti)
     this->setTouchEnabled(false);
     
     // remove all CCNodes
-    /*
     if (isOpened)
     {
         sp->removeFromParentAndCleanup(true);
@@ -633,7 +656,7 @@ void SketchDetail::EndScene(bool isNoti)
         node->removeFromParentAndCleanup(true);
         clip->removeFromParentAndCleanup(true);
     }
-     */
+
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
@@ -748,6 +771,14 @@ void SketchDetail::XmlParseUpgradeOrPurchaseSkill(xml_document *xmlDoc, int tag)
         CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         
         // 게임준비 연습스킬 정보 갱신
+        for (int i = 0 ; i < myInfo->GetSkillList().size() ; i++)
+        {
+            if (myInfo->GetSkillList()[i]->GetCommonId() == myInfo->GetPracticeSkillId())
+            {
+                myInfo->SetPracticeSkill(myInfo->GetPracticeSkillId(), myInfo->GetSkillList()[i]->GetLevel());
+                break;
+            }
+        }
         param = CCString::create("5");
         CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
 

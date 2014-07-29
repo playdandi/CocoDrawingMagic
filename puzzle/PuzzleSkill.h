@@ -44,7 +44,7 @@ public:
     void A2Clear();
     void F3(int num, int queue_pos);
     //void F4(int num);
-    void F5(int num);
+    void F5(int num, int queue_pos);
     void F5_Callback(CCNode* sender, void* data);
     void SpiritTry(int type, int queue_pos);
     bool IsSpiritAlive(int type);
@@ -72,7 +72,7 @@ public:
     int W3GetScore();
     //void W4(int num);
     //int W4GetCandy();
-    void W5(int num);
+    void W5(int num, int queue_pos);
     void W5_Callback(CCNode* sender, void* data);
     //void W7_Init(int numOfFreezeTime);
     //int W7_GetSlotTime();
@@ -96,7 +96,7 @@ public:
     int E3_Get_AddedCandy();
     void E3_Done();
     //void E4(int num, int queue_pos);
-    void E5(int num);
+    void E5(int num, int queue_pos);
     void E5_Callback(CCNode* sender, void* data);
     void E7(int num);
     void E7_Done();
@@ -186,6 +186,7 @@ private:
     int F5_callbackCnt;
     
     int F6_callbackCnt;
+    int F6_callbackDone;
     std::vector<CCPoint> F6_order;
     int A6_addedScore;
     

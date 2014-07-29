@@ -41,7 +41,8 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     req->setUrl(url.c_str());
     req->setRequestData(postData.c_str(), postData.size());
     req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback((CCObject*)pointer, hr);
+    if (pointer != NULL)
+        req->setResponseCallback((CCObject*)pointer, hr);
     if (tag != "")
     {
         if (etc != "") // (현재는 send_topaz에 대한 내용뿐이다)
@@ -51,7 +52,6 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     }
     CCHttpClient::getInstance()->send(req);
     req->release();
-    //CCLog("final");
 }
 
 std::string Network::Encrypt_PS(bool isBasic)

@@ -137,8 +137,10 @@ private:
     int callbackDone;
     int callbackCnt;
     int callbackAll;
+    int skillIcon_callbackCnt;
     int queue_pos_now;
     int skillNum;
+    int plus_callbackCnt;
     std::vector<int> multi_callbackCnt;
     
     int A2_addedScore;

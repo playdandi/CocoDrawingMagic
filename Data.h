@@ -44,6 +44,7 @@ extern std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
 extern std::vector<class LastWeeklyRank*> lastWeeklyRank;
 extern std::vector<class TipContent*> tipContent;
+extern std::vector<class ProfileTitle*> profileTitle;
 extern std::vector<class NoticeList*> noticeList;
 
 // 친구초대 리스트
@@ -184,7 +185,7 @@ class MyInfo
 {
 public:
     void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
-    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
+    void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int staffFailPoint, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     
     std::string GetSessionId();
     int GetKeyValue();
@@ -213,6 +214,7 @@ public:
     int GetMPStaff();
     int GetMPFairy();
     int GetMPTotal();
+    int GetStaffFailPoint();
 
     int GetStaffLv();
     int GetHighScore();
@@ -236,12 +238,13 @@ public:
     bool IsWaterByTopaz();
     bool IsLandByTopaz();
     bool HasNoProperty();
+    int GetNumOfProperties();
     bool IsTimeToFreelyBuyProperty();
     
     void SetSettingVariables(bool kakaoMsgReserved, bool pushNotiReserved, bool potionMsgReserved);
     void SetMoney(int topaz, int starcandy);
     void SetPotion(int potion, int remainPotionTime);
-    void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv);
+    void SetCoco(int mp, int mpStaff, int mpFairy, int staffLv, int staffFailPoint);
     void SetItem(std::vector<int> items);
     void ChangeItem(int idx, int value);
     void SetProperties(int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
@@ -264,7 +267,7 @@ public:
     bool IsTodayCandyUsed();
     
     void AddSkillSlot(int id, int csi, int usi);
-    void AddFairy(int cfi, int ufi, int level, int isUse);
+    void AddFairy(int cfi, int ufi, int level, int isUse, int failPoint);
     void AddSkill(int csi, int usi, int level, int exp, int learntime);
     void SortMySkillByCommonId();
     
@@ -308,6 +311,7 @@ private:
     int mpStaff;
     int mpFairy;
     int staffLv;
+    int staffFailPoint;
     
     int highScore;
     int weeklyHighScore;
@@ -363,17 +367,19 @@ private:
 class MyFairy
 {
 public:
-    MyFairy(int cfi, int ufi, int level, int isUse);
+    MyFairy(int cfi, int ufi, int level, int isUse, int failPoint);
     static MyFairy* GetObj(int cfi);
     bool IsUse();
     int GetId();
     int GetUserId();
     int GetLevel();
+    int GetFailPoint();
 private:
     int common_fairy_id;
     int user_fairy_id;
     int level;
     int isUse;
+    int failPoint;
 };
 class MySkill
 {
@@ -416,7 +422,7 @@ private:
 class Friend
 {
 public:
-    Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
+    Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int profileTitleId, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillid, int skillLevel);
     
     void SetProfile(CCSprite* sp);
     void SetProfileUrl(std::string url);
@@ -436,6 +442,10 @@ public:
     CCSprite* GetPotionSprite();
     CCLabelTTF* GetPotionLabelMin();
     CCLabelTTF* GetPotionLabelSec();
+    
+    int GetCertificateType();
+    int GetProfileTitleId();
+    void SetProfileTitleId(int id);
 
     static void ChangeMyFairyInfo();
     
@@ -484,6 +494,8 @@ private:
     int weeklyHighScore;
     int scoreUpdateTime;
     int certificateType;
+    int profileTitleId;
+    
     bool propertyFire;
     bool propertyWater;
     bool propertyLand;
@@ -621,6 +633,7 @@ public:
     int GetType();
     int GetCostTopaz();
     int GetCostStarCandy();
+    int GetRefVal();
     std::string GetName();
     static FairyInfo* GetObj(int id);
 private:
@@ -630,7 +643,7 @@ private:
     int nGrade;
     int nCost_starcandy;
     int nCost_topaz;
-    int nPid;
+    int nRefVal;
 };
 
 class FairyBuildUpInfo
@@ -683,19 +696,22 @@ private:
 class SkillBuildupMPInfo
 {
 public:
-    SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2);
+    SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2, int topaz);
     static SkillBuildupMPInfo* GetObj(int skillCount);
+    static int GetRealOrder(std::vector<MySkill*> sList, int scid);
     static int GetOrder(std::vector<MySkill*> sList, int scid);
     static int RequiredMP(std::vector<MySkill*> sList, int scid);
     int GetSkillCount();
     int GetRequireMP();
     int GetDiscount1();
     int GetDiscount2();
+    int GetTopazCostValue();
 private:
     int nSkillCount;
     int nRequireMP;
     int nDiscountOne;
     int nDiscountTwo;
+    int nTopazCostValue;
 };
 
 class SkillBuildUpInfo
@@ -747,6 +763,23 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+class ProfileTitle
+{
+public:
+    ProfileTitle(int id, int ct, int pt, std::string t);
+    int GetId();
+    int GetCertificateType();
+    int GetPropertyType();
+    std::string GetTitle();
+private:
+    int nId;
+    int nCertificateType;
+    int nPropertyType;
+    std::string title;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 class InviteList
 {
 public:
@@ -766,12 +799,13 @@ public:
 class NoticeList
 {
 public:
-    NoticeList(int i, int pf, std::string t, std::string m, std::string l);
+    NoticeList(int i, int pf, std::string t, std::string m, std::string l, int onetime);
     int id;
     int platform;
     std::string title;
     std::string message;
     std::string link;
+    int oneTime;
     bool isShown;
 };
 

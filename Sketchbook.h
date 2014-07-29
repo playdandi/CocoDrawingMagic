@@ -30,6 +30,8 @@ public:
     
     void Notification(CCObject* obj);
     
+    void ShowHintOfMP();
+    
     void InitSprites();
     void CheckProperties();
     void MakeScroll(int state, bool isFromPopup = false);
@@ -59,6 +61,8 @@ protected:
     CCSize winSize;
     bool isKeybackTouched;
     bool isTouched;
+    
+    bool isHintOfMPShown;
      
     int curState;
     int tabNumber;
@@ -85,6 +89,8 @@ private:
     
     CCScale9Sprite* balloon;
     CCLabelTTF* ball;
+    CCScale9Sprite* balloon2;
+    CCLabelTTF* ball2;
     
     std::vector<MySkill*> sList;
 };

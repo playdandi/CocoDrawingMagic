@@ -36,8 +36,8 @@ USING_NS_CC;
 
 // 인게임 기본 구성 변수
 #define PUZZLE_TIME 60
-#define FEVER_TIME 8
-#define FEVER_START_COMBO 15
+#define FEVER_TIME 9
+#define FEVER_START_COMBO 12
 #define MAX_COMBO_TIME 2000
 
 #define MAX_NUM_OF_INVITE_FRIEND 30
@@ -235,6 +235,8 @@ public:
     static void RebootSystem(void* p);
     
     static std::string GetMissionContent(int type, int val, int refVal);
+    static void UpdateProfileTitle();
+    static std::string GetProfileTitle(int idx);
     static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
     static std::string base64_decode(std::string const& encoded_string);
     

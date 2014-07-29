@@ -237,8 +237,10 @@ void Profile::InitSprites()
                 ccp(0, 0), ccp(114, 701-25), CCSize(858, 76), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png",
                 ccp(0, 0), ccp(908, 710-25), CCSize(0, 0), "", "Layer", tLayer, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("오늘도 곰을 백마리 잡은 마법사", fontList[0], 48,
-                ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_degree_desc.png"), ccc3(255,255,255), "background/bg_degree_desc.png", "1", NULL, 1, 1) );
+    
+    // 문구 내용 정하기
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::GetProfileTitle(profile_index), fontList[0], 40,
+                ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_degree_desc.png"), ccc3(255,255,255), "background/bg_degree_desc.png", "1", NULL, 1, 1, 255, 11111) ); // tag = 11111
 }
 
 void Profile::InitFairy()
@@ -253,7 +255,7 @@ void Profile::InitFairy()
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
-    CCLog("%d %d", fid, flv);
+    //CCLog("%d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     

@@ -121,6 +121,7 @@ void AppDelegate::applicationWillEnterForeground()
                 void* p = Depth::GetParentPointer();
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->PauseBackgroundInGameSound();
+                return;
             }
             else if (!isStartGameEnd && depth.size() == 1 && Depth::GetCurNameString() == "Puzzle")
             {
@@ -128,6 +129,7 @@ void AppDelegate::applicationWillEnterForeground()
                 void* p = Depth::GetCurPointer();
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->PauseBackgroundInGameSound();
+                return;
             }
         }
 

@@ -151,6 +151,9 @@ void Sound::PreLoadInGameSound()
     engine->preloadEffect(ext("sounds/pieces", "bombA").c_str());
     engine->preloadEffect(ext("sounds/pieces", "bombB").c_str());
     
+    engine->preloadEffect(ext("sounds/item", "paint").c_str());
+    engine->preloadEffect(ext("sounds/item", "staff").c_str());
+    
     engine->preloadEffect(ext("sounds/skill", "fire_2").c_str());
     engine->preloadEffect(ext("sounds/skill", "fire_3_land_4").c_str());
     engine->preloadEffect(ext("sounds/skill", "fire_5").c_str());
@@ -261,7 +264,6 @@ void Sound::PlayPieceClick(int idx)
     if (idx % 18 > 0)
         idx = idx % 18;
     char name[22];
-    //sprintf(name, "sounds/pieces/%d.mp3", idx);
     sprintf(name, "%d", idx);
     engine->playEffect(ext("sounds/pieces", name).c_str());
 }
@@ -382,6 +384,9 @@ void Sound::UnLoadInGameSound()
     
     engine->unloadEffect(ext("sounds/pieces", "bombA").c_str());
     engine->unloadEffect(ext("sounds/pieces", "bombB").c_str());
+    
+    engine->unloadEffect(ext("sounds/item", "paint").c_str());
+    engine->unloadEffect(ext("sounds/item", "staff").c_str());
     
     engine->unloadEffect(ext("sounds/skill", "fire_2").c_str());
     engine->unloadEffect(ext("sounds/skill", "fire_3_land_4").c_str());

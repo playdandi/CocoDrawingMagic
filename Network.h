@@ -55,6 +55,7 @@ using namespace cocos2d::extension;
 #define URL_FRIENDDEL               "http://14.63.212.106/cogma/game/friend_del.php?"
 #define URL_QUIT                    "http://14.63.212.106/cogma/game/quit_user.php?"
 #define URL_GET_POTION_STATUS       "http://14.63.212.106/cogma/game/get_user_potion_setting.php?"
+#define URL_UPDATE_NAME_TITLE       "http://14.63.212.106/cogma/game/update_name_title.php?"
 
 class Network
 {

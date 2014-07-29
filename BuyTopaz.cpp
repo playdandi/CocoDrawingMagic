@@ -38,8 +38,7 @@ void BuyTopaz::keyBackClicked()
     if (isKeybackTouched || isTouched)
         return;
     isKeybackTouched = true;
-    
-    sound->playClick();
+
     EndScene();
 }
 

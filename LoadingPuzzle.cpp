@@ -88,7 +88,7 @@ void LoadingPuzzle::LoadingSprites()
     CCPoint vo = CCDirector::sharedDirector()->getVisibleOrigin();
     pTip = CCSprite::createWithSpriteFrameName("loading/tip.png");
     pTip->setAnchorPoint(ccp(0.5, 0));
-    pTip->setPosition(ccp(m_winSize.width/2, vo.y+200));
+    pTip->setPosition(ccp(m_winSize.width/2, vo.y+150));
     this->addChild(pTip, 5);
     
     CCSize t = pTip->getContentSize();
@@ -97,7 +97,7 @@ void LoadingPuzzle::LoadingSprites()
     pTipMsg = CCLabelTTF::create(Common::GetTip().c_str(), fontList[0].c_str(), 32, CCSize(774, 126), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
     pTipMsg->setColor(ccc3(255,255,255));
     pTipMsg->setAnchorPoint(ccp(0, 0.5));
-    pTipMsg->setPosition(ccp(m_winSize.width/2-t.width/2+170, vo.y+200+t.height/2-10));
+    pTipMsg->setPosition(ccp(m_winSize.width/2-t.width/2+170, vo.y+150+t.height/2-10));
     this->addChild(pTipMsg, 6);
     
     
@@ -146,15 +146,6 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
     if (code != 0)
     {
         Common::RebootSystem(this);
-        /*
-         std::vector<int> nullData;
-         if (code <= MAX_COMMON_ERROR_CODE)
-         Network::ShowCommonError(code);
-         else if (code == 10) // 포션 부족함.
-         Common::ShowPopup(this, "Loading", "NoImage", false, YOU_WERE_BLOCKED, BTN_1, nullData);
-         else
-         Common::ShowPopup(this, "Loading", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
-         */
     }
     
     else if (code == 0)
@@ -204,6 +195,11 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
                 myInfo->AddSkillSlot(id, csi, usi);
             inGameSkill.push_back(csi);
         }
+        for (int i = 0 ; i < inGameSkill.size() ; i++)
+        {
+            CCLog("행할 스킬 번호 : %d", inGameSkill[i]);
+        }
+        
         // 빈 슬롯 처리
         for (int i = myInfo->GetSlot().size()+1 ; i <= slotSize ; i++)
             myInfo->AddSkillSlot(i, 0, 0);

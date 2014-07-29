@@ -16,7 +16,6 @@ std::vector<class PriceTopaz*> priceTopaz;
 std::vector<class PriceStarCandy*> priceStarCandy;
 std::vector<class MagicStaffBuildUpInfo*> magicStaffBuildupInfo;
 std::vector<class SkillSlotInfo*> skillSlotInfo;
-//std::vector<class PrerequisiteInfo*> prerequisiteInfo;
 std::vector<class FairyInfo*> fairyInfo;
 std::vector<class FairyBuildUpInfo*> fairyBuildUpInfo;
 std::vector<class SkillInfo*> skillInfo;
@@ -26,6 +25,7 @@ std::vector<class SkillPropertyInfo*> skillPropertyInfo;
 
 std::vector<class LastWeeklyRank*> lastWeeklyRank;
 std::vector<class TipContent*> tipContent;
+std::vector<class ProfileTitle*> profileTitle;
 std::vector<class NoticeList*> noticeList;
 
 // 친구초대리스트
@@ -268,7 +268,7 @@ void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg
     this->addedTopaz = 0;
 }
 
-void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
+void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int staffFailPoint, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
 {
     this->topaz = topaz * 3 + 1892;
     this->starcandy = starcandy * 2 + 179805;
@@ -277,6 +277,7 @@ void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, 
     this->mpStaff = (int)((float)(GetMP() * GetMPStaffPercent()) / (float)100) + 718933 ;
     this->mpFairy = mpFairy * 2 + 22902;
     this->staffLv = staffLv;
+    this->staffFailPoint = staffFailPoint;
     this->highScore = highScore;
     this->weeklyHighScore = weeklyHighScore;
     this->lastWeeklyHighScore = lastWeeklyHighScore;
@@ -409,6 +410,10 @@ int MyInfo::GetStaffLv()
 {
     return staffLv;
 }
+int MyInfo::GetStaffFailPoint()
+{
+    return staffFailPoint;
+}
 int MyInfo::GetHighScore()
 {
     return highScore;
@@ -523,6 +528,14 @@ bool MyInfo::HasNoProperty()
 {
     return (!IsFire() && !IsWater() && !IsLand() && !IsMaster());
 }
+int MyInfo::GetNumOfProperties()
+{
+    int cnt = 0;
+    if (IsFire()) cnt++;
+    if (IsWater()) cnt++;
+    if (IsLand()) cnt++;
+    return cnt;
+}
 bool MyInfo::IsTimeToFreelyBuyProperty()
 {
     int checkProperty[5] = {0,};
@@ -574,13 +587,14 @@ void MyInfo::SetPotion(int potion, int remainPotionTime)
     if (remainPotionTime != -1)
         this->remainPotionTime = remainPotionTime;
 }
-void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv)
+void MyInfo::SetCoco(int mp, int mpStaffPercent, int mpFairy, int staffLv, int staffFailPoint)
 {
     this->mp = mp * 4 + 34890;
     this->mpStaffPercent = mpStaffPercent + 189;
     this->mpStaff = (int)((float)(GetMP()*GetMPStaffPercent())/(float)100) + 718933;
     this->mpFairy = mpFairy * 2 + 22902;
     this->staffLv = staffLv;
+    this->staffFailPoint = staffFailPoint;
 }
 void MyInfo::SetItem(std::vector<int> items)
 {
@@ -677,9 +691,9 @@ void MyInfo::AddSkillSlot(int id, int csi, int usi)
 {
     mySkillSlot.push_back( new MySkillSlot(id, csi, usi) );
 }
-void MyInfo::AddFairy(int cfi, int ufi, int level, int isUse)
+void MyInfo::AddFairy(int cfi, int ufi, int level, int isUse, int failPoint)
 {
-    myFairy.push_back( new MyFairy(cfi, ufi, level, isUse) );
+    myFairy.push_back( new MyFairy(cfi, ufi, level, isUse, failPoint) );
 }
 void MyInfo::AddSkill(int csi, int usi, int level, int exp, int learntime)
 {
@@ -795,12 +809,13 @@ void MySkillSlot::InsertSkill(int scid, int suid)
 }
 
 
-MyFairy::MyFairy(int cfi, int ufi, int level, int isUse)
+MyFairy::MyFairy(int cfi, int ufi, int level, int isUse, int failPoint)
 {
     this->common_fairy_id = cfi;
     this->user_fairy_id = ufi;
     this->level = level;
     this->isUse = isUse;
+    this->failPoint = failPoint;
 }
 MyFairy* MyFairy::GetObj(int cfi)
 {
@@ -827,6 +842,10 @@ int MyFairy::GetUserId()
 int MyFairy::GetLevel()
 {
     return level;
+}
+int MyFairy::GetFailPoint()
+{
+    return failPoint;
 }
 
 MySkill::MySkill(int csi, int usi, int level, int exp, int learntime)
@@ -911,7 +930,7 @@ void LastWeeklyRank::SortByRank()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Friend::Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
+Friend::Friend(std::string kakaoId, std::string nickname, std::string imageUrl, int potionMsgStatus, int remainPotionTime, int remainRequestPotionTime, int remainRequestTopazTime, int weeklyHighScore, int highScore, int scoreUpdateTime, int certificateType, int profileTitleId, int fire, int water, int land, int master, int fairyId, int fairyLevel, int skillId, int skillLevel)
 {
     // constructor
     this->kakaoId = kakaoId;
@@ -932,6 +951,7 @@ Friend::Friend(std::string kakaoId, std::string nickname, std::string imageUrl, 
     this->highScore = highScore;
     this->scoreUpdateTime = scoreUpdateTime;
     this->certificateType = certificateType;
+    this->profileTitleId = profileTitleId;
     this->propertyFire = (fire == 1) ? true : false;
     this->propertyWater = (water == 1) ? true : false;
     this->propertyLand = (land == 1) ? true : false;
@@ -1017,6 +1037,18 @@ void Friend::SetScore(int highScore, int weeklyHighScore, int certificateType)
     this->highScore = highScore;
     this->weeklyHighScore = weeklyHighScore;
     this->certificateType = certificateType;
+}
+int Friend::GetCertificateType()
+{
+    return certificateType;
+}
+int Friend::GetProfileTitleId()
+{
+    return profileTitleId;
+}
+void Friend::SetProfileTitleId(int id)
+{
+    profileTitleId = id;
 }
 
 CCLabelTTF* Friend::GetPotionLabelMin()
@@ -1370,7 +1402,7 @@ PrerequisiteInfo::PrerequisiteInfo(int id, int category, int type, int value1, i
 */
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int pid)
+FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int refVal)
 {
     this->nId = id;
     this->nType = type;
@@ -1378,7 +1410,7 @@ FairyInfo::FairyInfo(int id, int type, int grade, int cs, int ct, int pid)
     this->nGrade = grade;
     this->nCost_starcandy = cs;
     this->nCost_topaz = ct;
-    this->nPid = pid;
+    this->nRefVal = refVal;
 }
 std::string FairyInfo::MakeName(int id)
 {
@@ -1416,13 +1448,6 @@ std::string FairyInfo::GetAbilityDesc(int type, bool newline) // 특수능력
             case 1: return "연결피스\n확률증가"; break;
             case 9: return "피버타임\n시간증가"; break;
             case 10: return "별사탕\n추가획득"; break;
-            /*
-        case 4: return "보너스 점수"; break;
-        case 5: return "보너스 시간"; break;
-        case 6: return "아이템 더 쓴다!"; break;
-        case 7: return "지팡이 강화 좋게!"; break;
-        case 8: return "MP 증가"; break;
-             */
         }
     }
     else
@@ -1465,6 +1490,10 @@ int FairyInfo::GetCostTopaz()
 int FairyInfo::GetCostStarCandy()
 {
     return nCost_starcandy;
+}
+int FairyInfo::GetRefVal()
+{
+    return nRefVal;
 }
 std::string FairyInfo::GetName()
 {
@@ -1716,12 +1745,13 @@ int SkillInfo::GetRequiredMP()
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SkillBuildupMPInfo::SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2)
+SkillBuildupMPInfo::SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2, int topaz)
 {
     this->nSkillCount = skillCount;
     this->nRequireMP = requireMP;
     this->nDiscountOne = discount1;
     this->nDiscountTwo = discount2;
+    this->nTopazCostValue = topaz;
 }
 SkillBuildupMPInfo* SkillBuildupMPInfo::GetObj(int skillCount)
 {
@@ -1746,7 +1776,6 @@ int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
     // (단, 속성별 첫 번째 스킬은 직접 배우는 것이 아니므로 개념상 제외한다)
     int eachPropertyCnt[5] = {0,};
     for (int i = 0 ; i <= p ; i++)
-        //if (sList[i]->GetCommonId() % 10 != 1)
         eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
     
     // 각 속성마다 그것+1개만큼 개수를 계산한다. (+1 하는 이유는, 예를 들어 불 속성이 2개 있다면 필연적으로 불의 3번째 '?' 스킬이 등장했기 때문)
@@ -1756,6 +1785,32 @@ int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
     
     return orderNumber;
 }
+int SkillBuildupMPInfo::GetRealOrder(std::vector<MySkill*> sList, int scid)
+{
+    // '?' 직전 스킬의 common-id가 뭔지 찾기.
+    int p;
+    for (int i = 0 ; i < sList.size() ; i++)
+    {
+        if (sList[i]->GetCommonId() == scid-1)
+            p = i;
+    }
+    // 11 12 13 31 32 33 21 34
+    // 11 12 13 14 15 16 21 22 23
+    
+    // [처음 배운 스킬 ~ '?' 직전 스킬]을 속성별로 몇 개씩인지 분류한다.
+    // (단, 속성별 첫 번째 스킬은 직접 배우는 것이 아니므로 개념상 제외한다)
+    int eachPropertyCnt[5] = {0,};
+    for (int i = 0 ; i <= p ; i++)
+        eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
+    
+    // 각 속성마다 그것+1개만큼 개수를 계산한다. (+1 하는 이유는, 예를 들어 불 속성이 2개 있다면 필연적으로 불의 3번째 '?' 스킬이 등장했기 때문)
+    int orderNumber = 0;
+    for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
+        orderNumber += (eachPropertyCnt[i]) + (eachPropertyCnt[i] > 0 && eachPropertyCnt[i] < 7);
+    
+    return orderNumber;
+}
+
 int SkillBuildupMPInfo::RequiredMP(std::vector<MySkill*> sList, int scid)
 {
     // '?' 스킬이 몇 번째로 등장한 것인지 알아내자.
@@ -1794,6 +1849,10 @@ int SkillBuildupMPInfo::GetDiscount1()
 int SkillBuildupMPInfo::GetDiscount2()
 {
     return nDiscountTwo;
+}
+int SkillBuildupMPInfo::GetTopazCostValue()
+{
+    return nTopazCostValue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1913,6 +1972,33 @@ std::string TipContent::GetContent()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ProfileTitle::ProfileTitle(int id, int ct, int pt, std::string t)
+{
+    this->nId = id;
+    this->nCertificateType = ct;
+    this->nPropertyType = pt;
+    this->title = t;
+}
+int ProfileTitle::GetId()
+{
+    return nId;
+}
+int ProfileTitle::GetCertificateType()
+{
+    return nCertificateType;
+}
+int ProfileTitle::GetPropertyType()
+{
+    return nPropertyType;
+}
+std::string ProfileTitle::GetTitle()
+{
+    return title;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 InviteList::InviteList(std::string userid, std::string name, std::string purl, std::string htuid, bool msgblocked, bool supporteddevice, bool wi)
 {
     this->userId = userid;
@@ -1926,13 +2012,14 @@ InviteList::InviteList(std::string userid, std::string name, std::string purl, s
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NoticeList::NoticeList(int i, int pf, std::string t, std::string m, std::string l)
+NoticeList::NoticeList(int i, int pf, std::string t, std::string m, std::string l, int onetime)
 {
     this->id = i;
     this->platform = pf;
     this->title = t;
     this->message = m;
     this->link = l;
+    this->oneTime = onetime;
     this->isShown = false;
 }
 

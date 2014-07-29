@@ -547,7 +547,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             }
         }
         else
-            ((Puzzle*)obj)->addChild(nextScene, 200, 200);
+            ((Puzzle*)obj)->addChild(nextScene, 9999, 9999);
     }
     else if (from == "PuzzlePause") ((PuzzlePause*)obj)->addChild(nextScene, 200, 200);
     else if (from == "NoImage") ((NoImage*)obj)->addChild(nextScene, 200, 200);
@@ -1000,24 +1000,15 @@ void SpriteClass::RemoveAllObjects()
                 spriteObj[i]->parentType.clear();
                 if (spriteObj[i]->type == 0)
                 {
-                    //spriteObj[i]->sprite->autorelease();
-                    //spriteObj[i]->sprite->release();
                     spriteObj[i]->sprite->removeFromParentAndCleanup(true);
-                    //CCLog("type 0 : %d", spriteObj[i]->sprite->retainCount());
                 }
                 else if (spriteObj[i]->type == 1)
                 {
-                    //spriteObj[i]->sprite9->autorelease();
-                    //spriteObj[i]->sprite9->release();
                     spriteObj[i]->sprite9->removeFromParentAndCleanup(true);
-                    //CCLog("type 1 : %d", spriteObj[i]->sprite9->retainCount());
                 }
                 else
                 {
-                    //spriteObj[i]->label->autorelease();
-                    //spriteObj[i]->label->release();
                     spriteObj[i]->label->removeFromParentAndCleanup(true);
-                    //CCLog("type 2 : %d", spriteObj[i]->label->retainCount());
                 }
             }
         }
@@ -1124,7 +1115,6 @@ void Common::RebootSystem(void* p)
 }
 
 
-
 std::string Common::GetMissionContent(int type, int val, int refVal)
 {
     char s[100];
@@ -1148,6 +1138,73 @@ std::string Common::GetMissionContent(int type, int val, int refVal)
     
     std::string ret = s;
     return ret;
+}
+
+std::string Common::GetProfileTitle(int idx)
+{
+    int id = friendList[idx]->GetProfileTitleId();
+    
+    int pIdx = 0;
+    for (int i = 0 ; i < profileTitle.size() ; i++)
+    {
+        if (profileTitle[i]->GetId() == id)
+        {
+            pIdx = i;
+            break;
+        }
+    }
+    std::string title = profileTitle[pIdx]->GetTitle();
+    
+    if (friendList[idx]->GetProfileTitleId() != 1)
+    {
+        if (friendList[idx]->GetCertificateType() == 1) title += " 마법학사";
+        else if (friendList[idx]->GetCertificateType() == 2) title += " 마법석사";
+        else if (friendList[idx]->GetCertificateType() == 3) title += " 마법박사";
+        else
+        {
+            if (profileTitle[pIdx]->GetPropertyType() == 1) title += " 물 마법사";
+            else if (profileTitle[pIdx]->GetPropertyType() == 2) title += " 불 마법사";
+            else if (profileTitle[pIdx]->GetPropertyType() == 3) title += " 땅 마법사";
+        }
+    }
+    return title;
+}
+
+void Common::UpdateProfileTitle()
+{
+    int titleIdx = 1;
+    int k, type;
+    while(1)
+    {
+        k = rand()%profileTitle.size();
+        type = profileTitle[k]->GetPropertyType();
+        if ( (type == 1 && myInfo->IsWater()) ||
+            (type == 2 && myInfo->IsFire())  ||
+            (type == 3 && myInfo->IsLand()) )
+        {
+            titleIdx = profileTitle[k]->GetId();
+            break;
+        }
+    }
+    
+    // 친구리스트에서 본인을 찾아 profile title 정보를 업데이트한다.
+    for (int i = 0 ; i < friendList.size() ; i++)
+    {
+        if (friendList[i]->GetKakaoId() == myInfo->GetKakaoId())
+        {
+            friendList[i]->SetProfileTitleId(titleIdx);
+            break;
+        }
+    }
+
+    char temp[255];
+    std::string param = "";
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+    param += temp;
+    sprintf(temp, "name_title_id=%d", titleIdx);
+    param += temp;
+    
+    Network::HttpPost(param, URL_UPDATE_NAME_TITLE, NULL, NULL);
 }
 
 

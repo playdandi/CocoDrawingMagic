@@ -83,26 +83,25 @@ void T_Skip::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_cont.png", ccp(1, 0.5), ccp(m_winSize.width/2-10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_end.png", ccp(0, 0.5), ccp(m_winSize.width/2+10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
      */
-CCLog("1");
-    
+
     // pop-up 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "T_Skip", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "T_Skip", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "T_Skip", this, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "T_Skip", this, 1) );
-CCLog("2");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "T_Skip", this, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "T_Skip", this, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "T_Skip", this, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "T_Skip", this, 10001) );
+
     // 텍스트
     std::string text = "튜토리얼을 넘기시겠습니까?";
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), ccc3(78,47,8), CCSize(829-20, 250), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "T_Skip", this, 5) );
-CCLog("3");
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), ccc3(78,47,8), CCSize(829-20, 250), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "T_Skip", this, 10005) );
+
     // 확인 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "T_Skip", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 5, 1) );
-CCLog("4");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 0), ccp(717+5, 711), CCSize(0, 0), "", "T_Skip", this, 10005) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_confirm_mini.png",ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), "button/btn_red_mini.png", "0", NULL, 10005, 1) );
+
     // 취소 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "T_Skip", this, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_cancel.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 5, 1) );
-CCLog("5");
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(0, 0), ccp(126, 711), CCSize(0, 0), "", "T_Skip", this, 10005) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_cancel.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 30), CCSize(0, 0), "button/btn_system.png", "0", NULL, 10005, 1) );
+
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
 }

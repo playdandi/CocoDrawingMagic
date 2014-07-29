@@ -963,6 +963,7 @@ void Splash::XMLParseGameData()
     }
     
     // fairy info
+    int refVal;
     its = nodeResult.child("fairy_define").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
     {
@@ -974,9 +975,10 @@ void Splash::XMLParseGameData()
             else if (name == "nFairyGrade") grade = ait->as_int();
             else if (name == "nStarCandyCostValue") cost_starcandy = ait->as_int();
             else if (name == "nTopazCostValue") cost_topaz = ait->as_int();
-            else if (name == "nPrerequisiteID") pid = ait->as_int();
+            else if (name == "nRefValue") refVal = ait->as_int();
+            //else if (name == "nPrerequisiteID") pid = ait->as_int();
         }
-        fairyInfo.push_back( new FairyInfo(id, type, grade, cost_starcandy, cost_topaz, pid) );
+        fairyInfo.push_back( new FairyInfo(id, type, grade, cost_starcandy, cost_topaz, refVal) );
     }
     
     // fairy buildup info
@@ -1019,7 +1021,7 @@ void Splash::XMLParseGameData()
     }
     
     // skill_require_mp_define info
-    int skillCnt, skillRequireMP, discountOne, discountTwo;
+    int skillCnt, skillRequireMP, discountOne, discountTwo, topazVal;
     its = nodeResult.child("skill_require_mp_define").children("Data");
     for (it = its.begin() ; it != its.end() ; ++it)
     {
@@ -1028,10 +1030,11 @@ void Splash::XMLParseGameData()
             std::string name = ait->name();
             if (name == "nSkillCount") skillCnt = ait->as_int();
             else if (name == "nRequireMP") skillRequireMP = ait->as_int();
+            else if (name == "nTopazCostValue") topazVal = ait->as_int();
             else if (name == "nDiscountPercentOneType") discountOne = ait->as_int();
             else if (name == "nDiscountPercentTwoType") discountTwo = ait->as_int();
         }
-        skillBuildupMPInfo.push_back( new SkillBuildupMPInfo(skillCnt, skillRequireMP, discountOne, discountTwo) );
+        skillBuildupMPInfo.push_back( new SkillBuildupMPInfo(skillCnt, skillRequireMP, discountOne, discountTwo, topazVal) );
     }
     
     // skill buildup info
@@ -1097,6 +1100,24 @@ void Splash::XMLParseGameData()
             else if (name == "charScript") script = ait->as_string();
         }
         tipContent.push_back( new TipContent(id, category, script) );
+    }
+    
+    // 프로필 문구 내용
+    std::string title;
+    int propertyType;
+    its = nodeResult.child("name_title_define_client").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nIndex") id = ait->as_int();
+            else if (name == "bCertificateType") certificateType = ait->as_int(); // -1(공통), 0(무학위), 1(학사), 2(석사), 3(박사)
+            else if (name == "bPropertieseType") propertyType = ait->as_int(); // -1(공통), 0(무속성), 1(물), 2(불), 3(땅)
+            else if (name == "charNameTitle") title = ait->as_string();
+        }
+        CCLog("!@#@!#!@#");
+        profileTitle.push_back( new ProfileTitle(id, certificateType, propertyType, title) );
     }
 }
 
@@ -1256,6 +1277,7 @@ void Splash::XmlParseNotice(xml_document *xmlDoc)
         }
         
         // 공지사항 리스트를 받는다.
+        int onetime;
         its = nodeResult.child("notice-list").children("notice");
         for (it = its.begin() ; it != its.end() ; ++it)
         {
@@ -1267,11 +1289,12 @@ void Splash::XmlParseNotice(xml_document *xmlDoc)
                 else if (name == "title") title = ait->as_string();
                 else if (name == "message") message = ait->as_string();
                 else if (name == "link") link = ait->as_string();
+                else if (name == "one-time") onetime = ait->as_int();
             }
             if ( (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID && platform != 2) || // 플랫폼에 맞는 공지사항만 들고온다.
                  (CC_TARGET_PLATFORM == CC_PLATFORM_IOS && platform != 1) )
             {
-                noticeList.push_back( new NoticeList(id, platform, title, message, link) );
+                noticeList.push_back( new NoticeList(id, platform, title, message, link, onetime) );
             }
         }
         
@@ -1313,6 +1336,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
         int mpFairy = nodeResult.child("coco").attribute("fairy-bonus-mp").as_int();
         int staffLv = nodeResult.child("coco").attribute("magic-staff-level").as_int();
         int practiceUserSkillId = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
+        int staffFailPoint = nodeResult.child("coco").attribute("magic-staff-fail-point").as_int();
         
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
@@ -1339,7 +1363,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
         int waterByTopaz = nodeResult.child("properties").attribute("water-purchase-topaz").as_int();
         int landByTopaz = nodeResult.child("properties").attribute("land-purchase-topaz").as_int();
         
-        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, highScore, weeklyHighScore, lastWeeklyHighScore, isWeeklyRankReward, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master, fireByTopaz, waterByTopaz, landByTopaz);
+        myInfo->InitRestInfo(topaz, starcandy, mp, mpStaffPercent, mpFairy, staffLv, staffFailPoint, highScore, weeklyHighScore, lastWeeklyHighScore, isWeeklyRankReward, certificateType, remainWeeklyRankTime, item1, item2, item3, item4, item5, potion, remainPotionTime, fire, water, land, master, fireByTopaz, waterByTopaz, landByTopaz);
         
         int profileSkillId = nodeResult.child("profile-skill").attribute("id").as_int();
         int profileSkillLv = nodeResult.child("profile-skill").attribute("level").as_int();
@@ -1360,7 +1384,7 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
         }
         
         its = nodeResult.child("fairy-list").children("fairy");
-        int cfi, ufi, level, isUse;
+        int cfi, ufi, level, isUse, failPoint;
         for (xml_named_node_iterator it = its.begin() ; it != its.end() ; ++it)
         {
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
@@ -1370,8 +1394,9 @@ void Splash::XmlParseMyInfo(xml_document *xmlDoc)
                 else if (name == "user-fairy-id") ufi = ait->as_int();
                 else if (name == "level") level = ait->as_int();
                 else if (name == "is-use") isUse = ait->as_int();
+                else if (name == "fairy-fail-point") failPoint = ait->as_int();
             }
-            myInfo->AddFairy(cfi, ufi, level, isUse);
+            myInfo->AddFairy(cfi, ufi, level, isUse, failPoint);
         }
         
         its = nodeResult.child("skill-list").children("skill");
@@ -1501,6 +1526,11 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
             if (ProfileSprite::GetProfile(profileUrl) == NULL) // 프로필 sprite에 모은다.
                 profiles.push_back( new ProfileSprite(profileUrl, true) );
         }
+        
+        // 프로필 문구를 갱신하기 위해 서버로 업데이트
+        Common::UpdateProfileTitle();
+        //CCUserDefault::sharedUserDefault()->setStringForKey("profileTitle", "");
+        
 
         // 친구 리스트 정보를 받는다.
         m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
@@ -1548,6 +1578,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
         int remainRequestTopazTime;
         int highScore;
         int certificateType;
+        int profileTitleId;
         int fire;
         int water;
         int land;
@@ -1574,6 +1605,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 else if (name == "weekly-high-score") weeklyHighScore = ait->as_int();
                 else if (name == "score-update-time") scoreUpdateTime = ait->as_int();
                 else if (name == "certificate-type") certificateType = ait->as_int();
+                else if (name == "name-title-id") profileTitleId = ait->as_int();
                 else if (name == "properties-fire") fire = ait->as_int();
                 else if (name == "properties-water") water = ait->as_int();
                 else if (name == "properties-land") land = ait->as_int();
@@ -1592,7 +1624,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
             // nickname 너무 길면 자르자.
             nickname = SubstrNickname(nickname);
             
-            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
+            friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, profileTitleId, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
             friendList[(int)friendList.size()-1]->SetPotionSprite();
         }
@@ -1734,7 +1766,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
             if (profileCnt == 0) // preload할 것이 없으면 바로 시작.
             {
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                /*
+
                 m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
                 httpStatus = HTTP_NONCONSUMED_GET_FRIEND_ID;
                 
@@ -1744,8 +1776,8 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 param += temp;
                 
                 Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
-                */
-                LastActionStart();
+                
+                //LastActionStart();
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -1838,6 +1870,17 @@ void Splash::XmlParseServerCheck(void* data, int size)
         std::vector<int> nullData;
         if (code <= MAX_COMMON_ERROR_CODE)
             Network::ShowCommonError(code);
+        else if (code == 10) // 문제없으니 그대로 넘겨라. (계속 진행)
+        {
+            // 게임 버전 체크
+            m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl(URL_VERSION);
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
         else
             Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
@@ -1896,30 +1939,14 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // mt.php (제일 처음) 호출 결과
     if (atoi(res->getHttpRequest()->getTag()) == 8888888)
     {
-        CCLog("status code = %d", res->getResponseCode());
-        if (res->getResponseCode() != 200) // php가 없다는 말은 서버 점검 중이 아니므로, 계속 진행한다.
-        {
-            // 게임 버전 체크
-            m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
-            CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl(URL_VERSION);
-            req->setRequestType(CCHttpRequest::kHttpPost);
-            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
-            CCHttpClient::getInstance()->send(req);
-            req->release();
-            return;
-        }
-        else // status 200 이면, 서버 점검 중이다. 팝업창을 띄우자.
-        {
-            // dump data
-            std::vector<char> *buffer = res->getResponseData();
-            for (unsigned int i = 0 ; i < buffer->size() ; i++)
-                dumpData[i] = (*buffer)[i];
-            dumpData[buffer->size()] = NULL;
-            
-            XmlParseServerCheck(dumpData, (int)buffer->size());
-            return;
-        }
+        // dump data
+        std::vector<char> *buffer = res->getResponseData();
+        for (unsigned int i = 0 ; i < buffer->size() ; i++)
+            dumpData[i] = (*buffer)[i];
+        dumpData[buffer->size()] = NULL;
+        
+        XmlParseServerCheck(dumpData, (int)buffer->size());
+        return;
     }
     
     // 프로필 사진 or resource.xml 받아올 때
@@ -1933,7 +1960,6 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             if (profileCnt <= 0)
             {
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                /*
                  m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
                  httpStatus = HTTP_NONCONSUMED_GET_FRIEND_ID;
                  
@@ -1943,8 +1969,7 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
                  param += temp;
                  
                  Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
-                 */
-                LastActionStart();
+                //LastActionStart();
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -1986,7 +2011,6 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         if (profileCnt <= 0)
         {
             #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-            /*
             m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
             httpStatus = HTTP_NONCONSUMED_GET_FRIEND_ID;
             
@@ -1996,8 +2020,7 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             param += temp;
             
             Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
-            */
-            LastActionStart();
+            //LastActionStart();
             #endif
             
             #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)

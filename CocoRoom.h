@@ -37,6 +37,8 @@ public:
     
     void RenewAllData();
     
+    void ShowHintOfMP();
+    
     void InitSprites();
     void MakeSprites(int state);
     
@@ -71,6 +73,8 @@ protected:
     bool isSlotTouched;
     int curState;
     
+    bool isHintOfMPShown;
+    
     bool isTodayCandyWorking;
     CCSprite* todaycandy_bg;
     
@@ -94,8 +98,11 @@ private:
     CCScrollView* scrollView;
     CCLayer* containerCoco;
     CCLayer* containerFairy;
+    
     CCScale9Sprite* balloon;
     CCLabelTTF* ball;
+    CCScale9Sprite* balloon2;
+    CCLabelTTF* ball2;
     
     CCLayer* coco;
     CCLayer* fairy;

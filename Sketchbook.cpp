@@ -124,6 +124,9 @@ bool Sketchbook::init()
     
     balloon = NULL;
     ball = NULL;
+    balloon2 = NULL;
+    ball2 = NULL;
+    isHintOfMPShown = false;
     
     spriteClass = new SpriteClass();
     spriteClassBook = new SpriteClass();
@@ -339,6 +342,34 @@ void Sketchbook::InitSprites()
     
     // 슬롯구입 힌트
     ShowHintOfBuyingSlot();
+}
+
+void Sketchbook::ShowHintOfMP()
+{
+    if (isHintOfMPShown)
+        return;
+    isHintOfMPShown = true;
+    
+    if (balloon2 != NULL && ball2 != NULL)
+    {
+        ball2->removeFromParentAndCleanup(true);
+        balloon2->removeFromParentAndCleanup(true);
+    }
+    balloon2 = NULL;
+    ball2 = NULL;
+    
+    balloon2 = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon2->setContentSize(CCSize(600, 200));
+    balloon2->setAnchorPoint(ccp(1, 1));
+    balloon2->setPosition(ccp(765+200, 1666+35));
+    this->addChild(balloon2, 100);
+    ball2 = CCLabelTTF::create("MP로 새로운 마법을 배울 수 있고,\n보너스 점수를 증가시켜줘요.", fontList[0].c_str(), 36);
+    ball2->setPosition(ccp(600/2, 200/2-30));
+    ball2->setColor(ccc3(255,255,255));
+    balloon2->addChild(ball2, 101);
+    
+    CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
+    balloon2->runAction( CCRepeatForever::create(action) );
 }
 
 void Sketchbook::CheckProperties()
@@ -736,6 +767,18 @@ void Sketchbook::SetTouchLock(bool val)
 
 bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
+    if (isHintOfMPShown) // MP힌트 표시되고 있으면 없애기.
+    {
+        if (balloon2 != NULL && ball2 != NULL)
+        {
+            ball2->removeFromParentAndCleanup(true);
+            balloon2->removeFromParentAndCleanup(true);
+        }
+        balloon2 = NULL;
+        ball2 = NULL;
+        isHintOfMPShown = false;
+    }
+    
     if (isTouched)
         return false;
     isTouched = true;
@@ -851,6 +894,15 @@ bool Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClickboard();
                 Common::ShowNextScene(this, "Sketchbook", "BuyStarCandy", false, 0);
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "background/bg_topinfo.png3") // MP hint 보여주기
+        {
+            if (spriteClass->spriteObj[i]->sprite9->boundingBox().containsPoint(point))
+            {
+                sound->playClickboard();
+                ShowHintOfMP();
                 return true;
             }
         }
@@ -989,14 +1041,21 @@ void Sketchbook::EndScene()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    // 슬롯구매 힌트 있으면 지운다.
-    if (balloon != NULL && ball != NULL)
+    if (balloon != NULL && ball != NULL) // 슬롯구매 힌트 있으면 지운다.
     {
         ball->removeFromParentAndCleanup(true);
         balloon->removeFromParentAndCleanup(true);
     }
     ball = NULL;
     balloon = NULL;
+    
+    if (balloon2 != NULL && ball2 != NULL) // MP 힌트 있으면 지운다.
+    {
+        ball2->removeFromParentAndCleanup(true);
+        balloon2->removeFromParentAndCleanup(true);
+    }
+    balloon2 = NULL;
+    ball2 = NULL;
 
     // remove all objects
     spriteClass->RemoveAllObjects();

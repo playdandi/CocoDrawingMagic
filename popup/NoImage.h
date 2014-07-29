@@ -59,6 +59,7 @@ public:
     void XmlParseGetFirstSkill(xml_document *xmlDoc);
     void XmlParseKakaoUnregister(xml_document *xmlDoc);
     void XmlParseGetPotionStatus(xml_document *xmlDoc);
+    void XmlParsePurchaseSkill(xml_document *xmlDoc);
     
     void ShowHintOfUpgrade();
     

@@ -164,6 +164,7 @@ void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_SkillIcon(int skillNum)
 {
+    CCLog("PlayEffect_SkillIcon : %d", skillNum);
     // 스킬 실제 고유번호 계산
     int num = SkillInfo::ConvertedToOriginal(skillNum);
     
@@ -175,7 +176,8 @@ void Effect::PlayEffect_SkillIcon(int skillNum)
     skill->setOpacity(0);
     gameLayer->addChild(skill, z1);
     
-    callbackCnt = skillNum; // 스킬 번호 임시저장 (떡갈나무지팡이, 끈질긴생명력 스킬에 이용)
+    skillIcon_callbackCnt = skillNum; // 스킬 번호 임시저장 (떡갈나무지팡이, 끈질긴생명력 스킬에 이용)
+    CCLog("PlayEffect_SkillIcon : (callbackCnt = %d)", callbackCnt);
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCSpawn::create(CCFadeOut::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_SkillIcon_Callback), this), NULL);
     skill->runAction(action);
@@ -185,11 +187,12 @@ void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
     sender->removeFromParentAndCleanup(true);
     
     Effect* pThis = (Effect*)p;
-    CCPoint pos = ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120);
-    CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
-    if (pThis->callbackCnt == 18)
+    //CCPoint pos = ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120);
+    //CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
+    CCLog("PlayEffect_SkillIcon_Callback : %d", pThis->skillIcon_callbackCnt);
+    if (pThis->skillIcon_callbackCnt == 18)
         pThis->PlayEffect_18(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
-    else if (pThis->callbackCnt == 22)
+    else if (pThis->skillIcon_callbackCnt == 22)
         pThis->PlayEffect_22(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
 }
 
@@ -274,7 +277,6 @@ void Effect::SpiritEffect(int type, int centerX, int centerY)
     if (type == 0)
     {
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/spirit_fire.plist");
-        //m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height/2));
         m_emitter->setPosition(gameLayer->SetTouch8Position(centerX, centerY));
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setAutoRemoveOnFinish(true);
@@ -640,12 +642,12 @@ void Effect::PlayEffect_17_Callback(CCNode* sender, void* p)
         pThis->gameLayer->GetSound()->PlaySkillSound(17);
         
         // 점수 업데이트
-        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 9%)])
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 5%)])
         int dragNum = pThis->gameLayer->GetPiece8xy(true).size(); // 드래그수 구하기
         if (pThis->gameLayer->IsRoundInFeverTime(true))
             dragNum = pThis->gameLayer->GetPosForFeverTime(true).size();
         int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(17); // 발동점수
-        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*9)/100.0f))); // 가중치점수
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*5)/100.0f))); // 가중치점수
         pThis->gameLayer->UpdateScore(1, (basicScore+addedScore)/numOfBomb);
         float scale = pThis->gameLayer->GetScoreBasicScale(dragNum);
         pThis->gameLayer->ShowSkillScore((basicScore+addedScore)/numOfBomb, scale, pThis->queuePos, x[0], y[0]);
@@ -689,11 +691,8 @@ void Effect::PlayEffect_17_Callback(CCNode* sender, void* p)
         {
             x = (int)pThis->skillPos[i].x;
             y = (int)pThis->skillPos[i].y;
-            //CCLog("[[%d %d]]", x, y);
-            //if (pThis->gameLayer->GetPuzzleP8Set()->GetObject(x, y)->GetPiece() != NULL)
             if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
             {
-                //CCLog("(%d %d)", x, y);
                 pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
                 pThis->gameLayer->SetSpriteP8Null(x, y);
             }
@@ -835,7 +834,6 @@ void Effect::PlayEffect_13(std::vector<CCPoint> pos)
         CCPoint p = gameLayer->SetTouch8Position(x, y);
         
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/water6.plist");
-        //m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(ccp((int)p.x, (int)p.y+20));
         m_emitter->setScale(1.5f);
@@ -846,6 +844,8 @@ void Effect::PlayEffect_13(std::vector<CCPoint> pos)
 void Effect::PlayEffect_21(std::vector<CCPoint> pos)
 {
     // E6 : 그린 피스 6개 이상 한 번 더
+    //CCParticleSystemQuad* m_emit = CCParticleSystemQuad::create("particles/land6.plist");
+    
     int x, y;
     for (int i = 0; i < pos.size(); i++)
     {
@@ -853,11 +853,13 @@ void Effect::PlayEffect_21(std::vector<CCPoint> pos)
         y = (int)pos[i].y;
         
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land6.plist");
-        //m_emitter->retain();
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
         gameLayer->addChild(m_emitter, 2000);
-        m_emitter->setAutoRemoveOnFinish(true);
+        //m_emitter->setAutoRemoveOnFinish(true);
+        
+        CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.5f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
+        m_emitter->runAction(action);
     }
 }
 
@@ -1201,8 +1203,6 @@ void Effect::PlayEffect_23(int num, std::vector<CCPoint> pos, int queue_pos) // 
         scaled_H = 350.0f;
     A8_icon->setScale( scaled_H / (float)A8_icon->getContentSize().height );
     
-    //int A8_icon_height = (gameLayer->vo.y+gameLayer->vs.height-50-50-120) - (gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120);
-    //A8_icon->setScale( (float)A8_icon_height / (float)A8_icon->getContentSize().height );
     A8_icon->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+120- 100));
     gameLayer->addChild(A8_icon, z1);
     
@@ -1372,7 +1372,7 @@ void Effect::PlayEffect_2(std::vector<CCPoint> pos, int queue_pos)
     //    deltaPos = ccp(x, y);
     //else
     deltaPos = gameLayer->SetTouch8Position(x, y);
-    callbackCnt = 0;
+    plus_callbackCnt = 0;
     CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
     plus->setPosition(ccp(deltaPos.x, deltaPos.y));
     plus->setScale(0.5);
@@ -1396,17 +1396,17 @@ void Effect::Effect2Callback(CCNode* sender, void* pointer)
 void Effect::Effect2CallbackNewSprite(CCNode* sender, void* pointer)
 {
     Effect* pThis = (Effect*)pointer;
-    pThis->callbackCnt++;
-    if (pThis->callbackCnt < 5)
+    pThis->plus_callbackCnt++;
+    if (pThis->plus_callbackCnt < 5)
     {
         CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
-        if (pThis->callbackCnt == 1)
+        if (pThis->plus_callbackCnt == 1)
             plus->setPosition(ccp(pThis->deltaPos.x-20, pThis->deltaPos.y+20));
-        else if (pThis->callbackCnt == 2)
+        else if (pThis->plus_callbackCnt == 2)
             plus->setPosition(ccp(pThis->deltaPos.x+20, pThis->deltaPos.y+5));
-        else if (pThis->callbackCnt == 3)
+        else if (pThis->plus_callbackCnt == 3)
             plus->setPosition(ccp(pThis->deltaPos.x-10, pThis->deltaPos.y+10));
-        else if (pThis->callbackCnt == 4)
+        else if (pThis->plus_callbackCnt == 4)
             plus->setPosition(ccp(pThis->deltaPos.x+10, pThis->deltaPos.y+15));
         plus->setScale(0.5);
         plus->setOpacity(0);
@@ -1525,6 +1525,7 @@ void Effect::Effect19CallbackNewSprite(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_22(CCPoint p)
 {
+    CCLog("PlayEffect_22");
     // E7 : 끈질긴 생명력
     CCSprite* potion = CCSprite::createWithSpriteFrameName("icon/icon_potion.png");
     potion->setPosition(p);
@@ -1537,6 +1538,7 @@ void Effect::PlayEffect_22(CCPoint p)
 }
 void Effect::Effect22Callback(CCNode* sender, void* pointer)
 {
+    CCLog("Effect22 callback");
     sender->removeFromParentAndCleanup(true);
     
     ((Effect*)pointer)->gameLayer->GetSkill()->E7_Done();
@@ -1546,20 +1548,8 @@ void Effect::Effect22Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_10()
 {
-    /*
-    // W3 : 콤보 비례 추가 점수
-    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire3.plist");
-    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
-    m_emitter->setPosition(ccp(150, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+200));
-    //ccp(150, 1600));
-    m_emitter->setScale(3.0f);
-    gameLayer->addChild(m_emitter, 2000);
-    m_emitter->setDuration(0.5f);
-    m_emitter->setAutoRemoveOnFinish(true);
-    */
-    
     deltaPos = ccp(130, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60+220);
-    callbackCnt = 0;
+    plus_callbackCnt = 0;
     CCSprite* plus = CCSprite::createWithSpriteFrameName("icon/icon_plus.png");
     plus->setPosition(deltaPos);
     plus->setScale(0.5);
@@ -1567,11 +1557,6 @@ void Effect::PlayEffect_10()
     gameLayer->addChild(plus, z1+1);
     CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.4f, 1.5f), CCMoveBy::create(0.4f, ccp(0, 50)), CCSequence::create( CCFadeIn::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2CallbackNewSprite), this), CCFadeOut::create(0.2f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::Effect2Callback), this), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_10_Callback), this), NULL), NULL), NULL );
     plus->runAction(action);
-    
-    
-    /*CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.3f), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_10_Callback), this), NULL );
-    m_emitter->runAction(action);
-     */
 }
 void Effect::PlayEffect_10_Callback(CCNode* sender, void* pointer)
 {
@@ -1581,6 +1566,7 @@ void Effect::PlayEffect_10_Callback(CCNode* sender, void* pointer)
     int W3_addedScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(10);
     W3_addedScore *= (pThis->gameLayer->GetCombo()/10);
     CCLog("W3 현재 콤보 : %d", pThis->gameLayer->GetCombo());
+    CCLog("score = %d", W3_addedScore);
     
     pThis->gameLayer->UpdateScore(1, W3_addedScore);
     pThis->gameLayer->ShowSkillScore(W3_addedScore, 1.5f, -1);
@@ -1891,8 +1877,6 @@ void Effect::PlayEffect_FeverCircle(CCPoint p, CCPoint bp, int size)
     float angle = 10.0f;
     if ((dx <= 0 && dy < 0) || (dx < 0 && dy == 0) || (dx < 0 && dy > 0))
         angle = -10.0f;
-    
-    //CCActionInterval* action = CCSequence::create( CCSpawn::create(CCEaseOut::create(CCFadeIn::create(0.2f), 1.0f), CCRotateBy::create(0.2f, angle), CCMoveBy::create(0.2f, ccp(dx, dy)), NULL), CCSpawn::create(CCEaseIn::create(CCFadeIn::create(0.2f), 1.0f), CCRotateBy::create(0.2f, angle), NULL), CCMoveBy::create(0.2f, ccp(dx, dy)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.2f), CCRotateBy::create(0.2f, angle), CCMoveBy::create(0.2f, ccp(dx, dy)), NULL), CCSpawn::create(CCFadeOut::create(0.2f), CCRotateBy::create(0.2f, angle), NULL), CCMoveBy::create(0.2f, ccp(dx, dy)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_FeverCircle_Callback), this), NULL );
     fc->runAction(action);

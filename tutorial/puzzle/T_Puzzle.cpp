@@ -789,13 +789,7 @@ void T_Puzzle::TutorialStart(CCNode* sender, void* pointer)
     ttrMsg->setOpacity(255);
     
     pThis->ttrState = -1;
-    
-    // touch 해제
-    pThis->isFalling = false;
-    pThis->isInGamePause = false;
-    pThis->isCancelling = false;
-    pThis->isKeybackTouched = false;
-    
+
     pThis->TutorialNextState();
 }
 
@@ -812,6 +806,11 @@ void T_Puzzle::TutorialNextState()
             ttrBg1->setOpacity(255);
             ttrBg2->setOpacity(0);
             ttrMsg->setString("안녕, 난 코코라고 해. 넌 누구니? 이상하게 생겼네 ㅋ");
+            // touch 해제
+            isFalling = false;
+            isInGamePause = false;
+            isCancelling = false;
+            isKeybackTouched = false;
             break;
         case 1:
             ttrBg1->setOpacity(0);
