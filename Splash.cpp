@@ -1526,11 +1526,6 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
             if (ProfileSprite::GetProfile(profileUrl) == NULL) // 프로필 sprite에 모은다.
                 profiles.push_back( new ProfileSprite(profileUrl, true) );
         }
-        
-        // 프로필 문구를 갱신하기 위해 서버로 업데이트
-        Common::UpdateProfileTitle();
-        //CCUserDefault::sharedUserDefault()->setStringForKey("profileTitle", "");
-        
 
         // 친구 리스트 정보를 받는다.
         m_pMsgLabel->setString("못생긴 친구들을 불러오는 중...");
@@ -1674,6 +1669,9 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
         }
         else
         {
+            // 프로필 문구를 갱신하기 위해 서버로 업데이트
+            Common::UpdateProfileTitle();
+              
             int cnt = KakaoFriends::getInstance()->appFriends->count();
             CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
             std::string id;
@@ -1702,19 +1700,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                     }
                 }
             }
-            /*
-            for (int i = 0 ; i < friendList.size() ; i++)
-            {
-                char n[50];
-                
-                if (i % 2 == 0)
-                    sprintf(n, "qwh %d", i);
-                else
-                    sprintf(n, "http://q,%d", i);
 
-                friendList[i]->SetProfileUrl(n);
-            }
-            */
             // 본인과 상위 5명 (스크롤뷰에 보이는 정도) : 미리 프로필 사진을 받아두도록 하자. (flag 'preload' = true)
             bool flag;
             for (int i = 0 ; i < friendList.size() ; i++)

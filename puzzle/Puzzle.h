@@ -110,6 +110,7 @@ public:
     
     void CancelDrawing();
     void InvokeSkills(int queue_pos);
+    void EndRound(int queue_pos);
     void Lock(int queue_pos);
     void LockEach(int x, int y);
     void UnLockEach(int x, int y);
@@ -205,6 +206,7 @@ public:
     bool IsRoundInFeverTime(bool afterCast);
     
     void BonusTime(CCNode* sender, void* pointer);
+    void BonusTime_Callback(CCNode* sender, void* pointer);
     
     void FairySkillAction();
     
@@ -270,8 +272,9 @@ protected:
     int m_iNextState[QUEUE_CNT];
     bool m_bIsCycle[QUEUE_CNT]; // 사이클 발동 여부
     bool m_bSkillLock[QUEUE_CNT]; // skill 발동 여부에 대한 lock
+    bool wasFallen[QUEUE_CNT]; // falling을 시작했는지에 대한 여부 (default = true)
+
     bool isFeverRound[QUEUE_CNT]; // 이 queue_cnt에 대한 폭발이 feverTime용인가?
-    
     int feverBombOrderCnt[QUEUE_CNT];
     int feverBombOrderMax[QUEUE_CNT];
     int feverBombOrder[QUEUE_CNT][COLUMN_COUNT][ROW_COUNT]; // 피버타임 때 폭발하는 순서

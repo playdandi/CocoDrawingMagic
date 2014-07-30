@@ -172,6 +172,8 @@ void MagicList::Notification(CCObject* obj)
         char name[7];
         sprintf(name, "%d", (int)myInfo->GetSlot().size());
         ((CCLabelTTF*)spriteClass->FindLabelByTag(100))->setString(name);
+        
+        RenewCheck();
     }
     else if (param->intValue() == 1)
     {
@@ -342,6 +344,59 @@ void MagicList::MakeScrollSlot(bool isAutoMove)
     
     if (isAutoMove)
         scrollViewSlot->setContentOffsetInDuration(ccp(scrollViewSlot->minContainerOffset().x, 0), 0.4f);
+}
+
+void MagicList::RenewCheck()
+{
+    char name2[50];
+    for (int i = 0 ; i < 4; i++)
+    {
+        for (int j = 0 ; j < 4; j++)
+        {
+            //sprintf(name, "background/bg_skill_yellow.png%c", (4*i+j)+'a');
+            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(127+j*229, 1451-i*160+offset), CCSize(0, 0), "", "Layer", layer, 20) );
+            sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
+            ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(0);
+            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 21, 1, 0) );
+            /*
+            if (i == 0) sprintf(name2, "icon/icon_skill_division_red.png%d", j);
+            else if (i == 1) sprintf(name2, "icon/icon_skill_division_blue.png%d", j);
+            else if (i == 2) sprintf(name2, "icon/icon_skill_division_green.png%d", j);
+            else sprintf(name2, "icon/icon_skill_division_purple.png%d", j);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229, 1539-i*160+offset), CCSize(0, 0), "", "Layer", layer, 20) );
+            */
+            
+            // 스킬 문양
+            SkillInfo* si = SkillInfo::GetSkillInfo(sid[i*4+j]);
+            if (si == NULL)
+                continue;
+            
+            bool flag = false;
+            for (int k = 0 ; k < myInfo->GetSkillList().size() ; k++)
+            {
+                if (myInfo->GetSkillList()[k]->GetCommonId() == si->GetId())
+                    flag = true;
+            }
+            
+            if (flag)
+            {
+                flag = false;
+                for (int k = 0 ; k < myInfo->GetSlot().size() ; k++)
+                {
+                    if (myInfo->GetSlot()[k]->GetCommonId() == sid[i*4+j])
+                        flag = true;
+                }
+                if (flag)
+                {
+                    sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
+                    ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(255);
+                }
+                
+                //sprintf(name2, "skill_%d.png", si->GetId());
+                //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229+12, 1451-i*160+offset+12), CCSize(0, 0), "", "Layer", layer, 20, 0, 255, si->GetId()) );
+            }
+        }
+    }
 }
 
 

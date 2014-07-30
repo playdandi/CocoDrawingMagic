@@ -2425,6 +2425,12 @@ void NoImage::XmlParseKakaoUnregister(xml_document *xmlDoc)
         CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_2", "");
         CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_3", "");
         CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_4", "");
+        char name[30];
+        for (int i = 0 ; i < fairyInfo.size() ; i++)
+        {
+            sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
+            CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
+        }
         
         
         // 카카오 회원탈퇴 후 게임종료

@@ -23,10 +23,7 @@ Effect* PuzzleSkill::GetEffect()
 }
 
 void PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv)
-{    
-    //for (int i = 0 ; i < num.size(); i++)
-    //    CCLog("%d번 스킬 작동할 것임", num[i]);
-    
+{
     // init.
     for (int i = 0 ; i < NUMOFSKILL ; i++)
     {
@@ -689,12 +686,11 @@ bool PuzzleSkill::IsSpiritAlive(int type)
 
 void PuzzleSkill::F5(int num, int queue_pos)
 {
-    // 위험한 불장난 - 모서리에 나타나는 불의 정령을 선택하면 모든 붉은 피스를 정중앙으로 모아준다.
+    // 사랑의 불꽃 : 하나의 불 피스 주변을 불로 채운다.
     
     result_pos.clear();
     int type;
-    //int cnt = 0;
-    
+
     // 모든 붉은 피스 위치를 구한다.
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
     {
@@ -1123,6 +1119,7 @@ void PuzzleSkill::F8(int num, int queue_pos)
     F8_isActive = true;
     F8_isReady = true;
     
+    int type;
     result_pos.clear();
     for (int x = 0 ; x < COLUMN_COUNT ; x++)
     {
@@ -1131,7 +1128,10 @@ void PuzzleSkill::F8(int num, int queue_pos)
             if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
                 (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
                 continue;
-            result_pos.push_back(ccp(x, y));
+            
+            type = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+            if (type >= PIECE_RED && type <= PIECE_WHITE) // 일반 피스만 폭발
+                result_pos.push_back(ccp(x, y));
         }
     }
     m_pGameLayer->Bomb(queue_pos, result_pos);

@@ -144,6 +144,21 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         // 스크롤 내용 갱신
         RenewScroll();
     }
+    else if (param->intValue() == 3)
+    {
+        // 요정을 하나 구입해서, 요정의마을 리스트를 새로 갱신한다.
+        
+        // Loading 화면으로 MESSAGE request 넘기기
+        Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+        
+        // 네트워크로 메시지들을 받아온다.
+        char temp[50];
+        std::string params = "";
+        sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
+        params += temp;
+        
+        Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    }
     else if (param->intValue() == 10)
     {
         // 터치 풀기 (백그라운드에서 돌아올 때)
@@ -261,9 +276,17 @@ void CocoRoomFairyTown::MakeScroll()
         {
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
         }
-        else if (MyFairy::GetObj(fi->GetId()) == NULL) // 구입하지않음 표시 (lock)
+        else if (MyFairy::GetObj(fi->GetId()) != NULL) // 구입은 했고, 착용중이지 않은 것 표시
         {
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(1, 1), ccp(287, 287), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_fairy_select_no.png", ccp(0, 0), ccp(172, 173), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+        }
+        else
+        {
+            if (fairyData[i]->GetCostType() == 2) // 구입하지 않았고, 달성 조건을 채우지 못한 경우 (토파즈 구입)
+            {
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(1, 1), ccp(287, 287), CCSize(0, 0), "", "Layer", itemLayer, 90) );
+            }
+            // 구입하지 않았고, 달성 조건 채운 경우(별사탕 구입)는 아무것도 표시하지 않는다
         }
     }
     
@@ -280,6 +303,9 @@ void CocoRoomFairyTown::RenewScroll()
 {
     // delete & init all scroll-related variables.
     spriteClassScroll->RemoveAllObjects();
+    delete spriteClassScroll;
+    spriteClassScroll = NULL;
+    
     scrollContainer->removeAllChildren();
     scrollContainer->removeFromParentAndCleanup(true);
     scrollView->removeAllChildren();
@@ -445,9 +471,13 @@ void CocoRoomFairyTown::XmlParseFairyList(xml_document *xmlDoc)
     
     else if (code == 0)
     {
+        // init
+        for (int i = 0 ; i < fairyData.size() ; i++)
+            delete fairyData[i];
+        fairyData.clear();
+        
         int cfi, costType, costValue;
         std::string name;
-        
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("purchase-fairy-list").children("fairy");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {

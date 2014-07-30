@@ -32,6 +32,7 @@ protected:
     bool isTouched;
     bool isByTopaz;
     bool isAlreadyBought;
+    bool isSomeFairyBought;
     
     
     CCRect rect;

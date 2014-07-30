@@ -13,7 +13,7 @@ std::string ext(std::string fname)
 #endif
     
     std::string res = fname + "." + extension;
-    CCLog("sound = %s", res.c_str());
+    //CCLog("sound = %s", res.c_str());
     return res;
 }
 
@@ -32,7 +32,7 @@ std::string ext(std::string path, std::string fname)
 #endif
     
     std::string res = path + "/" + os + "/" + fname + "." + extension;
-    CCLog("sound = %s", res.c_str());
+    //CCLog("sound = %s", res.c_str());
     return res;
 }
 
@@ -205,9 +205,9 @@ void Sound::PreLoadInGameSound()
 
 void Sound::ReduceBackgroundMusicVolume(int volCnt)
 {
-    CCLog("%d", volCnt);
+    //CCLog("%d", volCnt);
     float vol = 0.8f * ((float)volCnt/(float)10.0f);
-    CCLog("reduce Volume = %f", vol);
+    //CCLog("reduce Volume = %f", vol);
     engine->setBackgroundMusicVolume(vol);
 }
 void Sound::GainBackgroundMusicVolume(int volCnt)

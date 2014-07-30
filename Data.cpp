@@ -1465,8 +1465,8 @@ std::string FairyInfo::GetDescription()
 {
     switch (this->nId)
     {
-        case 1: return "나같이 꽃같은 등신봤어~?"; break;
-        case 2: return "(은근은근) (은근은근)"; break;
+        case 1: return "4월에 피는 등이 이쁜 꽃"; break;
+        case 2: return "따스한 햇살과 눈길(?)을 은근하게"; break;
         case 3: return "뭉게뭉게 무웅게무웅게"; break;
     }
     return "할 말이 없네요";
@@ -1784,6 +1784,31 @@ int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
         orderNumber += (eachPropertyCnt[i]) - (eachPropertyCnt[i] == 7);
     
     return orderNumber;
+}
+int SkillBuildupMPInfo::GetOrderForTopaz(std::vector<MySkill*> sList, int scid) // 스킬의 토파즈 구매를 위한 n번째 구하기
+{
+    // '?' 직전 스킬의 common-id가 뭔지 찾기.
+    int p;
+    for (int i = 0 ; i < sList.size() ; i++)
+    {
+        if (sList[i]->GetCommonId() == scid-1)
+            p = i;
+    }
+    
+    int eachPropertyCnt[5] = {0,};
+    for (int i = 0 ; i <= p ; i++)
+        eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
+    
+    int orderNumber = 0;
+    for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
+        orderNumber += (eachPropertyCnt[i]) + (eachPropertyCnt[i] > 0 && eachPropertyCnt[i] < 7);
+    
+    int propertyCnt = 0; // 그때까지 배운 속성의 개수 구하기
+    for (int i = 1 ; i <= 3 ; i++)
+        if (eachPropertyCnt[i] > 0)
+            propertyCnt++;
+    
+    return orderNumber + propertyCnt - 1;
 }
 int SkillBuildupMPInfo::GetRealOrder(std::vector<MySkill*> sList, int scid)
 {

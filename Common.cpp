@@ -1174,16 +1174,24 @@ void Common::UpdateProfileTitle()
 {
     int titleIdx = 1;
     int k, type;
-    while(1)
+    
+    if (myInfo->HasNoProperty())
     {
-        k = rand()%profileTitle.size();
-        type = profileTitle[k]->GetPropertyType();
-        if ( (type == 1 && myInfo->IsWater()) ||
-            (type == 2 && myInfo->IsFire())  ||
-            (type == 3 && myInfo->IsLand()) )
+        titleIdx = 1;
+    }
+    else
+    {
+        while(1)
         {
-            titleIdx = profileTitle[k]->GetId();
-            break;
+            k = rand()%profileTitle.size();
+            type = profileTitle[k]->GetPropertyType();
+            if ( (type == 1 && myInfo->IsWater()) ||
+                (type == 2 && myInfo->IsFire())  ||
+                (type == 3 && myInfo->IsLand()) )
+            {
+                titleIdx = profileTitle[k]->GetId();
+                break;
+            }
         }
     }
     

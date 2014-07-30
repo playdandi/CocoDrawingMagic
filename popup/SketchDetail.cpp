@@ -406,10 +406,10 @@ void SketchDetail::MakeClosedSkillSprites()
         // 가격 표시
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(540, 688), CCSize(201, 77), "", "Layer", tLayer, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        int number = SkillBuildupMPInfo::GetOrder(sList, skill_common_id);
-        number += (myInfo->GetNumOfProperties() - 1);
+
+        int number = SkillBuildupMPInfo::GetRealOrder(sList, skill_common_id);
         CCLog("scid = %d / number = %d", skill_common_id, number);
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildupMPInfo::GetObj(number)->GetTopazCostValue()), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildupMPInfo::GetObj(number-1)->GetTopazCostValue()), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     }
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/rank_1.png", ccp(0, 1), ccp(3, 0), CCSize(0, 0), "", "Layer", descLayer, 5) );
@@ -619,10 +619,9 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 std::vector<int> data;
                 data.push_back(skill_common_id); // 스킬 common id
-                int number = SkillBuildupMPInfo::GetOrder(sList, skill_common_id);
-                number += (myInfo->GetNumOfProperties() - 1);
-                data.push_back(SkillBuildupMPInfo::GetObj(number)->GetTopazCostValue()); // 토파즈 비용
-                data.push_back(SkillBuildupMPInfo::GetRealOrder(sList, skill_common_id)); // 스킬 몇 번째인지.
+                int number = SkillBuildupMPInfo::GetRealOrder(sList, skill_common_id);
+                data.push_back(SkillBuildupMPInfo::GetObj(number-1)->GetTopazCostValue()); // 토파즈 비용
+                data.push_back(number); // 스킬 몇 번째인지.
                 Common::ShowPopup(this, "SketchDetail", "NoImage", false, PURCHASE_SKILL_BY_TOPAZ_TRY, BTN_2, data);
             }
         }

@@ -21,7 +21,7 @@ PuzzleP8* PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrder, 
         else
             puzzleP8->type = (rand() % TYPE_COUNT) + ITEM_PAINT_RED;
     }
-    //puzzleP8->type = PIECE_BLUE;
+    //puzzleP8->type = PIECE_RED;
     
     char name[20];
     sprintf(name, "pieces/%d.png", puzzleP8->type);

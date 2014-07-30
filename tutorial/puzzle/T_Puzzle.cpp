@@ -67,6 +67,7 @@ bool T_Puzzle::init()
     isFalling = true;
     isInGamePause = true;
     isCancelling = true;
+    ttrState = -1;
     
     // make depth tree
     Depth::AddCurDepth("T_Puzzle", this);
@@ -788,7 +789,7 @@ void T_Puzzle::TutorialStart(CCNode* sender, void* pointer)
     ttrBg1->setOpacity(255);
     ttrMsg->setOpacity(255);
     
-    pThis->ttrState = -1;
+    //pThis->ttrState = -1;
 
     pThis->TutorialNextState();
 }
@@ -1123,10 +1124,13 @@ void T_Puzzle::StopAllActionsAtPieces()
 
 bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (ttrState >= 22)
+    if (ttrState < 0 || ttrState >= 22)
         return false;
     
     CCPoint point = pTouch->getLocation();
+    
+    //if (!isGameStarted)
+    //    return true;
 
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     // 2) 튜토리얼 건너뛰기
@@ -1259,7 +1263,7 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (m_iSkillSP > 0)
+    if (ttrState < 0 || m_iSkillSP > 0)
         return;
     
 	if (m_bTouchStarted && !m_bIsCycle[touch_cnt%QUEUE_CNT])
@@ -1447,7 +1451,7 @@ void T_Puzzle::CheckUselessDiaPieces()
 
 void T_Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    if (m_iSkillSP > 0)
+    if (ttrState < 0 || m_iSkillSP > 0)
         return;
     
     if (m_bTouchStarted)

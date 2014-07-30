@@ -263,12 +263,12 @@ void GameReady::ShowRewardPopup()
             if (myInfo->GetRewardTopaz() > 0)
             {
                 myInfo->SetMsgCnt(myInfo->GetMsgCnt()+1); // 메시지함 개수 1개 추가
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_100, BTN_1, nullData);
+                Common::ShowPopup(this, "GameReady", "NoImage", false, MP_REWARD_100, BTN_1, nullData);
                 return;
             }
             else if (myInfo->IsRewardPotion())
             {
-                Common::ShowPopup(this, "CocoRoom", "NoImage", false, MP_REWARD_50, BTN_1, nullData);
+                Common::ShowPopup(this, "GameReady", "NoImage", false, MP_REWARD_50, BTN_1, nullData);
                 return;
             }
         }
@@ -276,13 +276,8 @@ void GameReady::ShowRewardPopup()
         {
             if (!isPossibleBuyFairyShown)
             {
-                int requireMP;
                 for (int i = 0 ; i < fairyInfo.size() ; i++) // 한 요정이라도 살 수 있는 조건이 충족되면 팝업창을 띄운다 (게임중 한번만)
                 {
-                    if (fairyInfo[i]->GetId() == 1) requireMP = 500;
-                    else if (fairyInfo[i]->GetId() == 2) requireMP = 30;
-                    else if (fairyInfo[i]->GetId() == 3) requireMP = 300;
-                    
                     bool flag = false;
                     for (int j = 0 ; j < myInfo->GetFairyList().size() ; j++)
                     {
@@ -293,11 +288,11 @@ void GameReady::ShowRewardPopup()
                         }
                     }
                     
-                    if (!flag && myInfo->GetMPTotal() >= requireMP)
+                    if (!flag && myInfo->GetMPTotal() >= fairyInfo[i]->GetRefVal())
                     {
                         char name[30];
                         sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
-                        if (CCUserDefault::sharedUserDefault()->getBoolForKey(name, false))
+                        if (!CCUserDefault::sharedUserDefault()->getBoolForKey(name, false))
                         {
                             CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
                             isPossibleBuyFairyShown = true;
@@ -307,15 +302,6 @@ void GameReady::ShowRewardPopup()
                             Common::ShowPopup(this, "GameReady", "NoImage", false, POSSIBLE_BUY_FAIRY, BTN_1, data);
                             return;
                         }
-                        /*
-                        else if (myInfo->GetTopaz() >= fairyInfo[i]->GetCostTopaz())
-                        {
-                            isPossibleBuyFairyShown = true;
-                            doNotShowExpPopup = true;
-                            Common::ShowPopup(this, "GameReady", "NoImage", false, POSSIBLE_BUY_FAIRY, BTN_1, nullData);
-                            return;
-                        }
-                        */
                     }
                 }
             }

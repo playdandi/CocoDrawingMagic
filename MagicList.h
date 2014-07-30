@@ -24,6 +24,8 @@ public:
     void InitBtn();
     void MakeScrollSlot(bool isAutoMove);
     
+    void RenewCheck();
+    
     void Notification(CCObject* obj);
     
     void TryEnd();

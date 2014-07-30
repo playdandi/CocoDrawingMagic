@@ -56,6 +56,7 @@ bool FairyOneInfo::init()
     
     idx = -1;
     isTouched = true;
+    isSomeFairyBought = false;
 
     // make depth tree
     Depth::AddCurDepth("FairyOneInfo", this);
@@ -110,6 +111,7 @@ void FairyOneInfo::Notification(CCObject* obj)
     else if (param->intValue() == 2)
     {
         // 요정 구매 성공 후에 돌아올 경우 : 즉시 종료
+        isSomeFairyBought = true;
         EndScene();
     }
     else if (param->intValue() == 10)
@@ -417,6 +419,12 @@ void FairyOneInfo::EndScene()
     // touch 넘겨주기 (GetCurName = 위에서 remove를 했기 때문에 결국 여기 입장에서는 부모다)
     CCString* param = CCString::create("0");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    
+    if (isSomeFairyBought)
+    {
+        param = CCString::create("3");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    }
     
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);

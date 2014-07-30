@@ -164,7 +164,7 @@ void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_SkillIcon(int skillNum)
 {
-    CCLog("PlayEffect_SkillIcon : %d", skillNum);
+    //CCLog("PlayEffect_SkillIcon : %d", skillNum);
     // 스킬 실제 고유번호 계산
     int num = SkillInfo::ConvertedToOriginal(skillNum);
     
@@ -177,7 +177,7 @@ void Effect::PlayEffect_SkillIcon(int skillNum)
     gameLayer->addChild(skill, z1);
     
     skillIcon_callbackCnt = skillNum; // 스킬 번호 임시저장 (떡갈나무지팡이, 끈질긴생명력 스킬에 이용)
-    CCLog("PlayEffect_SkillIcon : (callbackCnt = %d)", callbackCnt);
+    //CCLog("PlayEffect_SkillIcon : (callbackCnt = %d)", callbackCnt);
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCSpawn::create(CCFadeOut::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_SkillIcon_Callback), this), NULL);
     skill->runAction(action);
@@ -189,7 +189,7 @@ void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
     Effect* pThis = (Effect*)p;
     //CCPoint pos = ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120);
     //CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
-    CCLog("PlayEffect_SkillIcon_Callback : %d", pThis->skillIcon_callbackCnt);
+    //CCLog("PlayEffect_SkillIcon_Callback : %d", pThis->skillIcon_callbackCnt);
     if (pThis->skillIcon_callbackCnt == 18)
         pThis->PlayEffect_18(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
     else if (pThis->skillIcon_callbackCnt == 22)
