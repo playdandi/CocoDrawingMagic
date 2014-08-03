@@ -268,7 +268,7 @@ void GetDegree::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void GetDegree::EndScene()
 {
-    sound->playClick();
+    //sound->playClick();
     
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());

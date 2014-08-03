@@ -50,7 +50,7 @@ public:
     
     void SetScoreAndStarCandy();
     void UpdateScore(int type, int data);
-    void UpdateStarCandy(int type, int data);
+    void UpdateStarCandy(int type, int data, bool isCycle);
     void ShowBasicScore(int score, CCPoint pos, int size);
     void ShowSkillScore(int score, float scale, int queue_pos, int etc = -1, int etc2 = -1, int height = 0);
     void ShowSkillScore_Callback(CCNode* sender, void* data);
@@ -214,7 +214,8 @@ public:
     bool IsItemTime();
     bool IsItemPaint();
     bool IsItemStaff();
-    void SetItemPossible(bool flag);
+    //void SetItemPossible(bool flag);
+    void UpdateSemaphore(int v);
     
     int Time100(int denom);
     
@@ -240,6 +241,8 @@ public:
     
     // 한붓그리기 기본 점수
     int dragScore;
+    
+    float board_wh;
     
 protected:
     bool isKeybackTouched;
@@ -301,6 +304,7 @@ protected:
     int m_iSpiritSP; // 정령 터치에 관한 semaphore
     bool m_bIsSpiritExecuted; // 정령 스킬이 실행될 때 lock
     int m_iSkillSP; // 스킬 lock에 관한 semaphore
+    int m_iItemSP; // 아이템 lock에 관한 semaphore
     
     // Bomb()에서 연결피스 지울 때 사용되는 변수
     bool P8Bombed[COLUMN_COUNT][ROW_COUNT];
@@ -340,7 +344,7 @@ protected:
     
     int bonusTimeState; // 보너스타임 순서 상태
     
-    bool m_bIsItemPossible;
+    //bool m_bIsItemPossible;
     bool item_clear;
     bool item_time;
     bool item_paint;

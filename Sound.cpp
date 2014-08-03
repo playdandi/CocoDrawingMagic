@@ -198,6 +198,7 @@ void Sound::PreLoadInGameSound()
     engine->preloadEffect(ext("sounds/clock").c_str());
     engine->preloadEffect(ext("sounds/game_result").c_str());
     engine->preloadEffect(ext("sounds/game_result_bg").c_str());
+    engine->preloadEffect(ext("sounds/lvup_success").c_str());
     
     SetEffectVolume();
     SetBackgroundMusicVolume(0.5f);
@@ -286,9 +287,15 @@ void Sound::PlayBomb()
     engine->playEffect(ext("sounds/pieces", "bombB").c_str());
 }
 
-void Sound::PlayGameResult()
+void Sound::PlayGameResult(bool isNewRecord)
 {
-    engine->playEffect(ext("sounds/game_result_bg").c_str()); // 배경효과음
+    if (isNewRecord)
+        playLvUpSuccess();
+    else
+        engine->playEffect(ext("sounds/game_result_bg").c_str()); // 배경효과음
+}
+void Sound::PlayGameResultScore()
+{
     nGameResultId = engine->playEffect(ext("sounds/game_result").c_str(), true); // 또또또또 효과음
 }
 void Sound::StopGameResult()
@@ -432,6 +439,63 @@ void Sound::UnLoadInGameSound()
     engine->unloadEffect(ext("sounds/clock").c_str());
     engine->unloadEffect(ext("sounds/game_result").c_str());
     engine->unloadEffect(ext("sounds/game_result_bg").c_str());
+    
+    engine->unloadEffect(ext("sounds/lvup_success").c_str());
 }
 
+
+
+
+
+void Sound::PreLoadInGameTutorial()
+{
+    char name[22];
+    for (int i = 1 ; i <= 4 ; i++)
+    {
+        sprintf(name, "%d", i);
+        engine->preloadEffect(ext("sounds/pieces", name).c_str());
+    }
+    engine->preloadEffect(ext("sounds/pieces", "cycle").c_str());
+    
+    engine->preloadEffect(ext("sounds/pieces", "bombA").c_str());
+    engine->preloadEffect(ext("sounds/pieces", "bombB").c_str());
+    
+    
+    engine->preloadEffect(ext("sounds/skill", "fire_2").c_str());
+    engine->preloadEffect(ext("sounds/skill", "fire_8_dragon").c_str());
+    engine->preloadEffect(ext("sounds/skill", "fire_8_comet").c_str());
+    engine->preloadEffect(ext("sounds/skill", "fire_8_bomb_big").c_str());
+    engine->preloadEffect(ext("sounds/skill", "fire_8_bomb_small").c_str());
+    
+    engine->preloadEffect(ext("sounds/skill", "water_1").c_str());
+    engine->preloadEffect(ext("sounds/skill", "water_2").c_str());
+    
+    engine->preloadEffect(ext("sounds/skill", "land_2").c_str());
+}
+
+void Sound::UnLoadInGameTutorial()
+{
+    char name[22];
+    for (int i = 1 ; i <= 4 ; i++)
+    {
+        sprintf(name, "%d", i);
+        engine->unloadEffect(ext("sounds/pieces", name).c_str());
+    }
+    engine->unloadEffect(ext("sounds/pieces", "cycle").c_str());
+    
+    engine->unloadEffect(ext("sounds/pieces", "bombA").c_str());
+    engine->unloadEffect(ext("sounds/pieces", "bombB").c_str());
+    
+    
+    engine->unloadEffect(ext("sounds/skill", "fire_2").c_str());
+    engine->unloadEffect(ext("sounds/skill", "fire_8_dragon").c_str());
+    engine->unloadEffect(ext("sounds/skill", "fire_8_comet").c_str());
+    engine->unloadEffect(ext("sounds/skill", "fire_8_bomb_big").c_str());
+    engine->unloadEffect(ext("sounds/skill", "fire_8_bomb_small").c_str());
+    
+    engine->unloadEffect(ext("sounds/skill", "water_1").c_str());
+    engine->unloadEffect(ext("sounds/skill", "water_2").c_str());
+    
+    engine->unloadEffect(ext("sounds/skill", "land_2").c_str());
+}
 

@@ -204,26 +204,9 @@ void RequestPotion::MakeScroll()
         else
         {
             spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 1.0f, -888*(numOfList-i)) ); // tag = -888 * (i+1)
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0, -777*(numOfList-i)) ); // tag = -777 * (i+1)
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, -777*(numOfList-i)) ); // tag = -777 * (i+1)
         }
-        // 친구리스트에 포인터 저장.
-        //friendList[i]->SetProfile( spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite );
-        
-        /*
-        // 프로필 이미지
-        //CCSprite* profile = ProfileSprite::GetProfile(friendList[i]->GetImageUrl());
-        if (friendList[i]->GetImageUrl() != "")
-        {
-            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
-            sprintf(fname, "background/bg_profile.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-        }
-        else
-        {
-            spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, profile, ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3) );
-        }
-        */
-        
+       
         // name (text)
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel(friendList[i]->GetNickname(), fontList[0], 48, ccp(0, 0), ccp(196-10, 71), ccc3(78,47,8), "", "Layer", itemLayer, 3) );
         

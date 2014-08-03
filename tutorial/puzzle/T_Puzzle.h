@@ -24,7 +24,7 @@ class T_PuzzleP4Set;
 class T_Puzzle : public CCLayerColor
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(int from);
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -92,6 +92,8 @@ public:
     void Bomb(int queue_pos, std::vector<CCPoint> bomb_pos);
     void BombCallback(CCNode* sender, void *queue_pos);
     
+    float GetScoreBasicScale(int size);
+    
     void FallingProcess();
     void Falling(int queue_pos);
 	void FallingCallback(CCNode* sender, void* queue_pos);
@@ -101,6 +103,11 @@ public:
     
     void CheckUselessDiaPieces();
     
+    void Cycle_Callback(CCNode* sender, void* p);
+    
+    void ShowBasicScore(int score, CCPoint pos, int size);
+    void ShowSkillScore(int score, float scale, int queue_pos, int etc = -1, int etc2 = -1, int height = 0);
+    void ShowSkillScore_Callback(CCNode* sender, void* data);
     
     void SetPiece8xy(int queue_pos, std::vector<CCPoint> pos);
     std::vector<CCPoint> GetPiece8xy(bool afterCast);
@@ -116,6 +123,9 @@ public:
     CCLayer* GetFairyLayer();
     
     //void SetSpiritTouch(bool val);
+    
+    void MakeFingerNumber();
+    void FingerNumber(CCNode* sender, void *data);
     
     T_PuzzleP8Set* GetPuzzleP8Set();
     void SetSpriteP8Null(int x, int y);
@@ -166,6 +176,8 @@ protected:
     int m_bLockP8[COLUMN_COUNT][ROW_COUNT];
     int m_bLockP4[COLUMN_COUNT][ROW_COUNT];
     
+    std::vector<CCPoint> lastPosition;
+    
     // queue는 DROP_QUEUE_CNT(5)개.
     std::vector< std::vector<CCPoint> > lock8xy;
     std::vector< std::vector<CCPoint> > lock4xy;
@@ -206,7 +218,11 @@ protected:
     
     int ttrState;
     
+    int cycleNum;
+    
 private:
+    int myP;
+    
     Sound* sound;
     T_PuzzleSkill* skill;
     T_Effect* effect;
@@ -249,10 +265,12 @@ private:
     CCLabelTTF* ttrMsg;
     CCScale9Sprite* ttrBg1;
     CCScale9Sprite* ttrBg2;
-    //CCSprite* ttrBg;
-    //CCSprite* ttrArrow;
     CCSprite* ttrSkip;
     CCSprite* ttrFinger;
+    CCSprite* ttrFinger_1;
+    CCSprite* ttrFinger_2;
+    CCSprite* ttrFinger_3;
+    CCSprite* ttrFinger_4;
     
     bool isSkipPossible;
 };

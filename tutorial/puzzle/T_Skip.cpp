@@ -4,10 +4,13 @@
 using namespace cocos2d;
 
 static int height;
+static int skipFromWhere;
 
-CCScene* T_Skip::scene(int h)
+CCScene* T_Skip::scene(int h, int from)
 {
     height = h;
+    skipFromWhere = from; // 0 : 실제 인게임 튜토리얼(게임 첫 시작) , 1 : 환경설정->튜토리얼
+    
     CCScene* pScene = CCScene::create();
     T_Skip* pLayer = T_Skip::create();
     pScene->addChild(pLayer);
@@ -41,11 +44,10 @@ bool T_Skip::init()
 	{
 		return false;
 	}
-    CCLog("98");
+
     // make depth tree
     Depth::AddCurDepth("T_Skip", this);
     
-    CCLog("99");
     this->setKeypadEnabled(false);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
@@ -58,9 +60,8 @@ bool T_Skip::init()
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     
-CCLog("100");
     InitSprites();
-CCLog("101");
+    
     return true;
 }
 
@@ -86,12 +87,14 @@ void T_Skip::InitSprites()
 
     // pop-up 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "T_Skip", this, 10001) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "T_Skip", this, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678), CCSize(929, 562), "", "T_Skip", this, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039), CCSize(0, 0), "", "T_Skip", this, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132), CCSize(0, 0), "", "T_Skip", this, 10001) );
 
     // 텍스트
     std::string text = "튜토리얼을 넘기시겠습니까?";
+    if (skipFromWhere == 1)
+        text = "튜토리얼을 그만두시겠습니까?";
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(text, fontList[0], 40, ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), ccc3(78,47,8), CCSize(829-20, 250), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "T_Skip", this, 10005) );
 
     // 확인 버튼
@@ -145,7 +148,6 @@ void T_Skip::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void T_Skip::ResumeGame()
 {
-    CCLog("T_Skip : Resume game");
     EndScene();
     
     CCString* param = CCString::create("0");
@@ -154,7 +156,6 @@ void T_Skip::ResumeGame()
 
 void T_Skip::EndGame()
 {
-    CCLog("T_Skip : End game");
     EndScene();
     
     // 이걸 끝내면서, Puzzle에게도 끝내고 Ranking으로 돌아가라고 알려준다.
@@ -177,8 +178,6 @@ void T_Skip::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     
     this->removeFromParentAndCleanup(true);
-    
-    CCLog("t skip endScene done");
 }
 
 

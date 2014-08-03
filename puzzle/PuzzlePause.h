@@ -36,6 +36,10 @@ protected:
     CCSize m_winSize;
     bool isKeybackTouched;
     
+    CCRect rect;
+    int kind;
+    int idx;
+    
 private:
     CCSprite* pBlack;    
     SpriteClass* spriteClass;

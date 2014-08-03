@@ -21,8 +21,7 @@ using namespace cocos2d::extension;
 
 USING_NS_CC_EXT;
 
-class Splash : public CCLayerColor,
-                public CCScrollViewDelegate    
+class Splash : public CCLayerColor
 {
 public:
     ~Splash(void);
@@ -30,8 +29,6 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void keyBackClicked();
-    virtual void scrollViewDidScroll(CCScrollView* view);
-    virtual void scrollViewDidZoom(CCScrollView* view);
 
     void onInitComplete();
     void onInitErrorComplete(const char* status, const char* error);
@@ -47,8 +44,6 @@ public:
     void onFriendsErrorComplete(char const* status, char const* error);
     void onLogoutComplete();
     void onLogoutErrorComplete(char const* status, char const* error);
-    //void onUnregisterComplete();
-    //void onUnregisterErrorComplete(char const* status, char const* error);
 
     virtual bool ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent);
 	virtual void ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent);
@@ -65,6 +60,8 @@ public:
     void LogoLoadingCompleted();
     void SoundCallback(CCNode* sender, void* p);
     void Button_Callback();
+    
+    void Notification(CCObject* obj);
 
     //void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
     //void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
@@ -120,6 +117,9 @@ protected:
     int profileCntTotal;
     int profileCnt;
     
+    CCRect rect;
+    int kind;
+    
     std::string sessionId;
     char regId[1000]; // 유저의 안드로이드 기기 고유 id
     
@@ -128,14 +128,13 @@ private:
     CCPoint vo;
     
     CCSprite* m_pBackground;
+    CCSprite* m_pBackground2;
     CCSprite* m_pTitle;
     CCSprite* m_pForKakao;
     CCLabelTTF* m_pMsgLabel;
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
     CCSprite* m_pKakaoBtn;
-    
-    //CCTextFieldTTF* m_pEditName;
     
     // 약관 관련 변수들
     CCSprite* term1;

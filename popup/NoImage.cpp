@@ -66,13 +66,14 @@ void NoImage::keyBackClicked()
     isKeybackTouched = true;
     
     sound->playClick();
-    EndScene();
+    
+    HandlingTouch(TOUCH_CANCEL);
 }
 
 void NoImage::onLogoutComplete()
 {
     CCLog("onLogoutComplete");
-    //EndScene();
+
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
@@ -98,7 +99,7 @@ void NoImage::onUnregisterErrorComplete(char const* status, char const* error)
 void NoImage::onAuthComplete(bool result)
 {
     CCLog("onAuthComplete : result (%d)", result);
-    //EndScene();
+
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
@@ -107,7 +108,7 @@ void NoImage::onAuthComplete(bool result)
 void NoImage::onAuthErrorComplete(char const* status, char const* error)
 {
     CCLog("onAuthErrorComplete : %s, %s", status, error);
-    //EndScene();
+
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
@@ -218,7 +219,7 @@ void NoImage::InitSprites()
     
     // pop-up 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640+offset), CCSize(982, 623-offset*2), "", "Layer", tLayer, 10001) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0, 0), ccp(76, 678+offset), CCSize(929, 562-offset*2), "", "Layer", tLayer, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678+offset), CCSize(929, 562-offset*2), "", "Layer", tLayer, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039-offset), CCSize(0, 0), "", "Layer", tLayer, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132-offset), CCSize(0, 0), "", "Layer", tLayer, 10001) );
     
@@ -250,7 +251,8 @@ void NoImage::InitSprites()
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setScale(0.85f);
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setRotation(20);
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->runAction(CCRepeatForever::create(CCSequence::create(CCRotateBy::create(1.0f, -10), CCRotateBy::create(2.0f, 20), CCRotateBy::create(1.0f, -10), NULL)));
-                if (type != UPGRADE_STAFF_OK)
+                //if (type != UPGRADE_STAFF_OK)
+                if (type == UPGRADE_STAFF_BY_STARCANDY_TRY)
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png", ccp(0, 0), ccp(903, 710+115), CCSize(0, 0), "", "Layer", tLayer, 10001) );
                     sprintf(txt, "강화포인트 : (%d/100)", myInfo->GetStaffFailPoint());
@@ -282,7 +284,7 @@ void NoImage::InitSprites()
                 ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_drug.png"))->setScale(1.0f);
                 ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_drug.png"))->setRotation(20);
                 ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_drug.png"))->runAction(CCRepeatForever::create(CCSequence::create(CCRotateBy::create(1.0f, -10), CCRotateBy::create(2.0f, 20), CCRotateBy::create(1.0f, -10), NULL)));
-                if (type != UPGRADE_FAIRY_OK)
+                if (type == UPGRADE_FAIRY_BY_STARCANDY_TRY)
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png", ccp(0, 0), ccp(903, 710+115), CCSize(0, 0), "", "Layer", tLayer, 10001) );
                     for (int i = 0 ; i < myInfo->GetFairyList().size() ; i++)
@@ -337,7 +339,6 @@ void NoImage::InitSprites()
             case SELECT_PROPERTY_OK:
                 char temp[40];
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0.5, 0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "Layer", tLayer, 10002) );
-                //CCPoint p;
                 p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png");
                 if (d[0] == 1) sprintf(temp, "icon/icon_property_fire.png");
                 else if (d[0] == 2) sprintf(temp, "icon/icon_property_water.png");
@@ -499,7 +500,7 @@ void NoImage::InitSprites()
             int fid, flv;
             fid = myInfo->GetActiveFairyId();
             flv = myInfo->GetActiveFairyLevel();
-            sprintf(text, "요정의 능력을\n강화하시겠습니까?\nMP +%d > +%d", FairyBuildUpInfo::GetTotalMP(fid, flv), FairyBuildUpInfo::GetTotalMP(fid, flv+1)); break;
+            sprintf(text, "요정의 능력을\n강화하시겠습니까?\nMP +%d > +%d\n(강화확률 100%%)", FairyBuildUpInfo::GetTotalMP(fid, flv), FairyBuildUpInfo::GetTotalMP(fid, flv+1)); break;
         case UPGRADE_FAIRY_BY_STARCANDY_TRY:
             title = "요정 강화하기";
             fid = myInfo->GetActiveFairyId();
@@ -759,7 +760,7 @@ void NoImage::InitSprites()
             break;
         case CREDIT:
             title = "만든 사람들";
-            sprintf(text, "문재웅 : 기획 총괄\n박일진 : 서버 개발\n정연준 : 클라이언트 개발");
+            sprintf(text, "문재웅 박일진 정연준\n(주)플레이단디");
             break;
         case TUTORIAL_START:
             title = "튜토리얼 시작";
@@ -784,6 +785,12 @@ void NoImage::InitSprites()
                 ((CCSprite*)spriteClass->FindSpriteByName("button/btn_clause_agree2.png"))->setColor(ccc3(120,120,120));
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_check.png", ccp(0.5, 0.5), ccp(76+40+40, 711+40), CCSize(0,0), "", "Layer", tLayer, 10005, 0, 0) );
             }
+            break;
+        case HINT_BUY_PROPERTY:
+            title = "속성 배우기";
+            if (d[0] == 1) sprintf(text, "물 속성 마법을 다 배웠습니다.\n모든 물 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
+            else if (d[0] == 2) sprintf(text, "불 속성 마법을 다 배웠습니다.\n모든 불 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
+            else if (d[0] == 3) sprintf(text, "땅 속성 마법을 다 배웠습니다.\n모든 땅 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
             break;
     }
     
@@ -899,6 +906,68 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();
+                HandlingTouch(TOUCH_CANCEL);
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_blue.png")
+        {
+            // 오.별에서 친구 부족하다는 팝업창에서 '친구 초대하기' 버튼 눌렀을 때
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                if (myInfo->GetHashedTalkUserId() == "") // 카카오톡 탈퇴한 경우 친구초대 못함.
+                    ReplaceScene("NoImage", KAKAOTALK_UNKNOWN, BTN_1);
+                else
+                {
+                    EndScene();
+                    Common::ShowNextScene(Depth::GetCurPointer(), "CocoRoom", "InviteFriend", false);
+                }
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CONFIRM;
+                idx = i;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_clause_agree2.png") // 공지사항 24시간 안보기 체크 유/무
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                int alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
+                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->setOpacity(255-alpha);
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_question_mini.png") // 강화포인트 설명 물음표
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                ShowHintOfUpgrade();
+                return true;
+            }
+        }
+    }
+    
+/*
+    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
+    {
+        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
+            spriteClass->spriteObj[i]->name == "button/btn_system.png")
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
                 if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == SERVER_CHECK)
                 {
                     Exit();
@@ -937,11 +1006,7 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 if (myInfo->GetHashedTalkUserId() == "") // 카카오톡 탈퇴한 경우 친구초대 못함.
-                //{
-                    //std::vector<int> nullData;
                     ReplaceScene("NoImage", KAKAOTALK_UNKNOWN, BTN_1);
-                    //Common::ShowPopup(this, "Ranking", "NoImage", false, KAKAOTALK_UNKNOWN, BTN_1, nullData);
-                //}
                 else
                 {
                     EndScene();
@@ -966,11 +1031,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                //spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
-                //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
-                //rect = spriteClass->spriteObj[i]->sprite->boundingBox();
-                //kind = BTN_MENU_CONFIRM;
-                //idx = i;
                 int alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
                 ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->setOpacity(255-alpha);
                 return true;
@@ -985,10 +1045,478 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
     }
+*/
     
     isTouchDone = false;
     return true;
 }
+
+void NoImage::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
+{
+}
+
+void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
+{
+    if (!isTouched)
+        return;
+
+    CCPoint point = pTouch->getLocation();
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        if (kind == BTN_MENU_CONFIRM)
+        {
+            HandlingTouch(TOUCH_CONFIRM);
+        }
+    }
+    
+    isTouched = false;
+}
+
+void NoImage::HandlingTouch(int touchType)
+{
+    char temp[255];
+    if (btn == BTN_1 || touchType == TOUCH_CANCEL) // 팝업창에서 '확인' 버튼 하나만 있는 경우 , 혹은 'x' 누른 경우
+    {
+        if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == SERVER_CHECK)
+        {
+            Exit();
+        }
+        else if (type == POPUP_NOTICE && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            if (noticeList[d[0]]->link != "")
+            {
+                // 공지사항 팝업창 링크 연결
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                JniMethodInfo t;
+                if (JniHelper::getStaticMethodInfo(t,
+                                                   "com/playDANDi/CocoMagic/CocoMagic",
+                                                   "OpenNoticeURL",
+                                                   "(Ljava/lang/String;)V"))
+                {
+                    // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+                    t.env->CallStaticVoidMethod(t.classID, t.methodID, t.env->NewStringUTF(noticeList[d[0]]->link.c_str()));
+                    // Release
+                    t.env->DeleteLocalRef(t.classID);
+                }
+                #endif
+                
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+                EndScene();
+                #endif
+            }
+            else
+                EndScene();
+        }
+        else if (type == NEED_TO_UPDATE)
+        {
+            EndScene();
+            
+            // 앱 업데이트 (마켓으로 이동)
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+            JniMethodInfo t;
+            if (JniHelper::getStaticMethodInfo(t,
+                                               "com/playDANDi/CocoMagic/CocoMagic",
+                                               "GoToPlayStore",
+                                               "()V"))
+            {
+                // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+                t.env->CallStaticVoidMethod(t.classID, t.methodID);
+                // Release
+                t.env->DeleteLocalRef(t.classID);
+            }
+            #endif
+        }
+        else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
+        {
+            Common::RebootSystem(this); // 재부팅.
+        }
+        else if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
+        {
+            if (d[0] == 1) ReplaceScene("NoImage", INVITE_FRIEND_10, BTN_1);
+            else if (d[0] == 2) ReplaceScene("NoImage", INVITE_FRIEND_20, BTN_1);
+            else if (d[0] == 3) ReplaceScene("NoImage", INVITE_FRIEND_30, BTN_1);
+        }
+        else if (type == BUY_FAIRY_OK)
+        {
+            EndScene();
+            // 요정 구매 성공 후에는 'FairyOneInfo' 창도 같이 끄자.
+            CCString* param = CCString::create("2");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("FairyOneInfo", param);
+        }
+        else if (type == PRACTICE_SKILL_FULL_EXP && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            // 스케치북으로 이동
+            EndScene();
+            Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "Sketchbook", false, 0);
+        }
+        else if (type == POSSIBLE_BUY_FAIRY && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            // 요정의 방으로 이동
+            EndScene();
+            Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "CocoRoom", false, 2);
+        }
+        else if (type == SELECT_PROPERTY_OK)
+        {
+            EndScene();
+            CCString* param;
+            if (d[1] == 1) // 인게임 튜토리얼 시작
+                param = CCString::create("3");
+            else // 스케치북 튜토리얼 시작
+                param = CCString::create("2");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("SelectProperty", param);
+        }
+        else if (type == GET_DEGREE)
+        {
+            // 학위수여 화면으로 이동
+            EndScene();
+            Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurName(), "GetDegree", false);
+        }
+        else if (type == COUPON_OK)
+        {
+            EndScene();
+            // 쿠폰 입력창도 종료시킨다.
+            CCString* param = CCString::create("2");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Coupon", param);
+        }
+        else if (type == UPGRADE_SKILL_OK)
+        {
+            EndScene();
+            // 스케치북에서, 한 속성의 7개 스킬이 모두 5레벨 이상인지 확인한다.
+            CCString* param = CCString::create("4");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        }
+        else if (type == BUY_PROPERTY_FREE_MSG && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            EndScene();
+            // 속성선택창을 연다.
+            CCString* param = CCString::create("5");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        }
+        else if (type == TODAYCANDY_RESULT_LOSE && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            if (!friendList[d[0]]->IsMessageBlocked() && friendList[d[0]]->GetPotionMsgStatus() > 0)
+            {
+                // 카카오 api 호출 (초대메시지 템플릿 이용)
+                sendLinkType = type;
+                std::string templateId = KAKAO_MSG_TEMPLATE_TODAYCANDY;
+                std::string executeUrl = "";
+                char temp[128];
+                sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
+                std::string metaInfo = temp;
+                //CCLog("metaInfo = %s", metaInfo.c_str());
+                KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&NoImage::onSendLinkMessageComplete, this), std::bind(&NoImage::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, friendList[d[0]]->GetKakaoId(), "", executeUrl, metaInfo);
+            }
+            EndScene();
+        }
+        else if (type == RANKUP_BOAST && touchType == TOUCH_CONFIRM) // only '확인'버튼
+        {
+            // 친구의 카톡메시지 수신여부 받아오기 (현재는 '자랑하기' 할 때만 쓰인다)
+            std::string url = URL_GET_POTION_STATUS;
+            std::string param = "";
+            sprintf(temp, "friend_kakao_id=%s", friendList[d[0]]->GetKakaoId().c_str());
+            param += temp;
+            
+            HttpRequest(url, param);
+        }
+        else if (type == RANKUP_BOAST_REJECTED)
+        {
+            // 자랑하기 다시 못하게 하기
+            CCString* param = CCString::create("5");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("RankUp", param);
+            
+            EndScene();
+        }
+        else if (type == MP_REWARD_50 || type == MP_REWARD_100)
+        {
+            myInfo->SetReward(0, 0); // 보상 초기화
+            EndScene();
+        }
+        else if (type == PURCHASE_SKILL_OK)
+        {
+            // 한 속성의 스킬을 다 배운 순간 (속성의 마지막 스킬 구매 후) -> 안내팝업창 띄우기
+            EndScene();
+            CCString* param = CCString::create("6");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
+        }
+        else // 그 외, 그냥 끈다.
+        {
+            EndScene();
+        }
+    }
+    
+    // 아래부터는 무조건 '확인'/'취소' 버튼 2개 있는 팝업창에서 '확인'을 누른 경우다.
+    
+    else if (type == POPUP_EXIT)
+    {
+        Exit();
+    }
+    else if (type == NEED_TO_BUY_POTION)
+    {
+        CCNode* parent = this->getParent();
+        EndScene();
+        Common::ShowNextScene(parent, Depth::GetCurName(), "BuyPotion", false, 3); // curName == 결국 부모
+    }
+    else if (type == NEED_TO_BUY_TOPAZ)
+    {
+        CCNode* parent = this->getParent();
+        EndScene();
+        Common::ShowNextScene(parent, Depth::GetCurName(), "BuyTopaz", false, 3); // curName == 결국 부모
+    }
+    else if (type == NEED_TO_BUY_STARCANDY)
+    {
+        CCNode* parent = this->getParent();
+        EndScene();
+        Common::ShowNextScene(parent, Depth::GetCurName(), "BuyStarCandy", false, 3); // curName == 결국 부모
+    }
+    else if (type == KAKAO_LOGOUT)
+    {
+        // 카카오 로그아웃 후 게임종료
+        KakaoNativeExtension::getInstance()->logout(std::bind(&NoImage::onLogoutComplete, this), std::bind(&NoImage::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+    }
+    else if (type == KAKAO_UNREGISTER)
+    {
+        std::string url = URL_QUIT;
+        std::string param = "";
+        sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
+        param += temp;
+        
+        HttpRequest(url, param);
+    }
+    else if (type == BUY_TOPAZ_TRY)
+    {
+        // 토파즈 구입하기. (미결제 버전) -> (현재 iOS에만 fake로 이용됨)
+        std::string url = URL_BUY_TOPAZ_TEST;
+        std::string param = "";
+        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+        param += temp;
+        sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
+        param += temp;
+        
+        HttpRequest(url, param);
+    }
+    else if (type == BUY_STARCANDY_TRY)
+    {
+        if (myInfo->GetTopaz() < priceStarCandy[d[0]]->GetPrice()) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+        {
+            std::string url = URL_PURCHASE_STARCANDY;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "starcandy_id=%d", priceStarCandy[d[0]]->GetId());
+            param += temp;
+            
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == BUYPOTION_1)
+    {
+        if (myInfo->GetTopaz() < 5) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+        {
+            // 포션 구매 프로토콜을 요청한다.
+            std::string url = URL_PURCHASE_POTION;
+            sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
+            std::string param = "";
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == POTION_SEND_TRY)
+    {
+        // 포션 보내기 (랭킹 화면에서)
+        std::string url = URL_SEND_POTION;
+        std::string param = "";
+        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+        param += temp;
+        sprintf(temp, "friend_kakao_id=%s", friendList[d[0]]->GetKakaoId().c_str());
+        param += temp;
+        HttpRequest(url, param);
+    }
+    else if (type == MESSAGE_ALL_TRY)
+    {
+        // 포션 모두 받기 프로토콜 요청.
+        std::string url = URL_MESSAGE_ALL;
+        std::string param = "";
+        sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
+        param += temp;
+        HttpRequest(url, param);
+    }
+    else if (type == SEND_TOPAZ_TRY)
+    {
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        EndScene();
+        CCString* param = CCString::create("2");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+        #endif
+        
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        // 토파즈 선물하기. (미결제 버전) -> 현재 iOS에만 fake 이용됨.
+        std::string url = URL_SEND_TOPAZ_TEST;
+        std::string param = "";
+        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+        param += temp;
+        sprintf(temp, "friend_kakao_id=%s&", friendList[d[0]]->GetKakaoId().c_str());
+        param += temp;
+        sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
+        param += temp;
+        HttpRequest(url, param);
+        #endif
+    }
+    else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
+    {
+        // 토파즈vs별사탕 구분 및 가격
+        int costType = (type == UPGRADE_STAFF_BY_TOPAZ_TRY) ? 2 : 1;
+        int cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz();
+        if (costType == 1) // 일반강화는 별사탕
+            cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
+        
+        // 잔액 부족
+        if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        else
+        {
+            // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
+            std::string url = URL_UPGRADE_STAFF;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "cost_type=%d", costType);
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == UPGRADE_FAIRY_BY_TOPAZ_TRY || type == UPGRADE_FAIRY_BY_STARCANDY_TRY)
+    {
+        // 토파즈vs별사탕 구분 및 가격
+        int costType = (type == UPGRADE_FAIRY_BY_TOPAZ_TRY) ? 2 : 1;
+        int cost = d[1];
+        
+        // 잔액 부족
+        if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        else
+        {
+            // 요정 강화 (by 별사탕, by 토파즈 모두 통용됨)
+            std::string url = URL_UPGRADE_FAIRY;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "user_fairy_id=%d&",  myInfo->GetActiveFairyUserId());
+            param += temp;
+            sprintf(temp, "cost_type=%d", costType);
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
+    {
+        FairyInfo* fi = fairyInfo[d[0]];
+        
+        // 토파즈vs별사탕 구분 및 가격
+        int costType = (type == BUY_FAIRY_BY_TOPAZ_TRY) ? 2 : 1;
+        int cost = fi->GetCostTopaz();
+        if (costType == 1) // 별사탕으로 산다면,
+            cost = fi->GetCostStarCandy();
+        
+        // 잔액 부족
+        if (costType == 2 && myInfo->GetTopaz() < cost)
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else if (costType == 1 && myInfo->GetStarCandy() < cost)
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        else
+        {
+            // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
+            std::string url = URL_PURCHASE_FAIRY;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "fairy_id=%d&", fi->GetId());
+            param += temp;
+            sprintf(temp, "cost_type=%d", costType);
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
+    {
+        if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY && myInfo->GetStarCandy() < d[1]) // 별사탕 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
+        else if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+        {
+            // 스킬 슬롯 구매
+            char temp[255];
+            std::string url = URL_UPGRADE_SKILLSLOT;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "slot_id=%d", d[0]);
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == BUY_PROPERTY_TRY || type == SELECT_PROPERTY_TRY)
+    {
+        if (type == BUY_PROPERTY_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+        {
+            // 스킬 새 속성 열기
+            char temp[255];
+            std::string url = URL_PURCHASE_SKILL_PROPERTY;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
+            if (d[0] == 1) newSkillType = 2;
+            else if (d[0] == 2) newSkillType = 1;
+            else newSkillType = d[0];
+            sprintf(temp, "skill_type=%d", newSkillType);
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+    else if (type == INVITE_FRIEND_TRY)
+    {
+        EndScene();
+        CCString* param = CCString::create("5");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    }
+    else if (type == PURCHASE_SKILL_BY_TOPAZ_TRY)
+    {
+        // 스킬 즉시 구매하기 (토파즈로)
+        if (myInfo->GetTopaz() < d[1])
+            ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
+        else
+        {
+            char temp[255];
+            std::string url = URL_PURCHASE_SKILL;
+            std::string param = "";
+            sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+            param += temp;
+            sprintf(temp, "skill_id=%d&", d[0]);
+            param += temp;
+            sprintf(temp, "cost_type=2"); // 1 : 별사탕, 2 : 토파즈
+            param += temp;
+            HttpRequest(url, param);
+        }
+    }
+}
+
 
 void NoImage::ShowHintOfUpgrade()
 {
@@ -999,7 +1527,7 @@ void NoImage::ShowHintOfUpgrade()
     }
     balloon = NULL;
     ball = NULL;
-
+    
     balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
     balloon->setContentSize(CCSize(600, 140+120));
     balloon->setAnchorPoint(ccp(1, 0));
@@ -1012,500 +1540,6 @@ void NoImage::ShowHintOfUpgrade()
     
     CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, -5)), CCMoveBy::create(0.5f, ccp(0, 5)), NULL );
     balloon->runAction( CCRepeatForever::create(action) );
-}
-
-void NoImage::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
-{
-}
-
-void NoImage::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
-{
-    if (!isTouched)
-        return;
-    //if (!isEnded)
-    //    isTouched = false;
-    
-    CCPoint point = pTouch->getLocation();
-    
-    if (idx > -1)
-    {
-        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
-        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(255,255,255));
-    }
-    if (rect.containsPoint(point))
-    {
-        if (kind == BTN_MENU_CONFIRM)
-        {
-            sound->playClick();
-            char temp[255];
-            
-            if (btn == BTN_1) // 팝업창에서 '확인' 버튼 하나만 있는 경우.
-            {
-                if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == SERVER_CHECK)
-                {
-                    Exit();
-                }
-                else if (type == POPUP_NOTICE)
-                {
-                    if (noticeList[d[0]]->link != "")
-                    {
-                        // 공지사항 팝업창 링크 연결
-                        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                        JniMethodInfo t;
-                        if (JniHelper::getStaticMethodInfo(t,
-                                                           "com/playDANDi/CocoMagic/CocoMagic",
-                                                           "OpenNoticeURL",
-                                                           "(Ljava/lang/String;)V"))
-                        {
-                            // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-                            t.env->CallStaticVoidMethod(t.classID, t.methodID, t.env->NewStringUTF(noticeList[d[0]]->link.c_str()));
-                            // Release
-                            t.env->DeleteLocalRef(t.classID);
-                        }
-                        #endif
-                        
-                        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                        EndScene();
-                        #endif
-                    }
-                    else
-                        EndScene();
-                }
-                else if (type == NEED_TO_UPDATE)
-                {
-                    EndScene();
-                    
-                    // 앱 업데이트 (마켓으로 이동)
-                    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                    JniMethodInfo t;
-                    if (JniHelper::getStaticMethodInfo(t,
-                                                       "com/playDANDi/CocoMagic/CocoMagic",
-                                                       "GoToPlayStore",
-                                                       "()V"))
-                    {
-                        // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-                        t.env->CallStaticVoidMethod(t.classID, t.methodID);
-                        // Release
-                        t.env->DeleteLocalRef(t.classID);
-                    }
-                    #endif
-                }
-                else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
-                {
-                    Common::RebootSystem(this); // 재부팅.
-                }
-                else if (type == INVITE_FRIEND_OK && d[0] > 0) // 친구초대 성공 후, 보상(10/20/30)달성했을 경우
-                {
-                    if (d[0] == 1) ReplaceScene("NoImage", INVITE_FRIEND_10, BTN_1);
-                    else if (d[0] == 2) ReplaceScene("NoImage", INVITE_FRIEND_20, BTN_1);
-                    else if (d[0] == 3) ReplaceScene("NoImage", INVITE_FRIEND_30, BTN_1);
-                }
-                else if (type == BUY_FAIRY_OK)
-                {
-                    EndScene();
-                    // 요정 구매 성공 후에는 'FairyOneInfo' 창도 같이 끄자.
-                    CCString* param = CCString::create("2");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("FairyOneInfo", param);
-                }
-                else if (type == PRACTICE_SKILL_FULL_EXP)
-                {
-                    // 스케치북으로 이동
-                    EndScene();
-                    Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "Sketchbook", false, 0);
-                }
-                else if (type == POSSIBLE_BUY_FAIRY)
-                {
-                    // 요정의 방으로 이동
-                    EndScene();
-                    Common::ShowNextScene(Depth::GetCurPointer(), "GameReady", "CocoRoom", false, 2);
-                }
-                else if (type == SELECT_PROPERTY_OK)
-                {
-                    EndScene();
-                    CCString* param;
-                    if (d[1] == 1) // 인게임 튜토리얼 시작
-                        param = CCString::create("3");
-                    else // 스케치북 튜토리얼 시작
-                        param = CCString::create("2");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("SelectProperty", param);
-                }
-                else if (type == GET_DEGREE)
-                {
-                    // 학위수여 화면으로 이동
-                    EndScene();
-                    Common::ShowNextScene(Depth::GetCurPointer(), Depth::GetCurName(), "GetDegree", false);
-                }
-                else if (type == COUPON_OK)
-                {
-                    EndScene();
-                    // 쿠폰 입력창도 종료시킨다.
-                    CCString* param = CCString::create("2");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("Coupon", param);
-                }
-                else if (type == UPGRADE_SKILL_OK)
-                {
-                    EndScene();
-                    // 스케치북에서, 한 속성의 7개 스킬이 모두 5레벨 이상인지 확인한다.
-                    CCString* param = CCString::create("4");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-                }
-                else if (type == BUY_PROPERTY_FREE_MSG)
-                {
-                    EndScene();
-                    // 속성선택창을 연다.
-                    CCString* param = CCString::create("5");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
-                }
-                else if (type == TODAYCANDY_RESULT_LOSE)
-                {
-                    if (!friendList[d[0]]->IsMessageBlocked() && friendList[d[0]]->GetPotionMsgStatus() > 0)
-                    {
-                        // 카카오 api 호출 (초대메시지 템플릿 이용)
-                        sendLinkType = type;
-                        std::string templateId = KAKAO_MSG_TEMPLATE_TODAYCANDY;
-                        std::string executeUrl = "";
-                        char temp[128];
-                        sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
-                        std::string metaInfo = temp;
-                        //CCLog("metaInfo = %s", metaInfo.c_str());
-                        KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&NoImage::onSendLinkMessageComplete, this), std::bind(&NoImage::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, friendList[d[0]]->GetKakaoId(), "", executeUrl, metaInfo);
-                    }
-                    EndScene();
-                }
-                else if (type == RANKUP_BOAST)
-                {
-                    // 친구의 카톡메시지 수신여부 받아오기 (현재는 '자랑하기' 할 때만 쓰인다)
-                    std::string url = URL_GET_POTION_STATUS;
-                    std::string param = "";
-                    sprintf(temp, "friend_kakao_id=%s", friendList[d[0]]->GetKakaoId().c_str());
-                    param += temp;
-                    
-                    HttpRequest(url, param);
-                }
-                else if (type == RANKUP_BOAST_REJECTED)
-                {
-                    // 자랑하기 다시 못하게 하기
-                    CCString* param = CCString::create("5");
-                    CCNotificationCenter::sharedNotificationCenter()->postNotification("RankUp", param);
-                    
-                    EndScene();
-                }
-                else if (type == MP_REWARD_50 || type == MP_REWARD_100)
-                {
-                    myInfo->SetReward(0, 0); // 보상 초기화
-                    EndScene();
-                }
-                else
-                {
-                    EndScene();
-                }
-            }
-            else if (type == POPUP_EXIT)
-            {
-                Exit();
-            }
-            else if (type == NEED_TO_BUY_POTION)
-            {
-                CCNode* parent = this->getParent();
-                EndScene();
-                Common::ShowNextScene(parent, Depth::GetCurName(), "BuyPotion", false, 3); // curName == 결국 부모
-                //return true;
-            }
-            else if (type == NEED_TO_BUY_TOPAZ)
-            {
-                CCNode* parent = this->getParent();
-                EndScene();
-                Common::ShowNextScene(parent, Depth::GetCurName(), "BuyTopaz", false, 3); // curName == 결국 부모
-                //return true;
-            }
-            else if (type == NEED_TO_BUY_STARCANDY)
-            {
-                CCNode* parent = this->getParent();
-                EndScene();
-                Common::ShowNextScene(parent, Depth::GetCurName(), "BuyStarCandy", false, 3); // curName == 결국 부모
-                //return true;
-            }
-            else if (type == KAKAO_LOGOUT)
-            {
-                // 카카오 로그아웃 후 게임종료
-                KakaoNativeExtension::getInstance()->logout(std::bind(&NoImage::onLogoutComplete, this), std::bind(&NoImage::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
-            }
-            else if (type == KAKAO_UNREGISTER)
-            {
-                std::string url = URL_QUIT;
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
-                param += temp;
-                
-                HttpRequest(url, param);
-            }
-            else if (type == BUY_TOPAZ_TRY)
-            {
-                //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                // 토파즈 구입하기. (미결제 버전) -> 건드리지 말자
-                std::string url = "http://14.63.212.106/cogma/game/purchase_topaz.php?";
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                param += temp;
-                sprintf(temp, "topaz_id=%d", priceTopaz[d[0]]->GetId());
-                param += temp;
-                
-                HttpRequest(url, param);
-                //#endif
-                
-                //#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                
-                //#endif
-            }
-            else if (type == BUY_STARCANDY_TRY)
-            {
-                if (myInfo->GetTopaz() < priceStarCandy[d[0]]->GetPrice()) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else
-                {
-                    std::string url = URL_PURCHASE_STARCANDY;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "starcandy_id=%d", priceStarCandy[d[0]]->GetId());
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", priceStarCandy[d[0]]->GetPrice());
-                    //param += temp;
-                    CCLog("url : %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == BUYPOTION_1)
-            {
-                if (myInfo->GetTopaz() < 5) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else
-                {
-                    // 포션 구매 프로토콜을 요청한다.
-                    std::string url = URL_PURCHASE_POTION;
-                    sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
-                    std::string param = "";
-                    param += temp;
-                    CCLog("url : %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == POTION_SEND_TRY)
-            {
-                // 포션 보내기 (랭킹 화면에서)
-                std::string url = URL_SEND_POTION;
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                param += temp;
-                sprintf(temp, "friend_kakao_id=%s", friendList[d[0]]->GetKakaoId().c_str());
-                param += temp;
-                CCLog("url : %s", url.c_str());
-                HttpRequest(url, param);
-                //return true;
-            }
-            else if (type == MESSAGE_ALL_TRY)
-            {
-                // 포션 모두 받기 프로토콜 요청.
-                std::string url = URL_MESSAGE_ALL;
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
-                param += temp;
-                CCLog("url : %s", url.c_str());
-                HttpRequest(url, param);
-                //return true;
-            }
-            else if (type == SEND_TOPAZ_TRY)
-            {
-                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                EndScene();
-                CCString* param = CCString::create("2");
-                CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-                #endif
-                
-                #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                // 토파즈 선물하기. (미결제 버전) -> 건드리지말자
-                std::string url = "http://14.63.212.106/cogma/game/send_topaz.php?";
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                param += temp;
-                sprintf(temp, "friend_kakao_id=%s&", friendList[d[0]]->GetKakaoId().c_str());
-                param += temp;
-                sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
-                param += temp;
-                CCLog("url : %s", url.c_str());
-                HttpRequest(url, param);
-                #endif
-                //return true;
-            }
-            else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
-            {
-                // 토파즈vs별사탕 구분 및 가격
-                int costType = (type == UPGRADE_STAFF_BY_TOPAZ_TRY) ? 2 : 1;
-                int cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_Topaz();
-                if (costType == 1) // 일반강화는 별사탕
-                    cost = magicStaffBuildupInfo[myInfo->GetStaffLv()+1-1]->GetCost_StarCandy();
-                
-                // 잔액 부족
-                if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                else
-                {
-                    // 지팡이 강화 (by 별사탕, by 토파즈 모두 통용됨)
-                    std::string url = URL_UPGRADE_STAFF;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "cost_type=%d", costType);
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", cost);
-                    //param += temp;
-                    CCLog("url = %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == UPGRADE_FAIRY_BY_TOPAZ_TRY || type == UPGRADE_FAIRY_BY_STARCANDY_TRY)
-            {
-                // 토파즈vs별사탕 구분 및 가격
-                int costType = (type == UPGRADE_FAIRY_BY_TOPAZ_TRY) ? 2 : 1;
-                int cost = d[1];
-                
-                // 잔액 부족
-                if (costType == 2 && myInfo->GetTopaz() < cost) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else if (costType == 1 && myInfo->GetStarCandy() < cost) // 별사탕 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                else
-                {
-                    // 요정 강화 (by 별사탕, by 토파즈 모두 통용됨)
-                    std::string url = URL_UPGRADE_FAIRY;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "user_fairy_id=%d&",  myInfo->GetActiveFairyUserId());
-                    param += temp;
-                    sprintf(temp, "cost_type=%d", costType);
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", cost);
-                    //param += temp;
-                    CCLog("url = %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == BUY_FAIRY_BY_TOPAZ_TRY || type == BUY_FAIRY_BY_STARCANDY_TRY)
-            {
-                FairyInfo* fi = fairyInfo[d[0]];
-                
-                // 토파즈vs별사탕 구분 및 가격
-                int costType = (type == BUY_FAIRY_BY_TOPAZ_TRY) ? 2 : 1;
-                int cost = fi->GetCostTopaz();
-                if (costType == 1) // 별사탕으로 산다면,
-                    cost = fi->GetCostStarCandy();
-                
-                // 잔액 부족
-                if (costType == 2 && myInfo->GetTopaz() < cost)
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else if (costType == 1 && myInfo->GetStarCandy() < cost)
-                    ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                else
-                {
-                    // 요정 구입 (by 별사탕, by 토파즈 모두 통용됨)
-                    std::string url = URL_PURCHASE_FAIRY;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "fairy_id=%d&", fi->GetId());
-                    param += temp;
-                    sprintf(temp, "cost_type=%d", costType);
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", cost);
-                    //param += temp;
-                    CCLog("url = %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY)
-            {
-                if (type == BUY_SKILLSLOT_BY_STARCANDY_TRY && myInfo->GetStarCandy() < d[1]) // 별사탕 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_STARCANDY, BTN_2);
-                else if (type == BUY_SKILLSLOT_BY_TOPAZ_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else
-                {
-                    // 스킬 슬롯 구매
-                    char temp[255];
-                    std::string url = URL_UPGRADE_SKILLSLOT;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "slot_id=%d", d[0]);
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", d[1]);
-                    //param += temp;
-                    CCLog("url = %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-                //return true;
-            }
-            else if (type == BUY_PROPERTY_TRY || type == SELECT_PROPERTY_TRY)
-            {
-                if (type == BUY_PROPERTY_TRY && myInfo->GetTopaz() < d[1]) // 토파즈 구매 창으로 이동
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else
-                {
-                    // 스킬 새 속성 열기
-                    char temp[255];
-                    std::string url = URL_PURCHASE_SKILL_PROPERTY;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    // 서버랑 클라이언트랑 불/물 숫자가 서로 반대여서 부득이하게 아래처럼 판별하도록 한다.
-                    if (d[0] == 1) newSkillType = 2;
-                    else if (d[0] == 2) newSkillType = 1;
-                    else newSkillType = d[0];
-                    sprintf(temp, "skill_type=%d", newSkillType);
-                    param += temp;
-                    //sprintf(temp, "cost_value=%d", d[1]);
-                    //param += temp;
-                    CCLog("url = %s", url.c_str());
-                    HttpRequest(url, param);
-                }
-            }
-            else if (type == INVITE_FRIEND_TRY)
-            {
-                EndScene();
-                CCString* param = CCString::create("5");
-                CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-            }
-            else if (type == PURCHASE_SKILL_BY_TOPAZ_TRY)
-            {
-                // 스킬 즉시 구매하기 (토파즈로)
-                if (myInfo->GetTopaz() < d[1])
-                    ReplaceScene("NoImage", NEED_TO_BUY_TOPAZ, BTN_2);
-                else
-                {
-                    char temp[255];
-                    std::string url = URL_PURCHASE_SKILL;
-                    std::string param = "";
-                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                    param += temp;
-                    sprintf(temp, "skill_id=%d&", d[0]);
-                    param += temp;
-                    sprintf(temp, "cost_type=2"); // 1 : 별사탕, 2 : 토파즈
-                    param += temp;
-                    HttpRequest(url, param);
-                }
-            }
-        }
-    }
-    
-    isTouched = false;
 }
 
 
@@ -2383,6 +2417,8 @@ void NoImage::XmlParseBuySkillProperty(xml_document *xmlDoc)
         
         // 프로필 문구를 정하기 위해 서버로 업데이트
         Common::UpdateProfileTitle();
+        
+        isHintForBuyingNextProperty = false; // 다음 속성 무료 구매 힌트 팝업창에 대한 flag 초기화
 
         // OK 창으로 넘어가자.
         if (type == BUY_PROPERTY_TRY)

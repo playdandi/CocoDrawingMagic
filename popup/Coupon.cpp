@@ -359,6 +359,7 @@ void Coupon::EndScene()
     spriteClass->RemoveAllObjects();
     delete spriteClass;
     pBlack->removeFromParentAndCleanup(true);
+    m_pCouponField->detachWithIME();
     m_pCouponField->removeFromParentAndCleanup(true);
     
     tLayer->removeAllChildren();

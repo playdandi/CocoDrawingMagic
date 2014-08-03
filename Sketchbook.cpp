@@ -46,6 +46,11 @@ void Sketchbook::SceneCallback()
         std::vector<int> nullData;
         Common::ShowPopup(this, "Sketchbook", "NoImage", false, BUY_PROPERTY_FREE_MSG, BTN_1, nullData);
     }
+    else
+    {
+        // "모두 5레벨 이상되면 속성 무료 구매 가능하다"는 팝업알림창 띄우기
+        ShowHintForBuyingProperty();
+    }
 }
 void Sketchbook::onExit()
 {
@@ -223,6 +228,11 @@ void Sketchbook::Notification(CCObject* obj)
         // 속성선택창을 열어야 하는 경우 (무료로 배울 때가 되서)
         Common::ShowNextScene(this, "Sketchbook", "SelectProperty", false, 0);
     }
+    else if (param->intValue() == 6)
+    {
+        // 모두 5레벨 이상되면 속성 무로 구매 가능하다는 팝업알림창 띄우기
+        ShowHintForBuyingProperty();
+    }
     else if (param->intValue() == 8)
     {
         // 스킬 속성 개/폐 여부 갱신
@@ -372,6 +382,84 @@ void Sketchbook::ShowHintOfMP()
     balloon2->runAction( CCRepeatForever::create(action) );
 }
 
+void Sketchbook::ShowHintForBuyingProperty()
+{
+    int numOfSkills[5] = {0,}; // 속성별 스킬 개수
+    int numOfMore5Lv[5] = {0,}; // 속성별 5레벨 이상 스킬 개수
+    int idx;
+    for (int i = 0 ; i < (int)myInfo->GetSkillList().size() ; i++)
+    {
+        idx = myInfo->GetSkillList()[i]->GetCommonId() / 10;
+        numOfSkills[idx]++;
+        if (myInfo->GetSkillList()[i]->GetLevel() >= 5)
+            numOfMore5Lv[idx]++;
+    }
+    
+    int propertyCnt = 0;
+    if (myInfo->IsFire()) propertyCnt++;
+    if (myInfo->IsWater()) propertyCnt++;
+    if (myInfo->IsLand()) propertyCnt++;
+    if (propertyCnt >= 3) // 보유 속성이 이미 3개면 힌트가 나올 필요 없다.
+        return;
+    
+    // 스킬이 7개 다 존재하면서 전부 5레벨 이상은 아닌, 그런 속성의 개수를 카운트한다.
+    int appliedCnt = 0;
+    for (int i = 1 ; i <= 3 ; i++)
+    {
+        if (numOfSkills[i] == 7 && numOfMore5Lv[i] < 7)
+            appliedCnt++;
+        else if (numOfSkills[i] == 7 && numOfMore5Lv[i] == 7)
+            propertyCnt--;
+    }
+    
+    // 보유 속성 수와 위 조건을 만족하는 속성 수가 같다면 힌트 팝업창을 노출하도록 한다.
+    int propertyIdx = -1;
+    if (appliedCnt > 0 && appliedCnt == propertyCnt)
+    {
+        for (int i = 1 ; i <= 3 ; i++)
+        {
+            if (numOfSkills[i] == 7 && numOfMore5Lv[i] < 7)
+            {
+                propertyIdx = i;
+                break;
+            }
+        }
+    }
+    
+    if (propertyIdx != -1 && !isHintForBuyingNextProperty && !myInfo->IsTimeToFreelyBuyProperty())
+    {
+        isHintForBuyingNextProperty = true;
+        std::vector<int> data;
+        data.push_back(propertyIdx); // 1(물), 2(불), 3(땅)
+        Common::ShowPopup(this, "Sketchbook", "NoImage", false, HINT_BUY_PROPERTY, BTN_1, data);
+    }
+    
+    /*
+    int idx = 4;
+    if (curState == 0) idx = 2;
+    else if (curState == 1) idx = 1;
+    else if (curState == 2) idx = 3;
+    
+    int cnt = 0;
+    for (int i = 0 ; i < (int)myInfo->GetSkillList().size() ; i++)
+        if (myInfo->GetSkillList()[i]->GetCommonId() / 10 == idx)
+            cnt++;
+    
+    int propertyCnt = 0;
+    if (myInfo->IsFire()) propertyCnt++;
+    if (myInfo->IsWater()) propertyCnt++;
+    if (myInfo->IsLand()) propertyCnt++;
+    
+    if (!isHintForBuyingNextProperty && !myInfo->IsTimeToFreelyBuyProperty() && propertyCnt < 3 && cnt == 7)
+    {
+        isHintForBuyingNextProperty = true;
+        std::vector<int> data;
+        data.push_back(idx); // 1(물), 2(불), 3(땅)
+        Common::ShowPopup(this, "Sketchbook", "NoImage", false, HINT_BUY_PROPERTY, BTN_1, data);
+    }
+    */
+}
+
 void Sketchbook::CheckProperties()
 {
     if (myInfo->IsFire())
@@ -396,6 +484,7 @@ void Sketchbook::MakeScroll(int state, bool isFromPopup)
     // menu change
     SetMenuChange(state);
 
+    // 선택된 속성의 마법들 보여주기
     if (state == 0) MakeScrollBook(2);
     else if (state == 1) MakeScrollBook(1);
     else if (state == 2) MakeScrollBook(3);
@@ -463,21 +552,16 @@ SkillInfo* Sketchbook::GetNextSkillInfo(int state)
 void Sketchbook::MakeScrollBook(int idx)
 {
     std::vector<MySkill*> ms;
-    int numOfList = myInfo->GetSkillList().size();
+    int numOfList = (int)myInfo->GetSkillList().size();
     for (int i = 0 ; i < numOfList ; i++)
     {
-        //CCLog("my skill : %d", myInfo->GetSkillList()[i]->GetCommonId());
         if (myInfo->GetSkillList()[i]->GetCommonId() / 10 == idx)
-        {
             ms.push_back(myInfo->GetSkillList()[i]);
-            //CCLog("%d", myInfo->GetSkillList()[i]->GetCommonId());
-        }
     }
     numOfList = ms.size();
     numOfList++;
     
     int numOfMaxSkill = 7;
-    //CCLog("numOfList = %d", numOfList);
     
     containerBook = CCLayer::create();
     containerBook->setContentSize(CCSizeMake(929, std::min(numOfList, numOfMaxSkill)*206));

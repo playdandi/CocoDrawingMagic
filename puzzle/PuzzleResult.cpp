@@ -20,7 +20,13 @@ void PuzzleResult::onEnter()
     CCLayer::onEnter();
     
     // sound
-    ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult();
+    ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResult(myGameResult->isNewRecord);
+    if (myGameResult->totalScore > 0)
+        ((Puzzle*)Depth::GetParentPointer())->GetSound()->PlayGameResultScore();
+    
+    // effect
+    if (myGameResult->isNewRecord)
+        ((Puzzle*)Depth::GetParentPointer())->GetEffect()->ShowNewRecordEffect(this);
 }
 void PuzzleResult::onExit()
 {

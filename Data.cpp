@@ -56,7 +56,7 @@ int menuInSetting = -1;
 int myRank;
 int myLastWeekHighScore;
 int rewardType;
-int certificateType;
+int certificateType = 0;
 
 // 게임에 필요한 미션 내용
 int missionType;
@@ -74,6 +74,7 @@ bool isStartUser = false;
 
 bool isPossibleBuyFairyShown = false;
 
+bool isHintForBuyingNextProperty = false;
 
 // rsa 관련
 RSA* rsa;
@@ -546,7 +547,7 @@ bool MyInfo::IsTimeToFreelyBuyProperty()
     {
         idx = myInfo->GetSkillList()[i]->GetCommonId() / 10;
         numOfSkillsInProperty[idx]++;
-        if (myInfo->GetSkillList()[i]->GetLevel() >= 5)
+        if (myInfo->GetSkillList()[i]->GetLevel() >= 5) // 5레벨 이상인 스킬 개수 검사
             checkProperty[idx]++;
     }
     
@@ -556,6 +557,7 @@ bool MyInfo::IsTimeToFreelyBuyProperty()
     {
         if (numOfSkillsInProperty[i] == 0) // 아예 스킬이 없으면 (배우지 않은 속성) 패스.
             continue;
+        
         if (numOfSkillsInProperty[i] > 0 && numOfSkillsInProperty[i] < 7) // 일단 개수가 0과 7사이면 다 배운 게 아니므로 false
             ret = false;
         else if (numOfSkillsInProperty[i] == 7 && (checkProperty[i] < 7)) // 스킬 7개는 다 배웠지만, 5레벨 미만인 게 있는 경우도 false
@@ -1762,6 +1764,34 @@ SkillBuildupMPInfo* SkillBuildupMPInfo::GetObj(int skillCount)
     }
     return NULL;
 }
+/*
+ int SkillBuildupMPInfo::GetOrderForTopaz(std::vector<MySkill*> sList, int scid) // 스킬의 토파즈 구매를 위한 n번째 구하기
+ {
+ // '?' 직전 스킬의 common-id가 뭔지 찾기.
+ int p;
+ for (int i = 0 ; i < sList.size() ; i++)
+ {
+ if (sList[i]->GetCommonId() == scid-1)
+ p = i;
+ }
+ 
+ int eachPropertyCnt[5] = {0,};
+ for (int i = 0 ; i <= p ; i++)
+ eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
+ 
+ int orderNumber = 0;
+ for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
+ orderNumber += (eachPropertyCnt[i]) + (eachPropertyCnt[i] > 0 && eachPropertyCnt[i] < 7);
+ 
+ int propertyCnt = 0; // 그때까지 배운 속성의 개수 구하기
+ for (int i = 1 ; i <= 3 ; i++)
+ if (eachPropertyCnt[i] > 0)
+ propertyCnt++;
+ 
+ return orderNumber + propertyCnt - 1;
+ }
+ */
+
 int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
 {
     // '?' 직전 스킬의 common-id가 뭔지 찾기.
@@ -1785,31 +1815,7 @@ int SkillBuildupMPInfo::GetOrder(std::vector<MySkill*> sList, int scid)
     
     return orderNumber;
 }
-int SkillBuildupMPInfo::GetOrderForTopaz(std::vector<MySkill*> sList, int scid) // 스킬의 토파즈 구매를 위한 n번째 구하기
-{
-    // '?' 직전 스킬의 common-id가 뭔지 찾기.
-    int p;
-    for (int i = 0 ; i < sList.size() ; i++)
-    {
-        if (sList[i]->GetCommonId() == scid-1)
-            p = i;
-    }
-    
-    int eachPropertyCnt[5] = {0,};
-    for (int i = 0 ; i <= p ; i++)
-        eachPropertyCnt[ sList[i]->GetCommonId() / 10 ]++;
-    
-    int orderNumber = 0;
-    for (int i = 1 ; i <= 3 ; i++) // 1(물), 2(불), 3(땅)
-        orderNumber += (eachPropertyCnt[i]) + (eachPropertyCnt[i] > 0 && eachPropertyCnt[i] < 7);
-    
-    int propertyCnt = 0; // 그때까지 배운 속성의 개수 구하기
-    for (int i = 1 ; i <= 3 ; i++)
-        if (eachPropertyCnt[i] > 0)
-            propertyCnt++;
-    
-    return orderNumber + propertyCnt - 1;
-}
+
 int SkillBuildupMPInfo::GetRealOrder(std::vector<MySkill*> sList, int scid)
 {
     // '?' 직전 스킬의 common-id가 뭔지 찾기.
@@ -1819,9 +1825,7 @@ int SkillBuildupMPInfo::GetRealOrder(std::vector<MySkill*> sList, int scid)
         if (sList[i]->GetCommonId() == scid-1)
             p = i;
     }
-    // 11 12 13 31 32 33 21 34
-    // 11 12 13 14 15 16 21 22 23
-    
+
     // [처음 배운 스킬 ~ '?' 직전 스킬]을 속성별로 몇 개씩인지 분류한다.
     // (단, 속성별 첫 번째 스킬은 직접 배우는 것이 아니므로 개념상 제외한다)
     int eachPropertyCnt[5] = {0,};

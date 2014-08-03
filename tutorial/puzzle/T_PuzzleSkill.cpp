@@ -60,6 +60,7 @@ bool T_PuzzleSkill::IsSkillNumberExists(int skillNum)
 
 void T_PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
 {
+    CCLog("TRY SKILLS");
     // Init
     for (int i = 0 ; i < NUMOFSKILL ; i++)
     {
@@ -76,12 +77,38 @@ void T_PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
             // Cycle (주변부 터뜨리기)
             if (i == 1) {
                 if (pieceColor == PIECE_RED && m_pGameLayer->IsCycle(queue_pos))
-                    Try(i, queue_pos);
+                {
+                    if (Check_A2(i, queue_pos))
+                        Try(i, queue_pos);
+                }
+            }
+            else if (i == 9) {
+                if (pieceColor == PIECE_BLUE && m_pGameLayer->IsCycle(queue_pos))
+                {
+                    if (Check_A2(i, queue_pos))
+                        Try(i, queue_pos);
+                }
+            }
+            else if (i == 17) {
+                CCLog("tryskills %d (color = %d , %d)", i, pieceColor, m_pGameLayer->IsCycle(queue_pos));
+                if (pieceColor == PIECE_GREEN && m_pGameLayer->IsCycle(queue_pos))
+                {
+                    if (Check_A2(i, queue_pos))
+                        Try(i, queue_pos);
+                }
             }
             
             // 기본 1번 스킬
             else if (i == 0) {
                 if (pieceColor == PIECE_RED)
+                    Try(i, queue_pos);
+            }
+            else if (i == 8) {
+                if (pieceColor == PIECE_BLUE)
+                    Try(i, queue_pos);
+            }
+            else if (i == 16) {
+                if (pieceColor == PIECE_GREEN)
                     Try(i, queue_pos);
             }
             
@@ -145,48 +172,83 @@ void T_PuzzleSkill::UpdateAppliedSkillCount(int skillNum)
 void T_PuzzleSkill::Invoke(int skillNum, int queue_pos)
 {
     // 스킬 목록에 없거나, 있더라도 시전이 되지 않은 경우(확률 실패한 경우), 실행하지 않는다.
-    //if (!skillNumber[skillNum] || !skillApplied[queue_pos][skillNum])
-    //    return;
-    
-    // coco animation
     if (skillNum != 7)
-        m_pGameLayer->schedule(schedule_selector(T_Puzzle::CocoAnim), 0.04f);
+    {
+        if (!skillNumber[skillNum] || !skillApplied[queue_pos][skillNum])
+            return;
+        
+         m_pGameLayer->schedule(schedule_selector(T_Puzzle::CocoAnim), 0.04f);
+    }
     
     switch (skillNum)
     {
-        case 0:  A1(skillNum, queue_pos); break;
-        case 1:  A2(skillNum, queue_pos); break;
-        case 7:  F8(skillNum, queue_pos); break;
+        case 0:
+        case 8:
+        case 16:
+            A1(skillNum, queue_pos); break;
+        case 1:
+        case 9:
+        case 17:
+            A2(skillNum, queue_pos); break;
+        case 7:
+            F8(skillNum, queue_pos); break;
     }
+}
+
+SkillBuildUpInfo* T_PuzzleSkill::GetObj(int num)
+{
+    int sid = SkillInfo::ConvertedToOriginal(num);
+    //CCLog("sid, level = %d , %d", sid, skillLevel[num]);
+    return SkillBuildUpInfo::GetObj(sid, skillLevel[num]);
+}
+
+int T_PuzzleSkill::GetBasicSkillScore(int num)
+{
+    return GetObj(num)->GetAbility1();
 }
 
 void T_PuzzleSkill::A1(int num, int queue_pos)
 {
     // 마법불꽃, 은은한 달빛, 대지의 숨결 - 각 색깔의 피스 제거 시, 추가점수
     
-    // 추가점수 = 스킬레벨 * 한붓그리기 개수 * 30 (점)
-    A1_addedScore = 30*skillLevel[num]*m_pGameLayer->GetPiece8xy(true).size();
-    m_pGameLayer->UpdateScore(1, A1_addedScore);
+    
+    // 기본드래그 개수, 피버로 터진 추가개수 따로 구하기
+    int dragNum_basic = m_pGameLayer->GetPiece8xy(true).size();
+    
+    // 한붓그리기 기본점수 계산 (사이클이면 3배)
+    int dragScore = (200 + myInfo->GetMPTotal()/2 + 15*pow(dragNum_basic-3, 1.2f)) * dragNum_basic; // 순수 드래그 개수로 따지는 기본점수
+    if (m_pGameLayer->IsCycle(queue_pos)) // 사이클이면 추가점수
+        dragScore += (1000+dragScore)*2;
+    
+    // 점수 업데이트 [ (드래그수-1)*(10+드래그수*발동점수의4%) ]
+    // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 4%)])
+    int basicScore = GetBasicSkillScore(num); // 발동점수
+    A1_addedScore = (int)((float)(dragNum_basic-1)*(10.0f+(float)dragNum_basic*((float)(basicScore*4)/100.0f)));
+    m_pGameLayer->UpdateScore(1, basicScore+A1_addedScore+dragScore);
+    float scale = m_pGameLayer->GetScoreBasicScale(dragNum_basic);
+    m_pGameLayer->ShowSkillScore(basicScore+A1_addedScore+dragScore, scale, queue_pos);
+
     
     // 이펙트
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
     m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
-    m_pGameLayer->GetEffect()->PlayEffect_0(m_pGameLayer->GetPiece8xy(true));
+    if (num == 0)
+        m_pGameLayer->GetEffect()->PlayEffect_0(m_pGameLayer->GetPiece8xy(true));
+    else if (num == 8)
+        m_pGameLayer->GetEffect()->PlayEffect_8(m_pGameLayer->GetPiece8xy(true));
+    else
+        m_pGameLayer->GetEffect()->PlayEffect_16(m_pGameLayer->GetPiece8xy(true));
     
     // 사이클이 발동된 상태면, 사이클 이펙트도 같이 보여준다. (태양열, 파도, 클로버 그림 띄우는 것)
     if (IsApplied(num+1, queue_pos) && m_pGameLayer->IsCycle(queue_pos))
-        m_pGameLayer->GetEffect()->PlayEffect_CycleOnly(-1, m_pGameLayer->GetPiece8xy(true));
-        //m_pGameLayer->PlayEffect(-(num+1), queue_pos);
+        m_pGameLayer->GetEffect()->PlayEffect_CycleOnly(-(num+1), m_pGameLayer->GetPiece8xy(true));
+       // m_pGameLayer->PlayEffect(-(num+1), queue_pos);
+    //}
 }
 
-void T_PuzzleSkill::A2(int num, int queue_pos)
+bool T_PuzzleSkill::Check_A2(int num, int queue_pos)
 {
-    // 불꽃송이, 파도타기, 땅울림 - 각 색깔의 피스를 사이클로 제거하면 스킬 레벨에 비례하여 정해진 방식대로 주변부 터뜨리기
-    // (여기서는 주변부의 위치만 구한다)
-    // 불2 : 스킬레벨 수만큼 사이클의 주변부를 동시에 터뜨린다.
-    // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
-    // 땅2 : 스킬레벨 수만큼 완전히 랜덤하게 터뜨린다.
-    
+    CCLog("CheckA2 : %d , %d", num, queue_pos);
     // 변수 초기화
     A2_pos.clear();
     int x, y;
@@ -197,7 +259,7 @@ void T_PuzzleSkill::A2(int num, int queue_pos)
             xy[x][y] = 0;
     
     std::vector<CCPoint> pos;
-    pos = m_pGameLayer->GetPiece8xy(true);
+    pos = m_pGameLayer->GetPiece8xy(false);
     for (int i = 0 ; i < pos.size() ; i++)
         xy[(int)pos[i].x][(int)pos[i].y] = -1;
     
@@ -250,14 +312,85 @@ void T_PuzzleSkill::A2(int num, int queue_pos)
         selectPos.clear();
     }
     
+    else if (num == 9) // 물2 (파도타기)
+    {
+        // 사이클 끝난 방향으로 파도타기 (길이가 모자라면 반대편에서 계속 진행)
+        CCPoint last = pos[0];
+        CCPoint before = pos[pos.size()-1];
+        CCPoint delta = ccp((int)last.x-(int)before.x, (int)last.y-(int)before.y);
+        
+        CCPoint lastPos = m_pGameLayer->SetPiece8Position((int)pos[0].x, (int)pos[0].y);
+        CCPoint beforePos = m_pGameLayer->SetPiece8Position((int)pos[pos.size()-1].x, (int)pos[pos.size()-1].y);
+        CCPoint deltaPos = ccp((int)lastPos.x-(int)beforePos.x, (int)lastPos.y-(int)beforePos.y);
+        
+        // 예외처리 : 시작점, 직전점의 변화량 값을 array의 처음에 넣는다. (파티클 움직임을 위해)
+        A2_pos.push_back(deltaPos);
+        
+        int x = (int)pos[0].x + (int)delta.x;
+        int y = (int)pos[0].y + (int)delta.y;
+        
+        while (1)
+        {
+            if ((x == 0 && y == 0) || (x == 0 && y == ROW_COUNT-1) ||
+                (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
+                break;
+            if (x < 0 || y < 0 || x >= COLUMN_COUNT || y >= ROW_COUNT)
+                break;
+            
+            if (m_pGameLayer->GetSpriteP8(x, y) == NULL)
+                A2_pos.push_back(ccp(x, y));
+            else
+            {
+                pieceType = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
+                if (pieceType >= PIECE_RED && pieceType <= PIECE_WHITE) // 일반 피스인 경우에만 허용한다.
+                    A2_pos.push_back(ccp(x, y));
+            }
+            
+            x += (int)delta.x;
+            y += (int)delta.y;
+        }
+    }
+    
+    else if (num == 17) // 땅2
+    {
+        A2_pos.push_back(ccp(2, 1));
+        A2_pos.push_back(ccp(4, 5));
+    }
+    
+    if ( (num == 9 && (int)A2_pos.size() > 1) || ((num == 1 || num == 17) && (int)A2_pos.size() > 0) )
+    {
+        CCLog("True");
+        return true;
+    }
+    return false;
+}
+
+void T_PuzzleSkill::A2(int num, int queue_pos)
+{
+    // 불꽃송이, 파도타기, 땅울림 - 각 색깔의 피스를 사이클로 제거하면 스킬 레벨에 비례하여 정해진 방식대로 주변부 터뜨리기
+    // (여기서는 주변부의 위치만 구한다)
+    // 불2 : 스킬레벨 수만큼 사이클의 주변부를 동시에 터뜨린다.
+    // 물2 : 스킬레벨 수만큼 사이클이 끝나는 방향으로 파도타듯이 터뜨린다.
+    // 땅2 : 스킬레벨 수만큼 완전히 랜덤하게 터뜨린다.
+    
+    
     // 이펙트 실행 (태양/달/파도 그림)
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
     m_pGameLayer->GetEffect()->PlayEffect_SkillIcon(num);
-    m_pGameLayer->GetEffect()->PlayEffect_1(A2_pos);
-    //m_pGameLayer->PlayEffect(num, queue_pos);
+    if (num == 1)
+        m_pGameLayer->GetEffect()->PlayEffect_1(A2_pos);
+    else if (num == 9)
+        m_pGameLayer->GetEffect()->PlayEffect_9(A2_pos, queue_pos);
+    else
+        m_pGameLayer->GetEffect()->PlayEffect_17(A2_pos, queue_pos);
     
     // 폭파 실행
-    m_pGameLayer->Bomb(queue_pos, A2_pos);
+    if (num == 1) // 태양열의 경우에만!
+    {
+        std::vector<CCPoint> pos = m_pGameLayer->GetPiece8xy(true);
+        m_pGameLayer->Bomb(queue_pos, A2_pos); // 물 사이클 스킬은 이펙트와 함께 발동시켜야 하므로, 여기서 Bomb을 실행하지 않는다.
+    }
+    
 }
 std::vector<CCPoint> T_PuzzleSkill::A2GetPos()
 {
@@ -273,6 +406,7 @@ static T_PuzzleSkill* psF8;
 
 void T_PuzzleSkill::F8(int num, int queue_pos)
 {
+    CCLog("용 숨");
     // 붉은 용의 숨결
     F8_isActive = true;
     F8_isFalling = false;
@@ -351,12 +485,6 @@ void T_PuzzleSkill::F8(int num, int queue_pos)
     
     m_pGameLayer->GetSound()->PlaySkillSound(num);
     m_pGameLayer->GetEffect()->PlayEffect_7(result_double_pos, A8_pos, queue_pos);
-    
-    for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
-    {
-        CCLog("%d %d %d %d %d %d %d", F8_check[0][y], F8_check[1][y], F8_check[2][y],
-              F8_check[3][y], F8_check[4][y], F8_check[5][y], F8_check[6][y]);
-    }
 }
 
 void T_PuzzleSkill::F8Check(int x, int y, int idx)

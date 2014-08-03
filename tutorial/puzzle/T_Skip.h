@@ -11,7 +11,7 @@ using namespace cocos2d::extension;
 class T_Skip : public CCLayer
 {
 public:
-    static CCScene* scene(int h);
+    static CCScene* scene(int h, int from);
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();

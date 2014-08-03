@@ -73,7 +73,8 @@ public:
     void PlayItemPaint();
     void PlayItemStaff();
     
-    void PlayGameResult();
+    void PlayGameResult(bool isNewRecord);
+    void PlayGameResultScore();
     void StopGameResult();
     
     void PlayPieceClick(int idx);
@@ -81,6 +82,9 @@ public:
     void PlaySkillSound(int skillNum);
     void PlayDesignatedSound(int idx);
     void UnLoadInGameSound();
+    
+    void UnLoadInGameTutorial();
+    void PreLoadInGameTutorial();
     
 protected:
     int nClockSoundId;

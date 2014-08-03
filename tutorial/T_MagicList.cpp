@@ -212,8 +212,6 @@ void T_MagicList::InitSprites()
                 
                 ttrPos->setAnchorPoint(ccp(0, 0));
                 ttrPos->setPosition(ccp(127+j*229+12-14, 1451-i*160+offset+12-10));
-                //ttrPos->setScaleX( (float)156 / (float)782 );
-                //ttrPos->setScaleY( (float)156 / (float)177 );
                 ttrPos->setContentSize(CCSize(153, 153));
                 layer->addChild(ttrPos, 5005);
             }
@@ -263,7 +261,7 @@ void T_MagicList::MakeScrollSlot(bool isAutoMove)
         sprintf(fname, "background/bg_skill_yellow.png%d", i);
         spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
         
-        if (tutorialState == 10 && i == 0)
+        if (tutorialState == 10+2 && i == 0)
         {
             
             //scid = myInfo->GetSlot()[i]->GetCommonId();
@@ -300,7 +298,7 @@ bool T_MagicList::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     if (scrollViewSlot->boundingBox().containsPoint(point))
         isScrollViewTouched = true;
     
-    if (tutorialState == 10)
+    if (tutorialState == 10+2)
     {
         isTouched = false;
         return true;
@@ -366,7 +364,7 @@ void T_MagicList::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     
     if (isScrollViewTouched && !isScrolling && scrollViewSlot->boundingBox().containsPoint(point))
     {
-        if (tutorialState == 10)
+        if (tutorialState == 10+2)
             EndScene();
     }
     

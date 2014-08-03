@@ -24,6 +24,9 @@ public:
     void TrySkills(int pieceColor, int queue_pos);
     void Try(int skillNum, int queue_pos);
     
+    SkillBuildUpInfo* GetObj(int num);
+    int GetBasicSkillScore(int num);
+    
     bool IsApplied(int skillNum, int queue_pos);
     
     bool IsSkillNumberExists(int skillNum);
@@ -36,6 +39,7 @@ public:
     
     void A1(int num, int queue_pos);
     void A2(int num, int queue_pos);
+    bool Check_A2(int num, int queue_pos);
     std::vector<CCPoint> A2GetPos();
     void A2Clear();
     

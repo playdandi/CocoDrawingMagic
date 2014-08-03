@@ -537,7 +537,7 @@ void Ranking::ProfileTimer(float f)
         //CCLog("%d : loadingRanking : %d %d %d", i, psp!=NULL, psp->IsLoadingDone(), psp->IsLoadingDoneForRanking());
         if (psp != NULL && psp->IsLoadingDone() && !psp->IsLoadingDoneForRanking())
         {
-            CCLog("ok");
+            //CCLog("ok");
             if (spriteClass == NULL)
                 return;
             spriteClass->ChangeSprite(-888*(i+1), profiles[i]->GetProfile());
@@ -667,7 +667,7 @@ void Ranking::MakeScroll()
         else
         {
             spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102, 36), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 0, -777*(i+1)) ); // tag = -777 * (i+1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(102, 36), CCSize(0, 0), "", "Layer", profileLayer, 5, 0, 255, -777*(i+1)) ); // tag = -777 * (i+1)
         }
         // 친구리스트에 포인터 저장.
         friendList[i]->SetProfile( spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite );
@@ -959,8 +959,6 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 
 void Ranking::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
-    //scrollViewLastPoint = scrollView->getContentOffset();
 }
 
 void Ranking::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
@@ -1086,7 +1084,11 @@ void Ranking::EndScene()
             menuInSetting == 0)
         {
             isInGameTutorial = true;
-            Common::ShowNextScene(this, "Ranking", "T_Puzzle", true);
+            
+            if (menuInSetting == 0)
+                Common::ShowNextScene(this, "Ranking", "T_Puzzle", true, 1); // 1 : 세팅의 튜토리얼에서 옴.
+            else
+                Common::ShowNextScene(this, "Ranking", "T_Puzzle", true, 0); // 0 : 실제 처음 튜토리얼 진행하려고 옴.
         }
         else
             Common::ShowNextScene(this, "Ranking", "LoadingPuzzle", true);

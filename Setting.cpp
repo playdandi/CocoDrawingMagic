@@ -165,14 +165,17 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png1",
                     ccp(0, 0), ccp(75, 492+270), CCSize(929, 904-270), "", "Layer", tLayer, 1) );
     
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png2", // ver
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", // ver
                     ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Layer", tLayer, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png3", // id
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", // id
                     ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Layer", tLayer, 1) );
 
     char temp[50];
     // text (version, kakaoID)
-    sprintf(temp, "게임버전 : %d", binaryVersion_current);
+    int version1 = binaryVersion_current / 1000;
+    int version2 = (binaryVersion_current / 100) % 10;
+    int version3 = binaryVersion_current % 100;
+    sprintf(temp, "게임버전 : %d.%d.%d", version1, version2, version3);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
@@ -385,9 +388,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                CCLog("tutorial ");
-                CCLog("kind = %d", kind);
-                sound->playClick();
+                //sound->playClick();
                 spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
                 ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(170,170,170));
                 rect = spriteClass->spriteObj[i]->sprite->boundingBox();

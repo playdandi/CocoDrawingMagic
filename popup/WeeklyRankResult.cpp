@@ -223,7 +223,7 @@ void WeeklyRankResult::InitSprites()
         // 보상 (opt.) : 배경 + 보상그림 + 보상 숫자
         spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png2", ccp(0.5, 1), ccp(winSize.width/2, 635), CCSize(750, 105), "", "WeeklyRankResult", this, 5) );
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_starcandy.png", ccp(0.5, 0.5), ccp(420, 635-52.5f), CCSize(0, 0), "", "WeeklyRankResult", this, 5) );
-        int numOfStarCandy;
+        int numOfStarCandy = 0;
         if (rewardType == 1) numOfStarCandy = 10000;
         else if (rewardType == 2) numOfStarCandy = 7000;
         else if (rewardType == 3) numOfStarCandy = 5000;
@@ -240,13 +240,8 @@ void WeeklyRankResult::InitSprites()
         //spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(numOfStarCandy), fontList[0], 56, ccp(0.5, 0.5), ccp(600, 635-52.5f), ccc3(255,255,255), "", "WeeklyRankResult", this, 5) );
     }
     
-    // 1~3등 중에 내가 있다면, 축하 이펙트 rotation 하기 + 색종이 떨어뜨리기
-
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        CCLog("%d : %s", i, spriteClass->spriteObj[i]->name.c_str());
         spriteClass->AddChild(i);
-    }
 }
 
 
@@ -267,8 +262,11 @@ bool WeeklyRankResult::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_x_yellow.png")
         {
-            EndScene();
-            return true;
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                EndScene();
+                return true;
+            }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_red.png")
         {
@@ -317,7 +315,7 @@ void WeeklyRankResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void WeeklyRankResult::EndScene()
 {
-    sound->playClick();
+    //sound->playClick();
     
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());

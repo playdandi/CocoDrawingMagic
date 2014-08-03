@@ -1161,7 +1161,6 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 if (myInfo->GetPotion() > 0)
                 {
-                    sound->playClick();
                     spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
                     ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_gamestart.png"))->setColor(ccc3(170,170,170));
                     rect = spriteClass->spriteObj[i]->sprite->boundingBox();
@@ -1286,14 +1285,10 @@ void GameReady::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         switch (kind)
         {
             case BTN_MENU_GAMESTART:
-                //if (myInfo->HasNoProperty()) // 속성이 없으면 속성선택창을 띄운다.
-                //    Common::ShowNextScene(this, "GameReady", "SelectProperty", false, 1);
-                //else
                 StartGame();
                 break;
         }
     }
-    
     
     isScrolling = false;
     isScrollViewTouched = false;

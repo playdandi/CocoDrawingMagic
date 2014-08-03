@@ -24,10 +24,10 @@ public:
     void InitFairy();
     void InitSkill();
     
-    //void MakeOpenedSkillSprites();
+    void MakeOpenedSkillSprites();
     void MakeClosedSkillSprites();
     
-    //std::string SkillDescription(int scid);
+    std::string SkillDescription(int scid);
     
     void EndScene(bool isNoti);
     
@@ -49,6 +49,11 @@ private:
     
     CCScale9Sprite* ttrPos;
     CCSprite* ttrArrow;
+    
+    CCSprite* sp;
+    CCScale9Sprite* mask;
+    CCClippingNode* clip;
+    CCNode* node;
 };
 
 #endif /* defined(__CocoMagic__T_SketchDetail__) */

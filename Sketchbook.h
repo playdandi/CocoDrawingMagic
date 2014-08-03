@@ -50,6 +50,7 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     
     void ShowHintOfBuyingSlot();
+    void ShowHintForBuyingProperty();
     
     int FromWhere();
     

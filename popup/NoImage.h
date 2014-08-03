@@ -4,6 +4,9 @@
 #include "Common.h"
 #include "../pugixml/pugixml.hpp"
 
+#define TOUCH_CANCEL  0
+#define TOUCH_CONFIRM 1
+
 using namespace pugi;
 
 class NoImage : public CCLayer
@@ -35,11 +38,12 @@ public:
     void onSendLinkMessageComplete();
     void onSendLinkMessageErrorComplete(char const *status, char const *error);
 
-    
     void ReplaceScene(std::string to, int type, int btnType);
     void EndScene();
     void EndSceneCallback();
     void Exit();
+    
+    void HandlingTouch(int touchType);
     
     void HttpRequest(std::string url, std::string param);
     void onHttpRequestCompleted(CCNode *sender, void *data);

@@ -193,17 +193,24 @@ void AppDelegate::Resume()
     //CCLog("SESSION CHECK : SUCCESS");
     CCLog("현재위치 : %s", Depth::GetCurName());
     
+    Depth::DumpDepth();
+    
     CCString* param = CCString::create("5");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
+    CCLog("2");
     
-    // 터치 풀기
-    param = CCString::create("10");
-    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-    
+    if (Depth::GetCurNameString() != "Splash")
+    {
+        // 터치 풀기
+        param = CCString::create("10");
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+    }
+    CCLog("3");
     if (Depth::GetCurNameString() != "RankUp")
     {
         // if you use SimpleAudioEngine, it must resume here
         SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
+    CCLog("4");
 }

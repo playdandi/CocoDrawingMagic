@@ -8,8 +8,11 @@ T_PuzzleP8* T_PuzzleP8::CreateP8(CCPoint ap, CCPoint pos, void* parent, int zOrd
     puzzleP8->type = type;
 
     if (type == -1) // 기본 랜덤 피스 만들기
+    {
         puzzleP8->type = rand() % TYPE_COUNT;
-
+        //puzzleP8->type = 3 + rand()%2;
+    }
+    
     char name[20];
     sprintf(name, "pieces/%d.png", puzzleP8->type);
 

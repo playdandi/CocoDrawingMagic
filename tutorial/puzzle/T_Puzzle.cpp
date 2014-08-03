@@ -8,17 +8,40 @@ enum
     zPieceConn = 3,
 };
 
-static int ptype[7][7] = {
+static int ttrFromWhere;
+
+static int ptype2[7][7] = { // 불
     -1, 1, 0, 2, 4, 4, -1,
     2, 0, 4, 2, 0, 0, 1,
-    0, 1, 4, 1, 4, 0, 1,
+    0, 1, 4, 1, 0, 4, 1,
     0, 1, 3, 3, 1, 2, 3,
     1, 1, 1, 0, 3, 0, 4,
     2, 1, 2, 4, 4, 1, 2,
-    -1, 0, 3, 0, 0, 4, -1};
+    -1, 0, 3, 0, 0, 4, -1
+};
+static int ptype1[7][7] = { // 물
+    -1, 1, 0, 2, 4, 4, -1,
+    2, 0, 4, 2, 1, 1, 0,
+    0, 1, 4, 0, 1, 4, 0,
+    0, 1, 3, 3, 2, 2, 3,
+    1, 1, 1, 0, 3, 1, 4,
+    2, 1, 2, 4, 4, 0, 2,
+    -1, 0, 3, 1, 1, 4, -1
+};
+static int ptype3[7][7] = { // 땅
+    -1, 1, 0, 2, 4, 4, -1,
+    2, 0, 4, 0, 2, 2, 1,
+    0, 1, 4, 1, 2, 4, 1,
+    0, 1, 3, 3, 1, 0, 3,
+    1, 1, 1, 0, 3, 2, 4,
+    2, 1, 0, 4, 4, 1, 3,
+    -1, 0, 3, 2, 2, 4, -1
+};
 
-CCScene* T_Puzzle::scene()
+CCScene* T_Puzzle::scene(int from)
 {
+    ttrFromWhere = from; // 0 : 실제 인게임 튜토리얼(게임 첫 시작) , 1 : 환경설정->튜토리얼
+    
 	CCScene* pScene = CCScene::create();
     
 	T_Puzzle* pLayer = T_Puzzle::create();
@@ -63,6 +86,13 @@ bool T_Puzzle::init()
 		return false;
 	}
     
+    myP = 1;
+    if (myInfo->IsFire()) myP = 2;
+    else if (myInfo->IsWater()) myP = 1;
+    else if (myInfo->IsLand()) myP = 3;
+    
+    cycleNum = 1;
+    
     isKeybackTouched = true;
     isFalling = true;
     isInGamePause = true;
@@ -81,7 +111,7 @@ bool T_Puzzle::init()
     
     
     sound = new Sound();
-    sound->PreLoadInGameSound();
+    sound->PreLoadInGameTutorial();
     effect = new T_Effect();
     effect->Init(effect, this);
     
@@ -139,29 +169,12 @@ void T_Puzzle::InitTutorial()
     ttrBg2->setOpacity(0);
     this->addChild(ttrBg2, 3001);
     
-    /*
-    ttrBg = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width-250, 150));
-    ttrBg->setAnchorPoint(ccp(0.5, 1));
-    ttrBg->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120-30));
-    ttrBg->setColor(ccc3(0,0,0));
-    ttrBg->setOpacity(0);
-    this->addChild(ttrBg, 3001);
-     */
-    
     CCSize size = ttrBg1->getContentSize();
     ttrMsg = CCLabelTTF::create("", fontList[0].c_str(), 34, CCSize(700, 150), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter);
     ttrMsg->setAnchorPoint(ccp(0.5, 0.5));
     ttrMsg->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130+30));
     ttrMsg->setColor(ccc3(255,255,255));
     this->addChild(ttrMsg, 3002);
-    //ttrMsg->setPosition(ccp(size.width/2, size.height/2));
-    
-    //ttrBg->addChild(ttrMsg, 3002);
-    //ttrBg->setOpacity(0);
-    
-    //ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-    //ttrArrow->setRotation(180);
-    //ttrArrow->retain();
     
     ttrFinger = CCSprite::create("images/tutorial_finger.png");
     ttrFinger->setScale(1.3f);
@@ -180,8 +193,6 @@ void T_Puzzle::InitTutorial()
         ttrSkip = CCSprite::create("images/tutorial_skip.png");
         ttrSkip->setAnchorPoint(ccp(1, 0));
         ttrSkip->setPosition(ccp(m_winSize.width, vo.y));
-        //ttrSkip->setScaleX((float)400 / (float)637);
-        //ttrSkip->setScaleY((float)100 / (float)130);
         this->addChild(ttrSkip, 3001);
     //}
     #endif
@@ -226,12 +237,11 @@ void T_Puzzle::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
-        CCLog("2222222");
         //sound->StopBackgroundInGameSound();
         sound->ResumeAllEffects();
         
         // 종료하고 Ranking으로 돌아가자.
-        CCLog("T_Puzzle 종료. Ranking으로 돌아감.");
+        //CCLog("T_Puzzle 종료. Ranking으로 돌아감.");
         this->TutorialEnd();
     }
 }
@@ -242,16 +252,28 @@ void T_Puzzle::InitSkills()
     std::vector<int> skillNum, skillProb, skillLv;
     
     skillNum.push_back(0);
+    skillNum.push_back(8);
+    skillNum.push_back(16);
     skillNum.push_back(1);
+    skillNum.push_back(9);
+    skillNum.push_back(17);
     skillNum.push_back(7);
     
     skillProb.push_back(100);
     skillProb.push_back(100);
     skillProb.push_back(100);
+    skillProb.push_back(100);
+    skillProb.push_back(100);
+    skillProb.push_back(100);
+    skillProb.push_back(100);
     
-    skillLv.push_back(5);
-    skillLv.push_back(5);
-    skillLv.push_back(5);
+    skillLv.push_back(1);
+    skillLv.push_back(1);
+    skillLv.push_back(1);
+    skillLv.push_back(3);
+    skillLv.push_back(3);
+    skillLv.push_back(3);
+    skillLv.push_back(7);
  
     skill->Init(skillNum, skillProb, skillLv);
 }
@@ -341,7 +363,8 @@ void T_Puzzle::InitSprites()
     
     // puzzle board
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/board.png", ccp(0.5, 0.5), ccp(0, 0), CCSize(0, 0), "", "Layer", puzzleLayer, 20) );
-    ((CCSprite*)spriteClass->FindSpriteByName("background/board.png"))->setScale((float)boardSize.height/(float)1076);
+    float oh = ((CCSprite*)spriteClass->FindSpriteByName("background/board.png"))->getContentSize().height;
+    ((CCSprite*)spriteClass->FindSpriteByName("background/board.png"))->setScale((float)boardSize.height/(float)oh);
     
     // 화면 비율에 맞춰 piece 1개의 size 지정하기
     PIECE8_WIDTH = (float)152 * (float)boardSize.height/(float)1076;
@@ -654,7 +677,12 @@ void T_Puzzle::InitBoard()
                 (x == COLUMN_COUNT-1 && y == 0) || (x == COLUMN_COUNT-1 && y == ROW_COUNT-1))
                 continue;
             
-            puzzleP8set->CreatePiece(x, y, ptype[y][x]);
+            if (myP == 1)
+                puzzleP8set->CreatePiece(x, y, ptype1[y][x]);
+            else if (myP == 2)
+                puzzleP8set->CreatePiece(x, y, ptype2[y][x]);
+            else if (myP == 3)
+                puzzleP8set->CreatePiece(x, y, ptype3[y][x]);
             spriteP8[x][y] = puzzleP8set->GetSprite(x, y);
             spriteP8[x][y]->setColor(ccc3(180,180,180));
             puzzleP8set->AddChild(x, y);
@@ -693,6 +721,8 @@ void T_Puzzle::InitBoard()
         piece4xy.push_back(temp4);
         strap.push_back(temp5);
         
+        lastPosition.push_back(CCPointZero);
+        
         // skill state 초기화
         m_iState[i] = -1;
         m_iNextState[i] = -1;
@@ -726,31 +756,76 @@ void T_Puzzle::SetScoreAndStarCandy()
 
 void T_Puzzle::UpdateScore(int type, int data)
 {
-    //CCLog("before : %d %d", iScore, data);
+    int score;
     if (type == 0)
     {
-        if (data < 3)
-            iScore += data * 1000;
-        else
-            // 기본점수 : (50 + 15(n-3)^1.2) * n
-            iScore += ( (50 + 15*pow(data-3, 1.20)) * data );
+        // 기본드래그 개수, 피버로 터진 추가개수 따로 구하기
+        int dragNum_basic = data;
+        
+        // 한붓그리기 기본점수 계산
+        score = (200 + myInfo->GetMPTotal()/2 + 15*pow(dragNum_basic-3, 1.2f)) * dragNum_basic;
+        
+        if (m_bIsCycle[(touch_cnt-1)%QUEUE_CNT]) // (1000 + 드래그점수)*2 = 사이클 점수
+            score += (1000+score)*2;
     }
     else if (type == 1)
     {
         // 기본 스킬에 의한 추가점수 (A1)
-        iScore += data;
+        score = data;
     }
-    //CCLog("after : %d", iScore);
+    
+    iScore += score;
     
     pScoreLayer->removeAllChildren();
     pScoreLayer->removeFromParentAndCleanup(true);
     
-    char n[12];
-    sprintf(n, "%d", iScore);
     pScoreLayer = Common::MakeScoreLayer(iScore);
     CCSize s = pScoreLayer->getContentSize();
     pScoreLayer->setPosition(ccp(m_winSize.width/2-s.width/2-30, vo.y+vs.height-93-7));
     this->addChild(pScoreLayer, 6);
+    
+    // show score (type이 0이란 말은 기본 한붓그리기 점수를 의미함)
+    // 각 1번스킬 때 보여주지 마라!
+    int queue_pos = (touch_cnt-1)%QUEUE_CNT;
+    if (!skill->IsApplied(0, queue_pos) && !(skill->IsApplied(8, queue_pos)) && !(skill->IsApplied(16, queue_pos)))
+    {
+        std::vector<CCPoint> pos = piece8xy[(touch_cnt-1)%QUEUE_CNT];
+        int idx;
+        if (m_bIsCycle[(touch_cnt-1)%QUEUE_CNT])
+            idx = 0;
+        else
+            idx = pos.size()-1;
+        
+        ShowBasicScore(score, pos[idx], (int)pos.size());
+    }
+}
+
+void T_Puzzle::ShowBasicScore(int score, CCPoint pos, int size) // 한붓그리기 기본점수
+{
+    float scale = GetScoreBasicScale(size);
+    CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(score), scale);
+    this->addChild(layer, 100);
+    
+    pos = SetTouch8Position(pos.x, pos.y);
+    layer->setPosition(ccp(pos.x+layer->getContentSize().width/2, pos.y));
+    
+    int cnt = layer->getChildrenCount();
+    for (int i = 0 ; i < cnt ; i++)
+    {
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), CCMoveBy::create(0.6f, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::ShowSkillScore_Callback), (void*)layer->getChildrenCount()), NULL );
+        layer->getChildByTag(i)->runAction(action);
+    }
+}
+
+float T_Puzzle::GetScoreBasicScale(int size) // 한붓그리기한 개수에 따라 점수 크기 조정
+{
+    float scale = 1.0f;
+    if (size <= 5) scale = 1.0f;
+    else if (size <= 9) scale = 1.3f;
+    else if (size <= 14) scale = 1.5f;
+    else if (size <= 19) scale = 2.0f;
+    else if (size >= 20) scale = 3.0f;
+    return scale;
 }
 
 void T_Puzzle::UpdateStarCandy(int type, int data)
@@ -801,6 +876,7 @@ void T_Puzzle::TutorialNextState()
     CCActionInterval* action = NULL;
     
     CCLog("인게임 튜토리얼 이번 상태 : %d", ttrState);
+    char name[200];
     switch (ttrState)
     {
         case 0:
@@ -862,10 +938,16 @@ void T_Puzzle::TutorialNextState()
         case 9:
             ttrBg1->setOpacity(0);
             ttrBg2->setOpacity(255);
-            ttrMsg->setString("나는 불 속성 마법사라서 붉은 피스를 그리면 마법을 시전할 수 있어!");
+            if (myP == 1) sprintf(name, "너는 물 속성 마법사라서 파란 피스를 그리면 마법을 시전할 수 있어!");
+            else if (myP == 2) sprintf(name, "너는 불 속성 마법사라서 빨간 피스를 그리면 마법을 시전할 수 있어!");
+            else if (myP == 3) sprintf(name, "너는 땅 속성 마법사라서 초록 피스를 그리면 마법을 시전할 수 있어!");
+            ttrMsg->setString(name);
             break;
         case 10:
-            ttrMsg->setString("빨간색 피스를 따라 그려봐.");
+            if (myP == 1) sprintf(name, "파란색 피스를 따라 그려봐.");
+            else if (myP == 2) sprintf(name, "빨간색 피스를 따라 그려봐.");
+            else if (myP == 3) sprintf(name, "초록색 피스를 따라 그려봐.");
+            ttrMsg->setString(name);
             break;
         case 11: // 붉은색 기본 마법 위한 한붓그리기
             ttrFinger->setOpacity(255);
@@ -888,9 +970,9 @@ void T_Puzzle::TutorialNextState()
             ttrBg2->setOpacity(0);
             char temp[150];
             if (myInfo->IsFire())
-                sprintf(temp, "그렇구나! 나는 불 속성 마법사니까, 너처럼 붉은색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
+                sprintf(temp, "그렇구나! 나는 불 속성 마법사니까, 빨간색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
             else if (myInfo->IsWater())
-                sprintf(temp, "그렇구나! 나는 물 속성 마법사니까, 푸른색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
+                sprintf(temp, "그렇구나! 나는 물 속성 마법사니까, 파란색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
             else if (myInfo->IsLand())
                 sprintf(temp, "그렇구나! 나는 땅 속성 마법사니까, 초록색 피스를 없애면 추가점수를 얻을 수 있겠구나!");
             ttrMsg->setString(temp);
@@ -903,25 +985,41 @@ void T_Puzzle::TutorialNextState()
         case 15:
             ttrBg1->setOpacity(0);
             ttrBg2->setOpacity(255);
-            ttrMsg->setString("아래에 보이는 붉은 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
+            if (myP == 1) sprintf(name, "아래에 보이는 파란 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
+            else if (myP == 2) sprintf(name, "아래에 보이는 빨간 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
+            else if (myP == 3) sprintf(name, "아래에 보이는 초록 피스를 처음과 끝이 연결되도록, 삼각형으로 그려봐!");
+            ttrMsg->setString(name);
             break;
         case 16: // 사이클 한붓그리기
+            MakeFingerNumber();
             ttrFinger->setOpacity(255);
-            ttrFinger->setPosition( SetTouch8Position(4, 1) );
-            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(5, 1)), CCMoveTo::create(0.5f, SetTouch8Position(5, 2)), CCMoveTo::create(0.5f, SetTouch8Position(4, 1)), NULL);
+            ttrFinger->setPosition( SetTouch8Position(4, 2) );
+            action = CCSequence::create(CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)1),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(4, 1)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)2),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(5, 1)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)3),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(4, 2)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)4),
+                                        CCDelayTime::create(0.5f),
+                                        NULL);
             ttrFinger->runAction(CCRepeatForever::create(action));
             spriteP8[4][1]->setColor(ccc3(255,255,255));
             spriteP8[5][1]->setColor(ccc3(255,255,255));
-            spriteP8[5][2]->setColor(ccc3(255,255,255));
+            spriteP8[4][2]->setColor(ccc3(255,255,255));
             puzzleP4set->SetOpacity(5, 2, 255);
             UnLockEach(4, 1);
             UnLockEach(5, 1);
-            UnLockEach(5, 2);
+            UnLockEach(4, 2);
             break;
         case 17:
             ttrBg1->setOpacity(255);
             ttrBg2->setOpacity(0);
             ttrMsg->setString("우와~ 나도 이런 마법을 쓸 수 있어?");
+            ttrFinger_1->removeFromParentAndCleanup(true);
+            ttrFinger_2->removeFromParentAndCleanup(true);
+            ttrFinger_3->removeFromParentAndCleanup(true);
+            ttrFinger_4->removeFromParentAndCleanup(true);
             break;
         case 18:
             ttrBg1->setOpacity(0);
@@ -960,6 +1058,47 @@ void T_Puzzle::TutorialNextState()
     }
 }
 
+void T_Puzzle::MakeFingerNumber()
+{
+    ttrFinger_1 = CCSprite::create("images/tutorial_1.png");
+    ttrFinger_2 = CCSprite::create("images/tutorial_2.png");
+    ttrFinger_3 = CCSprite::create("images/tutorial_3.png");
+    ttrFinger_4 = CCSprite::create("images/tutorial_4.png");
+    ttrFinger_1->setScale(0.5f);
+    ttrFinger_2->setScale(0.5f);
+    ttrFinger_3->setScale(0.5f);
+    ttrFinger_4->setScale(0.5f);
+    
+    ttrFinger_1->setOpacity(255);
+    ttrFinger_2->setOpacity(0);
+    ttrFinger_3->setOpacity(0);
+    ttrFinger_4->setOpacity(0);
+    
+    CCSize s = ttrFinger->getContentSize();
+    ttrFinger_1->setPosition(ccp(s.width/2+6, s.height/2-10));
+    ttrFinger_2->setPosition(ccp(s.width/2+6, s.height/2-10));
+    ttrFinger_3->setPosition(ccp(s.width/2+6, s.height/2-10));
+    ttrFinger_4->setPosition(ccp(s.width/2+6, s.height/2-10));
+    
+    ttrFinger->addChild(ttrFinger_1, 3005);
+    ttrFinger->addChild(ttrFinger_2, 3005);
+    ttrFinger->addChild(ttrFinger_3, 3005);
+    ttrFinger->addChild(ttrFinger_4, 3005);
+}
+
+void T_Puzzle::FingerNumber(CCNode* sender, void *data)
+{
+    int num = (int)data;
+    
+    ttrFinger_1->setOpacity(0);
+    ttrFinger_2->setOpacity(0);
+    ttrFinger_3->setOpacity(0);
+    ttrFinger_4->setOpacity(0);
+    if (num == 1) ttrFinger_1->setOpacity(255);
+    else if (num == 2) ttrFinger_2->setOpacity(255);
+    else if (num == 3) ttrFinger_3->setOpacity(255);
+    else if (num == 4) ttrFinger_4->setOpacity(255);
+}
 
 void T_Puzzle::ReverseColor()
 {
@@ -1088,13 +1227,13 @@ void T_Puzzle::PauseGame()
     if (skill->IsSpiritAlive(2))
         effect->GetSpirit(2)->pauseSchedulerAndActions();
     */
-    Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60);
+    Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60, ttrFromWhere);
 }
 void T_Puzzle::SkipGame()
 {
     CancelDrawing();
     
-    Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60);
+    Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60, ttrFromWhere);
 }
 
 void T_Puzzle::StopAllActionsAtPieces()
@@ -1217,19 +1356,30 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         if (!(x == 5 && y == 4))
             return (m_bTouchStarted = false);
     }
-    /*
     else if (ttrState == 16)
     {
-        if (!(x == 4 && y == 1))
+        if (!(x == 4 && y == 2))
             return (m_bTouchStarted = false);
     }
-    */
+
+     
     if (ttrState == 6 || ttrState == 11 || ttrState == 16) // 화살표 액션 정지
     {
         ttrFinger->stopAllActions();
+        
+        if (ttrState == 6) ttrFinger->setPosition( SetTouch8Position(2, 3) );
+        else if (ttrState == 11) ttrFinger->setPosition( SetTouch8Position(5, 4) );
+        else ttrFinger->setPosition( SetTouch8Position(4, 2) );
     }
     
     ttrFinger->setOpacity(0);
+    if (ttrState == 16)
+    {
+        ttrFinger_1->setOpacity(0);
+        ttrFinger_2->setOpacity(0);
+        ttrFinger_3->setOpacity(0);
+        ttrFinger_4->setOpacity(0);
+    }
     
     m_bIsCycle[touch_cnt%QUEUE_CNT] = false;
     m_bLockP8[x][y]++; // lock 걸기
@@ -1277,6 +1427,22 @@ void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
         
         if (x == -1 && y == -1)
             return;
+        
+        if (ttrState == 16)
+        {
+            CCLog(" %d %d %d", cycleNum, x, y);
+            if ( (cycleNum == 1 && x == 4 && y == 1) ||
+                 (cycleNum == 2 && x == 5 && y == 1) ||
+                 (cycleNum == 3 && x == 4 && y == 2) )
+            {
+                cycleNum++;
+            }
+            else
+            {
+                return;
+            }
+        }
+        
         
         // 바로 직전에 한붓그리기한 piece 위치
         int size = piece8xy[touch_cnt%QUEUE_CNT].size();
@@ -1365,8 +1531,16 @@ void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
             {
                 if (m_bIsCycle[touch_cnt%QUEUE_CNT])
                 {
-                    // cycle을 표시해주는 액션이 들어간다.
                     sound->PlayPieceClick(piece8xy[touch_cnt%QUEUE_CNT].size()+1);
+                    sound->PlayCycle();
+                    
+                    CCSprite* sp = CCSprite::create("images/cycle.png");
+                    CCPoint p = SetTouch8Position(x, y);
+                    sp->setPosition(ccp(p.x, p.y-100));
+                    sp->setOpacity(0);
+                    this->addChild(sp, 30);
+                    CCActionInterval* action = CCSequence::create( CCSpawn::create( CCMoveBy::create(0.6f, ccp(0, 50)), CCSequence::create(CCFadeIn::create(0.3f), CCFadeOut::create(0.3f), NULL), NULL), CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::Cycle_Callback), this), NULL );
+                    sp->runAction(action);
                 }
                 else
                 {
@@ -1400,6 +1574,11 @@ void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
             }
         }
 	}
+}
+
+void T_Puzzle::Cycle_Callback(CCNode* sender, void* p)
+{
+    sender->removeFromParentAndCleanup(true);
 }
 
 void T_Puzzle::CheckUselessDiaPieces()
@@ -1472,6 +1651,12 @@ void T_Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             // 일단 정령 스킬부터 semaphore 증가.
             // m_iSpiritSP++;
             
+            
+            int size = piece8xy[touch_cnt%QUEUE_CNT].size();
+            lastPosition[touch_cnt%QUEUE_CNT] = piece8xy[touch_cnt%QUEUE_CNT][size-1];
+            if (m_bIsCycle[touch_cnt%QUEUE_CNT])
+                lastPosition[touch_cnt%QUEUE_CNT] = piece8xy[touch_cnt%QUEUE_CNT][0];
+            
             // 다시 락 걸어둔다.
             for (int x = 0 ; x < COLUMN_COUNT ; x++)
                 for (int y = 0 ; y < ROW_COUNT ; y++)
@@ -1508,10 +1693,7 @@ void T_Puzzle::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             if (m_bSkillLock[touch_cnt%QUEUE_CNT])
             {
                 m_iSkillSP++; // skill semaphore 증가
-                //CCLog("스킬 lock 걸림 (%d)", touch_cnt%QUEUE_CNT);
             }
-            else
-                //CCLog("스킬 발동 X (%d)", touch_cnt%QUEUE_CNT);
             
             m_iBombCallbackType[touch_cnt%QUEUE_CNT] = 0;
             
@@ -1576,6 +1758,16 @@ void T_Puzzle::CancelDrawing()
     
     isCancelling = false;
     
+    cycleNum = 1;
+    if (ttrState == 16)
+    {
+        ttrFinger_1->setOpacity(255);
+        ttrFinger_2->setOpacity(0);
+        ttrFinger_3->setOpacity(0);
+        ttrFinger_4->setOpacity(0);
+    }
+    
+    
     // action (finger) 재시작
     CCActionInterval* action;
     if (ttrState == 6)
@@ -1583,7 +1775,18 @@ void T_Puzzle::CancelDrawing()
     else if (ttrState == 11)
         action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(4, 5)), CCMoveTo::create(0.5f, SetTouch8Position(3, 5)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(5, 4)), NULL);
     else if (ttrState == 16)
-        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(5, 1)), CCMoveTo::create(0.5f, SetTouch8Position(5, 2)), CCMoveTo::create(0.5f, SetTouch8Position(4, 1)), NULL);;
+    {
+        action = CCSequence::create(CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)1),
+                                    CCMoveTo::create(0.5f, SetTouch8Position(4, 1)),
+                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)2),
+                                    CCMoveTo::create(0.5f, SetTouch8Position(5, 1)),
+                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)3),
+                                    CCMoveTo::create(0.5f, SetTouch8Position(4, 2)),
+                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)4),
+                                    CCDelayTime::create(0.5f),
+                                    NULL);
+    }
+    
     ttrFinger->runAction(CCRepeatForever::create(action));
 }
 
@@ -1596,6 +1799,7 @@ void T_Puzzle::InvokeSkills(int queue_pos)
         CCLog("state(%d) BASIC", queue_pos);
         if (skill->IsApplied(1, queue_pos) || skill->IsApplied(9, queue_pos) || skill->IsApplied(17, queue_pos))
         {
+            CCLog("next cycle");
             m_iNextState[queue_pos] = SKILL_CYCLE;
         }
         else
@@ -1604,34 +1808,20 @@ void T_Puzzle::InvokeSkills(int queue_pos)
         }
         
         Lock(queue_pos);
+        Bomb(queue_pos, piece8xy[queue_pos]);
         
         if (ttrState != 6)
-            skill->Invoke(0, queue_pos);
-        
-        Bomb(queue_pos, piece8xy[queue_pos]);
+        {
+            skill->Invoke(0, queue_pos); skill->Invoke(8, queue_pos); skill->Invoke(16, queue_pos);
+        }
     }
     else if (m_iState[queue_pos] == SKILL_CYCLE) // 사이클 주변부 터뜨리기
     {
         CCLog("state(%d) CYCLE", queue_pos);
         
         m_iNextState[queue_pos] = SKILL_DONE;
-        skill->Invoke(1, queue_pos);// skill->Invoke(9, queue_pos); skill->Invoke(17, queue_pos);
+        skill->Invoke(1, queue_pos); skill->Invoke(9, queue_pos); skill->Invoke(17, queue_pos);
     }
-    /*
-    else if (m_iState[queue_pos] == SKILL_FINAL) // 마지막 (속성별 8번) 스킬
-    {
-        CCLog("state(%d) FINAL", queue_pos);
-        m_iNextState[queue_pos] = SKILL_DONE;
-
-        skill->Invoke(7, queue_pos);
- 
-        if (!skill->IsApplied(7, queue_pos))
-        {
-            m_iState[queue_pos] = m_iNextState[queue_pos];
-            InvokeSkills(queue_pos);
-        }
-    }
-    */
     
     else if (m_iState[queue_pos] == SKILL_DONE)
     {
@@ -1724,8 +1914,6 @@ void T_Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
     // sound bomb
     if (m_iState[queue_pos] == SKILL_BASIC && skill->IsApplied(0, queue_pos) && globalType[queue_pos] == PIECE_RED)
         sound->PlaySkillSound(0); //sound->PlayVoice(VOICE_EIT2);
-    //else if (F8_idx != -1)
-    //    ;
     else
         sound->PlayBomb();
     
@@ -1793,7 +1981,6 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
         else if (m_iState[(int)queue_pos] == SKILL_BASIC) // 한붓그리기 부분 폭발 완료 (피버타임 순차폭발이 끝났을 경우에도)
         {
             CCLog("bomb callback (%d) BASIC", (int)queue_pos);
-            // 추가점수 , +10 은 따로 둔 callback에서 처리하도록 하자
             
             for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
             {
@@ -1803,6 +1990,7 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                 spriteP8[x][y] = NULL;
             }
             
+            CCLog("next state = %d", m_iNextState[(int)queue_pos]);
             if (m_iNextState[(int)queue_pos] == SKILL_CYCLE) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
             {
                 m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
@@ -1903,14 +2091,23 @@ void T_Puzzle::Falling(int queue_pos)
                 {
                     // 더 이상 내려야 할 8각형이 없는 경우 (새로 만들어서 drop시킨다)
                     
+                    /*
                     type = -1;
                     if (ttrState == 6)
                     {
                         type = rand() % TYPE_COUNT;
                         if (type == 0) type = 2;
                     }
+                    */
                     //else if (ttrState < 22)
                     //    type = PIECE_RED;
+                    
+                    if (ttrState < 16)
+                        type = 3 + rand()%2;
+                    else if (ttrState < 22)
+                        type = PIECE_RED;
+                    else
+                        type = -1;
                         
                     puzzleP8set->CreatePiece(x, y, type);
                     puzzleP8set->GetObject(x, y)->SetPosition(SetPiece8Position(x, end));
@@ -2114,8 +2311,6 @@ void T_Puzzle::EndScene()
     // 일시정지 화면에서 바로 종료하는 상황일 경우
     isInGamePause = false;
     
-    CCLog("@#@!#@!#");
-    
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
@@ -2134,7 +2329,7 @@ void T_Puzzle::EndScene()
     delete skill;
     sound->StopAllEffects();
     sound->StopBackgroundInGameSound();
-    sound->UnLoadInGameSound();
+    sound->UnLoadInGameTutorial();
     delete sound;
     
     puzzleP4set->RemoveAllObjects();
@@ -2192,11 +2387,9 @@ void T_Puzzle::EndScene()
     
     if (!isRebooting)
     {
-        // 클라이언트의 튜토리얼 value가 이미 true라면, 이는 환경설정에서 들어왔다는 의미. UI로 돌아간다.
-        if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_done", false))
+        if (ttrFromWhere == 1) // 환경설정의 튜토리얼에서 들어온 경우 다시 랭킹화면으로 돌아가자.
             Common::ShowNextScene(this, "T_Puzzle", "Ranking", true, 0);
-        // 처음 튜토리얼에 들어왔다는 의미. 실제 인게임을 시작한다.
-        else
+        else // 처음 튜토리얼에 들어왔다는 의미. 실제 인게임을 시작한다.
             Common::ShowNextScene(this, "T_Puzzle", "LoadingPuzzle", true);
         
         CCUserDefault::sharedUserDefault()->setBoolForKey("is_inGameTutorial_done", true);
@@ -2207,6 +2400,57 @@ void T_Puzzle::EndScene()
 void T_Puzzle::EndSceneCallback()
 {
 }
+
+void T_Puzzle::ShowSkillScore(int score, float scale, int queue_pos, int etc, int etc2, int height) // 스킬로 인한 발동점수 (+가중치)
+{
+    CCLayer* layer = Common::MakeItemNumberLayer(Common::MakeComma(score), scale);
+    this->addChild(layer, 100);
+    
+    CCPoint pos;
+    if (etc == -1) // 기본 경우 (마지막 피스)
+        pos = SetTouch8Position(lastPosition[queue_pos].x, lastPosition[queue_pos].y);
+    else // (x, y)를 직접 받은 경우
+        pos = SetTouch8Position(etc, etc2);
+    
+    layer->setPosition(ccp(pos.x+layer->getContentSize().width/2, pos.y+height));
+    
+    bool flag = false;
+    float fadeInTime = 0.3f;
+    float fadeOutTime = 0.3f;
+    
+    if (height > 0)
+    {
+        fadeInTime = 0.7f;
+        fadeOutTime = 0.3f;
+        flag = true;
+    }
+    
+    if (!flag) // scale마다 fade in/out time 조절하기 (클수록 오래 보임)
+    {
+        if (scale < 1.5f) { fadeInTime = 0.3f; fadeOutTime = 0.3f; }
+        else if (scale < 2.0f) { fadeInTime = 0.6f; fadeOutTime = 0.2f; }
+        else if (scale < 2.5f) { fadeInTime = 0.7f; fadeOutTime = 0.3f; }
+        else { fadeInTime = 0.9f; fadeOutTime = 0.3f; }
+    }
+    
+    int cnt = layer->getChildrenCount();
+    for (int i = 0 ; i < cnt ; i++)
+    {
+        CCActionInterval* action = CCSequence::create( CCSpawn::create( CCSequence::create(CCFadeIn::create(fadeInTime), CCFadeOut::create(fadeOutTime), NULL), CCMoveBy::create(fadeInTime+fadeOutTime, ccp(0, 30)), NULL ), CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::ShowSkillScore_Callback), (void*)layer->getChildrenCount()), NULL );
+        layer->getChildByTag(i)->runAction(action);
+    }
+}
+void T_Puzzle::ShowSkillScore_Callback(CCNode* sender, void* data)
+{
+    if ((int)data == sender->getTag())
+    {
+        sender->removeFromParentAndCleanup(true);
+        sender->getParent()->removeFromParentAndCleanup(true);
+    }
+    else
+        sender->removeFromParentAndCleanup(true);
+}
+
 
 float T_Puzzle::GetPieceWidth()
 {

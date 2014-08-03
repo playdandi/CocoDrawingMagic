@@ -474,8 +474,8 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "T_Sketchbook") nextScene = T_Sketchbook::scene(etc);
     else if (to == "T_SketchDetail") nextScene = T_SketchDetail::scene(etc);
     else if (to == "T_MagicList") nextScene = T_MagicList::scene();
-    else if (to == "T_Puzzle") nextScene = T_Puzzle::scene();
-    else if (to == "T_Skip") nextScene = T_Skip::scene(etc);
+    else if (to == "T_Puzzle") nextScene = T_Puzzle::scene(etc);
+    else if (to == "T_Skip") nextScene = T_Skip::scene(etc, etc2);
     
     
     // go
@@ -1109,6 +1109,8 @@ void Common::RebootSystem(void* p)
     
     Depth::ClearDepth();
     
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
+    
     // reload SPLASH scene
     CCScene *pScene = Splash::scene();
     CCDirector::sharedDirector()->replaceScene(pScene);
@@ -1325,7 +1327,6 @@ std::string Common::GetVerifyParams(int type, int topazId, const char* kakaoId, 
     sprintf(temp, "purchase_data=%s&", purchaseData);
     param += temp;
     sprintf(temp, "signature=%s", dataSignature);
-    //sprintf(temp, "signature=gwhuighwugi1237494174169789");
     param += temp;
     if (type == 2) // 선물하기
     {

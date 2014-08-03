@@ -115,20 +115,6 @@ void PuzzlePause::InitSprites()
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_cont.png", ccp(1, 0.5), ccp(m_winSize.width/2-10, m_winSize.height/2-70), CCSize(0,0), "", "PuzzlePause", this, 10) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_end.png", ccp(0, 0.5), ccp(m_winSize.width/2+10, m_winSize.height/2-70), CCSize(0,0), "", "PuzzlePause", this, 10) );
-   
-    /*
-    // 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow_mini.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), CCSize(40+30+224*2 +30 +22, 40+30+80+105 +20 +26), "", "PuzzlePause", this, 5) );
-    char name[50];
-    sprintf(name, "background/bg_potion_time.png");
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), CCSize(40+30+224*2 +30, 40+30+80+105 +20), "", "PuzzlePause", this, 5) );
-    
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("잠시 쉬고 있는 중이에요.", fontList[0], 42, ccp(0.5, 0), ccp(m_winSize.width/2, m_winSize.height/2+27.5f - 5 +15), ccc3(255,255,255), "", "PuzzlePause", this, 10) );
-    
-    // 버튼
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red_mini.png", ccp(0, 1), ccp(m_winSize.width/2+15, m_winSize.height/2 - 2.5f), CCSize(0, 0), "", "PuzzlePause", this, 10) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png", ccp(1, 1), ccp(m_winSize.width/2-15, m_winSize.height/2 - 2.5f), CCSize(0, 0), "", "PuzzlePause", this, 10) );
-    */
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -139,13 +125,21 @@ bool PuzzlePause::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
     
+    rect = CCRectZero;
+    kind = -1;
+    idx = -1;
+    
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
         if (spriteClass->spriteObj[i]->name == "button/btn_pause_cont.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                ResumeGame();
+                //ResumeGame();
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_pause_cont.png"))->setColor(ccc3(140,140,140));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_RESUMEGAME;
+                idx = i;
                 return true;
             }
         }
@@ -153,7 +147,11 @@ bool PuzzlePause::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                EndGame();
+                //EndGame();
+                ((CCSprite*)spriteClass->FindSpriteByName("button/btn_pause_end.png"))->setColor(ccc3(140,140,140));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_ENDGAME;
+                idx = i;
                 return true;
             }
         }
@@ -169,7 +167,19 @@ void PuzzlePause::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 
 void PuzzlePause::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    //CCPoint point = pTouch->getLocation();
+    CCPoint point = pTouch->getLocation();
+    
+    if (idx > -1)
+    {
+        spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
+    }
+    if (rect.containsPoint(point))
+    {
+        if (kind == BTN_MENU_RESUMEGAME)
+            ResumeGame();
+        else if (kind == BTN_MENU_ENDGAME)
+            EndGame();
+    }
 }
 
 

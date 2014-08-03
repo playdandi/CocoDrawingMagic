@@ -94,6 +94,8 @@ extern bool isStartUser;
 
 extern bool isPossibleBuyFairyShown;
 
+extern bool isHintForBuyingNextProperty;
+
 
 // rsa 관련
 extern RSA* rsa;
@@ -698,7 +700,7 @@ class SkillBuildupMPInfo
 public:
     SkillBuildupMPInfo(int skillCount, int requireMP, int discount1, int discount2, int topaz);
     static SkillBuildupMPInfo* GetObj(int skillCount);
-    static int GetOrderForTopaz(std::vector<MySkill*> sList, int scid);
+    //static int GetOrderForTopaz(std::vector<MySkill*> sList, int scid);
     static int GetRealOrder(std::vector<MySkill*> sList, int scid);
     static int GetOrder(std::vector<MySkill*> sList, int scid);
     static int RequiredMP(std::vector<MySkill*> sList, int scid);

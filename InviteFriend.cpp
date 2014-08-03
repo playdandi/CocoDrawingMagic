@@ -23,6 +23,12 @@ void InviteFriend::onEnter()
     isScrolling = false;
     isScrollViewTouched = false;
     
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(InviteFriend::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void InviteFriend::SceneCallback()
+{
     if (!isInviteListGathered)
     {
         // Loading 화면으로 MESSAGE request 넘기기
@@ -39,21 +45,19 @@ void InviteFriend::onEnter()
     }
     else
     {
+        // Loading 화면으로 MESSAGE request 넘기기
+        Common::ShowNextScene(this, Depth::GetCurNameString(), "Loading", false, LOADING_MESSAGE);
+        
         // init sprite
         InitSprites();
         // scroll을 생성 후 데이터 보여주기
         MakeScroll();
         
+        ((Loading*)Depth::GetCurPointer())->EndScene();
+        
         // profile timer 시작
         this->schedule(schedule_selector(InviteFriend::ProfileTimer), 1.0f);
     }
-    
-    // 전체화면 액션
-    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(InviteFriend::SceneCallback)), NULL );
-    tLayer->runAction(CCEaseExponentialOut::create(action));
-}
-void InviteFriend::SceneCallback()
-{
 }
 void InviteFriend::onExit()
 {
@@ -281,7 +285,7 @@ void InviteFriend::MakeScroll()
         else
         {
             spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 0, -777*(i+1)) ); // tag = -777 * (i+1)
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -777*(i+1)) ); // tag = -777 * (i+1)
         }
         inviteList[i]->profile = spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite;
         
@@ -413,8 +417,6 @@ void InviteFriend::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             if (spriteClassScroll == NULL)
                 return;
             spriteClassScroll->ChangeSprite(-888*(index+1), profiles[i]->GetProfile());
-            //CCPoint p = ((CCSprite*)spriteClassScroll->FindSpriteByTag(-888*(index+1)))->getPosition();
-            //((CCSprite*)spriteClassScroll->FindSpriteByTag(-888*(index+1)))->setPosition(ccp(p.x+5, p.y+11));
             ((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
             break;
         }

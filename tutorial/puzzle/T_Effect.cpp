@@ -119,14 +119,18 @@ void T_Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
     CCSprite* sp_cycle;
     if (skillNum == -1)
         sp_cycle = CCSprite::createWithSpriteFrameName("icon/cycle_sun.png");
+    else if (skillNum == -9)
+        sp_cycle = CCSprite::createWithSpriteFrameName("icon/cycle_sea.png");
+    else
+        sp_cycle = CCSprite::createWithSpriteFrameName("icon/cycle_clover.png");
     
     sp_cycle->setAnchorPoint(ccp(0.5, 0.5));
     sp_cycle->setPosition(gameLayer->SetTouch8Position((int)pos[0].x, (int)pos[0].y));
-    sp_cycle->setScale(0.5f);
+    sp_cycle->setScale(2.0f);
     sp_cycle->setOpacity(0);
     gameLayer->addChild(sp_cycle, z1);
     
-    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.35f, 1.0f), CCSequence::create( CCFadeIn::create(0.30f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(T_Effect::PlayEffectCallback), NULL), NULL);
+    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(1.8f, 1.0f), CCSequence::create( CCFadeIn::create(0.30f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(T_Effect::PlayEffectCallback), NULL), NULL);
     sp_cycle->runAction(action);
 }
 void T_Effect::PlayEffectCallback(CCNode* sender, void* data)
@@ -214,6 +218,266 @@ void T_Effect::PlayEffect_1(std::vector<CCPoint> pos)
         gameLayer->addChild(par, z1);
     }
 }
+
+
+void T_Effect::PlayEffect_9(std::vector<CCPoint> pos, int queue_pos)
+{
+    // 물2A : blue 사이클 주변부 이펙트
+    
+    skillPos.clear();
+    skillPos = pos;
+    queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
+    
+    // 터뜨릴 개수가 없으면 바로 Falling을 시작하자.
+    if ((int)pos.size() <= 1)
+    {
+        gameLayer->Falling(queue_pos);
+        return;
+    }
+    
+    sp_fire = CCSprite::create("particles/fire.png");
+    CCParticleSystem* par = CCParticleGalaxy::create();
+    par->setTexture(sp_fire->getTexture());
+    par->setAnchorPoint(ccp(0.5, 0.5));
+    
+    CCPoint first = gameLayer->SetTouch8Position((int)pos[1].x, (int)pos[1].y);
+    par->setPosition(ccp((int)first.x-(int)pos[0].x, (int)first.y-(int)pos[0].y));
+    
+    par->setLife(1);
+    par->setStartSize(200);
+    par->setSpeed(200);
+    par->setSpeedVar(100);
+    
+    ccColor4F startColor = par->getStartColor();
+    startColor.r = 0.08f;
+    startColor.g = 0.82f;
+    startColor.b = 0.99f;
+    par->setStartColor(startColor);
+    
+    par->setDuration(-1);
+    par->setAutoRemoveOnFinish(false);
+    
+    gameLayer->addChild(par, z1);
+    
+    // delta
+    deltaPos = pos[0];
+    
+    callbackCnt = 1;
+    
+    // sound
+    gameLayer->GetSound()->PlaySkillSound(9);
+    
+    CCFiniteTimeAction* action = CCSequence::create(CCBezierBy::create(0.2f, GetBezierConfig(this, 1)), CCCallFuncND::create(gameLayer, callfuncND_selector(T_Effect::Effect9Callback), this), NULL);
+    par->runAction(action);
+}
+
+ccBezierConfig T_Effect::GetBezierConfig(T_Effect* pThis, int mul)
+{
+    CCPoint deltaPos = pThis->deltaPos;
+    
+    ccBezierConfig bezier;
+    int x, y;
+    if ((int)deltaPos.y == 0) // 가로 이동
+    {
+        if ((int)deltaPos.x < 0) x = -(int)deltaPos.x/2;
+        else x = (int)deltaPos.x/2;
+        y = mul * (int)deltaPos.x;
+    }
+    else if ((int)deltaPos.x == 0) // 세로 이동
+    {
+        if ((int)deltaPos.y < 0) y = -(int)deltaPos.y/2;
+        else y = (int)deltaPos.y/2;
+        x = mul * (int)deltaPos.y;
+    }
+    else // 대각선 이동
+    {
+        if (mul < 0) {
+            x = (int)deltaPos.x + (mul * 50);
+            y = 0;
+        }
+        else {
+            x = 0;
+            y = (int)deltaPos.y + (mul * 50);
+        }
+    }
+    bezier.controlPoint_1 = ccp(x, y);
+    bezier.controlPoint_2 = ccp(x, y);
+    bezier.endPosition = deltaPos;
+    return bezier;
+}
+
+void T_Effect::Effect9Callback(CCNode* sender, void* pointer)
+{
+    T_Effect* pThis = (T_Effect*)pointer;
+    
+    // bomb piece
+    int x = (int)pThis->skillPos[pThis->callbackCnt].x;
+    int y = (int)pThis->skillPos[pThis->callbackCnt].y;
+    
+    CCSprite* piece = pThis->gameLayer->GetSpriteP8(x, y);
+    if (piece != NULL)
+    {
+        CCFiniteTimeAction* bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
+        piece->runAction(bomb);
+        
+        // 물 사이클 스킬은 Puzzle의 Bomb함수를 쓰지 않기 때문에, 여기서 개수를 cnt해야 한다.
+        //pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType(x, y), 1 );
+        
+        // 주변 연결피스 제거
+        //pThis->gameLayer->RemoveConnectPiecesXY(x, y);
+    }
+    
+    // 점수 업데이트
+    // 발동점수 + [ SIGMA[k=1~파도폭파수] { [(k)*(10+k*발동점수의 2%)]) } ]
+    int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(9); // 발동점수
+    int A2_addedScore = (int)((float)(pThis->callbackCnt)*(10.0f+(float)(pThis->callbackCnt)*((float)(basicScore*2)/100.0f)));
+    A2_addedScore += (int)((float)basicScore / (float)(pThis->skillPos.size()-1));
+    
+    pThis->gameLayer->UpdateScore(1, basicScore+A2_addedScore);
+    pThis->gameLayer->ShowSkillScore(basicScore+A2_addedScore, (float)((pThis->callbackCnt-1)*20+100)/100.0f, pThis->queuePos, x, y);
+    // scale : 1.0f, 1.2f, 1.4f, ......
+    
+    if (pThis->callbackCnt < (int)pThis->skillPos.size()-1)
+    {
+        pThis->callbackCnt++;
+        
+        // sound
+        if (pThis->callbackCnt % 2 == 1)
+            pThis->gameLayer->GetSound()->PlaySkillSound(9);
+        
+        int mul = (pThis->callbackCnt % 2 == 0) ? -1 : 1;
+        CCFiniteTimeAction* action = CCSequence::create(CCBezierBy::create(0.2f, GetBezierConfig(pThis, mul)), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(T_Effect::Effect9Callback), (void*)pThis), NULL);
+        sender->runAction(action);
+    }
+    else
+    {
+        int x, y;
+        for (int i = 1 ; i < pThis->skillPos.size() ; i++)
+        {
+            x = (int)pThis->skillPos[i].x;
+            y = (int)pThis->skillPos[i].y;
+            if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
+            {
+                pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+                pThis->gameLayer->SetSpriteP8Null(x, y);
+            }
+        }
+        pThis->skillPos.clear();
+        
+        ((CCParticleSystem*)sender)->setDuration(0.1);
+        ((CCParticleSystem*)sender)->setAutoRemoveOnFinish(true);
+        
+        pThis->gameLayer->Falling(pThis->queuePos);
+    }
+}
+
+void T_Effect::PlayEffect_17(std::vector<CCPoint> pos, int queue_pos)
+{
+    callbackCnt = 0;
+    callbackDone = 0;
+    skillPos = pos;
+    queuePos = queue_pos; // 이 스킬이 터지는 동안은 lock에 의해 queue_pos가 증가하지 않을 것이기 떄문에, 이렇게 한 변수에 둬도 괜찮을 것이다.
+    
+    PlayEffect_17_Callback(NULL, this);
+}
+void T_Effect::PlayEffect_17_Callback(CCNode* sender, void* p)
+{
+    T_Effect* pThis = (T_Effect*)p;
+    int x[3], y[3];
+    
+    int size;
+    if (pThis->skillPos.size() < 5) size = 1;
+    else if (pThis->skillPos.size() < 9) size = 2;
+    else size = 3;
+    pThis->callbackCnt += size;
+    
+    int numOfBomb = (int)pThis->skillPos.size() / size; // 총 터지는 횟수 (네잎클로버 출현 횟수)
+    if ((int)pThis->skillPos.size() % size > 0)
+        numOfBomb++;
+    
+    int cnt = 0;
+    if (pThis->callbackDone < pThis->skillPos.size())
+    {
+        if (size >= 3 && pThis->callbackCnt-3 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-3 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-3 ].y;
+            cnt++;
+        }
+        if (size >= 2 && pThis->callbackCnt-2 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-2 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-2 ].y;
+            cnt++;
+        }
+        if (size >= 1 && pThis->callbackCnt-1 < pThis->skillPos.size())
+        {
+            x[cnt] = pThis->skillPos[ pThis->callbackCnt-1 ].x;
+            y[cnt] = pThis->skillPos[ pThis->callbackCnt-1 ].y;
+            cnt++;
+        }
+        
+        // sound
+        pThis->gameLayer->GetSound()->PlaySkillSound(17);
+        
+        // 점수 업데이트
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 5%)])
+        int dragNum = pThis->gameLayer->GetPiece8xy(true).size(); // 드래그수 구하기
+        int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(17); // 발동점수
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*5)/100.0f))); // 가중치점수
+        pThis->gameLayer->UpdateScore(1, (basicScore+addedScore)/numOfBomb);
+        float scale = pThis->gameLayer->GetScoreBasicScale(dragNum);
+        pThis->gameLayer->ShowSkillScore((basicScore+addedScore)/numOfBomb, scale, pThis->queuePos, x[0], y[0]);
+        
+        
+        pThis->callbackDone += cnt;
+        
+        for (int i = 0 ; i < cnt ; i++)
+        {
+            //pThis->gameLayer->UpdatePieceBombCnt( pThis->gameLayer->GetPuzzleP8Set()->GetType(x[i], y[i]), 1 );
+            //pThis->gameLayer->RemoveConnectPiecesXY(x[i], y[i]);
+            
+            // effect
+            CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/land2.plist");
+            m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+            m_emitter->setPosition(pThis->gameLayer->SetTouch8Position(x[i], y[i]));
+            pThis->gameLayer->addChild(m_emitter, 2000);
+            m_emitter->setAutoRemoveOnFinish(true);
+            
+            // 피스 폭발
+            CCSprite* piece = pThis->gameLayer->GetSpriteP8(x[i], y[i]);
+            if (piece != NULL)
+            {
+                CCFiniteTimeAction* bomb;
+                if (i == 0)
+                    bomb = CCSequence::create( CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL), CCCallFuncND::create(pThis->gameLayer, callfuncND_selector(T_Effect::PlayEffect_17_Callback), pThis), NULL );
+                else
+                    bomb = CCSpawn::create(CCScaleTo::create(0.2f, 1.5f), CCFadeOut::create(0.3f), NULL);
+                piece->runAction(bomb);
+            }
+        }
+    }
+    else
+    {
+        int x, y;
+        for (int i = 0 ; i < pThis->skillPos.size() ; i++)
+        {
+            x = (int)pThis->skillPos[i].x;
+            y = (int)pThis->skillPos[i].y;
+            if (pThis->gameLayer->GetSpriteP8(x, y) != NULL)
+            {
+                pThis->gameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+                pThis->gameLayer->SetSpriteP8Null(x, y);
+            }
+        }
+        pThis->skillPos.clear();
+        
+        pThis->gameLayer->Falling(pThis->queuePos);
+    }
+}
+
+
+
 
 
 void T_Effect::PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos)
@@ -403,6 +667,87 @@ void T_Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
         }
     }
 }
+
+
+void T_Effect::PlayEffect_8(std::vector<CCPoint> pos)
+{
+    // 물1 : blue 기본 추가점수
+    int x, y;
+    
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        x = (int)pos[i].x;
+        y = (int)pos[i].y;
+        
+        CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/water1.plist");
+        m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+        m_emitter->setPosition(gameLayer->SetTouch8Position(x, y));
+        m_emitter->setScale(1.0f);
+        gameLayer->addChild(m_emitter, 2000);
+        m_emitter->setAutoRemoveOnFinish(true);
+    }
+}
+
+
+void T_Effect::PlayEffect_16(std::vector<CCPoint> pos)
+{
+    // 땅1 : green 기본 추가점수 이펙트
+    isDone[16] = true;
+    
+    int x, y;
+    char name[30];
+    
+    CCArray* animFrames = CCArray::createWithCapacity(6);
+    for (int j = 0 ; j < 6 ; j++)
+    {
+        sprintf(name, "anim/green_%d.png", j+1);
+        CCSpriteFrame* frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(name);
+        animFrames->addObject(frame);
+    }
+    
+    for (int i = 0 ; i < pos.size() ; i++)
+    {
+        x = (int)pos[i].x;
+        y = (int)pos[i].y;
+        
+        CCSprite* first = CCSprite::createWithSpriteFrameName("anim/green_1.png");
+        first->setAnchorPoint(ccp(0.5, 0.5));
+        first->setPosition(gameLayer->SetTouch8Position(x, y));
+        gameLayer->addChild(first, z1);
+        
+        CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.03f);
+        CCAnimate* animate = CCAnimate::create(animation);
+        CCFiniteTimeAction* action = CCSequence::create(animate, CCCallFuncND::create(gameLayer, callfuncND_selector(T_Effect::PlayEffectCallback), NULL), NULL);
+        first->runAction(action);
+        
+        //// particle ////
+        sp_fire = CCSprite::create("particles/fire.png");
+        CCParticleSystem* par = CCParticleFlower::create();
+        par->setTexture(sp_fire->getTexture());
+        
+        par->setAnchorPoint(ccp(0.5, 0.5));
+        par->setPosition(gameLayer->SetTouch8Position(x, y));
+        par->setLife(0.5);
+        
+        par->setSpeed(300);
+        par->setSpeedVar(150);
+        
+        ccColor4F startColor = par->getStartColor();
+        startColor.r = 0.1f;
+        startColor.g = 0.9f;
+        startColor.b = 0.1f;
+        par->setStartColor(startColor);
+        
+        par->setDuration(0.15f);
+        par->setAutoRemoveOnFinish(true);
+        
+        gameLayer->addChild(par, z1);
+    }
+    
+    animFrames->removeAllObjects();
+}
+
+
 
 
 void T_Effect::ShowStarCandy(std::vector<CCPoint> pos)

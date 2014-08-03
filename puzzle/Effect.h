@@ -104,10 +104,10 @@ public:
     
     std::vector<CCPoint> GetDoublePos(int idx);
     
-    void ShowStarCandy(std::vector<CCPoint> pos);
     void ShowStarCandy(bool isCycle, std::vector<CCPoint> pos);
-    void ShowStarCandy(CCPoint pos, int size);
-    void ShowStarCandyAll(std::vector<CCPoint> pos);
+    void ShowStarCandyAll(bool isCycle, std::vector<CCPoint> pos);
+    void UpdateStarcandy_0(CCNode* sender, void* p);
+    void UpdateStarcandy_1(CCNode* sender, void* p);
     void ShowStarCandy_Callback_Done(CCNode* sender, void* pointer);
     
     void ShowItemPaintArrow(int x, int y);
@@ -118,6 +118,8 @@ public:
     void PlayEffect_ItemStaff(std::vector<CCPoint> pos, int type);
     
     void BonusBomb(std::vector<CCPoint> pos);
+    
+    void ShowNewRecordEffect(void* p);
     
     void RemoveAllObjects();
     
@@ -148,8 +150,6 @@ private:
     CCSprite* W7_bg;
     CCSprite* iced_bar;
     CCLayer* timerLayer;
-    //CCDrawNode* stencil;
-    //CCClippingNode* clip;
     
     std::vector<int> cbCnt;
     CCSprite* F8_bg;
@@ -169,17 +169,14 @@ private:
     CCSprite* spirit_fire;
     CCSprite* spirit_water;
     CCSprite* spirit_land;
-    /*
-    CCParticleSystemQuad* fire;
-    CCParticleSystemQuad* water;
-    CCParticleSystemQuad* land;
-    */
     
     // 기본 별사탕에 대한 변수
     int starCandyCallbackCnt;
     std::vector<CCPoint> starCandyPos;
     
     int queuePos;
+    bool starcandy_0_isCycle;
+    bool starcandy_1_isCycle;
     
     CCSprite* sp_fire;
     

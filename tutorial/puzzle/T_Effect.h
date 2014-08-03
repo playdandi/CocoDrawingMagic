@@ -29,9 +29,15 @@ public:
     void SpiritEffect(int type, int centerX = -1, int centerY = -1);
     */
     
-    void PlayEffect_0(std::vector<CCPoint> pos);
-    
     void PlayEffect_1(std::vector<CCPoint> pos);
+    void PlayEffect_9(std::vector<CCPoint> pos, int queue_pos);
+    ccBezierConfig GetBezierConfig(T_Effect* pThis, int mul);
+    void PlayEffect_17(std::vector<CCPoint> pos, int queue_pos);
+    void PlayEffect_17_Callback(CCNode* sender, void* p);
+    
+    void PlayEffect_0(std::vector<CCPoint> pos);
+    void PlayEffect_8(std::vector<CCPoint> pos);
+    void PlayEffect_16(std::vector<CCPoint> pos);
     
     void PlayEffect_7(std::vector< std::vector<CCPoint> > pos_d, std::vector<CCPoint> pos, int queue_pos);
     void Effect7_Comet(float f);
@@ -41,6 +47,7 @@ public:
     void Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer);
     void Effect7_Clear();
 
+    void Effect9Callback(CCNode* sender, void* pointer);
     
     std::vector<CCPoint> GetDoublePos(int idx);
     
@@ -63,6 +70,7 @@ private:
     std::vector< std::vector<CCPoint> > skillDoublePos;
     CCPoint deltaPos;
     int callbackCnt;
+    int callbackDone;
     int callbackAll;
     int queue_pos_now;
     int skillNum;

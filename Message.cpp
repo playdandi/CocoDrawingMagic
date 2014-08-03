@@ -21,6 +21,12 @@ void Message::onEnter()
     isScrollViewTouched = false;
     isKeybackTouched = false;
     
+    // 전체화면 액션
+    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Message::SceneCallback)), NULL );
+    tLayer->runAction(CCEaseExponentialOut::create(action));
+}
+void Message::SceneCallback()
+{
     // Loading 화면으로 MESSAGE request 넘기기
     Common::ShowNextScene(this, "Message", "Loading", false, LOADING_MESSAGE);
     
@@ -33,13 +39,6 @@ void Message::onEnter()
     params += temp;
     
     Network::HttpPost(params, URL_MESSAGE_LIST, this, httpresponse_selector(Message::onHttpRequestCompleted));
-    
-    // 전체화면 액션
-    CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(Message::SceneCallback)), NULL );
-    tLayer->runAction(CCEaseExponentialOut::create(action));
-}
-void Message::SceneCallback()
-{
 }
 void Message::onExit()
 {
@@ -370,7 +369,7 @@ void Message::MakeScroll()
                 if (psp == NULL)
                     psp = ProfileSprite::GetObj("");
                 spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
-                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 0, -777*(i+1)) ); // tag = -777 * (i+1)
+                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -777*(i+1)) ); // tag = -777 * (i+1)
             }
         }
         int offset = 0;

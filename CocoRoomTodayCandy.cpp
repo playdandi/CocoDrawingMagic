@@ -41,7 +41,7 @@ void CocoRoomTodayCandy::keyBackClicked()
         return;
     isKeybackTouched = true;
     
-    sound->playClick();
+    //sound->playClick();
     EndScene();
 }
 
@@ -218,7 +218,7 @@ void CocoRoomTodayCandy::MakeScroll()
         else
         {
             spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35, 35), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 1.0f, -888*(numOfList-i)) ); // tag = -888 * (i+1)
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0, -777*(numOfList-i)) ); // tag = -777 * (i+1)
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(35, 35), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 255, -777*(numOfList-i)) ); // tag = -777 * (i+1)
         }
     
         

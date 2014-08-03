@@ -73,7 +73,7 @@ void MagicList::keyBackClicked()
         return;
     isKeybackTouched = true;
     
-    sound->playClick();
+    //sound->playClick();
     TryEnd();
 }
 
@@ -353,18 +353,8 @@ void MagicList::RenewCheck()
     {
         for (int j = 0 ; j < 4; j++)
         {
-            //sprintf(name, "background/bg_skill_yellow.png%c", (4*i+j)+'a');
-            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(127+j*229, 1451-i*160+offset), CCSize(0, 0), "", "Layer", layer, 20) );
             sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
             ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(0);
-            //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0.5), spriteClass->FindParentCenterPos(name), CCSize(0, 0), name, "0", NULL, 21, 1, 0) );
-            /*
-            if (i == 0) sprintf(name2, "icon/icon_skill_division_red.png%d", j);
-            else if (i == 1) sprintf(name2, "icon/icon_skill_division_blue.png%d", j);
-            else if (i == 2) sprintf(name2, "icon/icon_skill_division_green.png%d", j);
-            else sprintf(name2, "icon/icon_skill_division_purple.png%d", j);
-            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229, 1539-i*160+offset), CCSize(0, 0), "", "Layer", layer, 20) );
-            */
             
             // 스킬 문양
             SkillInfo* si = SkillInfo::GetSkillInfo(sid[i*4+j]);
@@ -391,9 +381,6 @@ void MagicList::RenewCheck()
                     sprintf(name2, "background/bg_skill_select.png%d", sid[i*4+j]);
                     ((CCSprite*)spriteClass->FindSpriteByName(name2))->setOpacity(255);
                 }
-                
-                //sprintf(name2, "skill_%d.png", si->GetId());
-                //spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(127+j*229+12, 1451-i*160+offset+12), CCSize(0, 0), "", "Layer", layer, 20, 0, 255, si->GetId()) );
             }
         }
     }

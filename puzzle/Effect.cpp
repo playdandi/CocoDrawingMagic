@@ -1,4 +1,5 @@
 #include "Effect.h"
+#include "PuzzleResult.h"
 
 enum
 {
@@ -209,11 +210,11 @@ void Effect::PlayEffect_CycleOnly(int skillNum, std::vector<CCPoint> pos)
     
     sp_cycle->setAnchorPoint(ccp(0.5, 0.5));
     sp_cycle->setPosition(gameLayer->SetTouch8Position((int)pos[0].x, (int)pos[0].y));
-    sp_cycle->setScale(0.5f);
+    sp_cycle->setScale(2.0f);
     sp_cycle->setOpacity(0);
     gameLayer->addChild(sp_cycle, z1);
     
-    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(0.35f, 1.0f), CCSequence::create( CCFadeIn::create(0.30f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), NULL), NULL);
+    CCFiniteTimeAction* action = CCSequence::create( CCSpawn::create( CCScaleTo::create(1.8f, 1.0f), CCSequence::create( CCFadeIn::create(0.30f), CCFadeOut::create(0.05f), NULL), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffectCallback), NULL), NULL);
     sp_cycle->runAction(action);
 }
 
@@ -727,7 +728,7 @@ void Effect::PlayEffect_16(std::vector<CCPoint> pos)
         CCSprite* first = CCSprite::createWithSpriteFrameName("anim/green_1.png");
         first->setAnchorPoint(ccp(0.5, 0.5));
         first->setPosition(gameLayer->SetTouch8Position(x, y));
-        first->setScale(0.45f);
+        //first->setScale(0.45f);
         gameLayer->addChild(first, z1);
         
         CCAnimation* animation = CCAnimation::createWithSpriteFrames(animFrames, 0.03f);
@@ -1692,34 +1693,6 @@ void Effect::FairySkill()
     m_emitter->setScale(1.0f);
     gameLayer->addChild(m_emitter, 99);
     m_emitter->setAutoRemoveOnFinish(true);
-    
-    /*
-    sp_fire = CCSprite::create("particles/fire.png");
-    CCParticleSystem* par = CCParticleFlower::create();
-    par->setTexture(sp_fire->getTexture());
-    
-    par->setAnchorPoint(ccp(0.5, 0.5));
-    par->setPosition(ccp(gameLayer->m_winSize.width-280, gameLayer->vo.y+gameLayer->tbSize.height+gameLayer->boardSize.height+60));
-    par->setLife(0.5);
-    par->setSpeed(300);
-    par->setSpeedVar(150);
-    par->setScale(2.0f);
-    //par->setTotalParticles(500);
-    
-    CCLog("파티클 개수가 으아아 : %d", par->getParticleCount());
-    
-    ccColor4F startColor = par->getStartColor();
-    startColor.r = 0.95f;
-    startColor.g = 0.95f;
-    startColor.b = 0.95f;
-    par->setStartColor(startColor);
-    
-    par->setDuration(0.2f);
-    par->setAutoRemoveOnFinish(true);
-    
-    gameLayer->addChild(par, 200);
-    */
-
 }
 
 // 새로 만들어진 연결피스에 나타날 이펙트
@@ -1733,7 +1706,7 @@ void Effect::NewlyMadeConnPiece(int x, int y)
     m_emitter->setAutoRemoveOnFinish(true);
 }
 
-
+/*
 void Effect::ShowStarCandy(CCPoint pos, int size)
 {
     CCParticleSystemQuad* m_emitter;
@@ -1752,9 +1725,11 @@ void Effect::ShowStarCandy(CCPoint pos, int size)
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.05f), CCMoveTo::create(0.65f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL);
     m_emitter->runAction(action);
 }
-
+*/
 void Effect::ShowStarCandy(bool isCycle, std::vector<CCPoint> pos)
 {
+    starcandy_0_isCycle = isCycle;
+    
     int size = pos.size();
     
     int z; // 시작 위치
@@ -1775,9 +1750,21 @@ void Effect::ShowStarCandy(bool isCycle, std::vector<CCPoint> pos)
         m_emitter->setPosition(gameLayer->SetTouch8Position((int)pos[z].x, (int)pos[z].y));
         gameLayer->addChild(m_emitter, 100);
         m_emitter->setScale(1.5f);
-        m_emitter->setDuration(0.7f + i*0.15f);
+        m_emitter->setDuration(0.6f + (i+1)*0.15f);
         
-        CCActionInterval* action = CCSequence::create( CCDelayTime::create((i+1)*0.15f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
+        CCActionInterval* action;
+        if (i < total-1)
+        {
+            //action = CCSequence::create( CCDelayTime::create((i+1)*0.15f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
+            action = CCSequence::create( CCDelayTime::create((i+1)*0.15f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), NULL );
+            m_emitter->setAutoRemoveOnFinish(true);
+        }
+        else
+        {
+            action = CCSequence::create( CCDelayTime::create((i+1)*0.15f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::UpdateStarcandy_0), this), NULL );
+            m_emitter->setAutoRemoveOnFinish(false);
+            m_emitter->setTag(size);
+        }
         m_emitter->runAction(action);
         
         z--;
@@ -1786,8 +1773,10 @@ void Effect::ShowStarCandy(bool isCycle, std::vector<CCPoint> pos)
     }
 }
 
-void Effect::ShowStarCandyAll(std::vector<CCPoint> pos)
+void Effect::ShowStarCandyAll(bool isCycle, std::vector<CCPoint> pos)
 {
+    starcandy_1_isCycle = isCycle;
+    
     for (int i = 0 ; i < pos.size() ; i++)
     {
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/starcandy.plist");
@@ -1796,10 +1785,19 @@ void Effect::ShowStarCandyAll(std::vector<CCPoint> pos)
         gameLayer->addChild(m_emitter, 100);
         m_emitter->setScale(1.5f);
         m_emitter->setDuration(0.7f);
-        m_emitter->setAutoRemoveOnFinish(true);
         
-        //CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::ShowStarCandy_Callback_Done), this), NULL );
-        CCActionInterval* action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL), NULL );
+        CCActionInterval* action;
+        if (i+1 < (int)pos.size())
+        {
+            action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL), NULL );
+            m_emitter->setAutoRemoveOnFinish(true);
+        }
+        else
+        {
+            action = CCSequence::create( CCDelayTime::create(0.1f), CCSpawn::create( CCScaleTo::create(0.6f, 0.5f), CCMoveTo::create(0.6f, ccp(100+140-20, gameLayer->vo.y+gameLayer->vs.height-47-20/2+3-7)), NULL ), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::UpdateStarcandy_1), this), NULL );
+            m_emitter->setAutoRemoveOnFinish(false);
+            m_emitter->setTag((int)pos.size());
+        }
         m_emitter->runAction(action);
     }
 }
@@ -1807,6 +1805,23 @@ void Effect::ShowStarCandyAll(std::vector<CCPoint> pos)
 void Effect::ShowStarCandy_Callback_Done(CCNode* sender, void* pointer)
 {
     ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
+}
+
+void Effect::UpdateStarcandy_0(CCNode* sender, void* p) // showstarcandy general
+{
+    Effect* pThis = (Effect*)p;
+    int size = ((CCParticleSystemQuad*)sender)->getTag();
+    sender->removeFromParentAndCleanup(true);
+
+    pThis->gameLayer->UpdateStarCandy(0, size, pThis->starcandy_0_isCycle);
+}
+void Effect::UpdateStarcandy_1(CCNode* sender, void* p) // showstarcandy all
+{
+    Effect* pThis = (Effect*)p;
+    int size = ((CCParticleSystemQuad*)sender)->getTag();
+    sender->removeFromParentAndCleanup(true);
+    
+    pThis->gameLayer->UpdateStarCandy(1, 5*size, pThis->starcandy_1_isCycle);
 }
 
 
@@ -2004,6 +2019,17 @@ void Effect::BonusBomb(std::vector<CCPoint> pos)
     m_emitter2->setAutoRemoveOnFinish(true);
     gameLayer->addChild(m_emitter2, 2000);
     */
+}
+
+void Effect::ShowNewRecordEffect(void* p)
+{
+    PuzzleResult* pr = (PuzzleResult*)p;
+    CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/gameresult_newrecord.plist");
+    m_emitter->setAnchorPoint(ccp(0.5, 0.5));
+    m_emitter->setPosition(ccp(gameLayer->m_winSize.width/2, gameLayer->m_winSize.height/2));
+    m_emitter->setScale(1.0f);
+    m_emitter->setAutoRemoveOnFinish(true);
+    pr->addChild(m_emitter, 5000);
 }
 
 
