@@ -3,7 +3,7 @@
 
 LoadingPuzzle::~LoadingPuzzle(void)
 {
-    CCLog("LoadingPuzzle 소멸자");
+    //CCLog("LoadingPuzzle 소멸자");
 }
 
 CCScene* LoadingPuzzle::scene()
@@ -17,7 +17,7 @@ CCScene* LoadingPuzzle::scene()
 
 void LoadingPuzzle::onEnter()
 {
-    CCLog("LoadingPuzzle :: onEnter");
+    //CCLog("LoadingPuzzle :: onEnter");
     CCLayer::onEnter();
     
     CCActionInterval* action = CCSequence::create(CCDelayTime::create(0.5f), CCCallFuncND::create(this, callfuncND_selector(LoadingPuzzle::AAA), this), NULL);
@@ -47,7 +47,7 @@ void LoadingPuzzle::AAA(CCNode* sender, void* p)
 
 void LoadingPuzzle::onExit()
 {
-    CCLog("LoadingPuzzle :: onExit");
+    //CCLog("LoadingPuzzle :: onExit");
     CCLayer::onExit();
     
     pCoco->removeFromParentAndCleanup(true);
@@ -197,7 +197,7 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
         }
         for (int i = 0 ; i < inGameSkill.size() ; i++)
         {
-            CCLog("행할 스킬 번호 : %d", inGameSkill[i]);
+            //CCLog("행할 스킬 번호 : %d", inGameSkill[i]);
         }
         
         // 빈 슬롯 처리

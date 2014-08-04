@@ -19,7 +19,7 @@ CCScene* SendTopaz::scene(int idx)
 
 void SendTopaz::onEnter()
 {
-    CCLog("SendTopaz : onEnter");
+    //CCLog("SendTopaz : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -36,7 +36,7 @@ void SendTopaz::SceneCallback()
 }
 void SendTopaz::onExit()
 {
-    CCLog("SendTopaz : onExit");
+    //CCLog("SendTopaz : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -70,7 +70,7 @@ bool SendTopaz::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("SendTopaz : touch prio = %d", this->getTouchPriority());
+    //CCLog("SendTopaz : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SendTopaz::Notification), Depth::GetCurName(), NULL);
@@ -119,12 +119,12 @@ void SendTopaz::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("SendTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("SendTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("SendTopaz 터치 비활성");
+        //CCLog("SendTopaz 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -392,7 +392,7 @@ void SendTopaz::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     

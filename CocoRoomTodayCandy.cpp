@@ -12,7 +12,7 @@ CCScene* CocoRoomTodayCandy::scene()
 
 void CocoRoomTodayCandy::onEnter()
 {
-    CCLog("CocoRoomTodayCandy :: onEnter");
+    //CCLog("CocoRoomTodayCandy :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -29,7 +29,7 @@ void CocoRoomTodayCandy::SceneCallback()
 }
 void CocoRoomTodayCandy::onExit()
 {
-    CCLog("CocoRoomTodayCandy :: onExit");
+    //CCLog("CocoRoomTodayCandy :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -63,7 +63,7 @@ bool CocoRoomTodayCandy::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("CocoRoomTodayCandy : touch prio = %d", this->getTouchPriority());
+    //CCLog("CocoRoomTodayCandy : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomTodayCandy::Notification), Depth::GetCurName(), NULL);
@@ -117,12 +117,12 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("CocoRoomTodayCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("CocoRoomTodayCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("CocoRoomTodayCandy : 터치 비활성");
+        //CCLog("CocoRoomTodayCandy : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -388,7 +388,7 @@ bool CocoRoomTodayCandy::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 char name[15];
                 for (int i = 1 ; i < todayCandyKakaoId.size() ; i++)
                 {
-                    CCLog("%s", todayCandyKakaoId[i].c_str());
+                    //CCLog("%s", todayCandyKakaoId[i].c_str());
                     sprintf(name, "todayCandy_%d", i);
                     CCUserDefault::sharedUserDefault()->setStringForKey(name, todayCandyKakaoId[i].c_str());
                 }
@@ -540,7 +540,7 @@ void CocoRoomTodayCandy::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *d
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     

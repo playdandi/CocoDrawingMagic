@@ -4,7 +4,7 @@ static int status;
 
 Loading::~Loading(void)
 {
-    CCLog("Loading 소멸자");
+    //CCLog("Loading 소멸자");
 }
 
 CCScene* Loading::scene(int stat)
@@ -20,7 +20,7 @@ CCScene* Loading::scene(int stat)
 
 void Loading::onEnter()
 {
-    CCLog("Loading :: onEnter");
+    //CCLog("Loading :: onEnter");
     CCLayer::onEnter();
     
     if (status == -1)
@@ -56,7 +56,7 @@ void Loading::AAA(CCNode* sender, void* p)
 
 void Loading::onExit()
 {
-    CCLog("Loading :: onExit");
+    //CCLog("Loading :: onExit");
     CCLayer::onExit();
     
     if (loadingSprites)
@@ -185,7 +185,7 @@ void Loading::LoadingSprites()
 
 void Loading::LoadingSpriteTimer(float f)
 {
-    //CCLog("hahaha = %d", spriteStatus);
+    ////CCLog("hahaha = %d", spriteStatus);
     if (spriteStatus % 2 == 0)
     {
         if (timerStop)
@@ -331,7 +331,7 @@ void Loading::XmlParseGameStart(xml_document *xmlDoc)
 
 void Loading::EndScene()
 {
-    //CCLog("Loading : EndScene");
+    ////CCLog("Loading : EndScene");
     /*
     if (loadingSprites)
     {

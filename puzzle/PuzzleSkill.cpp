@@ -222,7 +222,7 @@ void PuzzleSkill::Try(int skillNum, int queue_pos)
     
     /*if (skillNum == 6)
     {
-        CCLog("코코 try : %d (%d), %d", prob, skillProb[skillNum], skillApplied[queue_pos][skillNum]);
+        //CCLog("코코 try : %d (%d), %d", prob, skillProb[skillNum], skillApplied[queue_pos][skillNum]);
     }*/
     
     if ((skillNum == 5 || skillNum == 13 || skillNum == 21) && skillApplied[queue_pos][skillNum])
@@ -320,7 +320,7 @@ void PuzzleSkill::Invoke(int skillNum, int queue_pos)
 SkillBuildUpInfo* PuzzleSkill::GetObj(int num)
 {
     int sid = SkillInfo::ConvertedToOriginal(num);
-    CCLog("sid, level = %d , %d", sid, skillLevel[num]);
+    //CCLog("sid, level = %d , %d", sid, skillLevel[num]);
     return SkillBuildUpInfo::GetObj(sid, skillLevel[num]);
 }
 
@@ -356,7 +356,7 @@ void PuzzleSkill::A1(int num, int queue_pos)
         else
             dragScore += ((200 + myInfo->GetMPTotal()/2 + 15*pow(dragNum_fever-3, 1.2f)) * dragNum_fever);
     }
-    CCLog("기본점수 : %d", dragScore);
+    //CCLog("기본점수 : %d", dragScore);
     
     // 점수 업데이트 [ (드래그수-1)*(10+드래그수*발동점수의4%) ]
     // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 4%)])
@@ -366,8 +366,8 @@ void PuzzleSkill::A1(int num, int queue_pos)
     float scale = m_pGameLayer->GetScoreBasicScale(dragNum_basic);
     m_pGameLayer->ShowSkillScore(basicScore+A1_addedScore+dragScore, scale, queue_pos);
     
-    CCLog("드래그개수/피버개수 : %d / %d", dragNum_basic, dragNum_fever);
-    CCLog("마법불꽃 : %d %d %d", dragScore, basicScore, A1_addedScore);
+    //CCLog("드래그개수/피버개수 : %d / %d", dragNum_basic, dragNum_fever);
+    //CCLog("마법불꽃 : %d %d %d", dragScore, basicScore, A1_addedScore);
 
     /*
     
@@ -390,8 +390,8 @@ void PuzzleSkill::A1(int num, int queue_pos)
     float scale = m_pGameLayer->GetScoreBasicScale(dragNum);
     m_pGameLayer->ShowSkillScore(basicScore+A1_addedScore+dragScore, scale, queue_pos);
     
-    CCLog("드래그개수 : %d", bombNum);
-    CCLog("마법불꽃 : %d %d %d", dragScore, basicScore, A1_addedScore);
+    //CCLog("드래그개수 : %d", bombNum);
+    //CCLog("마법불꽃 : %d %d %d", dragScore, basicScore, A1_addedScore);
     */
     
     // 이펙트
@@ -460,8 +460,8 @@ bool PuzzleSkill::Check_A2(int num, int queue_pos)
         // 후보 위치 중에서 랜덤하게 고른다. => min(drag수-1, 주변부 가능한 수)
         int dragNum = (int)pos.size();
         int size = std::min(dragNum-1, (int)selectPos.size());
-        //CCLog("%d %d", dragNum-1, (int)selectPos.size());
-        //CCLog("원하는 사이즈 = %d", size);
+        ////CCLog("%d %d", dragNum-1, (int)selectPos.size());
+        ////CCLog("원하는 사이즈 = %d", size);
         int cnt = 0, position;
         while (cnt < size)
         {
@@ -593,10 +593,10 @@ void PuzzleSkill::A2(int num, int queue_pos)
         else
             pos = m_pGameLayer->GetPiece8xy(true);
         
-        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 5%)])
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 7%)])
         int dragNum = (int)pos.size();
         int basicScore = GetBasicSkillScore(num); // 발동점수
-        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*5)/100.0f)));
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*7)/100.0f)));
         m_pGameLayer->UpdateScore(1, basicScore+addedScore);
         float scale = m_pGameLayer->GetScoreBasicScale(dragNum);
         m_pGameLayer->ShowSkillScore(basicScore+addedScore, scale, queue_pos); // 보여줄 때는 발동점수+가중치점수
@@ -899,7 +899,7 @@ void PuzzleSkill::A6(int num, int queue_pos)
     int basicScore = GetBasicSkillScore(num);
     A6_addedScore = (int)((float)(dragNum-5)*(10.0f+(float)dragNum*((float)(basicScore*4)/100.0f)));
     A6_addedScore += basicScore;
-    CCLog("불꽃놀이 드래그 개수 / 총점 : %d / %d", dragNum, A6_addedScore);
+    //CCLog("불꽃놀이 드래그 개수 / 총점 : %d / %d", dragNum, A6_addedScore);
     
     // 폭파
     if (num == 5) // 불꽃놀이는 연달아 터지도록 한다.
@@ -940,7 +940,7 @@ void PuzzleSkill::A6(int num, int queue_pos)
         m_pGameLayer->GetSound()->PlaySkillSound(num);
         
         // 점수 업데이트
-        CCLog("얼음비/상쾌바람 : %d", A6_addedScore);
+        //CCLog("얼음비/상쾌바람 : %d", A6_addedScore);
         float scale = m_pGameLayer->GetScoreBasicScale(result_pos.size());
         m_pGameLayer->UpdateScore(1, A6_addedScore);
         m_pGameLayer->ShowSkillScore(A6_addedScore, scale, queue_pos);
@@ -1040,7 +1040,7 @@ void PuzzleSkill::F6_Callback(CCNode* sender, void *p)
     
     if (pss->F6_callbackCnt <= (int)pss->result_pos.size()+1)
     {
-        CCLog("f6_callbackCnt = %d", pss->F6_callbackCnt);
+        //CCLog("f6_callbackCnt = %d", pss->F6_callbackCnt);
         
         if (pss->F6_callbackCnt <= (int)pss->result_pos.size())
         {
@@ -1206,12 +1206,12 @@ void PuzzleSkill::F8_Start(int num, int queue_pos)
             for (int j = 0 ; j < ROW_COUNT ; j++)
                 if (F8_check[i][j] > 0 || F8_check[i][j] == -1)
                     ch++;
-        //CCLog("%d %d , %d , %d", x, y, F8_check[x][y], ch);
+        ////CCLog("%d %d , %d , %d", x, y, F8_check[x][y], ch);
         if (ch >= 49)
             break;
     }
     
-    CCLog("붉은용의숨결 : 원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
+    //CCLog("붉은용의숨결 : 원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
     
     // 2차원 vector에 저장
     for (int i = 0 ; i < result_double_pos.size() ; i++)
@@ -1280,7 +1280,7 @@ void PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
     SetQueuePos(queue_pos);
     F8_bombQueueIdx.push(idx);
     F8_bombQueuePos.push(pos);
-    CCLog("F8 Bomb : (idx = %d)", idx);
+    //CCLog("F8 Bomb : (idx = %d)", idx);
     
     if (!F8_isFalling)
     {
@@ -1301,7 +1301,7 @@ void PuzzleSkill::F8_Bomb_Real()
     F8_bombQueueIdx.pop();
     F8_bombQueuePos.pop();
     
-    CCLog("F8 Bomb Real : (idx = %d)", bombIdx);
+    //CCLog("F8 Bomb Real : (idx = %d)", bombIdx);
     F8_bombCallbackCnt[bombIdx] = 0;
     
     int itemPieceCnt = 0;
@@ -1330,7 +1330,7 @@ void PuzzleSkill::F8_Bomb_Real()
     }
     
     // 폭발 예상 피스가 모두 일반 피스가 아니라면, callback을 호출하지 못하므로 즉시 턴을 종료한다.
-    CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
+    //CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
     if (itemPieceCnt == (int)result_double_pos[bombIdx].size())
     {
         F8_isFalling = false;
@@ -1373,7 +1373,7 @@ void PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
 void PuzzleSkill::F8_FinishCountUp()
 {
     F8_finishCnt++;
-    CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
+    //CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
     if (F8_finishCnt >= (int)A8_pos.size())
         F8_isActive = false;
 }
@@ -1397,7 +1397,7 @@ bool PuzzleSkill::F8_IsReady()
 void PuzzleSkill::W3(int num)
 {
     // 한방울 한방울 - 콤보에 비례한 추가 점수
-    CCLog("한방울 한방울 스킬 시작함");
+    //CCLog("한방울 한방울 스킬 시작함");
     
     UpdateAppliedSkillCount(num);
     
@@ -1440,7 +1440,7 @@ int PuzzleSkill::W4GetCandy()
 void PuzzleSkill::W5(int num, int queue_pos)
 {
     // 끝없는 물결 - 오른쪽상단 터치 시 일정 개수만큼 white/yellow -> blue로 바꾸기
-    CCLog("W5 : 끝없는 물결");
+    //CCLog("W5 : 끝없는 물결");
     
     result_pos.clear();
     
@@ -1472,7 +1472,7 @@ void PuzzleSkill::W5(int num, int queue_pos)
     
     // 모든 노란색/하얀색 피스 중 랜덤하게 스킬레벨에 비례한 개수만큼 선택한다.
     int maxNumber = GetObj(num)->GetAbility2();
-    CCLog("maxNumber = %d", maxNumber);
+    //CCLog("maxNumber = %d", maxNumber);
     if (pos.size() <= maxNumber)
     {
         result_pos = pos;
@@ -1491,7 +1491,7 @@ void PuzzleSkill::W5(int num, int queue_pos)
         }
     }
     
-    CCLog("result pos = %d", (int)result_pos.size());
+    //CCLog("result pos = %d", (int)result_pos.size());
     
     // 노란색, 하얀색 피스를 파란색으로 바꾸는 액션 실행한다.
     W5_callbackCnt = 0;
@@ -1526,7 +1526,7 @@ void PuzzleSkill::W5_Callback(CCNode* sender, void* data)
     PuzzleSkill* ps = (PuzzleSkill*)data;
 
     ps->W5_callbackCnt++;
-    CCLog("%d %d", ps->W5_callbackCnt, (int)ps->result_pos.size());
+    //CCLog("%d %d", ps->W5_callbackCnt, (int)ps->result_pos.size());
     
     if (ps->W5_callbackCnt == (int)ps->result_pos.size())
     {
@@ -1589,7 +1589,7 @@ void PuzzleSkill::W7_Init(int numOfFreezeTime)
             W7_timeSlot[2] = rand()%5 + 5;
             break;
     }
-    CCLog("얼리는 시간 : %d %d %d", W7_timeSlot[0], W7_timeSlot[1], W7_timeSlot[2]);
+    //CCLog("얼리는 시간 : %d %d %d", W7_timeSlot[0], W7_timeSlot[1], W7_timeSlot[2]);
 }
 int PuzzleSkill::W7_GetSlotTime()
 {
@@ -1681,7 +1681,7 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
     CCPoint p = pos[0];
     if (m_pGameLayer->GetPuzzleP8Set()->GetType(p.x, p.y) == PIECE_BLUE)
     {
-        CCLog("W8_invoke : bomb start");
+        //CCLog("W8_invoke : bomb start");
         if (W8_remainTime <= 0)
             return;
         W8_bombFirst = true;
@@ -1705,7 +1705,7 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
     {
         if (W8_isChanging == 0) // 바꾸는 건 기존에 바꾸는 액션이 끝나야 가능하다.
         {
-            CCLog("W8_invoke : other->blue change");
+            //CCLog("W8_invoke : other->blue change");
             m_pGameLayer->SkillSemaphoreUpdate(1);
             W8_isChanging++;
             W8_callbackCnt = 0;
@@ -1796,7 +1796,7 @@ void PuzzleSkill::W8_LastChange()
     if (m_pGameLayer->IsHintShown())
         m_pGameLayer->StopAllActionsAtPieces();
     
-    CCLog("W8_lastChange");
+    //CCLog("W8_lastChange");
     ps->W8_isLastChangeWaiting = false;
     ps->W8_isLastChange = true;
     
@@ -1854,7 +1854,7 @@ void PuzzleSkill::W8_Timer(float f) // 여신 지속시간 timer
     
     if (ps->W8_remainTime <= 0)
     {
-        CCLog("Timer remainTime = 0 ; LastChange will be started.");
+        //CCLog("Timer remainTime = 0 ; LastChange will be started.");
         if (ps->W8_bombFirst)
             return;
         ps->W8_scheduleDone = true;
@@ -1872,7 +1872,7 @@ void PuzzleSkill::W8_Timer(float f) // 여신 지속시간 timer
     }
     ps->W8_remainTime -= ps->W8_accel*100;
     
-    CCLog("W8_timer = %d %d %d", ps->W8_remainTime, ps->W8_accelTime, ps->W8_accel);
+    //CCLog("W8_timer = %d %d %d", ps->W8_remainTime, ps->W8_accelTime, ps->W8_accel);
     
     int decreased = (int)((float)(ps->W8_accel*10)/(float)ps->GetObj(15)->GetAbility2());
     ps->m_pGameLayer->GetEffect()->AddOrbMaxParticle(-decreased);
@@ -2111,7 +2111,7 @@ void PuzzleSkill::E7(int num)
     // 끈질긴 생명력 - 포션을 1개 얻는다.
     UpdateAppliedSkillCount(num);
     
-    CCLog("E7 : num = %d", num);
+    //CCLog("E7 : num = %d", num);
     
     // 이펙트
     m_pGameLayer->GetEffect()->PlayEffect_MagicCircle(num);
@@ -2476,7 +2476,7 @@ void PuzzleSkill::GiveHint()
             
             x = p.x;
             y = p.y;
-            //CCLog("hint = %d %d", x, y);
+            ////CCLog("hint = %d %d", x, y);
             
             if (x > 0 && y > 0 && !hintCheck[x-1][y-1] && m_pGameLayer->IsConnected(x, y) && m_pGameLayer->GetPuzzleP8Set()->GetType(x-1, y-1) == type)
             {   qpos.push(ccp(x-1, y-1)); hintCheck[x-1][y-1] = true; pos4.push_back(ccp(x, y)); }
@@ -2526,7 +2526,7 @@ void PuzzleSkill::GiveHint()
 // 피스들의 드랍이 끝나고 (혹은 특정 스킬이 끝나고), 한붓그리기할 부분이 없어 갱신해야 하는지 검사하는 함수
 bool PuzzleSkill::IsRenewNeeded()
 {
-    CCLog("Is Renew Needed");
+    //CCLog("Is Renew Needed");
     m_pGameLayer->SetRenewFlag(true);
     
     // 변수 init
@@ -2588,14 +2588,14 @@ bool PuzzleSkill::IsRenewNeeded()
             }
         }
     }
-    CCLog("renew needed done");
+    //CCLog("renew needed done");
     return true;
 }
 
 // 피스 폭발 + 갱신 함수
 void PuzzleSkill::RenewPuzzle(int queue_pos)
 {
-    CCLog("RenewPuzzle (%d)", queue_pos);
+    //CCLog("RenewPuzzle (%d)", queue_pos);
     // init
     for (int i = 0 ; i < result_double_pos.size() ; i++)
         result_double_pos[i].clear();
@@ -2679,7 +2679,7 @@ void PuzzleSkill::Renew_Bomb(int idx)
 
 void PuzzleSkill::RenewPuzzle_End(void* pointer, int queue_pos)
 {
-    CCLog("F7 콜백 끝 : Falling 시작");
+    //CCLog("F7 콜백 끝 : Falling 시작");
     PuzzleSkill* pss = (PuzzleSkill*)pointer;
     int x, y;
     for (int i = 0 ; i < pss->result_double_pos.size() ; i++)

@@ -11,7 +11,7 @@ CCScene* DegreeInfo::scene()
 
 void DegreeInfo::onEnter()
 {
-    CCLog("DegreeInfo :: onEnter");
+    //CCLog("DegreeInfo :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -26,7 +26,7 @@ void DegreeInfo::SceneCallback()
 }
 void DegreeInfo::onExit()
 {
-    CCLog("DegreeInfo :: onExit");
+    //CCLog("DegreeInfo :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -45,7 +45,7 @@ void DegreeInfo::keyBackClicked()
 
 bool DegreeInfo::init()
 {
-    CCLog("DegreeInfo :: Init");
+    //CCLog("DegreeInfo :: Init");
 	if (!CCLayer::init())
 	{
 		return false;
@@ -59,7 +59,7 @@ bool DegreeInfo::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("DegreeInfo : touch prio = %d", this->getTouchPriority());
+    //CCLog("DegreeInfo : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(DegreeInfo::Notification), Depth::GetCurName(), NULL);
@@ -93,12 +93,12 @@ void DegreeInfo::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("DegreeInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("DegreeInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("DegreeInfo : 터치 비활성");
+        //CCLog("DegreeInfo : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

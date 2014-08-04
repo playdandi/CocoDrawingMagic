@@ -4,7 +4,7 @@ static int profile_index;
 
 Profile::~Profile(void)
 {
-    //CCLog("Profile destructor");
+    ////CCLog("Profile destructor");
 }
 
 CCScene* Profile::scene(int idx)
@@ -19,7 +19,7 @@ CCScene* Profile::scene(int idx)
 
 void Profile::onEnter()
 {
-    CCLog("Profile :: onEnter");
+    //CCLog("Profile :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -34,7 +34,7 @@ void Profile::SceneCallback()
 }
 void Profile::onExit()
 {
-    CCLog("Profile :: onExit");
+    //CCLog("Profile :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -66,7 +66,7 @@ bool Profile::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("Profile : touch prio = %d", this->getTouchPriority());
+    //CCLog("Profile : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Profile::Notification), Depth::GetCurName(), NULL);
@@ -105,12 +105,12 @@ void Profile::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("Profile : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Profile : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Profile : 터치 비활성");
+        //CCLog("Profile : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -255,7 +255,7 @@ void Profile::InitFairy()
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
-    //CCLog("%d %d", fid, flv);
+    ////CCLog("%d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     
@@ -378,7 +378,7 @@ void Profile::InitSkill()
         sprintf(skillName, "skill_%d.png", friendList[idx]->GetSkillId());
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0.5, 0.5), spriteClass->FindParentCenterPos("background/bg_skill_brown.png"), CCSize(0, 0), "background/bg_skill_brown.png", "0", NULL, 5, 1) );
         
-        CCLog("스킬이름 : %s", DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()).c_str());
+        //CCLog("스킬이름 : %s", DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()).c_str());
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(DataProcess::FindSkillNameById(friendList[idx]->GetSkillId()), fontList[2], 30, ccp(0.5, 0.5), ccp(pos.x, pos.y+2), ccc3(255,255,255), "background/bg_gameready_name.png2", "1", NULL, 5, 2) );
         
         // Lv. <- 이 그림

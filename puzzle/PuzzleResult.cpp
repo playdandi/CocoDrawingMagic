@@ -14,7 +14,7 @@ CCScene* PuzzleResult::scene()
 
 void PuzzleResult::onEnter()
 {
-    CCLog("PuzzleResult :: onEnter");
+    //CCLog("PuzzleResult :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -30,7 +30,7 @@ void PuzzleResult::onEnter()
 }
 void PuzzleResult::onExit()
 {
-    CCLog("PuzzleResult :: onExit");
+    //CCLog("PuzzleResult :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -97,12 +97,12 @@ void PuzzleResult::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
-        CCLog("PuzzleResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("PuzzleResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("PuzzleResult : 터치 비활성");
+        //CCLog("PuzzleResult : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -129,7 +129,7 @@ void PuzzleResult::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_magicpoint.png", ccp(0, 0), ccp(696, 1669), CCSize(0, 0), "", "PuzzleResult", this, 1005) );
     
     // topaz
-    CCLog("%d %d %d", myInfo->GetTopaz(), myInfo->GetStarCandy(), myInfo->GetMPTotal());
+    //CCLog("%d %d %d", myInfo->GetTopaz(), myInfo->GetStarCandy(), myInfo->GetMPTotal());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetTopaz()-myGameResult->getTopaz), fontList[0], 36, ccp(0.5, 0), ccp((80+230+80)/2, 1686), ccc3(255,255,255), "", "PuzzleResult", this, 1005, 0, 255, 1) );
     // starcandy
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(myInfo->GetStarCandy()-myGameResult->getStarCandy), fontList[0], 36, ccp(0.5, 0), ccp((390+290+390)/2, 1686), ccc3(255,255,255), "", "PuzzleResult", this, 1005, 0, 255, 2) );
@@ -426,14 +426,14 @@ void PuzzleResult::SkillTimer(float f)
     
     ppp++;
     */
-    CCLog("%d %d", skillIdx, (int)myGameResult->skillNum.size());
+    //CCLog("%d %d", skillIdx, (int)myGameResult->skillNum.size());
     if (skillIdx < myGameResult->skillNum.size())
     {
         if (skillIdx == 3) // 4개째 만들어질 때 스크롤링 시작
         {
-            CCLog("min offset = %d", (int)scrollView->minContainerOffset().x);
+            //CCLog("min offset = %d", (int)scrollView->minContainerOffset().x);
             float d = (float)abs((int)scrollView->minContainerOffset().x) / (float)146 / 2;
-            CCLog("time = %f", d);
+            //CCLog("time = %f", d);
             scrollView->setContentOffsetInDuration(ccp(scrollView->minContainerOffset().x, 0), d);
         }
         CCActionInterval* action = CCFadeIn::create(0.33f);

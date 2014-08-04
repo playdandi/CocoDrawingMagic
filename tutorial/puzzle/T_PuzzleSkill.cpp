@@ -24,8 +24,8 @@ T_Effect* T_PuzzleSkill::GetEffect()
 
 void T_PuzzleSkill::Init(std::vector<int> num, std::vector<int> prob, std::vector<int> lv)
 {
-    for (int i = 0 ; i < num.size(); i++)
-        CCLog("%d번 스킬 작동할 것임", num[i]);
+    //for (int i = 0 ; i < num.size(); i++)
+        //CCLog("%d번 스킬 작동할 것임", num[i]);
     
     // init.
     for (int i = 0 ; i < NUMOFSKILL ; i++)
@@ -60,7 +60,7 @@ bool T_PuzzleSkill::IsSkillNumberExists(int skillNum)
 
 void T_PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
 {
-    CCLog("TRY SKILLS");
+    //CCLog("TRY SKILLS");
     // Init
     for (int i = 0 ; i < NUMOFSKILL ; i++)
     {
@@ -90,7 +90,7 @@ void T_PuzzleSkill::TrySkills(int pieceColor, int queue_pos)
                 }
             }
             else if (i == 17) {
-                CCLog("tryskills %d (color = %d , %d)", i, pieceColor, m_pGameLayer->IsCycle(queue_pos));
+                //CCLog("tryskills %d (color = %d , %d)", i, pieceColor, m_pGameLayer->IsCycle(queue_pos));
                 if (pieceColor == PIECE_GREEN && m_pGameLayer->IsCycle(queue_pos))
                 {
                     if (Check_A2(i, queue_pos))
@@ -198,7 +198,7 @@ void T_PuzzleSkill::Invoke(int skillNum, int queue_pos)
 SkillBuildUpInfo* T_PuzzleSkill::GetObj(int num)
 {
     int sid = SkillInfo::ConvertedToOriginal(num);
-    //CCLog("sid, level = %d , %d", sid, skillLevel[num]);
+    ////CCLog("sid, level = %d , %d", sid, skillLevel[num]);
     return SkillBuildUpInfo::GetObj(sid, skillLevel[num]);
 }
 
@@ -248,7 +248,7 @@ void T_PuzzleSkill::A1(int num, int queue_pos)
 
 bool T_PuzzleSkill::Check_A2(int num, int queue_pos)
 {
-    CCLog("CheckA2 : %d , %d", num, queue_pos);
+    //CCLog("CheckA2 : %d , %d", num, queue_pos);
     // 변수 초기화
     A2_pos.clear();
     int x, y;
@@ -359,7 +359,7 @@ bool T_PuzzleSkill::Check_A2(int num, int queue_pos)
     
     if ( (num == 9 && (int)A2_pos.size() > 1) || ((num == 1 || num == 17) && (int)A2_pos.size() > 0) )
     {
-        CCLog("True");
+        //CCLog("True");
         return true;
     }
     return false;
@@ -406,7 +406,7 @@ static T_PuzzleSkill* psF8;
 
 void T_PuzzleSkill::F8(int num, int queue_pos)
 {
-    CCLog("용 숨");
+    //CCLog("용 숨");
     // 붉은 용의 숨결
     F8_isActive = true;
     F8_isFalling = false;
@@ -465,7 +465,7 @@ void T_PuzzleSkill::F8(int num, int queue_pos)
             break;
     }
     
-    CCLog("붉은용의숨결 : 원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
+    //CCLog("붉은용의숨결 : 원하는 덩어리수(%d) , 실제 덩어리수(%d)", count, (int)A8_pos.size());
     
     // 2차원 vector에 저장
     for (int i = 0 ; i < result_double_pos.size() ; i++)
@@ -528,7 +528,7 @@ void T_PuzzleSkill::F8_Bomb(int queue_pos, std::vector<CCPoint> pos, int idx)
     SetQueuePos(queue_pos);
     F8_bombQueueIdx.push(idx);
     F8_bombQueuePos.push(pos);
-    CCLog("F8 Bomb : (idx = %d)", idx);
+    //CCLog("F8 Bomb : (idx = %d)", idx);
     
     if (!F8_isFalling)
     {
@@ -549,7 +549,7 @@ void T_PuzzleSkill::F8_Bomb_Real()
     F8_bombQueueIdx.pop();
     F8_bombQueuePos.pop();
     
-    CCLog("F8 Bomb Real : (idx = %d)", bombIdx);
+    //CCLog("F8 Bomb Real : (idx = %d)", bombIdx);
     F8_bombCallbackCnt[bombIdx] = 0;
     
     int itemPieceCnt = 0;
@@ -573,7 +573,7 @@ void T_PuzzleSkill::F8_Bomb_Real()
     }
     
     // 폭발 예상 피스가 모두 일반 피스가 아니라면, callback을 호출하지 못하므로 즉시 턴을 종료한다.
-    CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
+    //CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
     if (itemPieceCnt == (int)result_double_pos[bombIdx].size())
     {
         F8_isFalling = false;
@@ -616,7 +616,7 @@ void T_PuzzleSkill::F8_BombCallback(CCNode* sender, void* pointer)
 void T_PuzzleSkill::F8_FinishCountUp()
 {
     F8_finishCnt++;
-    CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
+    //CCLog("finish(%d), all(%d)", F8_finishCnt, (int)A8_pos.size());
     if (F8_finishCnt >= (int)A8_pos.size())
         F8_isActive = false;
 }

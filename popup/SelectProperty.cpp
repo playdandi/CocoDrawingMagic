@@ -14,7 +14,7 @@ CCScene* SelectProperty::scene(int isGameStart)
 
 void SelectProperty::onEnter()
 {
-    CCLog("SelectProperty :: onEnter");
+    //CCLog("SelectProperty :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -29,7 +29,7 @@ void SelectProperty::SceneCallback()
 }
 void SelectProperty::onExit()
 {
-    CCLog("SelectProperty :: onExit");
+    //CCLog("SelectProperty :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -59,7 +59,7 @@ bool SelectProperty::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("SelectProperty : touch prio = %d", Depth::GetCurPriority());
+    //CCLog("SelectProperty : touch prio = %d", Depth::GetCurPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SelectProperty::Notification), Depth::GetCurName(), NULL);
@@ -94,12 +94,12 @@ void SelectProperty::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("SelectProperty : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("SelectProperty : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("SelectProperty : 터치 비활성");
+        //CCLog("SelectProperty : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

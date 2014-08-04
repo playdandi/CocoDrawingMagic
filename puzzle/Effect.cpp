@@ -165,7 +165,7 @@ void Effect::PlayEffect_MagicCircle_Callback(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_SkillIcon(int skillNum)
 {
-    //CCLog("PlayEffect_SkillIcon : %d", skillNum);
+    ////CCLog("PlayEffect_SkillIcon : %d", skillNum);
     // 스킬 실제 고유번호 계산
     int num = SkillInfo::ConvertedToOriginal(skillNum);
     
@@ -178,7 +178,7 @@ void Effect::PlayEffect_SkillIcon(int skillNum)
     gameLayer->addChild(skill, z1);
     
     skillIcon_callbackCnt = skillNum; // 스킬 번호 임시저장 (떡갈나무지팡이, 끈질긴생명력 스킬에 이용)
-    //CCLog("PlayEffect_SkillIcon : (callbackCnt = %d)", callbackCnt);
+    ////CCLog("PlayEffect_SkillIcon : (callbackCnt = %d)", callbackCnt);
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCFadeIn::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCSpawn::create(CCFadeOut::create(0.5f), CCMoveBy::create(0.5f, ccp(0, 50)), NULL), CCCallFuncND::create(gameLayer, callfuncND_selector(Effect::PlayEffect_SkillIcon_Callback), this), NULL);
     skill->runAction(action);
@@ -189,8 +189,8 @@ void Effect::PlayEffect_SkillIcon_Callback(CCNode* sender, void* p)
     
     Effect* pThis = (Effect*)p;
     //CCPoint pos = ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120);
-    //CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
-    //CCLog("PlayEffect_SkillIcon_Callback : %d", pThis->skillIcon_callbackCnt);
+    ////CCLog("pos x,y  = %d , %d", (int)pos.x, (int)pos.y);
+    ////CCLog("PlayEffect_SkillIcon_Callback : %d", pThis->skillIcon_callbackCnt);
     if (pThis->skillIcon_callbackCnt == 18)
         pThis->PlayEffect_18(ccp(pThis->gameLayer->m_winSize.width/2, pThis->gameLayer->vo.y+pThis->gameLayer->tbSize.height+pThis->gameLayer->boardSize.height+120));
     else if (pThis->skillIcon_callbackCnt == 22)
@@ -550,9 +550,9 @@ void Effect::Effect9Callback(CCNode* sender, void* pointer)
     }
     
     // 점수 업데이트
-    // 발동점수 + [ SIGMA[k=1~파도폭파수] { [(k)*(10+k*발동점수의 2%)]) } ]
+    // 발동점수 + [ SIGMA[k=1~파도폭파수] { [(k)*(10+k*발동점수의 4%)]) } ]
     int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(9); // 발동점수
-    int A2_addedScore = (int)((float)(pThis->callbackCnt)*(10.0f+(float)(pThis->callbackCnt)*((float)(basicScore*2)/100.0f)));
+    int A2_addedScore = (int)((float)(pThis->callbackCnt)*(10.0f+(float)(pThis->callbackCnt)*((float)(basicScore*4)/100.0f)));
     A2_addedScore += (int)((float)basicScore / (float)(pThis->skillPos.size()-1));
     
     pThis->gameLayer->UpdateScore(1, basicScore+A2_addedScore);
@@ -941,7 +941,7 @@ void Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
 void Effect::Effect7_Comet(float f)
 {
     /*
-    CCLog("timer callback cnt : %d", eff->callbackCnt);
+    //CCLog("timer callback cnt : %d", eff->callbackCnt);
     if (eff->gameLayer->IsPaused())
         return;
     Effect7_Callback_2(NULL, eff);
@@ -985,7 +985,7 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     
     if (ef->gameLayer->GetPuzzleP8Set()->GetType(x, y) == PIECE_RED)
     {
-        CCLog("big fire : %d %d", x, y);
+        //CCLog("big fire : %d %d", x, y);
         // big sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(72);
         
@@ -1013,7 +1013,7 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     }
     else
     {
-        CCLog("small fire : %d %d", x, y);
+        //CCLog("small fire : %d %d", x, y);
         // small sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(71);
         
@@ -1061,7 +1061,7 @@ void Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
         
         // 완전히 끝
         ef->F8_finishCnt++;
-        CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
+        //CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
         if (ef->F8_finishCnt == (int)ef->skillPos.size())
         {
             ef->gameLayer->Falling((int)ef->queuePos);
@@ -1174,7 +1174,7 @@ void Effect::AddOrbMaxParticle(int v)
 {
     int res = std::min((int)m_orb->getStartSize()+v, 100);
     m_orb->setStartSize(res);
-    //CCLog("size = %d", (int)m_orb->getStartSize());
+    ////CCLog("size = %d", (int)m_orb->getStartSize());
 }
 void Effect::Effect15_Clear()
 {
@@ -1298,7 +1298,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
         ((CCParticleSystemQuad*)sender)->setAutoRemoveOnFinish(true);
     }
     
-    //CCLog("리뉴 콜백 %d", pThis->callbackCnt);
+    ////CCLog("리뉴 콜백 %d", pThis->callbackCnt);
     
     if (pThis->callbackCnt < pThis->gameLayer->GetSkill()->GetResultDouble().size() &&
         pThis->gameLayer->GetSkill()->GetResultDouble()[pThis->callbackCnt].size() > 0)
@@ -1352,7 +1352,7 @@ void Effect::Effect6Callback(CCNode* sender, void* pointer)
     }
     else
     {
-        //CCLog("리뉴 콜백 끝");
+        ////CCLog("리뉴 콜백 끝");
         // 콜백 끝
         pThis->gameLayer->GetSkill()->RenewPuzzle_End(pThis->gameLayer->GetSkill(), pThis->queuePos);
     }
@@ -1526,7 +1526,7 @@ void Effect::Effect19CallbackNewSprite(CCNode* sender, void* pointer)
 
 void Effect::PlayEffect_22(CCPoint p)
 {
-    CCLog("PlayEffect_22");
+    //CCLog("PlayEffect_22");
     // E7 : 끈질긴 생명력
     CCSprite* potion = CCSprite::createWithSpriteFrameName("icon/icon_potion.png");
     potion->setPosition(p);
@@ -1539,7 +1539,7 @@ void Effect::PlayEffect_22(CCPoint p)
 }
 void Effect::Effect22Callback(CCNode* sender, void* pointer)
 {
-    CCLog("Effect22 callback");
+    //CCLog("Effect22 callback");
     sender->removeFromParentAndCleanup(true);
     
     ((Effect*)pointer)->gameLayer->GetSkill()->E7_Done();
@@ -1566,8 +1566,8 @@ void Effect::PlayEffect_10_Callback(CCNode* sender, void* pointer)
     // 점수 보여주기
     int W3_addedScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(10);
     W3_addedScore *= (pThis->gameLayer->GetCombo()/10);
-    CCLog("W3 현재 콤보 : %d", pThis->gameLayer->GetCombo());
-    CCLog("score = %d", W3_addedScore);
+    //CCLog("W3 현재 콤보 : %d", pThis->gameLayer->GetCombo());
+    //CCLog("score = %d", W3_addedScore);
     
     pThis->gameLayer->UpdateScore(1, W3_addedScore);
     pThis->gameLayer->ShowSkillScore(W3_addedScore, 1.5f, -1);

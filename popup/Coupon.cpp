@@ -11,7 +11,7 @@ CCScene* Coupon::scene()
 
 void Coupon::onEnter()
 {
-    CCLog("Coupon :: onEnter");
+    //CCLog("Coupon :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -26,7 +26,7 @@ void Coupon::SceneCallback()
 }
 void Coupon::onExit()
 {
-    CCLog("Coupon :: onExit");
+    //CCLog("Coupon :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -56,7 +56,7 @@ bool Coupon::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("Coupon : touch prio = %d", Depth::GetCurPriority());
+    //CCLog("Coupon : touch prio = %d", Depth::GetCurPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Coupon::Notification), Depth::GetCurName(), NULL);
@@ -93,12 +93,12 @@ void Coupon::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("Coupon : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Coupon : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Coupon : 터치 비활성");
+        //CCLog("Coupon : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -220,7 +220,7 @@ bool Coupon::onTextFieldInsertText(CCTextFieldTTF * pSender, const char * text, 
 
     char name[3];
     sprintf(name, "%c", sss);
-    //CCLog("pos = %d", label_pos);
+    ////CCLog("pos = %d", label_pos);
     
     ((CCLabelTTF*)spriteClass->FindLabelByTag(label_pos))->setString(name);
     label_pos++;
@@ -244,7 +244,7 @@ bool Coupon::onTextFieldDeleteBackward(CCTextFieldTTF * pSender, const char * de
     if (label_pos <= 0)
         return false;
 
-    //CCLog("pos = %d", label_pos);
+    ////CCLog("pos = %d", label_pos);
     label_pos--;
     ((CCLabelTTF*)spriteClass->FindLabelByTag(label_pos))->setString("*");
     

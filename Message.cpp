@@ -11,7 +11,7 @@ CCScene* Message::scene()
 
 void Message::onEnter()
 {
-    CCLog("Message : onEnter");
+    //CCLog("Message : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -42,7 +42,7 @@ void Message::SceneCallback()
 }
 void Message::onExit()
 {
-    CCLog("Message : onExit");
+    //CCLog("Message : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -78,7 +78,7 @@ bool Message::init()
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("Message : touch prio = %d", this->getTouchPriority());
+    //CCLog("Message : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Message::Notification), Depth::GetCurName(), NULL);
@@ -126,7 +126,7 @@ void Message::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -136,7 +136,7 @@ void Message::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Message : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 메시지 data 갱신 (전체 포션 받기를 했을 때는 행하지 않는다)
         if (httpMsgIdx != -1)
@@ -162,7 +162,7 @@ void Message::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Message : 터치 비활성");
+        //CCLog("Message : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -269,7 +269,7 @@ void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     
@@ -333,13 +333,13 @@ void Message::MakeScroll()
         // 프로필 이미지
         if (msgData[i]->GetProfileUrl() == "COCO_IMG") // 공지/시스템/이벤트
         {
-            CCLog("1");
+            //CCLog("1");
             sprintf(spriteName, "background/bg_profile_coco.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
         }
         else if (msgData[i]->GetProfileUrl() == "PET_IMG_MEDAL") // 오.별 본인당첨
         {
-            CCLog("2");
+            //CCLog("2");
             sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
             int w = ((CCSprite*)spriteClassScroll->FindSpriteByName(spriteName))->getContentSize().width;
@@ -348,24 +348,24 @@ void Message::MakeScroll()
         }
         else if (msgData[i]->GetProfileUrl() == "PET_IMG_NOMEDAL") // 오.별 참가상
         {
-            CCLog("3");
+            //CCLog("3");
             sprintf(spriteName, "background/bg_profile_fairy.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(44, 35), CCSize(0,0), "", "Layer", itemLayer, 2) );
         }
         else // 실제 친구 프로필 (있거나 로딩하지 않았거나)
         {
-            CCLog("4");
+            //CCLog("4");
             sprintf(spriteName, "background/bg_profile.png%d", i);
             ProfileSprite* psp = ProfileSprite::GetObj(msgData[i]->GetProfileUrl());
             if (psp != NULL && msgData[i]->GetProfileUrl() != "" && psp->IsLoadingDone())
             {
-                CCLog("5");
+                //CCLog("5");
                 spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 0.95f) );
                 spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255) );
             }
             else
             {
-                CCLog("6");
+                //CCLog("6");
                 if (psp == NULL)
                     psp = ProfileSprite::GetObj("");
                 spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
@@ -720,7 +720,7 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
                     content = "알수없음" + content.substr(content.find("님이"));
             }
             
-            CCLog("%s : %s", friendKakaoId.c_str(), profileUrl.c_str());
+            //CCLog("%s : %s", friendKakaoId.c_str(), profileUrl.c_str());
             msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
         

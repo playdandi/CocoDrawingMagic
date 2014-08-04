@@ -17,14 +17,14 @@ CCScene* PuzzlePause::scene(int h)
 
 void PuzzlePause::onEnter()
 {
-    CCLog("PuzzlePause :: onEnter");
+    //CCLog("PuzzlePause :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void PuzzlePause::onExit()
 {
-    CCLog("PuzzlePause :: onExit");
+    //CCLog("PuzzlePause :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -70,7 +70,7 @@ bool PuzzlePause::init()
     
     isKeybackTouched = false;
     
-    CCLog("PuzzlePause : init - done");
+    //CCLog("PuzzlePause : init - done");
     
     return true;
 }

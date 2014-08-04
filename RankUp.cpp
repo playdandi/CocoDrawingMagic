@@ -13,7 +13,7 @@ CCScene* RankUp::scene()
 
 void RankUp::onEnter()
 {
-    CCLog("RankUp :: onEnter");
+    //CCLog("RankUp :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
@@ -33,7 +33,7 @@ void RankUp::Callback(CCNode* sender, void* p)
 }
 void RankUp::onExit()
 {
-    CCLog("RankUp :: onExit");
+    //CCLog("RankUp :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -60,7 +60,7 @@ bool RankUp::init()
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(0);
-    CCLog("RankUp : touch prio = %d", this->getTouchPriority());
+    //CCLog("RankUp : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RankUp::Notification), Depth::GetCurName(), NULL);
@@ -110,9 +110,9 @@ void RankUp::InitSprites()
     pBackground->setPosition(ccp(0, 0));
     this->addChild(pBackground, 0);
     
-    CCLog("=========================================================");
-    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    CCLog("=========================================================");
+    //CCLog("=========================================================");
+    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+    //CCLog("=========================================================");
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap_yellow.png", ccp(0, 0), ccp(14, 1506), CCSize(0, 0), "", "RankUp", this, 1) );
@@ -379,13 +379,13 @@ void RankUp::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void RankUp::onSendLinkMessageComplete()
 {
-    CCLog("onSendLinkMessageComplete");
+    //CCLog("onSendLinkMessageComplete");
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
 }
 void RankUp::onSendLinkMessageErrorComplete(char const *status, char const *error)
 {
-    CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
+    //CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
     // Loading 창 끄기
     ((Loading*)Depth::GetCurPointer())->EndScene();
 }

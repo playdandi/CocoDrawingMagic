@@ -16,9 +16,9 @@ void Network::replaceAll(std::string& str, const std::string& from, const std::s
 
 void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc, bool isbasic)
 {
-    CCLog("HttpPost : url = %s", url.c_str());
-    CCLog("param length = %d", (int)data.size());
-    CCLog("param = %s", (unsigned char*)(data.c_str()));
+    //CCLog("HttpPost : url = %s", url.c_str());
+    //CCLog("param length = %d", (int)data.size());
+    //CCLog("param = %s", (unsigned char*)(data.c_str()));
     
     std::string encoded_a = Encrypt_a(data, isbasic);
     std::string encoded_ps = Encrypt_PS(isbasic);
@@ -35,7 +35,7 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     sprintf(temp, "a=%s", encoded_a.c_str());
     postData += temp;
     
-    //CCLog("%s", postData.c_str());
+    ////CCLog("%s", postData.c_str());
      
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
@@ -72,7 +72,7 @@ std::string Network::Encrypt_PS(bool isBasic)
         char* err;
         ERR_load_crypto_strings();
         ERR_error_string(ERR_get_error(), err);
-        CCLog("RSA ERROR = %s", err);
+        //CCLog("RSA ERROR = %s", err);
         exit(0);
     }
     
@@ -123,7 +123,7 @@ std::string Network::Encrypt_a(std::string data, bool isBasic)
             char* err;
             ERR_load_crypto_strings();
             ERR_error_string(ERR_get_error(), err);
-            CCLog("RSA ERROR = %s", err);
+            //CCLog("RSA ERROR = %s", err);
             exit(0);
         }
         
@@ -145,7 +145,7 @@ int Network::GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfus
 {
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return NULL;
     }
     
@@ -164,8 +164,8 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
 {
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        CCLog("%d", res->getResponseCode());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("%d", res->getResponseCode());
         return;
     }
     
@@ -178,14 +178,14 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     char decryptedData[BUFFER_SIZE];
     int bufferSize = Network::DeObfuscation(dumpData, decryptedData);
    
-    CCLog("%s", decryptedData);
+    //CCLog("%s", decryptedData);
     
     // xml parsing
     xml_parse_result result = xmlDoc.load_buffer(decryptedData, bufferSize);
     if (!result)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
+        //CCLog("error description: %s", result.description());
+        //CCLog("error offset: %d", result.offset);
     }
 }
 
@@ -193,7 +193,7 @@ std::string Network::GetXMLFromResponseDataForAndroid(const char* resData)
 {
     char decryptedData[BUFFER_SIZE];
     Network::DeObfuscation(resData, decryptedData);
-    CCLog("FOR ANDROID : %s", decryptedData);
+    //CCLog("FOR ANDROID : %s", decryptedData);
 
     std::string result = decryptedData;
     return result;
@@ -224,7 +224,7 @@ int Network::DeObfuscation(std::string obfuscatedStr, char* data)
 
 void Network::ShowCommonError(int code)
 {
-    CCLog("xml code 공통에러 : %d", code);
+    //CCLog("xml code 공통에러 : %d", code);
     
     int popupType;
     switch (code)

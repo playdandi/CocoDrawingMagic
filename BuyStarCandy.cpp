@@ -15,7 +15,7 @@ CCScene* BuyStarCandy::scene(int parent)
 
 void BuyStarCandy::onEnter()
 {
-    CCLog("BuyStarCandy : onEnter");
+    //CCLog("BuyStarCandy : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -30,7 +30,7 @@ void BuyStarCandy::SceneCallback()
 }
 void BuyStarCandy::onExit()
 {
-    CCLog("BuyStarCandy : onExit");
+    //CCLog("BuyStarCandy : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -62,7 +62,7 @@ bool BuyStarCandy::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("BuyStarCandy : touch prio = %d", this->getTouchPriority());
+    //CCLog("BuyStarCandy : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyStarCandy::Notification), Depth::GetCurName(), NULL);
@@ -99,12 +99,12 @@ void BuyStarCandy::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("BuyStarCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("BuyStarCandy : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("BuyStarCandy 터치 비활성");
+        //CCLog("BuyStarCandy 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

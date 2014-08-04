@@ -8,7 +8,7 @@ static int minusCost_starcandy;
 
 GameReady::~GameReady(void)
 {
-    CCLog("GameReady 소멸자");
+    //CCLog("GameReady 소멸자");
 }
 
 CCScene* GameReady::scene()
@@ -22,7 +22,7 @@ CCScene* GameReady::scene()
 
 void GameReady::onEnter()
 {
-    CCLog("GameReady :: onEnter");
+    //CCLog("GameReady :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -38,7 +38,7 @@ void GameReady::onEnter()
 }
 void GameReady::SceneCallback()
 {
-    //CCLog("scene callback");
+    ////CCLog("scene callback");
 
     ShowRewardPopup();
     
@@ -49,7 +49,7 @@ void GameReady::SceneCallback()
 }
 void GameReady::onExit()
 {
-    CCLog("GameReady :: onExit");
+    //CCLog("GameReady :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -88,7 +88,7 @@ bool GameReady::init()
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("GameReady : touch prio = %d", Depth::GetCurPriority());
+    //CCLog("GameReady : touch prio = %d", Depth::GetCurPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(GameReady::Notification), Depth::GetCurName(), NULL);
@@ -165,7 +165,7 @@ void GameReady::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("GameReady : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         if (param->intValue() == 0)
             RenewInfo();
@@ -173,7 +173,7 @@ void GameReady::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("GameReady 터치 비활성");
+        //CCLog("GameReady 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         //this->setKeypadEnabled(false);
@@ -197,7 +197,7 @@ void GameReady::Notification(CCObject* obj)
     }
     else if (param->intValue() == 5)
     {
-        //CCLog("게임레디 : 스킬 바꾸자!");
+        ////CCLog("게임레디 : 스킬 바꾸자!");
         // 스킬 정보가 바뀐 경우 (게임준비->스케치북->게임준비 돌아올 때)
         InitSkill();
     }
@@ -481,7 +481,7 @@ void GameReady::InitSprites()
                 minus_starcandy += itemCost[i];
         }
     }
-    //CCLog("topaz = %d / starcandy = %d", minusCost_topaz, minusCost_starcandy);
+    ////CCLog("topaz = %d / starcandy = %d", minusCost_topaz, minusCost_starcandy);
     
     // 5 items
     int alpha;
@@ -489,7 +489,7 @@ void GameReady::InitSprites()
     {
         sprintf(name3, "item_0%d", i);
         itemSelected[i] = CCUserDefault::sharedUserDefault()->getBoolForKey(name3, false);
-        //CCLog("is %d(%s) selected? = %d", i, name3, itemSelected[i]);
+        ////CCLog("is %d(%s) selected? = %d", i, name3, itemSelected[i]);
         
         // 아이템이 0개인데 돈은 모자라고 선택되어 있는 경우, 클라이언트에 false로 저장한다.
         if ( (itemCost[i] == ITEM_STARCANDY && myInfo->GetStarCandy() < minus_starcandy) ||
@@ -543,7 +543,7 @@ void GameReady::InitSprites()
         }
         else
         {
-            //CCLog("itemcost = %d", itemCost[i]);
+            ////CCLog("itemcost = %d", itemCost[i]);
             // 남은 개수가 0이면 가격을 적는다 (별사탕 x개 or 토파즈 y개)
             if (itemType[i] == ITEM_STARCANDY)
             {
@@ -732,7 +732,7 @@ void GameReady::InitFairy()
     
     int fid = myInfo->GetActiveFairyId();
     int flv = myInfo->GetActiveFairyLevel();
-    CCLog("fid flv : %d %d", fid, flv);
+    //CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
     // 요정 그림
@@ -813,7 +813,7 @@ void GameReady::InitSkill()
     
     int sid = myInfo->GetPracticeSkillId();
     int slv = myInfo->GetPracticeSkillLv();
-    CCLog("sid, siv = %d %d", sid, slv);
+    //CCLog("sid, siv = %d %d", sid, slv);
     
     // 배경판
     spriteClassSkill->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png4", ccp(0, 0), ccp(0, 0), CCSize(263, 236), "", "Layer", skillLayer, 1) );
@@ -912,7 +912,7 @@ void GameReady::MakeScrollSlot()
         spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
         
         scid = myInfo->GetSlot()[i]->GetCommonId();
-        //CCLog("slot common id = %d", scid);
+        ////CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
             sprintf(fname2, "skill_%d.png", scid);
@@ -953,7 +953,7 @@ void GameReady::PotionTimer(float f)
     {
         if (potion > 0 && remainTime == 720-1)
         {
-            CCLog("GameReady: PotionTimer -> potion = %d", potion);
+            //CCLog("GameReady: PotionTimer -> potion = %d", potion);
             char name[25];
             sprintf(name, "icon/icon_potion.png%d", potion-1);
             ((CCSprite*)spriteClass->FindSpriteByName(name))->setOpacity(255);
@@ -1078,7 +1078,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             }
                             //else // 별사탕이 충분한 경우
                             //{
-                            //    CCLog("별사탕 충분함");
+                            //    //CCLog("별사탕 충분함");
                             //}
                         }
                         else if (itemType[tag-1] == ITEM_TOPAZ)
@@ -1091,7 +1091,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                             }
                             //else // 토파즈가 충분한 경우
                             //{
-                            //    CCLog("토파즈 충분함");
+                            //    //CCLog("토파즈 충분함");
                             //}
                         }
                     }
@@ -1109,7 +1109,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 {
                     if (myInfo->GetItem(tag-1) > 0) // 아이템을 보유하고 있는 경우
                     {
-                        CCLog("선->비선 : 아이템 있음");
+                        //CCLog("선->비선 : 아이템 있음");
                         // 숫자변경
                         // 아이템 남은 개수 변경 (실제로는 아님)
                         itemNumberLayer[tag-1]->removeAllChildren();
@@ -1120,7 +1120,7 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     }
                     else // 아닌 경우
                     {
-                        CCLog("선->비선 : 돈 되돌리기 (%d)", itemCost[tag-1]);
+                        //CCLog("선->비선 : 돈 되돌리기 (%d)", itemCost[tag-1]);
                         /*
                         if (itemType[tag-1] == ITEM_STARCANDY)
                         {

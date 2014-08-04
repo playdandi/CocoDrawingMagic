@@ -20,7 +20,7 @@ CCScene* MagicList::scene(int fromWhere)
 
 void MagicList::onEnter()
 {
-    CCLog("MagicList :: onEnter");
+    //CCLog("MagicList :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -38,7 +38,7 @@ void MagicList::Scene_Callback()
 }
 void MagicList::onExit()
 {
-    CCLog("MagicList :: onExit");
+    //CCLog("MagicList :: onExit");
     //if (code != 0)
     //{
         CCDirector* pDirector = CCDirector::sharedDirector();
@@ -94,7 +94,7 @@ bool MagicList::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("MagicList : touch prio = %d", this->getTouchPriority());
+    //CCLog("MagicList : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(MagicList::Notification), Depth::GetCurName(), NULL);
@@ -154,7 +154,7 @@ void MagicList::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -164,7 +164,7 @@ void MagicList::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("MagicList : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 스킬 슬롯 정보 갱신
         spriteClassSlot->RemoveAllObjects();
@@ -178,7 +178,7 @@ void MagicList::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("MagicList 터치 비활성");
+        //CCLog("MagicList 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

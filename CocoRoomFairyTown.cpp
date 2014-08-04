@@ -2,7 +2,7 @@
 
 CocoRoomFairyTown::~CocoRoomFairyTown()
 {
-    //CCLog("CocoFairyTown 소멸자 실행");
+    ////CCLog("CocoFairyTown 소멸자 실행");
 }
 
 CCScene* CocoRoomFairyTown::scene()
@@ -16,7 +16,7 @@ CCScene* CocoRoomFairyTown::scene()
 
 void CocoRoomFairyTown::onEnter()
 {
-    CCLog("CocoRoomFairyTown :: onEnter");
+    //CCLog("CocoRoomFairyTown :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -46,7 +46,7 @@ void CocoRoomFairyTown::SceneCallback()
 }
 void CocoRoomFairyTown::onExit()
 {
-    CCLog("CocoRoomFairyTown :: onExit");
+    //CCLog("CocoRoomFairyTown :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -80,7 +80,7 @@ bool CocoRoomFairyTown::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("CocoRoomFairyTown : touch prio = %d", this->getTouchPriority());
+    //CCLog("CocoRoomFairyTown : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoomFairyTown::Notification), Depth::GetCurName(), NULL);
@@ -127,12 +127,12 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("CocoRoomFairyTown : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("CocoRoomFairyTown : 터치 비활성");
+        //CCLog("CocoRoomFairyTown : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

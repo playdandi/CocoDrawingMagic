@@ -11,7 +11,7 @@ CCScene* Setting::scene()
 
 void Setting::onEnter()
 {
-    CCLog("Setting : onEnter");
+    //CCLog("Setting : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -26,7 +26,7 @@ void Setting::SceneCallback()
 }
 void Setting::onExit()
 {
-    CCLog("Setting : onExit");
+    //CCLog("Setting : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -58,7 +58,7 @@ bool Setting::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("Setting : touch prio = %d", this->getTouchPriority());
+    //CCLog("Setting : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Setting::Notification), Depth::GetCurName(), NULL);
@@ -105,7 +105,7 @@ void Setting::Notification(CCObject* obj)
             this->setTouchPriority(Depth::GetCurPriority());
             isTouched = false;
             isKeybackTouched = false;
-            CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
+            //CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
         }
     }
     else if (param->intValue() == 0)
@@ -115,12 +115,12 @@ void Setting::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Setting : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Setting : 터치 비활성");
+        //CCLog("Setting : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -294,8 +294,8 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                CCLog("kind = %d", kind);
-                CCLog("x yellow");
+                //CCLog("kind = %d", kind);
+                //CCLog("x yellow");
                 /*
                 //if (kakaoMsgReserved)
                 //    kakaoMsgReserved = true;

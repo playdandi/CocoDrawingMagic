@@ -30,7 +30,7 @@ CCScene* NoImage::scene(int popupType, int btnType, std::vector<int> data, int e
 
 void NoImage::onEnter()
 {
-    CCLog("NoImage : onEnter");
+    //CCLog("NoImage : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -48,7 +48,7 @@ void NoImage::SceneCallback()
 }
 void NoImage::onExit()
 {
-    CCLog("NoImage : onExit");
+    //CCLog("NoImage : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -72,7 +72,7 @@ void NoImage::keyBackClicked()
 
 void NoImage::onLogoutComplete()
 {
-    CCLog("onLogoutComplete");
+    //CCLog("onLogoutComplete");
 
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -82,23 +82,23 @@ void NoImage::onLogoutComplete()
 void NoImage::onLogoutErrorComplete(char const* status, char const* error)
 {
     //CCMessageBox(error, "onLogoutErrorComplete");
-    CCLog("onLogoutErrorComplete : %s, %s", status, error);
+    //CCLog("onLogoutErrorComplete : %s, %s", status, error);
 }
 
 void NoImage::onUnregisterComplete()
 {
-    //CCLog("onUnregisterComplete");
+    ////CCLog("onUnregisterComplete");
     KakaoNativeExtension::getInstance()->auth(std::bind(&NoImage::onAuthComplete, this, std::placeholders::_1), std::bind(&NoImage::onAuthErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
 }
 void NoImage::onUnregisterErrorComplete(char const* status, char const* error)
 {
     //CCMessageBox(error, "onUnregisterErrorComplete");
-    CCLog("onUnregisterErrorComplete : %s, %s", status, error);
+    //CCLog("onUnregisterErrorComplete : %s, %s", status, error);
 }
 
 void NoImage::onAuthComplete(bool result)
 {
-    CCLog("onAuthComplete : result (%d)", result);
+    //CCLog("onAuthComplete : result (%d)", result);
 
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -107,7 +107,7 @@ void NoImage::onAuthComplete(bool result)
 }
 void NoImage::onAuthErrorComplete(char const* status, char const* error)
 {
-    CCLog("onAuthErrorComplete : %s, %s", status, error);
+    //CCLog("onAuthErrorComplete : %s, %s", status, error);
 
     CCDirector::sharedDirector()->end();
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -117,12 +117,12 @@ void NoImage::onAuthErrorComplete(char const* status, char const* error)
 
 void NoImage::onSendLinkMessageComplete()
 {
-    CCLog("onSendLinkMessageComplete");
+    //CCLog("onSendLinkMessageComplete");
 }
 void NoImage::onSendLinkMessageErrorComplete(char const *status, char const *error)
 {
     //CCMessageBox(error, "onSendLinkMessageErrorComplete");
-    CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
+    //CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
 }
 
 
@@ -147,7 +147,7 @@ bool NoImage::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("NoImage : touch prio = %d", this->getTouchPriority());
+    //CCLog("NoImage : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(NoImage::Notification), Depth::GetCurName(), NULL);
@@ -181,12 +181,12 @@ void NoImage::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("NoImage : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("NoImage : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("NoImage : 터치 비활성");
+        //CCLog("NoImage : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -1209,7 +1209,7 @@ void NoImage::HandlingTouch(int touchType)
                 char temp[128];
                 sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
                 std::string metaInfo = temp;
-                //CCLog("metaInfo = %s", metaInfo.c_str());
+                ////CCLog("metaInfo = %s", metaInfo.c_str());
                 KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&NoImage::onSendLinkMessageComplete, this), std::bind(&NoImage::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, friendList[d[0]]->GetKakaoId(), "", executeUrl, metaInfo);
             }
             EndScene();
@@ -1615,7 +1615,7 @@ void NoImage::EndScene()
             alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
         if (alpha == 255 || noticeList[d[0]]->oneTime == 1) // 체크를 했거나, 1회성 공지의 경우
         {
-            CCLog("24시간동안 안 보여줌!");
+            //CCLog("24시간동안 안 보여줌!");
             char s[20];
             sprintf(s, "noticelist_%d", noticeList[d[0]]->id);
             CCUserDefault::sharedUserDefault()->setIntegerForKey(s, time(0));
@@ -1869,7 +1869,7 @@ void NoImage::XmlParseSendPotion(xml_document *xmlDoc)
             char temp[128];
             sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
             std::string metaInfo = temp;
-            CCLog("metaInfo = %s", metaInfo.c_str());
+            //CCLog("metaInfo = %s", metaInfo.c_str());
             KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&NoImage::onSendLinkMessageComplete, this), std::bind(&NoImage::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, friendList[d[0]]->GetKakaoId(), "", executeUrl, metaInfo);
         }
         
@@ -2207,7 +2207,7 @@ void NoImage::XmlParseBuyFairy(xml_document *xmlDoc)
             param += temp;
             sprintf(temp, "user_fairy_id=%d", myInfo->GetFairyList()[0]->GetUserId());
             param += temp;
-            CCLog("url = %s", url.c_str());
+            //CCLog("url = %s", url.c_str());
             
             type = USING_FAIRY;
             
@@ -2504,7 +2504,7 @@ void NoImage::XmlParseGetPotionStatus(xml_document *xmlDoc) // 친구의 카톡�
             char temp[100];
             sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
             std::string metaInfo = temp;
-            CCLog("metaInfo = %s", metaInfo.c_str());
+            //CCLog("metaInfo = %s", metaInfo.c_str());
             
             KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&NoImage::onSendLinkMessageComplete, this), std::bind(&NoImage::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, friendList[d[0]]->GetKakaoId(), "", executeUrl, metaInfo);
         }

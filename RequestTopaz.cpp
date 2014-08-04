@@ -11,7 +11,7 @@ CCScene* RequestTopaz::scene()
 
 void RequestTopaz::onEnter()
 {
-    CCLog("RequestTopaz : onEnter");
+    //CCLog("RequestTopaz : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -28,7 +28,7 @@ void RequestTopaz::SceneCallback()
 }
 void RequestTopaz::onExit()
 {
-    CCLog("RequestTopaz : onExit");
+    //CCLog("RequestTopaz : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -62,7 +62,7 @@ bool RequestTopaz::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("RequestTopaz : touch prio = %d", this->getTouchPriority());
+    //CCLog("RequestTopaz : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RequestTopaz::Notification), Depth::GetCurName(), NULL);
@@ -111,7 +111,7 @@ void RequestTopaz::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // scroll 갱신
         RenewScroll();
@@ -119,7 +119,7 @@ void RequestTopaz::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("RequestTopaz 터치 비활성");
+        //CCLog("RequestTopaz 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -133,7 +133,7 @@ void RequestTopaz::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("RequestTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     */
     else if (param->intValue() == 10)
@@ -308,7 +308,7 @@ void RequestTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 param += temp;
                 sprintf(temp, "friend_kakao_id=%s", friendkakaoId.c_str());
                 param += temp;
-                CCLog("param = %s", param.c_str());
+                //CCLog("param = %s", param.c_str());
 
                 Network::HttpPost(param, URL_REQUEST_TOPAZ, this, httpresponse_selector(RequestTopaz::onHttpRequestCompleted), friendkakaoId.c_str());
                 
@@ -475,7 +475,7 @@ void RequestTopaz::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     

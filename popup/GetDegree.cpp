@@ -11,14 +11,14 @@ CCScene* GetDegree::scene()
 
 void GetDegree::onEnter()
 {
-    CCLog("GetDegree :: onEnter");
+    //CCLog("GetDegree :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void GetDegree::onExit()
 {
-    CCLog("GetDegree :: onExit");
+    //CCLog("GetDegree :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -46,7 +46,7 @@ bool GetDegree::init()
     this->setTouchEnabled(true);
     //this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("GetDegree : touch prio = %d", this->getTouchPriority());
+    //CCLog("GetDegree : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(GetDegree::Notification), Depth::GetCurName(), NULL);
@@ -76,12 +76,12 @@ void GetDegree::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("GetDegree : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("GetDegree : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("GetDegree : 터치 비활성");
+        //CCLog("GetDegree : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -119,7 +119,7 @@ void GetDegree::InitSprites()
     int h = pBackground->getContentSize().height;
     CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
     int dy = std::max((int)(h-vs.height)/2, 100);
-    //CCLog("%d %d", h, (int)vs.height);
+    ////CCLog("%d %d", h, (int)vs.height);
     dy = h-vs.height;
     
     CCActionInterval* action = CCSequence::create( CCSpawn::create( CCFadeIn::create(2.0f), CCMoveBy::create(2.0f, ccp(0, dy)), CCSequence::create(CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SoundCallback), this), NULL) , NULL ), CCCallFuncND::create(this, callfuncND_selector(GetDegree::SpriteCallback), this), NULL );

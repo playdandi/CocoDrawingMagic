@@ -17,7 +17,7 @@ CCScene* CocoRoom::scene(int tab)
 
 void CocoRoom::onEnter()
 {
-    CCLog("CocoRoom : onEnter");
+    //CCLog("CocoRoom : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -35,7 +35,7 @@ void CocoRoom::SceneCallback()
 }
 void CocoRoom::onExit()
 {
-    CCLog("CocoRoom : onExit");
+    //CCLog("CocoRoom : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -72,7 +72,7 @@ bool CocoRoom::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("CocoRoom : touch prio = %d", this->getTouchPriority());
+    //CCLog("CocoRoom : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(CocoRoom::Notification), Depth::GetCurName(), NULL);
@@ -154,7 +154,7 @@ void CocoRoom::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -164,7 +164,7 @@ void CocoRoom::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("CocoRoom : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP 정보 + 각 방마다 정보 업데이트
         RenewAllData();
@@ -172,7 +172,7 @@ void CocoRoom::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("CocoRoom : 터치 비활성");
+        //CCLog("CocoRoom : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -450,7 +450,7 @@ void CocoRoom::SetMenuChange(int state)
 
 void CocoRoom::MakeSprites(int state)
 {
-    CCLog("MakeSprites : %d %d", curState, state);
+    //CCLog("MakeSprites : %d %d", curState, state);
     if (curState == state)
         return;
     
@@ -907,9 +907,9 @@ void CocoRoom::SetFairyBuildUp()
     // 일반적인 경우
     if (flv < FairyBuildUpInfo::GetMaxLevel(fid))
     {
-        //CCLog("fid flv SSS = %d %d", fid, flv);
-        //CCLog("%d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
-        //CCLog("%d", FairyBuildUpInfo::GetCostTopaz(fid, flv+1));
+        ////CCLog("fid flv SSS = %d %d", fid, flv);
+        ////CCLog("%d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
+        ////CCLog("%d", FairyBuildUpInfo::GetCostTopaz(fid, flv+1));
         // 지팡이 일반/고급 다음 cost 갱신
         char val[20];
         sprintf(val, "x %d", FairyBuildUpInfo::GetCostStarCandy(fid, flv+1));
@@ -1237,7 +1237,7 @@ int candyIdx[] = {0, 2, 4, 1, 3};
 //void CocoRoom::DecideUser(char* selectedKakaoId)
 void CocoRoom::DecideUser()
 {
-    CCLog("kakao id = %s", selectedKakaoId.c_str());
+    //CCLog("kakao id = %s", selectedKakaoId.c_str());
     isTodayCandyWorking = true;
     ((CCSprite*)spriteClassCandy->FindSpriteByName("button/btn_red_mini.png"))->setOpacity(0);
     ((CCSprite*)spriteClassCandy->FindSpriteByName("letter/letter_fairy_select.png"))->setOpacity(0);
@@ -1269,9 +1269,9 @@ void CocoRoom::Callback(CCNode* sender, void* data)
     // 0 2 4 1 3
     popo++;
     //char* skid = (char*)data;
-    //CCLog("skid = %s", skid);
+    ////CCLog("skid = %s", skid);
     //std::string id = skid;
-    //CCLog("id = %s", id.c_str());
+    ////CCLog("id = %s", id.c_str());
     if (popo > 15 && todayCandyKakaoId[candyIdx[(popo-1)%5]] == selectedKakaoId)
     {
         ((CCParticleSystemQuad*)sender)->setDuration(0.05f);
@@ -1659,7 +1659,6 @@ void CocoRoom::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             {
                 if (myInfo->GetMPTotal() < 200)
                 {
-                    sound->playClick();
                     std::vector<int> nullData;
                     Common::ShowPopup(this, "CocoRoom", "NoImage", false, UPGRADE_STAFF_INSUFFICIENT_MP, BTN_1, nullData);
                 }
@@ -1929,7 +1928,7 @@ void CocoRoom::XmlParseTodayCandy(xml_document *xmlDoc)
         
         // 그 사이에 블락된 경우 (다른 사람이) => 카카오톡 메시지 보내지 마라.
         int isBlocked = 1 - nodeResult.child("today-starcandy").attribute("blocked").as_int();
-        //CCLog("isBlocked = %d", isBlocked);
+        ////CCLog("isBlocked = %d", isBlocked);
         for (int i = 0 ; i < friendList.size() ; i++)
         {
             if (friendList[i]->GetKakaoId() == selectedKakaoId)

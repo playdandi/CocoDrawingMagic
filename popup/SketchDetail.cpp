@@ -19,7 +19,7 @@ CCScene* SketchDetail::scene(int id)
 
 void SketchDetail::onEnter()
 {
-    CCLog("SketchDetail :: onEnter");
+    //CCLog("SketchDetail :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -34,7 +34,7 @@ void SketchDetail::SceneCallback()
 }
 void SketchDetail::onExit()
 {
-    CCLog("SketchDetail :: onExit");
+    //CCLog("SketchDetail :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -67,7 +67,7 @@ bool SketchDetail::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("SketchDetail : touch prio = %d", Depth::GetCurPriority());
+    //CCLog("SketchDetail : touch prio = %d", Depth::GetCurPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(SketchDetail::Notification), Depth::GetCurName(), NULL);
@@ -102,12 +102,12 @@ void SketchDetail::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("SketchDetail : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("SketchDetail : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("SketchDetail : 터치 비활성");
+        //CCLog("SketchDetail : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -333,7 +333,7 @@ std::string SketchDetail::SkillDescription(int scid)
         case 23: return "사랑의 불꽃으로\n빨간 피스를 만들어요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
         case 24: return "빨간 피스를 한번에\n8개 이상 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 확득해요)"; break;
         case 25: return "빨간 피스를 한번에\n6개 이상 그리면\n불꽃으로 한번 더 터뜨려요.\n(강화시키면 추가점수가\n증가해요)"; break;
-        case 26: return "피버타임 게이지가\n더 빨리 차요.\n(강화시키면 더 자주\n시전되요)"; break;
+        case 26: return "피버타임으로 즉시\n전환되요.\n(강화시키면 더 자주\n시전되요)"; break;
         case 27: return "빨간 피스를 한번에\n10개 이상 그리면\n드래곤을 소환해요!\n(강화시키면 운석이 더 많이\n떨어져요)"; break;
 
         case 11: return "파란 피스를 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
@@ -347,7 +347,7 @@ std::string SketchDetail::SkillDescription(int scid)
         case 31: return "초록 피스를 그리면\n추가점수를 획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 32: return "초록 피스를 사이클로 그리면 개수에 비례해, 무작위로 피스를 터뜨려요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 33: return "마법 잎사귀가 초록피스를\n모두 모아줘요.\n(강화시키면 좀 더 자주 등장하고 추가점수를 획득해요)"; break;
-        case 34: return "마법지팡이로 추가별사탕을\n획득해요.\n(강화시키면 추가별사탕을\n더 획득해요)"; break;
+        case 34: return "마법지팡이로 추가별사탕을\n획득해요.\n(강화시키면 추가점수를\n더 획득해요)"; break;
         case 35: return "초록 피스를 한번에\n6개 이상 그리면\n바람으로 한번 더 터뜨려요.\n(강화시키면 추가점수가\n증가해요)"; break;
         case 36: return "가끔씩 포션 1개를 얻을 수\n있어요.\n(강화시키면 더 자주\n발동해요)"; break;
         case 37: return "초록 피스를 한번에\n10개 이상 그리면\n고대나무를 소환해요!\n(강화시키면 더 강력해져요)"; break;
@@ -422,7 +422,7 @@ void SketchDetail::MakeClosedSkillSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_topaz_mini.png", ccp(0, 0), ccp(550, 695), CCSize(0, 0), "", "Layer", tLayer, 5) );
 
         int number = SkillBuildupMPInfo::GetRealOrder(sList, skill_common_id);
-        CCLog("scid = %d / number = %d", skill_common_id, number);
+        //CCLog("scid = %d / number = %d", skill_common_id, number);
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(Common::MakeComma(SkillBuildupMPInfo::GetObj(number-1)->GetTopazCostValue()), fontList[0], 36, ccp(0, 0), ccp(617, 708), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     }
     

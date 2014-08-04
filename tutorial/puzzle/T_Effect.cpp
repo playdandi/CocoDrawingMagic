@@ -549,7 +549,7 @@ void T_Effect::Effect7_Callback_1(CCNode* sender, void* pointer)
 void T_Effect::Effect7_Comet(float f)
 {
     /*
-     CCLog("timer callback cnt : %d", eff->callbackCnt);
+     //CCLog("timer callback cnt : %d", eff->callbackCnt);
      if (eff->gameLayer->IsPaused())
      return;
      Effect7_Callback_2(NULL, eff);
@@ -596,7 +596,7 @@ void T_Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨�
         // big sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(72);
         
-        CCLog("big fire : %d %d", x, y);
+        //CCLog("big fire : %d %d", x, y);
         for (int i = 0 ; i < ef->skillDoublePos[idx].size() ; i++)
         {
             x = (int)ef->skillDoublePos[idx][i].x;
@@ -617,7 +617,7 @@ void T_Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨�
         // small sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(71);
         
-        CCLog("small fire : %d %d", x, y);
+        //CCLog("small fire : %d %d", x, y);
         CCParticleSystemQuad* m_emitter = CCParticleSystemQuad::create("particles/fire8_smallfire.plist");
         m_emitter->setAnchorPoint(ccp(0.5, 0.5));
         m_emitter->setPosition(ef->gameLayer->SetTouch8Position(x, y));
@@ -656,7 +656,7 @@ void T_Effect::Effect7_Callback_4(cocos2d::CCNode *sender, void *pointer)
         
         // 완전히 끝
         ef->F8_finishCnt++;
-        CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
+        //CCLog("끝? %d %d", ef->F8_finishCnt, (int)ef->skillPos.size());
         if (ef->F8_finishCnt == (int)ef->skillPos.size())
         {
             ef->gameLayer->Falling((int)ef->queuePos);

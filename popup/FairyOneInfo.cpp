@@ -15,7 +15,7 @@ CCScene* FairyOneInfo::scene(int cfi)
 
 void FairyOneInfo::onEnter()
 {
-    CCLog("FairyOneInfo : onEnter");
+    //CCLog("FairyOneInfo : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -30,7 +30,7 @@ void FairyOneInfo::SceneCallback()
 }
 void FairyOneInfo::onExit()
 {
-    CCLog("FairyOneInfo : onExit");
+    //CCLog("FairyOneInfo : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -64,7 +64,7 @@ bool FairyOneInfo::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("FairyOneInfo : touch prio = %d", this->getTouchPriority());
+    //CCLog("FairyOneInfo : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(FairyOneInfo::Notification), Depth::GetCurName(), NULL);
@@ -98,12 +98,12 @@ void FairyOneInfo::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("FairyOneInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("FairyOneInfo : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("FairyOneInfo : 터치 비활성");
+        //CCLog("FairyOneInfo : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -221,11 +221,8 @@ void FairyOneInfo::InitSprites()
         {
             spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_lock_white.png", ccp(0, 0), ccp(141, 822), CCSize(0, 0), "", "Layer", tLayer, 5) );
             
-            int requireMP;
-            if (abs(common_fairy_id) == 1) requireMP = 500;
-            else if (abs(common_fairy_id) == 2) requireMP = 30;
-            else if (abs(common_fairy_id) == 3) requireMP = 300;
-            char name[100];
+            int requireMP = FairyInfo::GetObj(abs(common_fairy_id))->GetRefVal();
+            char name[50];
             sprintf(name, "도전 : MP %d 달성", requireMP);
             
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(230, 830), ccc3(255,255,255), "", "Layer", tLayer, 5) );

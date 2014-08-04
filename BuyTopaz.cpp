@@ -12,7 +12,7 @@ CCScene* BuyTopaz::scene(int parent)
 
 void BuyTopaz::onEnter()
 {
-    CCLog("BuyTopaz : onEnter");
+    //CCLog("BuyTopaz : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -27,7 +27,7 @@ void BuyTopaz::SceneCallback()
 }
 void BuyTopaz::onExit()
 {
-    CCLog("BuyTopaz : onExit");
+    //CCLog("BuyTopaz : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -58,7 +58,7 @@ bool BuyTopaz::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("BuyTopaz : touch prio = %d", this->getTouchPriority());
+    //CCLog("BuyTopaz : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyTopaz::Notification), Depth::GetCurName(), NULL);
@@ -99,12 +99,12 @@ void BuyTopaz::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("BuyTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("BuyTopaz : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("BuyTopaz : 터치 비활성");
+        //CCLog("BuyTopaz : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -114,7 +114,7 @@ void BuyTopaz::Notification(CCObject* obj)
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("BuyTopaz : noti 10 ( tryingPurchase = %d )", isTryingPurchase);
+        //CCLog("BuyTopaz : noti 10 ( tryingPurchase = %d )", isTryingPurchase);
         
         if (isTryingPurchase)
         {
@@ -130,7 +130,7 @@ void BuyTopaz::Notification(CCObject* obj)
         std::string friendKakaoId = p.substr(0, p.find("/"));
         int priceTopazIdx = atoi(p.substr(p.find("/")+1).c_str());
         
-        CCLog("%s %d", friendKakaoId.c_str(), priceTopazIdx);
+        //CCLog("%s %d", friendKakaoId.c_str(), priceTopazIdx);
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         char num[10];
@@ -421,11 +421,11 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         // type : 일반구매(1) , 선물하기(2)
         int type = (httpStatus == 0) ? 1 : 2;
 
-        CCLog("type = %d", type);
-        CCLog("topazId = %d", topazId);
-        CCLog("productId = %s", productId);
-        CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
-        CCLog("friendKakaoId = %s", friendKakaoId.c_str());
+        //CCLog("type = %d", type);
+        //CCLog("topazId = %d", topazId);
+        //CCLog("productId = %s", productId);
+        //CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
+        //CCLog("friendKakaoId = %s", friendKakaoId.c_str());
         
         
         JniMethodInfo t;
@@ -481,18 +481,18 @@ void BuyTopaz::EndScene()
 
 void BuyTopaz::SetErrorFlag(bool flag)
 {
-    //CCLog("BuyTopaz : error flag to FALSE // flag = %d", flag);
+    ////CCLog("BuyTopaz : error flag to FALSE // flag = %d", flag);
     ((BuyTopaz*)Depth::GetCurPointer())->isTryingPurchase = flag;
 }
 
 
 void BuyTopaz::onSendLinkMessageComplete()
 {
-    CCLog("BuyTopaz :: onSendLinkMessageComplete");
+    //CCLog("BuyTopaz :: onSendLinkMessageComplete");
 }
 void BuyTopaz::onSendLinkMessageErrorComplete(char const *status, char const *error)
 {
     //CCMessageBox(error, "onSendLinkMessageErrorComplete");
-    CCLog("BuyTopaz :: onSendLinkMessageErrorComplete : %s, %s", status, error);
+    //CCLog("BuyTopaz :: onSendLinkMessageErrorComplete : %s, %s", status, error);
 }
 

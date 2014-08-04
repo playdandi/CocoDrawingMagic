@@ -12,7 +12,7 @@ CCScene* BuyPotion::scene(int parent)
 
 void BuyPotion::onEnter()
 {
-    CCLog("BuyPotion : onEnter");
+    //CCLog("BuyPotion : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -27,7 +27,7 @@ void BuyPotion::SceneCallback()
 }
 void BuyPotion::onExit()
 {
-    CCLog("BuyPotion : onExit");
+    //CCLog("BuyPotion : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -59,7 +59,7 @@ bool BuyPotion::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("BuyPotion : touch prio = %d", this->getTouchPriority());
+    //CCLog("BuyPotion : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(BuyPotion::Notification), Depth::GetCurName(), NULL);
@@ -93,12 +93,12 @@ void BuyPotion::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("BuyPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("BuyPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("BuyPotion 터치 비활성");
+        //CCLog("BuyPotion 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

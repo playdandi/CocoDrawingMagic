@@ -20,7 +20,7 @@ int Sketchbook::FromWhere()
 
 void Sketchbook::onEnter()
 {
-    CCLog("Sketchbook : onEnter");
+    //CCLog("Sketchbook : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -54,7 +54,7 @@ void Sketchbook::SceneCallback()
 }
 void Sketchbook::onExit()
 {
-    CCLog("Sketchbook : onExit");
+    //CCLog("Sketchbook : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -89,7 +89,7 @@ bool Sketchbook::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("스케치북 : touch prio = %d", this->getTouchPriority());
+    //CCLog("스케치북 : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Sketchbook::Notification), Depth::GetCurName(), NULL);
@@ -182,7 +182,7 @@ void Sketchbook::Notification(CCObject* obj)
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -192,7 +192,7 @@ void Sketchbook::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Sketchbook : 터치 비활성");
+        //CCLog("Sketchbook : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -257,7 +257,7 @@ void Sketchbook::Notification(CCObject* obj)
         isTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 10)
     {
@@ -718,7 +718,7 @@ void Sketchbook::MakeScrollBook(int idx)
                 {
                     sprintf(name2, "letter/letter_practicing.png%d", i+3);
                     spriteClassBook->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClassBook->spriteObj[spriteClassBook->spriteObj.size()-1]->sprite->getContentSize().width/2, 27), CCSize(0, 0), name, "0", NULL, 5, 1) );
-                    //CCLog("연습 스킬? %d , %d", ms[i]->GetCommonId(), myInfo->GetPracticeSkillId());
+                    ////CCLog("연습 스킬? %d , %d", ms[i]->GetCommonId(), myInfo->GetPracticeSkillId());
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setColor(ccc3(140,140,140));
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name2))->setColor(ccc3(140,140,140));
                     ((CCSprite*)spriteClassBook->FindSpriteByName(name))->setTag(0); // 클릭하지 못하도록 함
@@ -828,7 +828,7 @@ void Sketchbook::MakeScrollSlot()
         spriteClassSlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerSlot, 3) );
         
         scid = myInfo->GetSlot()[i]->GetCommonId();
-        //CCLog("slot common id = %d", scid);
+        ////CCLog("slot common id = %d", scid);
         if (scid > 0) // 슬롯에 스킬이 있다면 문양을 표시한다.
         {
             sprintf(fname2, "skill_%d.png", scid);
@@ -1007,7 +1007,7 @@ void Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isTouched)
         return;
     
-    CCLog("touch ended");
+    //CCLog("touch ended");
     
     CCPoint point = pTouch->getLocation();
     

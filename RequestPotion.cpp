@@ -11,7 +11,7 @@ CCScene* RequestPotion::scene()
 
 void RequestPotion::onEnter()
 {
-    CCLog("RequestPotion : onEnter");
+    //CCLog("RequestPotion : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -28,7 +28,7 @@ void RequestPotion::SceneCallback()
 }
 void RequestPotion::onExit()
 {
-    CCLog("RequestPotion : onExit");
+    //CCLog("RequestPotion : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -62,7 +62,7 @@ bool RequestPotion::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("RequestPotion : touch prio = %d", this->getTouchPriority());
+    //CCLog("RequestPotion : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RequestPotion::Notification), Depth::GetCurName(), NULL);
@@ -111,7 +111,7 @@ void RequestPotion::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("RequestPotion : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // scroll 갱신
         //if (param->intValue() == 0)
@@ -120,7 +120,7 @@ void RequestPotion::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("RequestPotion 터치 비활성");
+        //CCLog("RequestPotion 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -194,7 +194,7 @@ void RequestPotion::MakeScroll()
         // 프로필 이미지
         sprintf(fname, "background/bg_profile.png%d", i);
         ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
-        CCLog("%d : %d", numOfList-i, psp->IsLoadingDone());
+        //CCLog("%d : %d", numOfList-i, psp->IsLoadingDone());
         if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
         {
             spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(35+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 3, 0, 255, 0.95f) );
@@ -467,7 +467,7 @@ void RequestPotion::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     

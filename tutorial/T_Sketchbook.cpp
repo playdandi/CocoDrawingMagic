@@ -15,7 +15,7 @@ CCScene* T_Sketchbook::scene(int fromWhere)
 
 void T_Sketchbook::onEnter()
 {
-    CCLog("T_Sketchbook : onEnter");
+    //CCLog("T_Sketchbook : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -28,7 +28,7 @@ void T_Sketchbook::onEnter()
 }
 void T_Sketchbook::onExit()
 {
-    CCLog("T_Sketchbook : onExit");
+    //CCLog("T_Sketchbook : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -54,7 +54,7 @@ bool T_Sketchbook::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("T_스케치북 : touch prio = %d", this->getTouchPriority());
+    //CCLog("T_스케치북 : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(T_Sketchbook::Notification), Depth::GetCurName(), NULL);
@@ -160,7 +160,7 @@ void T_Sketchbook::TutorialNextState()
     else if (tabNumber == 1) { sNum = 11; prop = "물"; }
     else if (tabNumber == 2) { sNum = 31; prop = "땅"; }
     
-    CCLog("TutorialNextState() : %d", tutorialState);
+    //CCLog("TutorialNextState() : %d", tutorialState);
     
     switch (tutorialState)
     {
@@ -250,7 +250,7 @@ void T_Sketchbook::Notification(CCObject* obj)
         isTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("T_Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("T_Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -260,7 +260,7 @@ void T_Sketchbook::Notification(CCObject* obj)
         isTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("T_Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("T_Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -270,7 +270,7 @@ void T_Sketchbook::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("T_Sketchbook : 터치 비활성");
+        //CCLog("T_Sketchbook : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
         scrollView->setTouchEnabled(false);
@@ -319,7 +319,7 @@ void T_Sketchbook::Notification(CCObject* obj)
         isTouched = false;
         scrollView->setTouchEnabled(true);
         scrollViewSlot->setTouchEnabled(true);
-        CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Sketchbook : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 10)
     {
@@ -598,7 +598,7 @@ void T_Sketchbook::MakeScrollBook(int idx)
             // 튜토리얼에 따라 영역표시를 한다. ('자동효과'에 영역표시 (첫 스킬에만))
             if ( (tutorialState == 6+2 && i == 0) )
             {
-                //CCLog("스케치북 tutorialState = %d", tutorialState);
+                ////CCLog("스케치북 tutorialState = %d", tutorialState);
                 ttrPos2->setAnchorPoint(ccp(0, 0));
                 ttrPos2->setPosition(ccp(104, 153));
                 //ttrPos->setScaleX( (float)122 / (float)782 );
@@ -784,7 +784,7 @@ bool T_Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     isScrolling = false;
     isScrollViewTouched = false;
     
-    CCLog("touch began");
+    //CCLog("touch began");
     
     CCPoint point = pTouch->getLocation();
     
@@ -794,7 +794,7 @@ bool T_Sketchbook::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         isScrollViewTouched = true;
     
     
-    CCLog("tutorial = %d", tutorialState);
+    //CCLog("tutorial = %d", tutorialState);
     if (tutorialState <= 2 || tutorialState == 6+2 || tutorialState == 7+2)
     {
         TutorialNextState();
@@ -849,7 +849,7 @@ void T_Sketchbook::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     if (!isTouched)
         return;
     
-    CCLog("touch ended");
+    //CCLog("touch ended");
     
     CCPoint point = pTouch->getLocation();
     

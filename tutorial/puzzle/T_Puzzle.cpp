@@ -52,7 +52,7 @@ CCScene* T_Puzzle::scene(int from)
 
 void T_Puzzle::onEnter()
 {
-    CCLog("T_Puzzle : onEnter");
+    //CCLog("T_Puzzle : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
@@ -63,7 +63,7 @@ void T_Puzzle::onEnter()
 }
 void T_Puzzle::onExit()
 {
-    CCLog("T_Puzzle : onExit");
+    //CCLog("T_Puzzle : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -186,7 +186,7 @@ void T_Puzzle::InitTutorial()
     
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     isSkipPossible = false;
-    //CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
+    ////CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
     //if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
     //{
         isSkipPossible = true;
@@ -211,7 +211,7 @@ void T_Puzzle::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         m_bTouchStarted = false;
         isKeybackTouched = false;
-        CCLog("T_Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("T_Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         //sound->ResumeBackgroundInGameSound();
         sound->ResumeAllEffects();
@@ -228,7 +228,7 @@ void T_Puzzle::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("T_Puzzle 터치 비활성");
+        //CCLog("T_Puzzle 터치 비활성");
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
         
@@ -241,7 +241,7 @@ void T_Puzzle::Notification(CCObject* obj)
         sound->ResumeAllEffects();
         
         // 종료하고 Ranking으로 돌아가자.
-        //CCLog("T_Puzzle 종료. Ranking으로 돌아감.");
+        ////CCLog("T_Puzzle 종료. Ranking으로 돌아감.");
         this->TutorialEnd();
     }
 }
@@ -371,7 +371,7 @@ void T_Puzzle::InitSprites()
     PIECE8_HEIGHT = (float)152 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_WIDTH = (float)154 * (float)boardSize.height/(float)1076;
     PIECE8_FRAME_HEIGHT = (float)154 * (float)boardSize.height/(float)1076;
-    CCLog("%f %f", PIECE8_WIDTH, PIECE8_HEIGHT);
+    //CCLog("%f %f", PIECE8_WIDTH, PIECE8_HEIGHT);
     
     // 구름
     //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "bg_cloud_near.png", ccp(1, 0), ccp(m_winSize.width, vo.y+vs.height*1.920f/2.920f+350), CCSize(0, 0), "", "Puzzle", this, 1) );
@@ -479,7 +479,7 @@ void T_Puzzle::InitCoco()
 
 void T_Puzzle::CocoAnim(float f)
 {
-    //CCLog("CocoAnim : %d", cocoFrameNumber);
+    ////CCLog("CocoAnim : %d", cocoFrameNumber);
     if (cocoFrameNumber == 0) // 2번
     {
         coco_sp[3]->setOpacity(0);
@@ -875,7 +875,7 @@ void T_Puzzle::TutorialNextState()
     
     CCActionInterval* action = NULL;
     
-    CCLog("인게임 튜토리얼 이번 상태 : %d", ttrState);
+    //CCLog("인게임 튜토리얼 이번 상태 : %d", ttrState);
     char name[200];
     switch (ttrState)
     {
@@ -1283,8 +1283,8 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     //}
     #endif
     
-    CCLog("ttrState = %d", ttrState);
-    CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);
+    //CCLog("ttrState = %d", ttrState);
+    //CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);
     
     
     // 아래의 튜토리얼 상태일 때는 대화만 넘긴다.
@@ -1430,7 +1430,7 @@ void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
         
         if (ttrState == 16)
         {
-            CCLog(" %d %d %d", cycleNum, x, y);
+            //CCLog(" %d %d %d", cycleNum, x, y);
             if ( (cycleNum == 1 && x == 4 && y == 1) ||
                  (cycleNum == 2 && x == 5 && y == 1) ||
                  (cycleNum == 3 && x == 4 && y == 2) )
@@ -1619,7 +1619,7 @@ void T_Puzzle::CheckUselessDiaPieces()
                 }
                 if (flag)
                 {
-                    //CCLog("연결피스추가!");
+                    ////CCLog("연결피스추가!");
                     piece4xy[touch_cnt%QUEUE_CNT].push_back( ccp(mx, my) );
                     puzzleP4set->SetOpacity(mx, my, 100);
                 }
@@ -1796,10 +1796,10 @@ void T_Puzzle::InvokeSkills(int queue_pos)
 {
     if (m_iState[queue_pos] == SKILL_BASIC)
     {
-        CCLog("state(%d) BASIC", queue_pos);
+        //CCLog("state(%d) BASIC", queue_pos);
         if (skill->IsApplied(1, queue_pos) || skill->IsApplied(9, queue_pos) || skill->IsApplied(17, queue_pos))
         {
-            CCLog("next cycle");
+            //CCLog("next cycle");
             m_iNextState[queue_pos] = SKILL_CYCLE;
         }
         else
@@ -1817,7 +1817,7 @@ void T_Puzzle::InvokeSkills(int queue_pos)
     }
     else if (m_iState[queue_pos] == SKILL_CYCLE) // 사이클 주변부 터뜨리기
     {
-        CCLog("state(%d) CYCLE", queue_pos);
+        //CCLog("state(%d) CYCLE", queue_pos);
         
         m_iNextState[queue_pos] = SKILL_DONE;
         skill->Invoke(1, queue_pos); skill->Invoke(9, queue_pos); skill->Invoke(17, queue_pos);
@@ -1825,7 +1825,7 @@ void T_Puzzle::InvokeSkills(int queue_pos)
     
     else if (m_iState[queue_pos] == SKILL_DONE)
     {
-        CCLog("state(%d) DONE!", queue_pos);
+        //CCLog("state(%d) DONE!", queue_pos);
       
         // skill Lock을 푼다.
         if (m_bSkillLock[queue_pos])
@@ -1845,7 +1845,7 @@ void T_Puzzle::InvokeSkills(int queue_pos)
 
 void T_Puzzle::Lock(int queue_pos)
 {
-    CCLog("Lock() - state(%d) : %d", queue_pos, m_iState[queue_pos]);
+    //CCLog("Lock() - state(%d) : %d", queue_pos, m_iState[queue_pos]);
     
     // drop되는 모든 영역에 lock을 건다.
     int x, y;
@@ -1872,11 +1872,13 @@ void T_Puzzle::Lock(int queue_pos)
                 lock8xy[queue_pos].push_back(ccp(x, y));
         }
     }
+    /*
     for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
     {
-        CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
+        //CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
               m_bLockP8[3][y], m_bLockP8[4][y], m_bLockP8[5][y], m_bLockP8[6][y]);
     }
+     */
 }
 void T_Puzzle::LockEach(int x, int y)
 {
@@ -1889,7 +1891,7 @@ void T_Puzzle::UnLockEach(int x, int y)
 
 void T_Puzzle::Bomb(int queue_pos, std::vector<CCPoint> bomb_pos)
 {
-    CCLog("Bomb(%d) start : size = %d", queue_pos, (int)bomb_pos.size());
+    //CCLog("Bomb(%d) start : size = %d", queue_pos, (int)bomb_pos.size());
     
     int x, y;
     
@@ -1968,7 +1970,7 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
     {
         if (m_iState[(int)queue_pos] == SKILL_CYCLE) // cycle 주변부 폭발 완료
         {
-            CCLog("bomb callback (%d) CYCLE", (int)queue_pos);
+            //CCLog("bomb callback (%d) CYCLE", (int)queue_pos);
             std::vector<CCPoint> temp = skill->A2GetPos();
             for (int i = 0 ; i < temp.size() ; i++)
             {
@@ -1980,7 +1982,7 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
         }
         else if (m_iState[(int)queue_pos] == SKILL_BASIC) // 한붓그리기 부분 폭발 완료 (피버타임 순차폭발이 끝났을 경우에도)
         {
-            CCLog("bomb callback (%d) BASIC", (int)queue_pos);
+            //CCLog("bomb callback (%d) BASIC", (int)queue_pos);
             
             for (int i = 0 ; i < piece8xy[(int)queue_pos].size() ; i++)
             {
@@ -1990,7 +1992,7 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
                 spriteP8[x][y] = NULL;
             }
             
-            CCLog("next state = %d", m_iNextState[(int)queue_pos]);
+            //CCLog("next state = %d", m_iNextState[(int)queue_pos]);
             if (m_iNextState[(int)queue_pos] == SKILL_CYCLE) // 그 다음이 cycle 주변부를 바로 터뜨려야 한다면
             {
                 m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
@@ -2005,7 +2007,7 @@ void T_Puzzle::BombCallback(CCNode* sender, void* queue_pos)
         }
         else if (m_iState[(int)queue_pos] == SKILL_FINAL) // 8번 스킬 폭발 완료
         {
-            CCLog("bomb callback (%d) FINAL", (int)queue_pos);
+            //CCLog("bomb callback (%d) FINAL", (int)queue_pos);
             
             std::vector<CCPoint> temp = effect->GetDoublePos(sender->getTag());
             for (int i = 0 ; i < temp.size() ; i++)
@@ -2040,7 +2042,7 @@ void T_Puzzle::FallingProcess()
 
 void T_Puzzle::Falling(int queue_pos)
 {
-    CCLog("Falling 들어옴 : queue_pos %d", queue_pos);
+    //CCLog("Falling 들어옴 : queue_pos %d", queue_pos);
     
     // get the number of total falling objects.
     m_iFallingCallbackCnt = 0;
@@ -2167,7 +2169,7 @@ void T_Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
         /*
          for (int y = ROW_COUNT-1 ; y >= 0 ; y--)
          {
-         CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
+         //CCLog("%d %d %d %d %d %d %d", m_bLockP8[0][y], m_bLockP8[1][y], m_bLockP8[2][y],
          m_bLockP8[3][y], m_bLockP8[4][y], m_bLockP8[5][y], m_bLockP8[6][y]);
          }
          */
@@ -2207,7 +2209,7 @@ void T_Puzzle::GoNextState(int queue_pos)
     
     // 다음 스킬로 넘어간다.
     m_iState[queue_pos] = m_iNextState[queue_pos];
-    //CCLog("Falling callback (%d) - 다음 스킬 [일반] : %d", queue_pos, m_iState[queue_pos]);
+    ////CCLog("Falling callback (%d) - 다음 스킬 [일반] : %d", queue_pos, m_iState[queue_pos]);
     InvokeSkills(queue_pos);
 }
 
@@ -2215,7 +2217,7 @@ void T_Puzzle::FallingQueuePushAndFalling(int queue_pos)
 {
     // falling queue insertion
     fallingQueue.push(queue_pos);
-    //CCLog("FallingQueuePushAndFalling : %d", isFalling);
+    ////CCLog("FallingQueuePushAndFalling : %d", isFalling);
     if (!isFalling)
         FallingProcess();
 }

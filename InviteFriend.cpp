@@ -14,7 +14,7 @@ CCScene* InviteFriend::scene()
 
 void InviteFriend::onEnter()
 {
-    CCLog("InviteFriend : onEnter");
+    //CCLog("InviteFriend : onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
@@ -61,7 +61,7 @@ void InviteFriend::SceneCallback()
 }
 void InviteFriend::onExit()
 {
-    CCLog("InviteFriend : onExit");
+    //CCLog("InviteFriend : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -96,7 +96,7 @@ bool InviteFriend::init()
     this->setTouchEnabled(true);
     this->setKeypadEnabled(true);
     this->setTouchPriority(Depth::GetCurPriority());
-    CCLog("InviteFriend : touch prio = %d", this->getTouchPriority());
+    //CCLog("InviteFriend : touch prio = %d", this->getTouchPriority());
     
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(InviteFriend::Notification), Depth::GetCurName(), NULL);
@@ -144,12 +144,12 @@ void InviteFriend::Notification(CCObject* obj)
         isTouched = false;
         isKeybackTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("InviteFriend : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("InviteFriend : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("InviteFriend : 터치 비활성");
+        //CCLog("InviteFriend : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
@@ -166,8 +166,8 @@ void InviteFriend::Notification(CCObject* obj)
         char temp[100];
         sprintf(temp, "{\"sender_name\":\"%s\"}", MyInfo::GetName().c_str());
         std::string metaInfo = temp;
-        CCLog("metaInfo = %s", metaInfo.c_str());
-        CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
+        //CCLog("metaInfo = %s", metaInfo.c_str());
+        //CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
         
         KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&InviteFriend::onSendLinkMessageComplete, this), std::bind(&InviteFriend::onSendLinkMessageErrorComplete, this, std::placeholders::_1, std::placeholders::_2), templateId, inviteList[inviteIdx]->userId, "", executeUrl, metaInfo);
     }
@@ -310,7 +310,7 @@ void InviteFriend::MakeScroll()
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
-        CCLog("wasInvited (%d) : %d", i, inviteList[i]->wasInvited);
+        //CCLog("wasInvited (%d) : %d", i, inviteList[i]->wasInvited);
         
         // button
         if (!inviteList[i]->wasInvited) // 초대 가능한 경우
@@ -366,7 +366,7 @@ void InviteFriend::ProfileTimer(float f)
         
         if (p.y-h < 0)
         {
-            //CCLog("%d : loading start", i);
+            ////CCLog("%d : loading start", i);
             psp->SetLoadingStarted(true);
             
             char tag[6];
@@ -389,7 +389,7 @@ void InviteFriend::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     
@@ -473,7 +473,7 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 inviteIdx = atoi(spriteClassScroll->spriteObj[i]->name.substr(24).c_str());
-                CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
+                //CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
                 
                 if (totalCnt >= 40) // 최대 초대 수를 넘은 경우
                 {
@@ -505,14 +505,14 @@ static int stat;
 
 void InviteFriend::onSendLinkMessageComplete()
 {
-    CCLog("onSendLinkMessageComplete");
+    //CCLog("onSendLinkMessageComplete");
     stat = 0;
     SendToServer();
 }
 void InviteFriend::onSendLinkMessageErrorComplete(char const *status, char const *error)
 {
     //CCMessageBox(error, "onSendLinkMessageErrorComplete");
-    CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
+    //CCLog("onSendLinkMessageErrorComplete : %s, %s", status, error);
     stat = atoi(status);
     
     if (stat != -31)
@@ -731,7 +731,7 @@ void InviteFriend::InitInviteList()
     {
         CCString* k = (CCString*)keys->objectAtIndex(j);
         std::string userId = k->getCString();
-        //CCLog("user id = %s", userId.c_str());
+        ////CCLog("user id = %s", userId.c_str());
         KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey(userId.c_str());
         
         // 이미 초대되어있는지 서버에서 받아온 정보와 비교한다.
@@ -811,7 +811,7 @@ void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc)
         Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_OK, BTN_1, data);
     }
     
-    CCLog("xml parse (inviteIdx) = %d", inviteIdx);
+    //CCLog("xml parse (inviteIdx) = %d", inviteIdx);
     
     
     // 스크롤뷰 내용 갱신

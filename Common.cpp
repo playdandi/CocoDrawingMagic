@@ -991,9 +991,9 @@ void SpriteClass::RemoveAllObjects()
             {
                 /*
                 if (spriteObj[i]->type == 2)
-                    CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->label->getString());
+                    //CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->label->getString());
                 else
-                    CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->name.c_str());
+                    //CCLog("priority %d , idx %d , type %d , name %s", curPriority, i, spriteObj[i]->type, spriteObj[i]->name.c_str());
                 */
                 spriteObj[i]->name.clear();
                 spriteObj[i]->parentName.clear();
@@ -1037,7 +1037,7 @@ void Common::RebootSystem(void* p)
     while (depth.size() > 0)
     {
         cur = Depth::GetCurPointer();
-        CCLog("%s", Depth::GetCurNameString().c_str());
+        //CCLog("%s", Depth::GetCurNameString().c_str());
         
         if (Depth::GetCurNameString() == "Splash") ((Splash*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "Ranking") ((Ranking*)cur)->EndScene();
@@ -1345,37 +1345,37 @@ std::string Common::GetVerifyParams(int type, int topazId, const char* kakaoId, 
 
 void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx, const char* fkid)
 {
-    CCLog("start verify purchase result xml parse");
+    //CCLog("start verify purchase result xml parse");
     // xml parsing
     xml_document xmlDoc;
     xml_parse_result result = xmlDoc.load_buffer(data, size);
     
     if (!result)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
+        //CCLog("error description: %s", result.description());
+        //CCLog("error offset: %d", result.offset);
         return;
     }
     
-    CCLog("========= DATA =========");
-    CCLog("%s", data);
-    CCLog("========================");
+    //CCLog("========= DATA =========");
+    //CCLog("%s", data);
+    //CCLog("========================");
     
     // get data
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        CCLog("토파즈 구매 성공!");
+        //CCLog("토파즈 구매 성공!");
         
         // 토파즈, 별사탕을 갱신한다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-        CCLog("토파즈 = %d", topaz);
-        CCLog("별사탕 = %d", starcandy);
+        //CCLog("토파즈 = %d", topaz);
+        //CCLog("별사탕 = %d", starcandy);
         myInfo->SetMoney(topaz, starcandy);
-        //CCLog("after 토파즈 = %d", myInfo->GetTopaz());
-        //CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
+        ////CCLog("after 토파즈 = %d", myInfo->GetTopaz());
+        ////CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
         
         // 부모 scene에 갱신
         //CCString* param = CCString::create("2");
@@ -1409,7 +1409,7 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
             char temp[128];
             sprintf(temp, "{\"sender_name\":\"%s\"}", friendKakaoId.c_str());
             std::string metaInfo = temp;
-            CCLog("metaInfo = %s", metaInfo.c_str());
+            //CCLog("metaInfo = %s", metaInfo.c_str());
             KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&BuyTopaz::onSendLinkMessageComplete, (BuyTopaz*)Depth::GetCurPointer()), std::bind(&BuyTopaz::onSendLinkMessageErrorComplete, (BuyTopaz*)Depth::GetCurPointer(), std::placeholders::_1, std::placeholders::_2), templateId, friendKakaoId, "", executeUrl, metaInfo);
             
             Common::ShowPopup(Depth::GetCurPointer(), "BuyTopaz", "NoImage", false, SEND_TOPAZ_OK, BTN_1, nullData);
@@ -1421,11 +1421,13 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
     else
     {
         // purchase_topaz_google.php
-        CCLog("failed code = %d", code);
+        //CCLog("failed code = %d", code);
+        /*
         if (code == 10) CCLog("서버인증실패");
         else if (code == 11) CCLog("payload 다름");
         else if (code == 12) CCLog("이미 지급한 토파즈");
         else if (code == 13) CCLog("토파즈 id 이상함");
+        */
         
         // send_topaz_google.php
         // "kakao_id", "friend_kakao_id", "topaz_id", "purchase_data", "signature"

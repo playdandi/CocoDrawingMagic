@@ -15,7 +15,7 @@ static bool isJoinNeeded;
 
 Splash::~Splash(void)
 {
-    CCLog("Splash 소멸자");
+    //CCLog("Splash 소멸자");
 }
 
 CCScene* Splash::scene()
@@ -30,7 +30,7 @@ CCScene* Splash::scene()
 
 void Splash::onEnter()
 {
-    CCLog("Splash :: onEnter 00");
+    //CCLog("Splash :: onEnter 00");
     CCLayer::onEnter();
     
     CCActionInterval* action = CCSequence::create( CCFadeIn::create(0.5f), CCDelayTime::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(Splash::Callback_Logo_KakaoGame), this), NULL );
@@ -40,7 +40,7 @@ void Splash::onEnter()
 }
 void Splash::onExit()
 {
-    CCLog("Splash :: onExit");
+    //CCLog("Splash :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -62,25 +62,25 @@ void Splash::keyBackClicked()
 
 void Splash::onInitComplete()
 {
-    CCLog("onInitComplete");
-    CCLog("token : %s", CCUserDefault::sharedUserDefault()->getStringForKey("refresh_token").c_str());
+    //CCLog("onInitComplete");
+    //CCLog("token : %s", CCUserDefault::sharedUserDefault()->getStringForKey("refresh_token").c_str());
     KakaoNativeExtension::getInstance()->auth(std::bind(&Splash::onAuthComplete, this, std::placeholders::_1), std::bind(&Splash::onAuthErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
 }
 void Splash::onInitErrorComplete(const char* status, const char* error)
 {
-    CCLog("onInitErrorComplete : %s , %s", status, error);
+    //CCLog("onInitErrorComplete : %s , %s", status, error);
 }
 
 void Splash::onAuthComplete(bool result)
 {
-    CCLog("onAuthComplete : result (%d)", result);
+    //CCLog("onAuthComplete : result (%d)", result);
     // result = true (로그인 된 상태) , false (로그인 안된 상태)
     needToLoginForKakao = !result;
     
     if (result && isJoinNeeded && !stopHere) // join을 해야 함.
     {
         stopHere = true; // 처음 로그인할 때 auth가 두 번 호출되어서 이 flag로 막도록 조치함.
-        CCLog("onAuthComplete : 조인하자!!!");
+        //CCLog("onAuthComplete : 조인하자!!!");
         m_pMsgLabel->setString("잠시만 기다려주세요.");
         KakaoNativeExtension::getInstance()->localUser(std::bind(&Splash::onLocalUserComplete, this), std::bind(&Splash::onLocalUserErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
     }
@@ -88,24 +88,24 @@ void Splash::onAuthComplete(bool result)
 }
 void Splash::onAuthErrorComplete(char const* status, char const* error)
 {
-    CCLog("onAuthErrorComplete : %s, %s", status, error);
+    //CCLog("onAuthErrorComplete : %s, %s", status, error);
     waitTouch = false;
 }
 
 void Splash::onTokenComplete()
 {
     KakaoNativeExtension::getInstance()->auth(std::bind(&Splash::onAuthComplete, this, std::placeholders::_1), std::bind(&Splash::onAuthErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
-    CCLog("access_token : %s", CCUserDefault::sharedUserDefault()->getStringForKey("access_token").c_str());
+    //CCLog("access_token : %s", CCUserDefault::sharedUserDefault()->getStringForKey("access_token").c_str());
 }
 void Splash::onTokenErrorComplete(char const* status, char const* error)
 {
     //CCMessageBox(error, "onTokenErrorComplete");
-    CCLog("onTokenErrorComplete : %s, %s", status, error);
+    //CCLog("onTokenErrorComplete : %s, %s", status, error);
 }
 
 void Splash::onLoginComplete()
 {
-    CCLog("onLoginComplete");
+    //CCLog("onLoginComplete");
     isJoinNeeded = true;
     m_pKakaoBtn->removeFromParentAndCleanup(true);
     
@@ -113,13 +113,13 @@ void Splash::onLoginComplete()
 }
 void Splash::onLoginErrorComplete(char const* status, char const* error)
 {
-    CCLog("onLoginErrorComplete : %s, %s", status, error);
+    //CCLog("onLoginErrorComplete : %s, %s", status, error);
     waitTouch = false;
 }
 
 void Splash::onLocalUserComplete()
 {
-    CCLog("onLocalUserComplete");
+    //CCLog("onLocalUserComplete");
     isKeybackTouched = true;
     
     // 그 다음 친구목록 불러온다.
@@ -128,7 +128,7 @@ void Splash::onLocalUserComplete()
 void Splash::onLocalUserErrorComplete(char const* status, char const* error)
 {
     //CCMessageBox(error, "onLocalUserErrorComplete");
-    CCLog("onLocalUserErrorComplete : %s, %s", status, error);
+    //CCLog("onLocalUserErrorComplete : %s, %s", status, error);
     isTouched = false;
     
     std::vector<int> nullData;
@@ -137,10 +137,10 @@ void Splash::onLocalUserErrorComplete(char const* status, char const* error)
 
 void Splash::onFriendsComplete()
 {
-    CCLog("onFriendsComplete");
+    //CCLog("onFriendsComplete");
     
-    CCLog("친구 수 : %d", KakaoFriends::getInstance()->appFriends->count());
-    CCLog("X 친구 수 : %d", KakaoFriends::getInstance()->friends->count());
+    //CCLog("친구 수 : %d", KakaoFriends::getInstance()->appFriends->count());
+    //CCLog("X 친구 수 : %d", KakaoFriends::getInstance()->friends->count());
     
     isTouched = false;
     isLoading = true;
@@ -159,7 +159,7 @@ void Splash::onFriendsComplete()
 void Splash::onFriendsErrorComplete(char const* status, char const* error)
 {
     //CCMessageBox(error, "onFriendsErrorComplete");
-    CCLog("onFriendsErrorComplete : %s, %s", status, error);
+    //CCLog("onFriendsErrorComplete : %s, %s", status, error);
     isTouched = false;
     
     std::vector<int> nullData;
@@ -234,12 +234,12 @@ void Splash::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("Splash : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Splash : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Ranking 터치 비활성");
+        //CCLog("Ranking 터치 비활성");
         //this->setKeypadEnabled(false);
         //this->setTouchEnabled(false);
         isTouched = true;
@@ -440,7 +440,7 @@ RSA* Splash::createRSA(unsigned char * key, int pub)
     rsa = PEM_read_bio_RSA_PUBKEY(keybio, NULL, NULL, NULL);
     if(rsa == NULL)
     {
-        CCLog("res null");
+        //CCLog("res null");
         exit(0);
         printf( "Failed to create RSA");
     }
@@ -457,8 +457,8 @@ void Splash::StartLoginProcess()
 
 bool Splash::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCLog("%d %d %d", isTouched, waitTouch, isLoading);
-    CCLog("needtologin = %d", needToLoginForKakao);
+    //CCLog("%d %d %d", isTouched, waitTouch, isLoading);
+    //CCLog("needtologin = %d", needToLoginForKakao);
     if (waitTouch)
         return false;
     if (isLoading)
@@ -584,10 +584,10 @@ void Splash::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 
 void Splash::XmlParseVersion(xml_document *xmlDoc)
 {
-    CCLog("xml parse : version");
+    //CCLog("xml parse : version");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
-    //CCLog("code = %d", code);
+    ////CCLog("code = %d", code);
     
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)
@@ -605,7 +605,7 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         gameVersion = nodeResult.child("game-version").text().as_int();
         std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
         //int binaryVersion = nodeResult.child("binary-version").text().as_int();
-        CCLog("게임 버전 = %d", gameVersion);
+        //CCLog("게임 버전 = %d", gameVersion);
         
         // 마켓 버전
         int binaryVersion_android = nodeResult.child("market-version").child("android").text().as_int();
@@ -614,7 +614,7 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
 
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         binaryVersion_latest = binaryVersion_android;
-        CCLog("바이너리 버전 (android) = %d", binaryVersion_android);
+        //CCLog("바이너리 버전 (android) = %d", binaryVersion_android);
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                            "com/playDANDi/CocoMagic/CocoMagic",
@@ -628,15 +628,15 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
         binaryVersion_latest = binaryVersion_ios;
-        CCLog("바이너리 버전 (iOS) = %d", binaryVersion_ios);
+        //CCLog("바이너리 버전 (iOS) = %d", binaryVersion_ios);
         binaryVersion_current = binaryVersion_latest;
         #endif
 
-        CCLog("현재 바이너리 버전 : %d", binaryVersion_current);
+        //CCLog("현재 바이너리 버전 : %d", binaryVersion_current);
         
         if (binaryVersion_current != binaryVersion_latest)
         {
-            CCLog("바이너리 버전 다름 : 업데이트 해야 함.");
+            //CCLog("바이너리 버전 다름 : 업데이트 해야 함.");
 
             std::vector<int> nullData;
             Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_UPDATE, BTN_1, nullData);
@@ -647,9 +647,9 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         
         if (gameVersion != iGameVersion)
         {
-            CCLog("게임 버전 다름 : 리소스 업데이트 시작함.");
+            //CCLog("게임 버전 다름 : 리소스 업데이트 시작함.");
             m_pMsgLabel->setString("못생긴 리소스 설득 중...");
-            //CCLog("%s", balanceFileUrl.c_str());
+            ////CCLog("%s", balanceFileUrl.c_str());
             // 밸런스 파일 업데이트 !
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl(balanceFileUrl.c_str());
@@ -673,7 +673,7 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
 
 void Splash::TryLogin()
 {
-    CCLog("is join needed = %d", isJoinNeeded);
+    //CCLog("is join needed = %d", isJoinNeeded);
     
     // rsa 만들기 (초기 1회만 만들면 됨)
     rsa = createRSA((unsigned char*)(basicKey.c_str()), 1);
@@ -705,7 +705,7 @@ void Splash::TryLogin()
             jstring str = (jstring)t.env->CallStaticObjectMethod(t.classID,t.methodID);
             const char* msg = t.env->GetStringUTFChars(str, 0);
             strcpy(regId, msg);
-            CCLog("받은메시지 = %s", regId); // 여기서 전달받은 값이 출력됨
+            //CCLog("받은메시지 = %s", regId); // 여기서 전달받은 값이 출력됨
             
             t.env->ReleaseStringUTFChars(str, msg);
             // Release
@@ -752,7 +752,7 @@ void Splash::TryLogin()
 void Splash::XMLParseGameData()
 {
     std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
-    CCLog("filepath = %s", filepath.c_str());
+    //CCLog("filepath = %s", filepath.c_str());
     
     // read file
     unsigned long iSize = 0;
@@ -771,7 +771,7 @@ void Splash::XMLParseGameData()
     for (int i = 0 ; i < obfuscatedStr.size() ; i++) // xor operation
         decodedStr += obfuscatedStr[i] ^ obfuscationKey[obfKey][i%keyLen];
     
-    //CCLog("%s", decodedStr.c_str());
+    ////CCLog("%s", decodedStr.c_str());
     
     // xml parsing
     xml_document xmlDoc;
@@ -782,8 +782,8 @@ void Splash::XMLParseGameData()
     
     if (!result)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
+        //CCLog("error description: %s", result.description());
+        //CCLog("error offset: %d", result.offset);
         return;
     }
     
@@ -1026,25 +1026,25 @@ void Splash::XMLParseGameData()
 void Splash::WriteResFile(char* data, int size)
 {
     std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
-    CCLog("filepath = %s", filepath.c_str());
+    //CCLog("filepath = %s", filepath.c_str());
     
     FILE* ptr_fp;
     if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
     {
-        CCLog("FILE OPEN ERROR !");
+        //CCLog("FILE OPEN ERROR !");
         exit(1);
     }
     
     size_t realSize = strlen(data);
     size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
-    //CCLog("%d %d", realSize, fwriteSize);
+    ////CCLog("%d %d", realSize, fwriteSize);
     if (fwriteSize != realSize)
     {
-        CCLog("FILE WRITE ERROR !");
+        //CCLog("FILE WRITE ERROR !");
         exit(1);
     }
     fclose(ptr_fp);
-    CCLog("FILE WRITE done~");
+    //CCLog("FILE WRITE done~");
     
     // UserDefault에 바뀐 gameVersion 저장.
     iGameVersion = gameVersion;
@@ -1060,7 +1060,7 @@ void Splash::WriteResFile(char* data, int size)
 
 void Splash::XmlParseLogin(xml_document *xmlDoc)
 {
-    CCLog("xml parse : login");
+    //CCLog("xml parse : login");
     
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
@@ -1107,9 +1107,9 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         // get public-key for RSA
         publicKey = nodeResult.child("public-key").text().as_string();
         publicKeyIndex = nodeResult.child("public-key-index").text().as_int();
-        CCLog("gcm key = %s", gcmKey.c_str());
-        CCLog("public key = %s", publicKey.c_str());
-        CCLog("public key idx = %d", publicKeyIndex);
+        //CCLog("gcm key = %s", gcmKey.c_str());
+        //CCLog("public key = %s", publicKey.c_str());
+        //CCLog("public key idx = %d", publicKeyIndex);
         
         // rsa 만들기 (초기 1회만 만들면 됨)
         rsa = createRSA((unsigned char*)(publicKey.c_str()), 1);
@@ -1169,7 +1169,7 @@ void Splash::XmlParseNotice(xml_document *xmlDoc)
                 
                 if (result != 0)
                 {
-                    CCLog("악성 패키지 감지! (%s)", packageName.c_str());
+                    //CCLog("악성 패키지 감지! (%s)", packageName.c_str());
                     std::vector<int> nullData;
                     Common::ShowPopup(this, "Splash", "NoImage", false, FUCKING_APP_DETECTED, BTN_1, nullData);
                     return;
@@ -1213,7 +1213,7 @@ void Splash::XmlParseNotice(xml_document *xmlDoc)
 
 void Splash::XmlParseMyInfo(xml_document *xmlDoc)
 {
-    CCLog("xml parse : myinfo");
+    //CCLog("xml parse : myinfo");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -1376,7 +1376,7 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
             Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_REBOOT, BTN_1, nullData);
         }
         else if (code == 12)
-            CCLog("Splash : 이미 보상을 받은 경우");
+            ;//CCLog("Splash : 이미 보상을 받은 경우");
         else
             Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }
@@ -1443,7 +1443,7 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
 
 void Splash::XmlParseFriends(xml_document *xmlDoc)
 {
-    CCLog("xml parse : friends");
+    //CCLog("xml parse : friends");
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -1533,7 +1533,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
         if (!isFriendListChecked)
             CheckFriendList();
         
-        CCLog("added : %d  ,  deleted : %d", (int)addedList.size(), (int)deletedList.size());
+        //CCLog("added : %d  ,  deleted : %d", (int)addedList.size(), (int)deletedList.size());
         
         if (addedList.size() > 0) // 추가할 친구가 있으면 프로토콜 실행.
         {
@@ -1588,7 +1588,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                     {
                         KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->appFriends->objectForKey(id.c_str());
                         
-                        //CCLog("%s , %s", friendList[i]->GetKakaoId().c_str(), f->hashedTalkUserId.c_str());
+                        ////CCLog("%s , %s", friendList[i]->GetKakaoId().c_str(), f->hashedTalkUserId.c_str());
                         
                         // 친구가 카카오톡을 탈퇴했다면, 프로필 사진과 닉네임을 보여주지 않는다.
                         if (f->hashedTalkUserId == "")
@@ -1629,7 +1629,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 if (profiles[i]->IsPreload() && url != "" && ((int)url.size() >= 4 && url.substr(0, 4) == "http"))
                     profileCnt++;
             }
-            CCLog("프로필 로딩해야 할 수 : %d", profileCnt);
+            //CCLog("프로필 로딩해야 할 수 : %d", profileCnt);
             for (int i = 0 ; i < profiles.size() ; i++)
             {
                 std::string url = profiles[i]->GetProfileUrl();
@@ -1637,7 +1637,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 {
                     profiles[i]->SetLoadingStarted(true);
                     
-                    CCLog("프로필 url : %s", url.c_str());
+                    //CCLog("프로필 url : %s", url.c_str());
                     CCHttpRequest* req = new CCHttpRequest();
                     req->setUrl(url.c_str());
                     //req->set
@@ -1688,7 +1688,7 @@ void Splash::CheckFriendList()
     
     bool flag;
     int cnt = KakaoFriends::getInstance()->appFriends->count();
-    CCLog("COUNT = %d", cnt);
+    //CCLog("COUNT = %d", cnt);
     CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
     
     // 새로 추가된 친구가 있는지 찾는다.
@@ -1697,7 +1697,7 @@ void Splash::CheckFriendList()
         flag = false;
         CCString* k = (CCString*)keys->objectAtIndex(j);
         std::string userId = k->getCString();
-        CCLog("user id = %s", userId.c_str());
+        //CCLog("user id = %s", userId.c_str());
         for (int i = 0 ; i < friendList.size() ; i++)
         {
             if (myInfo->GetKakaoId() == friendList[i]->GetKakaoId())
@@ -1744,8 +1744,8 @@ void Splash::XmlParseServerCheck(void* data, int size)
     
     if (!result)
     {
-        CCLog("error description: %s", result.description());
-        CCLog("error offset: %d", result.offset);
+        //CCLog("error description: %s", result.description());
+        //CCLog("error offset: %d", result.offset);
         return;
     }
     
@@ -1840,10 +1840,10 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 or resource.xml 받아올 때
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         if ( !(atoi(res->getHttpRequest()->getTag()) == 9999999) )
         {
-            CCLog("프로필 사진 로드 실패...");
+            //CCLog("프로필 사진 로드 실패...");
             profileCnt--;
             if (profileCnt <= 0)
             {
@@ -2019,7 +2019,7 @@ void Splash::GetTodayCandyFriend()
 
 void Splash::LastActionStart()
 {
-    CCLog("last action start");
+    //CCLog("last action start");
     Splash* pThis = (Splash*)Depth::GetCurPointer();
 
     // 오늘의 별사탕 친구 목록 받아오기
@@ -2045,14 +2045,14 @@ void Splash::LastActionCallback2(CCNode* sender, void *data)
     delete sound;
     EndScene();
     Common::ShowNextScene(this, "Splash", "Ranking", true);
-    CCLog("loaded RANKING scene");
+    //CCLog("loaded RANKING scene");
 }
 
 std::string Splash::SubstrNickname(std::string nickname)
 {
     if (nickname.size() > 20)
     {
-        //CCLog("%s", nickname.c_str());
+        ////CCLog("%s", nickname.c_str());
         int i;
         for (i = 0 ; i < nickname.size() ; i++)
         {
@@ -2069,7 +2069,7 @@ std::string Splash::SubstrNickname(std::string nickname)
 
 void Splash::EndScene()
 {
-    CCLog("Splash : EndScene");
+    //CCLog("Splash : EndScene");
     // release depth tree
     Depth::RemoveCurDepth();
     

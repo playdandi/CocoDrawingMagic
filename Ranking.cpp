@@ -28,7 +28,7 @@ CCScene* Ranking::scene(int from)
 
 void Ranking::onEnter()
 {
-    CCLog("Ranking :: onEnter");
+    //CCLog("Ranking :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, 0, true);
     CCLayer::onEnter();
@@ -46,11 +46,11 @@ void Ranking::onEnter()
 }
 void Ranking::onPause()
 {
-    CCLog("Ranking : onPause");
+    //CCLog("Ranking : onPause");
 }
 void Ranking::onExit()
 {
-    CCLog("Ranking :: onExit");
+    //CCLog("Ranking :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -58,7 +58,7 @@ void Ranking::onExit()
 
 void Ranking::keyBackClicked()
 {
-    CCLog("%d %d", isKeybackTouched, isTouched);
+    //CCLog("%d %d", isKeybackTouched, isTouched);
     if (isKeybackTouched || isTouched)
         return;
     isKeybackTouched = true;
@@ -91,7 +91,7 @@ bool Ranking::init()
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
     this->setTouchPriority(0);
-    CCLog("Ranking : touch prio = %d", this->getTouchPriority());
+    //CCLog("Ranking : touch prio = %d", this->getTouchPriority());
     
     srand(time(NULL));
     
@@ -201,7 +201,7 @@ void Ranking::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
         scrollView->setTouchEnabled(true);
-        CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 0)
     {
@@ -213,7 +213,7 @@ void Ranking::Notification(CCObject* obj)
         scrollView->setTouchEnabled(true);
         isTouched = false;
         isKeybackTouched = false;
-        CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        //CCLog("Ranking : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -252,7 +252,7 @@ void Ranking::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        CCLog("Ranking 터치 비활성");
+        //CCLog("Ranking 터치 비활성");
         //this->setKeypadEnabled(false);
         //this->setTouchEnabled(false);
         isKeybackTouched = true;
@@ -262,8 +262,8 @@ void Ranking::Notification(CCObject* obj)
     }
     else if (param->intValue() == 2)
     {
-        CCLog("Ranking Noti(2) : 토파즈 = %d", myInfo->GetTopaz());
-        CCLog("토파즈 string = %s", Common::MakeComma(myInfo->GetTopaz()).c_str());
+        //CCLog("Ranking Noti(2) : 토파즈 = %d", myInfo->GetTopaz());
+        //CCLog("토파즈 string = %s", Common::MakeComma(myInfo->GetTopaz()).c_str());
         
         // 토파즈, 별사탕, MP, 포션남은시간 정보 업데이트
         ((CCLabelTTF*)spriteClass->FindLabelByTag(1))->setString(Common::MakeComma(myInfo->GetTopaz()).c_str());
@@ -359,7 +359,7 @@ void Ranking::ShowPopup()
             sprintf(s, "noticelist_%d", noticeList[i]->id);
             long lastTime = CCUserDefault::sharedUserDefault()->getIntegerForKey(s, -1);
             
-            CCLog("시간차 : %ld", time(0)-lastTime);
+            //CCLog("시간차 : %ld", time(0)-lastTime);
             
             if (lastTime == -1 || time(0)-lastTime > 60*60*24)
             {
@@ -409,9 +409,9 @@ void Ranking::InitSprites()
     pBackground->setPosition(ccp(0, 0));
     this->addChild(pBackground, 0);
     
-    CCLog("=========================================================");
+    //CCLog("=========================================================");
     CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    CCLog("=========================================================");
+    //CCLog("=========================================================");
     
     char name[30], name2[30];
     
@@ -534,10 +534,10 @@ void Ranking::ProfileTimer(float f)
         ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
         
         // 화면에 보이는 스프라이트 교체 (한번만 시행)
-        //CCLog("%d : loadingRanking : %d %d %d", i, psp!=NULL, psp->IsLoadingDone(), psp->IsLoadingDoneForRanking());
+        ////CCLog("%d : loadingRanking : %d %d %d", i, psp!=NULL, psp->IsLoadingDone(), psp->IsLoadingDoneForRanking());
         if (psp != NULL && psp->IsLoadingDone() && !psp->IsLoadingDoneForRanking())
         {
-            //CCLog("ok");
+            ////CCLog("ok");
             if (spriteClass == NULL)
                 return;
             spriteClass->ChangeSprite(-888*(i+1), profiles[i]->GetProfile());
@@ -554,7 +554,7 @@ void Ranking::ProfileTimer(float f)
         
         if (p.y - h < 0)
         {
-            CCLog("%d : loading start", i);
+            //CCLog("%d : loading start", i);
             psp->SetLoadingStarted(true);
             psp->SetLoadingDoneForRanking(true);
             
@@ -578,7 +578,7 @@ void Ranking::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 받아오기 실패
     if (!res || !res->isSucceed())
     {
-        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
         return;
     }
     
@@ -588,7 +588,7 @@ void Ranking::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
     
-    //CCLog("%d", (int)buffer->size());
+    ////CCLog("%d", (int)buffer->size());
     
     // make texture2D
     CCImage* img = new CCImage;
@@ -626,7 +626,7 @@ void Ranking::MakeScroll()
     char rankNum[3], name[40], score[12];
     for (int i = 0 ; i < numOfList ; i++)
     {
-        //CCLog("imageurl(%d) : %s", i, friendList[i]->GetImageUrl().c_str());
+        ////CCLog("imageurl(%d) : %s", i, friendList[i]->GetImageUrl().c_str());
         CCLayer* profileLayer = CCLayer::create();
         profileLayer->setContentSize(CCSizeMake(862, 166));
         profileLayer->setPosition(ccp(34, (numOfList-i-1)*166));
@@ -658,7 +658,7 @@ void Ranking::MakeScroll()
         // 프로필 이미지
         sprintf(name, "background/bg_profile.png%d", i);
         ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
-        CCLog("url = %s , %d", friendList[i]->GetImageUrl().c_str(), psp->IsLoadingDone());
+        //CCLog("url = %s , %d", friendList[i]->GetImageUrl().c_str(), psp->IsLoadingDone());
         if (friendList[i]->GetImageUrl() != "" && psp->IsLoadingDone())
         {
             spriteClass->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(102+5, 36+11), CCSize(0,0), "", "Layer", profileLayer, 5, 0, 255, 0.95f) );
@@ -1103,8 +1103,8 @@ CCScrollView* Ranking::GetScrollView()
 void Ranking::scrollViewDidScroll(CCScrollView* view)
 {
     isScrolling = true;
-    //CCLog("min %f", scrollView->minContainerOffset().y);
-    //CCLog("max %f", scrollView->maxContainerOffset().y);
+    ////CCLog("min %f", scrollView->minContainerOffset().y);
+    ////CCLog("max %f", scrollView->maxContainerOffset().y);
 }
 
 void Ranking::scrollViewDidZoom(CCScrollView* view)

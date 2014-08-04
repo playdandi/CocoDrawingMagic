@@ -20,14 +20,14 @@ CCScene* T_Skip::scene(int h, int from)
 
 void T_Skip::onEnter()
 {
-    CCLog("T_Skip :: onEnter");
+    //CCLog("T_Skip :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
     CCLayer::onEnter();
 }
 void T_Skip::onExit()
 {
-    CCLog("T_Skip :: onExit");
+    //CCLog("T_Skip :: onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();

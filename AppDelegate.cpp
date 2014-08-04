@@ -49,7 +49,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 // This function will be called when the app is inactive. When comes a phone call,it's be invoked too
 void AppDelegate::applicationDidEnterBackground()
 {
-    CCLog("enter background");
+    //CCLog("enter background");
     CCDirector::sharedDirector()->stopAnimation();
     CCDirector::sharedDirector()->pause();
     
@@ -72,7 +72,7 @@ void AppDelegate::applicationDidEnterBackground()
             void* p = Depth::GetCurPointer();
             //if (!((Puzzle*)p)->IsGameOver()) // 게임이 끝난 경우에는 호출 ㄴㄴ
             //{
-                CCLog("background : 게임 일시정지 화면 띄우자.");
+                //CCLog("background : 게임 일시정지 화면 띄우자.");
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->ResumeAllEffects();
                 ((Puzzle*)p)->PauseGame();
@@ -88,7 +88,7 @@ void AppDelegate::applicationDidEnterBackground()
 // this function will be called when the app is active again
 void AppDelegate::applicationWillEnterForeground()
 {
-    CCLog("enter foreground");
+    //CCLog("enter foreground");
     CCDirector::sharedDirector()->stopAnimation(); //
     CCDirector::sharedDirector()->resume(); //
     CCDirector::sharedDirector()->startAnimation();
@@ -101,7 +101,7 @@ void AppDelegate::applicationWillEnterForeground()
     // 시간 갱신 (인게임 중일 때는 할 필요 없다)
     else if (!isInGame)
     {
-        CCLog("현재 위치 ~ : %s", Depth::GetCurNameString().c_str());
+        //CCLog("현재 위치 ~ : %s", Depth::GetCurNameString().c_str());
         if (Depth::GetCurNameString() == "Splash")
             Resume();
         else if (Depth::GetCurNameString() != "Loading" && Depth::GetCurNameString() != "MagicList")
@@ -117,7 +117,7 @@ void AppDelegate::applicationWillEnterForeground()
         {
             if (depth.size() > 1 && Depth::GetParentNameString() == "Puzzle")
             {
-                CCLog("foreground : 사운드 1순위로 만들기");
+                //CCLog("foreground : 사운드 1순위로 만들기");
                 void* p = Depth::GetParentPointer();
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->PauseBackgroundInGameSound();
@@ -125,7 +125,7 @@ void AppDelegate::applicationWillEnterForeground()
             }
             else if (!isStartGameEnd && depth.size() == 1 && Depth::GetCurNameString() == "Puzzle")
             {
-                CCLog("게임오버 ~ 게임결과 사이");
+                //CCLog("게임오버 ~ 게임결과 사이");
                 void* p = Depth::GetCurPointer();
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->PauseBackgroundInGameSound();
@@ -157,7 +157,7 @@ void AppDelegate::SessionCheck()
 
 void AppDelegate::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    CCLog("%p", Depth::GetCurPointer());
+    //CCLog("%p", Depth::GetCurPointer());
     ((Loading*)Depth::GetCurPointer())->EndScene();
 
     CCHttpResponse* res = (CCHttpResponse*) data;
@@ -182,22 +182,22 @@ void AppDelegate::XmlParseSessionCheck(xml_document *xmlDoc)
     
     else if (code == 0)
     {
-        CCLog("session check : SUCCESS");
-        //CCLog("%s", Depth::GetCurNameString().c_str());
+        ////CCLog("session check : SUCCESS");
+        ////CCLog("%s", Depth::GetCurNameString().c_str());
         Resume();
     }
 }
 
 void AppDelegate::Resume()
 {
-    //CCLog("SESSION CHECK : SUCCESS");
-    CCLog("현재위치 : %s", Depth::GetCurName());
+    ////CCLog("SESSION CHECK : SUCCESS");
+    //CCLog("현재위치 : %s", Depth::GetCurName());
     
     Depth::DumpDepth();
     
     CCString* param = CCString::create("5");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    CCLog("2");
+    //CCLog("2");
     
     if (Depth::GetCurNameString() != "Splash")
     {
@@ -205,12 +205,12 @@ void AppDelegate::Resume()
         param = CCString::create("10");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
-    CCLog("3");
+    //CCLog("3");
     if (Depth::GetCurNameString() != "RankUp")
     {
         // if you use SimpleAudioEngine, it must resume here
         SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
-    CCLog("4");
+    //CCLog("4");
 }
