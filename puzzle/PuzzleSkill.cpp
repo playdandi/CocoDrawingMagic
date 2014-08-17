@@ -593,10 +593,10 @@ void PuzzleSkill::A2(int num, int queue_pos)
         else
             pos = m_pGameLayer->GetPiece8xy(true);
         
-        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 7%)])
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 3%)])
         int dragNum = (int)pos.size();
         int basicScore = GetBasicSkillScore(num); // 발동점수
-        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*7)/100.0f)));
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*3)/100.0f)));
         m_pGameLayer->UpdateScore(1, basicScore+addedScore);
         float scale = m_pGameLayer->GetScoreBasicScale(dragNum);
         m_pGameLayer->ShowSkillScore(basicScore+addedScore, scale, queue_pos); // 보여줄 때는 발동점수+가중치점수
@@ -892,12 +892,12 @@ void PuzzleSkill::A6(int num, int queue_pos)
     result_pos = temp;
     
     // 스킬 발동점수 (기본)
-    // 최종점수 = 발동점수 + [(드래그수-5)*(10+드래그수*발동점수의 4%)]
+    // 최종점수 = 발동점수 + [(드래그수-5)*(10+드래그수*발동점수의 2%)]
     int dragNum = result_pos.size();
     if (m_pGameLayer->IsRoundInFeverTime(queue_pos))
         dragNum = m_pGameLayer->GetPosForFeverTime(true).size();
     int basicScore = GetBasicSkillScore(num);
-    A6_addedScore = (int)((float)(dragNum-5)*(10.0f+(float)dragNum*((float)(basicScore*4)/100.0f)));
+    A6_addedScore = (int)((float)(dragNum-5)*(10.0f+(float)dragNum*((float)(basicScore*2)/100.0f)));
     A6_addedScore += basicScore;
     //CCLog("불꽃놀이 드래그 개수 / 총점 : %d / %d", dragNum, A6_addedScore);
     
@@ -1689,11 +1689,23 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
         W8_remainTime += (int)pos.size() * 500; // 개수*0.5초 만큼 추가
         W8_remainTime = std::min(W8_remainTime, GetObj(15)->GetAbility2()*1000);
         
-        // 점수 업데이트 (드래그수(피버 때는 총 개수)로 인한 기본점수 * 10)
-        int addedScore = ( (50 + 15*pow((int)pos.size()-3, 1.2f)) * (int)pos.size() ) * 10;
-        m_pGameLayer->UpdateScore(1, addedScore);
-        float scale = m_pGameLayer->GetScoreBasicScale((int)pos.size());
-        m_pGameLayer->ShowSkillScore(addedScore, scale, queue_pos);
+        int dragSize = (int)pos.size();
+        int feverSize = 0;
+        if (m_pGameLayer->IsRoundInFeverTime(false))
+        {
+            dragSize = (int)m_pGameLayer->GetPosForFeverTime(false).size();
+            feverSize = (int)pos.size() - dragSize;
+            feverSize = (feverSize < 3) ? 3 : feverSize;
+        }
+        
+        // 최종 점수 : (발동점수의 3%) * 파괴한 개수
+        // 피버로 터지는 피스들은 위 공식 결과의 0.25배
+        int score_basic = (int)((float)GetBasicSkillScore(15) * 0.03f) * dragSize;
+        int score_fever = (int)((float)GetBasicSkillScore(15) * 0.03f * 0.25f) * feverSize;
+
+        m_pGameLayer->UpdateScore(1, score_basic+score_fever);
+        float scale = m_pGameLayer->GetScoreBasicScale(dragSize);
+        m_pGameLayer->ShowSkillScore(score_basic+score_fever, scale, queue_pos);
         
         m_pGameLayer->Lock(queue_pos);
         m_pGameLayer->GetEffect()->Effect15_Bomb(pos, m_pGameLayer->GetEffect());
@@ -1711,11 +1723,11 @@ void PuzzleSkill::W8_Invoke(std::vector<CCPoint> pos, int queue_pos)
             W8_callbackCnt = 0;
             int x, y;
             
-            // 점수 업데이트 (드래그수(피버 때는 총 개수)로 인한 기본점수 * 10)
-            int addedScore = ( (50 + 15*pow((int)pos.size()-3, 1.2f)) * (int)pos.size() ) * 10;
-            m_pGameLayer->UpdateScore(1, addedScore);
+            // 최종 점수 : (발동점수의 3%) * 파괴한 개수
+            int baldong_score = (int)((float)GetBasicSkillScore(15) * 0.03f) * (int)pos.size();
+            m_pGameLayer->UpdateScore(1, baldong_score);
             float scale = m_pGameLayer->GetScoreBasicScale((int)pos.size());
-            m_pGameLayer->ShowSkillScore(addedScore, scale, queue_pos);
+            m_pGameLayer->ShowSkillScore(baldong_score, scale, queue_pos);
             m_pGameLayer->UpdateCombo();
             
             // sound
@@ -2166,9 +2178,9 @@ void PuzzleSkill::E8_Bomb(CCNode* sender, void* data)
         //ps->m_pGameLayer->GetSound()->PlayDesignatedSound(231);
         ps->m_pGameLayer->GetSound()->PlayBomb();
         
-        // 점수 업데이트 (터지는개수 * 발동점수의8%)
+        // 점수 업데이트 (터지는개수 * 발동점수의 5%)
         int numOfBombPiece = (ROW_COUNT-ps->E8_bottomY[x]) - (x == 0 || x == COLUMN_COUNT-1);
-        int addedScore = (int)((float)numOfBombPiece * (float)ps->GetBasicSkillScore(23) * 0.08f);
+        int addedScore = (int)((float)numOfBombPiece * (float)ps->GetBasicSkillScore(23) * 0.05f);
         ps->m_pGameLayer->UpdateScore(1, addedScore);
         ps->m_pGameLayer->ShowSkillScore(addedScore, 1.2f, ps->queuePos, x, ps->E8_bottomY[x]);
         //ps->m_pGameLayer->ShowSkillAddedScore(addedScore, ps->queuePos, 0, x, ps->E8_bottomY[x]);
@@ -2588,7 +2600,7 @@ bool PuzzleSkill::IsRenewNeeded()
             }
         }
     }
-    //CCLog("renew needed done");
+
     return true;
 }
 
@@ -2704,9 +2716,15 @@ void PuzzleSkill::RenewPuzzle_End(void* pointer, int queue_pos)
 void PuzzleSkill::ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos)
 {
     result_pos = GetPieces(x, y, dx, dy);
+    isStrongPaint = false;
     
     itemPaint_callbackCnt = 0;
     itemPaint_type = type - 10; // ITEM_PAINT류와 일반 PIECE류의 숫자는 정확히 10차이 (그렇게 정의함)
+    if (type > 100)
+    {
+        itemPaint_type = (type-3)/10 - 10;
+        isStrongPaint = true;
+    }
     item_dx = dx * 20;
     item_dy = dy * 20;
     
@@ -2737,6 +2755,51 @@ void PuzzleSkill::ApplyItemPaint_Change(CCNode* sender, void* pointer)
     // 진행방향 5픽셀 밀고 + 교체하고 + 다시 5픽셀 당기기
     CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(pss->item_dx, pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), pss), NULL);
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
+    
+    pss->item_x1 = pss->item_x2 = pss->item_y1 = pss->item_y2 = -1;
+    if (pss->isStrongPaint)
+    {
+        int dx = pss->item_dx / 20;
+        int dy = pss->item_dy / 20;
+        //CCLog("dx dy ; %d %d", dx ,dy);
+
+        if (dy == 0)
+        {
+            pss->item_x1 = x; pss->item_y1 = y+1;
+            pss->item_x2 = x; pss->item_y2 = y-1;
+        }
+        else if (dx == 0)
+        {
+            pss->item_x1 = x+1; pss->item_y1 = y;
+            pss->item_x2 = x-1; pss->item_y2 = y;
+        }
+        else
+        {
+            pss->item_x1 = x; pss->item_y1 = y+dy;
+            pss->item_x2 = x+dx; pss->item_y2 = y;
+        }
+        
+        if ( pss->item_x1 >= 0 && pss->item_x1 < COLUMN_COUNT && pss->item_y1 >= 0 && pss->item_y1 < ROW_COUNT &&
+             (!((pss->item_x1 == 0 || pss->item_x1 == COLUMN_COUNT-1) && (pss->item_y1 == 0 || pss->item_y1 == ROW_COUNT-1))) )
+        {
+            CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(pss->item_dx, pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), pss), NULL);
+            pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(pss->item_x1, pss->item_y1)->runAction(action);
+        }
+        else
+        {
+            pss->item_x1 = pss->item_y1 = -1;
+        }
+        if ( pss->item_x2 >= 0 && pss->item_x2 < COLUMN_COUNT && pss->item_y2 >= 0 && pss->item_y2 < ROW_COUNT &&
+            (!((pss->item_x2 == 0 || pss->item_x2 == COLUMN_COUNT-1) && (pss->item_y2 == 0 || pss->item_y2 == ROW_COUNT-1))) )
+        {
+            CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(pss->item_dx, pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Callback), pss), NULL);
+            pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(pss->item_x2, pss->item_y2)->runAction(action);
+        }
+        else
+        {
+            pss->item_x2 = pss->item_y2 = -1;
+        }
+    }
 }
 
 void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
@@ -2745,6 +2808,18 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
     int x = (int)pss->result_pos[pss->itemPaint_callbackCnt-1].x;
     int y = (int)pss->result_pos[pss->itemPaint_callbackCnt-1].y;
     
+    ApplyItemPaint_Callback_Handle(pss, x, y, true);
+    if (pss->isStrongPaint)
+    {
+        if (pss->item_x1 != -1 && pss->item_y1 != -1)
+            ApplyItemPaint_Callback_Handle(pss, pss->item_x1, pss->item_y1, false);
+        if (pss->item_x2 != -1 && pss->item_y2 != -1)
+            ApplyItemPaint_Callback_Handle(pss, pss->item_x2, pss->item_y2, false);
+    }
+}
+
+void PuzzleSkill::ApplyItemPaint_Callback_Handle(PuzzleSkill* pss, int x, int y, bool flag)
+{
     // 기존 피스를 없앤다.
     pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
     pss->m_pGameLayer->SetSpriteP8Null(x, y);
@@ -2756,11 +2831,15 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
     // 대각선 이동이라면, 지나가는 부분에 연결피스를 만든다.
     if (pss->item_dx != 0 && pss->item_dy != 0 && pss->itemPaint_callbackCnt-1 > 0)
     {
-        int beforeX = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].x;
-        int beforeY = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].y;
+        //int beforeX = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].x;
+        //int beforeY = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].y;
+        int beforeX = x - pss->item_dx/20;
+        int beforeY = y - pss->item_dy/20;
         int xx = std::max(x, beforeX);
         int yy = std::max(y, beforeY);
-
+        
+        //CCLog("%d %d  :  %d %d  : %d %d", x, y, beforeX, beforeY, xx, yy);
+        
         if (pss->m_pGameLayer->GetPuzzleP4Set()->CreatePiece(xx, yy, CONNECTED))
             pss->m_pGameLayer->GetPuzzleP4Set()->AddChild(xx, yy);
     }
@@ -2769,7 +2848,15 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->setPosition( ccp(p.x+pss->item_dx, p.y+pss->item_dy) );
     
     float time = (float)(pss->itemPaint_callbackCnt-1 + 1)*0.005f;
-    CCActionInterval* action = CCSequence::create( CCMoveBy::create(time, ccp(-pss->item_dx, -pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Change), pss), NULL);
+    CCActionInterval* action;
+    if (flag) // 중심 라인
+    {
+        action = CCSequence::create( CCMoveBy::create(time, ccp(-pss->item_dx, -pss->item_dy)), CCCallFuncND::create(pss->m_pGameLayer, callfuncND_selector(PuzzleSkill::ApplyItemPaint_Change), pss), NULL);
+    }
+    else // 주변 라인 (3줄 붓의 경우)
+    {
+        action = CCMoveBy::create(time, ccp(-pss->item_dx, -pss->item_dy));
+    }
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
 }
 
@@ -2925,11 +3012,10 @@ std::vector<CCPoint> PuzzleSkill::GetPieces(int x, int y, int dx, int dy)
             break;
         
         pieceType = m_pGameLayer->GetPuzzleP8Set()->GetType(x, y);
-        //if (pieceType >= PIECE_RED && pieceType <= PIECE_WHITE) // 일반 피스만 교체한다.
-        //{
-            pos.push_back(ccp(x, y));
-            m_pGameLayer->LockEach(x, y);
-        //}
+
+        pos.push_back(ccp(x, y));
+        m_pGameLayer->LockEach(x, y);
+
         x += dx;
         y += dy;
     }

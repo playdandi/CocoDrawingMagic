@@ -62,21 +62,21 @@ void AppDelegate::applicationDidEnterBackground()
     else if (!isInGame)
     {
         savedTime = savedTime2 = time(0);
+        savedMyPotionTime = -1;
     }
     // 인게임 중에는 '일시정지' flag를 세운다.
     else
     {
-        // 인게임 중이면, Puzzle 화면으로 돌아갈 경우에 한해 Pause 화면을 띄워준다. (게임결과 화면에서는 필요없다)
-        if (depth.size() > 0 && !isStartGameEnd && Depth::GetCurNameString() == "Puzzle")
+        // 인게임 중이면 Pause 화면을 띄워준다.
+        if (depth.size() > 0 && !isStartGameEnd && Depth::GetCurNameString().substr(0, 6) == "Puzzle")
         {
-            void* p = Depth::GetCurPointer();
-            //if (!((Puzzle*)p)->IsGameOver()) // 게임이 끝난 경우에는 호출 ㄴㄴ
-            //{
-                //CCLog("background : 게임 일시정지 화면 띄우자.");
+            if (Depth::GetCurNameString() != "Puzzle_BuyItem")
+            {
+                void* p = Depth::GetCurPointer();
                 ((Puzzle*)p)->GetSound()->ResumeBackgroundInGameSound();
                 ((Puzzle*)p)->GetSound()->ResumeAllEffects();
                 ((Puzzle*)p)->PauseGame();
-            //}
+            }
         }
     }
 
@@ -101,7 +101,6 @@ void AppDelegate::applicationWillEnterForeground()
     // 시간 갱신 (인게임 중일 때는 할 필요 없다)
     else if (!isInGame)
     {
-        //CCLog("현재 위치 ~ : %s", Depth::GetCurNameString().c_str());
         if (Depth::GetCurNameString() == "Splash")
             Resume();
         else if (Depth::GetCurNameString() != "Loading" && Depth::GetCurNameString() != "MagicList")
@@ -109,9 +108,12 @@ void AppDelegate::applicationWillEnterForeground()
     }
     else
     {
-        if (depth.size() > 0 && Depth::GetCurNameString() == "RankUp")
+        //CCLog("지금 장면 : %s", Depth::GetCurNameString().c_str());
+        if (depth.size() > 0 && (Depth::GetCurNameString() == "RankUp" || Depth::GetCurNameString() == "PuzzleResult"))
         {
-            SessionCheck(); // 인게임이지만 이 때는 sessionCheck를 해 주어야 한다.
+            // 게임결과화면, 랭킹변동화면에서는 sessionCheck를 하도록 하자.
+            SessionCheck();
+            return;
         }
         else
         {
@@ -132,8 +134,6 @@ void AppDelegate::applicationWillEnterForeground()
                 return;
             }
         }
-
-        //SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
     
     // if you use SimpleAudioEngine, it must resume here
@@ -157,7 +157,6 @@ void AppDelegate::SessionCheck()
 
 void AppDelegate::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    //CCLog("%p", Depth::GetCurPointer());
     ((Loading*)Depth::GetCurPointer())->EndScene();
 
     CCHttpResponse* res = (CCHttpResponse*) data;
@@ -173,31 +172,24 @@ void AppDelegate::XmlParseSessionCheck(xml_document *xmlDoc)
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
-    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
-    if (code != 0)
+    if (code != 0) // ERROR
     {
         if (code <= MAX_COMMON_ERROR_CODE)
             Network::ShowCommonError(code);
     }
-    
-    else if (code == 0)
+    else if (code == 0) // 세션체크 정상
     {
-        ////CCLog("session check : SUCCESS");
-        ////CCLog("%s", Depth::GetCurNameString().c_str());
         Resume();
     }
 }
 
 void AppDelegate::Resume()
 {
-    ////CCLog("SESSION CHECK : SUCCESS");
     //CCLog("현재위치 : %s", Depth::GetCurName());
-    
-    Depth::DumpDepth();
+    //Depth::DumpDepth();
     
     CCString* param = CCString::create("5");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-    //CCLog("2");
     
     if (Depth::GetCurNameString() != "Splash")
     {
@@ -205,12 +197,10 @@ void AppDelegate::Resume()
         param = CCString::create("10");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
     }
-    //CCLog("3");
-    if (Depth::GetCurNameString() != "RankUp")
+    if (Depth::GetCurNameString() != "RankUp" && Depth::GetCurNameString() != "PuzzleResult")
     {
         // if you use SimpleAudioEngine, it must resume here
         SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
         SimpleAudioEngine::sharedEngine()->resumeAllEffects();
     }
-    //CCLog("4");
 }

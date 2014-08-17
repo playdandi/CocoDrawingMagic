@@ -5,7 +5,7 @@ static std::string friendKakaoId;
 static int topazId;
 
 CCScene* SendTopaz::scene(int idx)
-{
+{    
     priceTopazIdx = idx;
     friendKakaoId = "";
     topazId = -1;
@@ -271,6 +271,7 @@ void SendTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
+                sound->playClick();
                 EndScene();
                 break;
             }
@@ -315,8 +316,6 @@ void SendTopaz::scrollViewDidZoom(CCScrollView* view)
 
 void SendTopaz::EndScene()
 {
-    sound->playClick();
-    
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree

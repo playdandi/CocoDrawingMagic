@@ -47,6 +47,12 @@ extern std::vector<class TipContent*> tipContent;
 extern std::vector<class ProfileTitle*> profileTitle;
 extern std::vector<class NoticeList*> noticeList;
 
+// 인게임 내 아이템 관련
+extern std::vector<class InGameItem*> inGameItem;
+
+// 출석보상 관련
+extern std::vector<class LoginEvent*> loginEvent;
+
 // 친구초대 리스트
 extern std::vector<class InviteList*> inviteList;
 extern int todayCnt, monthCnt, totalCnt;
@@ -64,6 +70,7 @@ extern bool isInGameTutorial;
 extern bool isStartGameEnd;
 extern int savedTime;
 extern int savedTime2;
+extern int savedMyPotionTime;
 
 // item type&cost
 extern int itemType[5];
@@ -89,13 +96,11 @@ extern class MyGameResult* myGameResult;
 // 바이너리 버전
 extern int binaryVersion_current;
 
-// 초보유저 보상 관련
+// 보상 팝업창 관련
 extern bool isStartUser;
-
 extern bool isPossibleBuyFairyShown;
-
 extern bool isHintForBuyingNextProperty;
-
+extern bool isAttendRewardShown; // 출석보상
 
 // rsa 관련
 extern RSA* rsa;
@@ -186,7 +191,7 @@ public:
 class MyInfo
 {
 public:
-    void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId);
+    void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int staffFailPoint, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     
     std::string GetSessionId();
@@ -287,6 +292,8 @@ public:
     void SetReward(int potion, int topaz);
     bool IsRewardPotion();
     int GetRewardTopaz();
+    
+    bool IsTodayFirst();
 
 private:
     int keyValue;
@@ -351,6 +358,8 @@ private:
     
     int isPotionMax;
     int addedTopaz;
+    
+    bool isToday_First;
 };
 
 class MySkillSlot
@@ -812,6 +821,36 @@ public:
     bool isShown;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+class LoginEvent
+{
+public:
+    LoginEvent(int type, int value, int achieve);
+    int GetType();
+    int GetValue();
+    bool IsAchieved();
+private:
+    int r_type;
+    int r_value;
+    bool isAchieved;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+class InGameItem
+{
+public:
+    InGameItem(int id, int costtype, int cost);
+    static InGameItem* GetObj(int id);
+    int GetId();
+    int GetCostType();
+    int GetCostValue();
+private:
+    int nId;
+    int nCostType;
+    int nCostValue;
+};
 
 #endif /* defined(__CocoMagic__Data__) */
 

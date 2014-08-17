@@ -69,6 +69,8 @@ bool PuzzleResult::init()
     
     isTouched = false;
     
+    pBlackClose = NULL;
+    
     spriteClass = new SpriteClass();
     spriteClassSkill = new SpriteClass();
     
@@ -97,12 +99,12 @@ void PuzzleResult::Notification(CCObject* obj)
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority()+1, true);
         this->setTouchPriority(Depth::GetCurPriority());
         isTouched = false;
-        //CCLog("PuzzleResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
+        CCLog("PuzzleResult : 터치 활성 (Priority = %d)", this->getTouchPriority());
     }
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        //CCLog("PuzzleResult : 터치 비활성");
+        CCLog("PuzzleResult : 터치 비활성");
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
     }
     else if (param->intValue() == 10)
@@ -228,10 +230,8 @@ void PuzzleResult::InitSprites()
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_potion.png", ccp(0.5, 0.5), p, CCSize(0,0), "icon/icon_potion_empty.png", "0", NULL, 1005, 1) );
     }
     
-     /*
+    /*
     // 토파즈 빈칸
-    // (차후 받아서 쓰자)
-    // 토파즈
     if (myGameResult->getTopaz > 0)
     {
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/result_topaz.png2", ccp(0, 0), ccp(465, 825-10), CCSize(0,0), "", "PuzzleResult", this, 1006) );
@@ -581,31 +581,6 @@ void PuzzleResult::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void PuzzleResult::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     CCPoint point = pTouch->getLocation();
-    /*
-    ((CCSprite*)spriteClass->FindSpriteByName("button/btn_green.png"))->setColor(ccc3(255,255,255));
-    ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_green.png"))->setColor(ccc3(255,255,255));
-    
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                // 화면 어둡게 하고, PuzzleResult 팝업창 끄고, Puzzle->Ranking으로 돌아가자.
-                pBlackClose = CCSprite::create("images/ranking_scrollbg.png", CCRectMake(0, 0, m_winSize.width, m_winSize.height));
-                pBlackClose->setPosition(ccp(0, 0));
-                pBlackClose->setAnchorPoint(ccp(0, 0));
-                pBlackClose->setColor(ccc3(0, 0, 0));
-                pBlackClose->setOpacity(0);
-                this->addChild(pBlackClose, 7000);
-                
-                CCActionInterval* action = CCSequence::create( CCFadeIn::create(1.5f), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::EndSceneCallback), this), NULL);
-                pBlackClose->runAction(action);
-                break;
-            }
-        }
-    }
-    */
     
     if (idx > -1)
     {
@@ -660,8 +635,6 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->spriteClassSkill->RemoveAllObjects();
     delete pThis->spriteClassSkill;
     
-    //pThis->timerStencil->removeFromParentAndCleanup(true);
-    //pThis->timerClip->removeFromParentAndCleanup(true);
     if (myInfo->GetPracticeSkillId() != 0) // 연습 중인 스킬이 있을 때만 노출되는 것들
     {
         pThis->barLayer->removeAllChildren();
@@ -671,7 +644,8 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     }
     
     pThis->pBlack->removeFromParentAndCleanup(true);
-    pThis->pBlackClose->removeFromParentAndCleanup(true);
+    if (pThis->pBlackClose != NULL)
+        pThis->pBlackClose->removeFromParentAndCleanup(true);
     
     pThis->scrollView->getContainer()->removeAllChildren();
     pThis->scrollView->removeAllChildren();

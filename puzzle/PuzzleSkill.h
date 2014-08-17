@@ -138,6 +138,7 @@ public:
     void ApplyItemPaint(int x, int y, int dx, int dy, int type, int queue_pos);
     void ApplyItemPaint_Change(CCNode* sender, void* pointer);
     void ApplyItemPaint_Callback(CCNode* sender, void* pointer);
+    void ApplyItemPaint_Callback_Handle(PuzzleSkill* pss, int x, int y, bool flag);
     void ApplyItemPaint_Done();
     void ApplyItemPaint_Bomb(int x, int y, int queue_pos);
     
@@ -273,10 +274,12 @@ private:
     
     int itemPaint_callbackCnt;
     int itemPaint_type;
+    bool isStrongPaint;
     std::vector<CCPoint> item_pos;
     int item_callbackCnt;
     int item_dx;
     int item_dy;
+    int item_x1, item_x2, item_y1, item_y2;
     
     std::vector< std::vector<CCPoint> > result_double_pos;
     std::vector<CCPoint> result_pos;

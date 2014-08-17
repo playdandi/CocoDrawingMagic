@@ -282,29 +282,7 @@ void Profile::InitFairy()
             break;
     }
     fairyLayer->addChild(picture, 6);
-    
-    /*
-    // 요정 그림
-    CCLayer* picture = Fairy::GetFairy(fid);
-    picture->setAnchorPoint(ccp(0, 0));
-    if (fid == 0)
-    {
-        picture->setPosition(ccp(309/2, 236/2+23));
-        picture->setScale(0.9f);
-    }
-    else if (fid == 1)
-    {
-        picture->setPosition(ccp(309/2+10, 236/2+23));
-        picture->setScale(0.63f);
-    }
-    else if (fid == 2)
-    {
-        picture->setPosition(ccp(309/2, 236/2+15));
-        picture->setScale(0.7f);
-    }
-    fairyLayer->addChild(picture, 6);
-    */
-    
+
     spriteClass->layers.push_back(picture);
     spriteClass->layers.push_back(fairyLayer);
     
@@ -383,10 +361,17 @@ void Profile::InitSkill()
         
         // Lv. <- 이 그림
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, "number/level_lv.png", ccp(0, 0), ccp(797, 850), CCSize(0, 0), "", "Layer", tLayer, 5) );
-        // 레벨 숫자 이미지
-        CCSize size = ((CCSprite*)spriteClass->FindSpriteByName("number/level_lv.png"))->getContentSize();
-        sprintf(skillName, "number/level_%d.png", friendList[idx]->GetSkillLv() % 10);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, skillName, ccp(0, 0), ccp(797+size.width, 850+3), CCSize(0, 0), "", "Layer", tLayer, 5) );
+        
+        char name[40];
+        int offset = 0;
+        if (friendList[idx]->GetSkillLv() >= 10)
+        {
+            sprintf(name, "number/level_%d.png", friendList[idx]->GetSkillLv() / 10);
+            spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(787+43+3, 850), CCSize(0,0), "",   "Layer", tLayer, 6) );
+            offset = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width;
+        }
+        sprintf(name, "number/level_%d.png", friendList[idx]->GetSkillLv() % 10);
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(787+43+3+offset, 850), CCSize(0, 0), "", "Layer", tLayer, 5) );
     }
 }
 

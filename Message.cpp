@@ -294,8 +294,10 @@ void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             profiles[i]->SetSprite(texture);
             profiles[i]->SetLoadingDone(true);
             // 화면에 보이는 스프라이트 교체
+            if (spriteClassScroll == NULL)
+                return;
             spriteClassScroll->ChangeSprite(-888*(index+1), profiles[i]->GetProfile());
-            ((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
+            //((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
             break;
         }
     }
@@ -361,16 +363,16 @@ void Message::MakeScroll()
             {
                 //CCLog("5");
                 spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45+5, 35+11), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 0.95f) );
-                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255) );
+                //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255) );
             }
             else
             {
-                //CCLog("6");
                 if (psp == NULL)
                     psp = ProfileSprite::GetObj("");
                 spriteClassScroll->spriteObj.push_back( SpriteObject::CreateFromSprite(0, psp->GetProfile(), ccp(0, 0), ccp(45, 35), CCSize(0,0), "", "Layer", itemLayer, 5, 0, 255, 1.0f, -888*(i+1)) ); // tag = -888 * (i+1)
-                spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -777*(i+1)) ); // tag = -777 * (i+1)
+                //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255, -777*(i+1)) ); // tag = -777 * (i+1)
             }
+            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, spriteName, ccp(0, 0), ccp(45, 35), CCSize(0, 0), "", "Layer", itemLayer, 5, 0, 255) );
         }
         int offset = 0;
         if (msgData[i]->GetProfileUrl() == "PET_IMG_MEDAL")
@@ -543,7 +545,7 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     sprintf(temp, "friend_kakao_id=%s", msgData[httpMsgIdx]->GetFriendKakaoId().c_str());
                     param += temp;
                     
-                    Network::HttpPost(param, URL_SEND_POTION, this, httpresponse_selector(Message::onHttpRequestCompleted));
+                    Network::HttpPost(param, URL_SEND_POTION, NULL, NULL);
                 }
                 
                 break;
@@ -560,10 +562,10 @@ void Message::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (kind == BTN_MENU_CONFIRM)
         {
+            std::vector<int> nullData;
             if (msgData.size() > 0)
             {
                 httpMsgIdx = -1; // 메시지 리스트 갱신 방지
-                std::vector<int> nullData;
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_ALL_TRY, BTN_2, nullData);
             }
         }
@@ -638,7 +640,6 @@ void Message::onHttpRequestCompleted(CCNode *sender, void *data)
     {
         case 0: XmlParseMsg(&xmlDoc); break;
         case 1: XmlParseMsgReceiveOne(&xmlDoc); break;
-        //case 2: ParseProfileImage(dumpData, bufferSize, atoi(res->getHttpRequest()->getTag())); break;
     }
 }
 
@@ -671,14 +672,6 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
         xml_object_range<xml_named_node_iterator> msg = nodeResult.child("message-list").children("message");
         for (xml_named_node_iterator it = msg.begin() ; it != msg.end() ; ++it)
         {
-            //friendKakaoId = "";
-            /*
-            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
-            {
-                name = ait->name();
-                if (name == "type") type = ait->as_int();
-            }
-            */
             for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
             {
                 name = ait->name();
@@ -689,22 +682,15 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
                 else if (name == "reward-count") rewardCount = ait->as_int();
                 else if (name == "notice-url") noticeUrl = "";
                 else if (name == "friend-kakao-id") friendKakaoId = ait->as_string();
-                //else if (type == 5 && name == "friend-kakao-id") friendKakaoId = ait->as_string();
             }
             
             // 프로필 url 대체
-            int fidx = -1;
             bool flag = false;
             for (int i = 0 ; i < friendList.size() ; i++) // 내가 카톡 탈퇴했다면 친구가 없으니 이 for문에 들어올 수가 없다.
             {
                 if (friendList[i]->GetKakaoId() == friendKakaoId)
                 {
                     flag = true;
-                    //if (friendList[i]->GetHashedTalkUserId() == "") // 이 친구가 카톡을 탈퇴했다면
-                    //    profileUrl = "";
-                    //else
-                        profileUrl = friendList[i]->GetImageUrl();
-                    fidx = i;
                     break;
                 }
             }
@@ -720,7 +706,6 @@ void Message::XmlParseMsg(xml_document *xmlDoc)
                     content = "알수없음" + content.substr(content.find("님이"));
             }
             
-            //CCLog("%s : %s", friendKakaoId.c_str(), profileUrl.c_str());
             msgData.push_back( new Msg(id, type, rewardCount, content, profileUrl, noticeUrl, friendKakaoId) );
         }
         
@@ -776,7 +761,8 @@ void Message::XmlParseMsgReceiveOne(xml_document *xmlDoc)
         data.push_back(msgData[httpMsgIdx]->GetRewardCount());
         switch (msgData[httpMsgIdx]->GetType())
         {
-            case 1: break; // 공지
+            case 1:
+                break; // 공지
                 //Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_NOTICE, BTN_1, data); break;
             case 2: // 별사탕 받기
                 Common::ShowPopup(this, "Message", "NoImage", false, MESSAGE_OK_STARCANDY, BTN_1, data); break;

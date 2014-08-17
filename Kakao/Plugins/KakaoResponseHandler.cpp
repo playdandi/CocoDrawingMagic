@@ -27,12 +27,12 @@ KakaoResponseHandler::KakaoResponseHandler() {
 }
 
 void KakaoResponseHandler::onSuccessComplete(const std::string &param) {
-    CCLog("onSuccessComplete : %s", param.c_str());
+    //CCLog("onSuccessComplete : %s", param.c_str());
     rapidjson::Document document;
     document.Parse<0>(param.c_str());
     if (document.HasMember("action")) {
         char const *action = document["action"].GetString();
-        CCLog("action in : %s", document["action"].GetString());
+        //CCLog("action in : %s", document["action"].GetString());
         if (strcmp(action, "Init") == 0) {
             KakaoResponseHandler::getInstance()->onInitComplete();
         } else if (strcmp(action, "Authorized") == 0) {
@@ -127,12 +127,12 @@ void KakaoResponseHandler::onSuccessComplete(const std::string &param) {
 }
 
 void KakaoResponseHandler::onErrorComplete(const std::string &param) {
-    CCLog("onErrorComplete : %s", param.c_str());
+    //CCLog("onErrorComplete : %s", param.c_str());
     rapidjson::Document document;
     document.Parse<0>(param.c_str());
     if (document.HasMember("action")) {
         char const *action = document["action"].GetString();
-        CCLog("action in : %s", document["action"].GetString());
+        //CCLog("action in : %s", document["action"].GetString());
         const rapidjson::Value& result = document["error"];
         char const *status;
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)

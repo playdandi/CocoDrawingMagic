@@ -130,8 +130,6 @@ void BuyTopaz::Notification(CCObject* obj)
         std::string friendKakaoId = p.substr(0, p.find("/"));
         int priceTopazIdx = atoi(p.substr(p.find("/")+1).c_str());
         
-        //CCLog("%s %d", friendKakaoId.c_str(), priceTopazIdx);
-        
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         char num[10];
         sprintf(num, "%d", priceTopazIdx);
@@ -289,7 +287,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 EndScene();
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 27) == "button/btn_yellow_mini2.png")
@@ -301,7 +299,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(27).c_str());
                 Common::ShowNextScene(this, "BuyTopaz", "SendTopaz", false, number);
-                break;
+                return true;
             }
         }
         else if (spriteClass->spriteObj[i]->name.substr(0, 25) == "button/btn_green_mini.png")
@@ -332,12 +330,15 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+                /*
                 std::vector<int> data;
                 data.push_back(number);
                 data.push_back(priceTopaz[number]->GetPrice(myInfo->GetDeviceType()));
                 Common::ShowPopup(this, "BuyTopaz", "NoImage", false, BUY_TOPAZ_TRY, BTN_2, data);
-                return true;
+                */
                 #endif
+                
+                return false;
             }
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_green.png")
@@ -346,7 +347,7 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             {
                 sound->playClick();
                 Common::ShowNextScene(this, "BuyTopaz", "RequestTopaz", false);
-                break;
+                return true;
             }
         }
     }
@@ -362,6 +363,7 @@ void BuyTopaz::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
 void BuyTopaz::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
     isTouched = false;
+    //CCLog("isTouched = %d", isTouched);
 }
 
 
@@ -427,7 +429,6 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         //CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
         //CCLog("friendKakaoId = %s", friendKakaoId.c_str());
         
-        
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                      "com/playDANDi/CocoMagic/CocoMagic",
@@ -448,6 +449,8 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
             t.env->DeleteLocalRef(t.classID);
         }
         #endif
+        
+        
     }
 }
 

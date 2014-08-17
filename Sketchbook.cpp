@@ -433,31 +433,6 @@ void Sketchbook::ShowHintForBuyingProperty()
         data.push_back(propertyIdx); // 1(물), 2(불), 3(땅)
         Common::ShowPopup(this, "Sketchbook", "NoImage", false, HINT_BUY_PROPERTY, BTN_1, data);
     }
-    
-    /*
-    int idx = 4;
-    if (curState == 0) idx = 2;
-    else if (curState == 1) idx = 1;
-    else if (curState == 2) idx = 3;
-    
-    int cnt = 0;
-    for (int i = 0 ; i < (int)myInfo->GetSkillList().size() ; i++)
-        if (myInfo->GetSkillList()[i]->GetCommonId() / 10 == idx)
-            cnt++;
-    
-    int propertyCnt = 0;
-    if (myInfo->IsFire()) propertyCnt++;
-    if (myInfo->IsWater()) propertyCnt++;
-    if (myInfo->IsLand()) propertyCnt++;
-    
-    if (!isHintForBuyingNextProperty && !myInfo->IsTimeToFreelyBuyProperty() && propertyCnt < 3 && cnt == 7)
-    {
-        isHintForBuyingNextProperty = true;
-        std::vector<int> data;
-        data.push_back(idx); // 1(물), 2(불), 3(땅)
-        Common::ShowPopup(this, "Sketchbook", "NoImage", false, HINT_BUY_PROPERTY, BTN_1, data);
-    }
-    */
 }
 
 void Sketchbook::CheckProperties()

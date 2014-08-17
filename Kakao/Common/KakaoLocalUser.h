@@ -9,7 +9,6 @@
 #include <string>
 #include "rapidjson/document.h"
 
-
 class KakaoLocalUser {
 private:
     static KakaoLocalUser *instance;

@@ -265,7 +265,7 @@ void InviteFriend::MakeScroll()
     scrollContainer->setPosition(ccp(77, 492+904));
     scrollContainer->setContentSize(CCSizeMake(862, numOfList*166));
     
-    char name[50], name2[50];
+    char name[50], name2[50], name3[50], name4[50];
     for (int i = 0 ; i < numOfList ; i++)
     {
         CCLayer* itemLayer = CCLayer::create();
@@ -300,18 +300,47 @@ void InviteFriend::MakeScroll()
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(13, 6), CCSize(0, 0), name, "1", NULL, 3, 1) );
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1,000", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
-        // potion bg + potion + text(x 1)
-        //sprintf(name, "background/bg_degree_desc.png2%d", i);
-        //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(1, name, ccp(0, 0), ccp(269-60+230, 25), CCSize(223-70, 76), "", "Layer", itemLayer, 3) );
         sprintf(name2, "icon/icon_potion.png%d", i);
-        //spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17, 7), CCSize(0, 0), name, "1", NULL, 3, 1) );
         spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(17+215, 10), CCSize(0, 0), name, "1", NULL, 3, 1) );
         ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setScale(0.8f);
         spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("1", fontList[0], 36, ccp(0, 0), ccp(83+215-3, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
-        //spriteClassScroll->spriteObj.push_back( SpriteObject::CreateLabel("x 1", fontList[0], 36, ccp(0, 0), ccp(83, 19), ccc3(78,47,8), name, "1", NULL, 3, 1) );
         
-        //CCLog("wasInvited (%d) : %d", i, inviteList[i]->wasInvited);
         
+        
+        //////// 친구초대 가능한 경우 ///////
+        sprintf(name, "button/btn_blue_mini.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0) );
+        sprintf(name2, "letter/letter_invite.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name, "0", NULL, 3, 1, 0) );
+        ////////////////////////////////
+        
+        //////// 친구초대 이미 한 경우 //////
+        sprintf(name3, "button/btn_invite.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name3, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3, 0, 0) );
+        sprintf(name4, "letter/letter_invite_brown.png%d", i);
+        spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name4, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name3, "0", NULL, 3, 1, 0) );
+        ////////////////////////////////
+        
+        
+        if (!inviteList[i]->wasInvited) // 친구초대 가능한 경우
+        {
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name))->setOpacity(255);
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setOpacity(255);
+            
+            // 메시지 수신거부한 친구 or 지원되지 않는 디바이스 이용중인 친구는 어둡게 만들어서 터치 못하게 하자.
+            if (inviteList[i]->messageBlocked || !inviteList[i]->supportedDevice)
+            {
+                ((CCSprite*)spriteClassScroll->FindSpriteByName(name))->setColor(ccc3(150,150,150));
+                ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setColor(ccc3(150,150,150));
+            }
+        }
+        else // 이미 초대한 경우
+        {
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name3))->setOpacity(255);
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name4))->setOpacity(255);
+        }
+        
+        /*
         // button
         if (!inviteList[i]->wasInvited) // 초대 가능한 경우
         {
@@ -334,6 +363,8 @@ void InviteFriend::MakeScroll()
             sprintf(name2, "letter/letter_invite_brown.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name, "0", NULL, 3, 1) );
         }
+         */
+         
         
         // dotted line
         sprintf(name, "background/bg_dotted_line.png%d", i);
@@ -366,7 +397,6 @@ void InviteFriend::ProfileTimer(float f)
         
         if (p.y-h < 0)
         {
-            ////CCLog("%d : loading start", i);
             psp->SetLoadingStarted(true);
             
             char tag[6];
@@ -473,18 +503,20 @@ void InviteFriend::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 (int)p.x >= 0 && (int)p.y >= 0 && (int)p.x <= size.width && (int)p.y <= size.height)
             {
                 inviteIdx = atoi(spriteClassScroll->spriteObj[i]->name.substr(24).c_str());
-                //CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
+                CCLog("Touched idx = %d (name = %s)", inviteIdx, inviteList[inviteIdx]->nickname.c_str());
                 
-                if (totalCnt >= 40) // 최대 초대 수를 넘은 경우
+                // 메시지 수신거부한 친구 , 지원되지 않는 디바이스 사용중인 친구는 터치 못하게 막아두자.
+                if (inviteList[inviteIdx]->messageBlocked || !inviteList[inviteIdx]->supportedDevice)
+                    break;
+                if (inviteList[inviteIdx]->wasInvited)
+                    break;
+                
+                if (totalCnt >= 30) // 최대 초대 수를 넘은 경우
                 {
                     std::vector<int> nullData;
                     Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_NO_MORE, BTN_1, nullData);
                     break;
                 }
-                
-                // 메시지 수신거부한 친구 , 지원되지 않는 디바이스 사용중인 친구는 터치 못하게 막아두자.
-                if (inviteList[inviteIdx]->messageBlocked || !inviteList[inviteIdx]->supportedDevice)
-                    break;
                 
                 sound->playClick();
                 std::vector<int> data;
@@ -538,7 +570,7 @@ void InviteFriend::onSendLinkMessageErrorComplete(char const *status, char const
         inviteList[inviteIdx]->messageBlocked = true;
         Common::ShowPopup(this, "InviteFriend", "NoImage", false, INVITE_FRIEND_UNREGISTERED, BTN_1, nullData);
     }
-    if (stat != 31)
+    //if (stat != 31)
     
     // 필요한 상황에서만 스크롤뷰 데이터 갱신을 한다.
     switch (stat)
@@ -638,11 +670,57 @@ void InviteFriend::RenewData()
     // 정렬 : 닉네임 순 (단, 초대된 사람은 무조건 뒤로 보낸다)
     //std::sort(inviteList.begin(), inviteList.end(), compareInvite);
     
+    /*
     // 스크롤뷰 갱신
     spriteClassScroll->RemoveAllObjects();
     scrollView->getContainer()->removeAllChildren();
     scrollView->removeAllChildren();
     MakeScroll();
+     */
+
+    char name1[50], name2[50], name3[50], name4[50];
+    sprintf(name1, "button/btn_blue_mini.png%d", inviteIdx);
+    sprintf(name2, "letter/letter_invite.png%d", inviteIdx);
+    sprintf(name3, "button/btn_invite.png%d", inviteIdx);
+    sprintf(name4, "letter/letter_invite_brown.png%d", inviteIdx);
+    
+    if (!inviteList[inviteIdx]->wasInvited) // 친구초대 가능한 경우
+    {
+        CCLog("sss : %s", name3);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name1))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name3))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name4))->setOpacity(0);
+/*
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(+1)))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(222*(inviteIdx+1)))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(333*(inviteIdx+1)))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(444*(inviteIdx+1)))->setOpacity(0);
+        */
+        // 메시지 수신거부한 친구 or 지원되지 않는 디바이스 이용중인 친구는 어둡게 만들어서 터치 못하게 하자.
+        if (inviteList[inviteIdx]->messageBlocked || !inviteList[inviteIdx]->supportedDevice)
+        {
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name1))->setColor(ccc3(150,150,150));
+            ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setColor(ccc3(150,150,150));
+/*
+            ((CCSprite*)spriteClassScroll->FindSpriteByTag(111*(inviteIdx+1)))
+            ((CCSprite*)spriteClassScroll->FindSpriteByTag(222*(inviteIdx+1)))->setColor(ccc3(150,150,150));
+ */
+        }
+    }
+    else // 이미 초대한 경우
+    {
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name1))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name3))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByName(name4))->setOpacity(255);
+        /*
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(111*(inviteIdx+1)))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(222*(inviteIdx+1)))->setOpacity(0);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(333*(inviteIdx+1)))->setOpacity(255);
+        ((CCSprite*)spriteClassScroll->FindSpriteByTag(444*(inviteIdx+1)))->setOpacity(255);
+         */
+    }
 }
 
 

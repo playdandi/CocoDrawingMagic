@@ -47,6 +47,8 @@ protected:
     
     CCSprite* m_pLogoutBtn;
     
+    CCSprite* cafe;
+    
     int code;
     
     CCRect rect;

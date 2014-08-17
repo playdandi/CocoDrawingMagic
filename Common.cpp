@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "Kakao/Plugins/KakaoNativeExtension.h"
 #include "Loading.h"
 #include "LoadingPuzzle.h"
 #include "Ranking.h"
@@ -38,7 +39,8 @@
 #include "tutorial/puzzle/T_Skip.h"
 #include "Splash.h"
 #include "RankUp.h"
-#include "Kakao/Plugins/KakaoNativeExtension.h"
+#include "popup/AttendReward.h"
+#include "puzzle/Puzzle_BuyItem.h"
 
 Sound* sound;
 
@@ -58,70 +60,6 @@ std::string fontList[] = {
 #endif
 };
 
-/*
-CCRenderTexture* Common::CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity )
-{
-    CCRenderTexture* rt = CCRenderTexture::create(
-                                                  label->getTexture()->getContentSize().width + size * 2,
-                                                  label->getTexture()->getContentSize().height+size * 2
-                                                  );
-    
-    CCPoint originalPos = label->getPosition();
-    
-    ccColor3B originalColor = label->getColor();
-    
-    GLubyte originalOpacity = label->getOpacity();
-    
-    bool originalVisibility = label->isVisible();
-    
-    label->setColor(color);
-    
-    label->setOpacity(opacity);
-    
-    label->setVisible(true);
-    
-    ccBlendFunc originalBlend = label->getBlendFunc();
-    
-    ccBlendFunc bf = {GL_SRC_ALPHA, GL_ONE};
-    
-    label->setBlendFunc(bf);
-    
-    
-    CCPoint bottomLeft = ccp(
-                             label->getTexture()->getContentSize().width * label->getAnchorPoint().x + size,
-                             label->getTexture()->getContentSize().height * label->getAnchorPoint().y + size);
-    
-    CCPoint positionOffset= ccp(
-                                label->getTexture()->getContentSize().width  * label->getAnchorPoint().x - label->getTexture()->getContentSize().width / 2,
-                                label->getTexture()->getContentSize().height * label->getAnchorPoint().y - label->getTexture()->getContentSize().height / 2);
-    
-    
-    CCPoint position = ccpSub(originalPos, positionOffset);
-    
-    //
-    //rt->getSprite()->getTexture()->setAntiAliasTexParameters();
-    rt->begin();
-    
-    for (int i=0; i<360; i+= 15) // you should optimize that for your needs
-    {
-        label->setPosition(
-                           ccp(bottomLeft.x + sin(CC_DEGREES_TO_RADIANS(i))*size, bottomLeft.y + cos(CC_DEGREES_TO_RADIANS(i))*size)
-                           );
-        label->visit();
-    }
-    rt->end();
-    
-    label->setPosition(originalPos);
-    label->setColor(originalColor);
-    label->setBlendFunc(originalBlend);
-    label->setVisible(originalVisibility);
-    label->setOpacity(originalOpacity);
-    
-    rt->setPosition(position);
-    
-    return rt;
-}
-*/
 
 std::string Common::GetTip()
 {
@@ -468,6 +406,8 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
 
     else if (to == "RankUp") nextScene = RankUp::scene();
     
+    else if (to == "AttendReward") nextScene = AttendReward::scene();
+    
     else if (to == "PuzzleResult") nextScene = PuzzleResult::scene();
     else if (to == "PuzzlePause") nextScene = PuzzlePause::scene(etc);
     
@@ -477,6 +417,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (to == "T_Puzzle") nextScene = T_Puzzle::scene(etc);
     else if (to == "T_Skip") nextScene = T_Skip::scene(etc, etc2);
     
+    else if (to == "Puzzle_BuyItem") nextScene = Puzzle_BuyItem::scene(etc);
     
     // go
     if (from == "Splash")
@@ -489,14 +430,11 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         if (isReplaced)
             CCDirector::sharedDirector()->replaceScene(nextScene);
         else
-            ((Ranking*)obj)->addChild(nextScene, 200, 200);
+            ((Ranking*)obj)->addChild(nextScene, 20000, 20000);
     }
     else if (from == "Loading")
     {
-        //if (isReplaced) // to Puzzle
-        //    CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
-        //else
-            ((Loading*)obj)->addChild(nextScene, 200, 200);
+        ((Loading*)obj)->addChild(nextScene, 200, 200);
     }
     else if (from == "LoadingPuzzle")
     {
@@ -518,6 +456,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "SelectProperty") ((SelectProperty*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(nextScene, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "CocoRoomTodayCandy") ((CocoRoomTodayCandy*)obj)->addChild(nextScene, 200, 200);
     else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(nextScene, 200, 200);
     else if (from == "MagicList") ((MagicList*)obj)->addChild(nextScene, 200, 200);
     else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(nextScene, 200, 200);
@@ -550,6 +489,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
             ((Puzzle*)obj)->addChild(nextScene, 9999, 9999);
     }
     else if (from == "PuzzlePause") ((PuzzlePause*)obj)->addChild(nextScene, 200, 200);
+    else if (from == "PuzzleResult") ((PuzzleResult*)obj)->addChild(nextScene, 200, 200);
     else if (from == "NoImage") ((NoImage*)obj)->addChild(nextScene, 200, 200);
     
     else if (from == "T_Sketchbook") ((T_Sketchbook*)obj)->addChild(nextScene, 200, 200);
@@ -563,6 +503,8 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
         else
             ((T_Puzzle*)obj)->addChild(nextScene, 200, 200);
     }
+    else if (from == "AttendReward") ((AttendReward*)obj)->addChild(nextScene, 20000, 20000);
+    else if (from == "Puzzle_BuyItem") ((Puzzle_BuyItem*)obj)->addChild(nextScene, 20000, 20000);
 }
 
 // 공통된 팝업창 (버튼 1~2개, 텍스트만 변경되는 고정된 디자인의 팝업창)
@@ -593,7 +535,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "Ranking") ((Ranking*)obj)->addChild(popup, 200, 200);
     else if (from == "GameReady") ((GameReady*)obj)->addChild(popup, 200, 200);
     else if (from == "WeeklyRankResult") ((WeeklyRankResult*)obj)->addChild(popup, 200, 200);
-    else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 200, 200);
+    else if (from == "BuyTopaz") ((BuyTopaz*)obj)->addChild(popup, 20000, 20000);
     else if (from == "BuyStarCandy") ((BuyStarCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "SendTopaz") ((SendTopaz*)obj)->addChild(popup, 200, 200);
     else if (from == "BuyPotion") ((BuyPotion*)obj)->addChild(popup, 200, 200);
@@ -602,6 +544,7 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "Message") ((Message*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoom") ((CocoRoom*)obj)->addChild(popup, 200, 200);
     else if (from == "CocoRoomFairyTown") ((CocoRoomFairyTown*)obj)->addChild(popup, 200, 200);
+    else if (from == "CocoRoomTodayCandy") ((CocoRoomTodayCandy*)obj)->addChild(popup, 200, 200);
     else if (from == "InviteFriend") ((InviteFriend*)obj)->addChild(popup, 200, 200);
     else if (from == "FairyOneInfo") ((FairyOneInfo*)obj)->addChild(popup, 200, 200);
     else if (from == "MagicList") ((MagicList*)obj)->addChild(popup, 200, 200);
@@ -626,6 +569,9 @@ void Common::ShowPopup(void* obj, std::string from, std::string to, bool isRepla
     else if (from == "NoImage") ((NoImage*)obj)->addChild(popup, 200, 200);
     else if (from == "Puzzle") ((Puzzle*)obj)->addChild(popup, 200, 200);
     else if (from == "PuzzlePause") ((PuzzlePause*)obj)->addChild(popup, 200, 200);
+    else if (from == "PuzzleResult") ((PuzzleResult*)obj)->addChild(popup, 20000, 20000);
+    else if (from == "Puzzle_BuyItem") ((Puzzle_BuyItem*)obj)->addChild(popup, 20000, 20000);
+    else if (from == "AttendReward") ((AttendReward*)obj)->addChild(popup, 20000, 20000);
 }
 
 
@@ -904,6 +850,8 @@ void SpriteClass::AddChild(int idx)
         else if (obj->parentType == "T_NoImage") p = ((T_NoImage*)obj->parent);
         else if (obj->parentType == "T_Puzzle") p = ((T_Puzzle*)obj->parent);
         else if (obj->parentType == "T_Skip") p = ((T_Skip*)obj->parent);
+        else if (obj->parentType == "AttendReward") p = ((AttendReward*)obj->parent);
+        else if (obj->parentType == "Puzzle_BuyItem") p = ((Puzzle_BuyItem*)obj->parent);
         
         if (obj->type == 0)      p->addChild(obj->sprite, obj->zOrder);
         else if (obj->type == 1) p->addChild(obj->sprite9, obj->zOrder);
@@ -1074,6 +1022,9 @@ void Common::RebootSystem(void* p)
         else if (Depth::GetCurNameString() == "T_NoImage") ((T_NoImage*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "T_Skip") ((T_Skip*)cur)->EndScene();
         else if (Depth::GetCurNameString() == "T_Puzzle") ((T_Puzzle*)cur)->EndScene();
+        
+        else if (Depth::GetCurNameString() == "AttendReward") ((AttendReward*)cur)->EndScene();
+        else if (Depth::GetCurNameString() == "Puzzle_BuyItem") ((Puzzle_BuyItem*)cur)->EndScene(false);
     }
     
     // 모든 전역변수 초기화 (profiles만 제외하고)
@@ -1434,5 +1385,6 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
         // 실패코드 10:서버인증 실패, 11:페이로드다름, 12:이미지급한토파즈, 13:토파즈아이디가 이상함, 14:친구관계가아님
     }
 }
+
 
 

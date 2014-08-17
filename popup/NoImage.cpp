@@ -58,7 +58,7 @@ void NoImage::keyBackClicked()
 {
     // 백버튼을 하면 안되는 팝업 종류들
     if (type == NEED_TO_REBOOT || type == NEED_TO_UPDATE || type == ERROR_IN_APP_BILLING || type == YOU_WERE_BLOCKED ||
-        type == SERVER_CHECK || type == FUCKING_APP_DETECTED)
+        type == SERVER_CHECK || type == FUCKING_APP_DETECTED || type == ROOTING_DETECTED)
         return;
     
     if (isKeybackTouched || isTouched)
@@ -365,6 +365,9 @@ void NoImage::InitSprites()
         case FUCKING_APP_DETECTED:
             title = "악성 앱 감지";
             sprintf(text, "악성 앱이 감지되었습니다. 제거한 뒤 다시 실행해 주세요."); break;
+        case ROOTING_DETECTED:
+            title = "루팅 폰 감지";
+            sprintf(text, "사용하시는 폰이 루팅되어 있습니다. 루팅을 해제한 뒤 다시 실행해 주세요."); break;
         case SERVER_CHECK:
             title = "서버 점검중";
             sprintf(text, "%s", serverCheckMsg.c_str()); break;
@@ -959,94 +962,6 @@ bool NoImage::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
     }
     
-/*
-    for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
-    {
-        if (spriteClass->spriteObj[i]->name == "button/btn_x_brown.png" ||
-            spriteClass->spriteObj[i]->name == "button/btn_system.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                sound->playClick();
-                if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == SERVER_CHECK)
-                {
-                    Exit();
-                }
-                else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
-                {
-                    Common::RebootSystem(this); // 재부팅
-                }
-                else if (type == NEED_TO_UPDATE)
-                {
-                    EndScene();
-                    
-                    // 앱 업데이트 (마켓으로 이동)
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-                    JniMethodInfo t;
-                    if (JniHelper::getStaticMethodInfo(t,
-                                                       "com/playDANDi/CocoMagic/CocoMagic",
-                                                       "GoToPlayStore",
-                                                       "()V"))
-                    {
-                        // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
-                        t.env->CallStaticVoidMethod(t.classID, t.methodID);
-                        // Release
-                        t.env->DeleteLocalRef(t.classID);
-                    }
-#endif
-                }
-                else
-                    EndScene();
-                return true;
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_blue.png")
-        {
-            // 오.별에서 친구 부족하다는 팝업창에서 '친구 초대하기' 버튼 눌렀을 때
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                if (myInfo->GetHashedTalkUserId() == "") // 카카오톡 탈퇴한 경우 친구초대 못함.
-                    ReplaceScene("NoImage", KAKAOTALK_UNKNOWN, BTN_1);
-                else
-                {
-                    EndScene();
-                    Common::ShowNextScene(Depth::GetCurPointer(), "CocoRoom", "InviteFriend", false);
-                }
-                return true;
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_red_mini.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
-                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_confirm_mini.png"))->setColor(ccc3(170,170,170));
-                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
-                kind = BTN_MENU_CONFIRM;
-                idx = i;
-                return true;
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_clause_agree2.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                int alpha = ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->getOpacity();
-                ((CCSprite*)spriteClass->FindSpriteByName("icon/icon_check.png"))->setOpacity(255-alpha);
-                return true;
-            }
-        }
-        else if (spriteClass->spriteObj[i]->name == "button/btn_question_mini.png")
-        {
-            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
-            {
-                ShowHintOfUpgrade();
-                return true;
-            }
-        }
-    }
-*/
-    
     isTouchDone = false;
     return true;
 }
@@ -1083,7 +998,7 @@ void NoImage::HandlingTouch(int touchType)
     char temp[255];
     if (btn == BTN_1 || touchType == TOUCH_CANCEL) // 팝업창에서 '확인' 버튼 하나만 있는 경우 , 혹은 'x' 누른 경우
     {
-        if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == SERVER_CHECK)
+        if (type == YOU_WERE_BLOCKED || type == FUCKING_APP_DETECTED || type == ROOTING_DETECTED || type == SERVER_CHECK)
         {
             Exit();
         }
@@ -1131,6 +1046,7 @@ void NoImage::HandlingTouch(int touchType)
                 t.env->DeleteLocalRef(t.classID);
             }
             #endif
+            CCDirector::sharedDirector()->end();
         }
         else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
         {
@@ -1586,6 +1502,8 @@ void NoImage::EndScene()
     isEnded = true;
     isTouched = true;
     
+    Depth::DumpDepth();
+    
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());
     // release depth tree
@@ -2023,7 +1941,11 @@ void NoImage::XmlParseUpgradeStaff(xml_document *xmlDoc)
         // 성공/실패 팝업창으로 넘어간다.
         int result = nodeResult.child("upgrade-result").text().as_int();
         if (result == 1)
+        {
             ReplaceScene("NoImage", UPGRADE_STAFF_OK, BTN_1);
+            CCString* param = CCString::create("3");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
+        }
         else
             ReplaceScene("NoImage", UPGRADE_STAFF_FAIL, BTN_1);
         

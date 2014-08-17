@@ -54,6 +54,8 @@ protected:
     bool isTouched;
     int label_pos;
     
+    int ofs;
+    
 private:
     CCSprite* pBlack;
     SpriteClass* spriteClass;

@@ -135,7 +135,6 @@ void Setting::Notification(CCObject* obj)
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
-            //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }
@@ -166,7 +165,7 @@ void Setting::InitSprites()
                     ccp(0, 0), ccp(75, 492+270), CCSize(929, 904-270), "", "Layer", tLayer, 1) );
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png2", // ver
-                    ccp(0, 0), ccp(77, 640), CCSize(643, 97), "", "Layer", tLayer, 1) );
+                    ccp(0, 0), ccp(630, 192), CCSize(373, 97), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png3", // id
                     ccp(0, 0), ccp(77, 326), CCSize(926, 97), "", "Layer", tLayer, 1) );
 
@@ -176,11 +175,14 @@ void Setting::InitSprites()
     int version2 = (binaryVersion_current / 100) % 10;
     int version3 = binaryVersion_current % 100;
     sprintf(temp, "게임버전 : %d.%d.%d", version1, version2, version3);
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 670), ccc3(78,47,8), "", "Layer", tLayer, 4) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(630+30, 192+30), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     
     int offset = 30;
+
+    // 버튼 : 공식카페
+    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_cafe.png", ccp(0, 0), ccp(96, 633-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     // 버튼 : 만든 사람들
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png1",
@@ -202,7 +204,7 @@ void Setting::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_tutorial.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png3", "0", NULL, 1) );
-    
+
     // 버튼 : ?
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png4",
                 ccp(0, 0), ccp(737, 492-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
@@ -216,19 +218,10 @@ void Setting::InitSprites()
     m_pLogoutBtn->setPosition(ccp(82, 192));
     tLayer->addChild(m_pLogoutBtn, 5);
     
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png1", ccp(0, 0), ccp(82, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
-    //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_logout.png", ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite-> getContentSize().width/2, 32), CCSize(0, 0), "button/btn_system.png1", "0", NULL, 1) );
-    
     // 버튼 : id복사
     float w = m_pLogoutBtn->getContentSize().width;
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("탈퇴하기", fontList[0], 36, ccp(0, 0), ccp(82+w+15, 192+5), ccc3(78,47,8), "", "Layer", tLayer, 1, 0, 255, -100) );
-    /*
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_system.png2",
-                    ccp(0, 0), ccp(779, 192), CCSize(0, 0), "", "Layer", tLayer, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_idcopy.png",
-                    ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
-                    getContentSize().width/2, 36), CCSize(0, 0), "button/btn_system.png2", "0", NULL, 1) );
-    */
+
     // text
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("효과음", fontList[0], 48, ccp(0, 0), ccp(162, 1277-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("배경음", fontList[0], 48, ccp(0, 0), ccp(162, 1168-offset), ccc3(78,47,8), "", "Layer", tLayer, 2) );
@@ -294,21 +287,7 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
-                //CCLog("kind = %d", kind);
-                //CCLog("x yellow");
-                /*
-                //if (kakaoMsgReserved)
-                //    kakaoMsgReserved = true;
-                // else if (selectedBtn == 3)
-                if (selectedBtn == 2)
-                    pushNotiReserved = true;
-                //else if (selectedBtn == 4)
-                else if (selectedBtn == 3)
-                    potionMsgReserved = true;
-                */
-                
                 // 카카오메시지, 푸시메시지, 포션수신 중 하나라도 바뀐 게 있다면 서버에 전송.
-                //if (kakaoMsgReserved != myInfo->GetKakaoMsg() || pushNotiReserved != myInfo->GetPushNotification() ||
                 if (pushNotiReserved != myInfo->GetPushNotification() || potionMsgReserved != myInfo->GetPotionMsg())
                 {
                     // Loading 화면으로 MESSAGE request 넘기기
@@ -318,8 +297,6 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                     std::string param = "";
                     sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
-                    //sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
-                    //param += temp;
                     sprintf(temp, "push_notification=%d&", pushNotiReserved);
                     param += temp;
                     sprintf(temp, "potion_message=%d", potionMsgReserved);
@@ -355,6 +332,18 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 selectedPos = spriteClass->spriteObj[i]->sprite->getPosition();
                 standardBtnPos.y = selectedPos.y;
                 selectedTouchPos = point;
+                return true;
+            }
+        }
+        else if (spriteClass->spriteObj[i]->name == "button/btn_cafe.png") // 공식카페
+        {
+            if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
+            {
+                sound->playClick();
+                spriteClass->spriteObj[i]->sprite->setColor(ccc3(170,170,170));
+                rect = spriteClass->spriteObj[i]->sprite->boundingBox();
+                kind = BTN_MENU_CAFE;
+                idx = i;
                 return true;
             }
         }
@@ -431,7 +420,6 @@ bool Setting::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         idx = 999;
         return true;
     }
-
     
     return true;
 }
@@ -484,8 +472,6 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCUserDefault::sharedUserDefault()->setBoolForKey(name, true);
                 sound->PlayBackgroundSound();
             }
-            //else if (selectedBtn == 2)
-            //    kakaoMsgReserved = true;
             else if (selectedBtn == 2)
                 pushNotiReserved = true;
             else if (selectedBtn == 3)
@@ -507,8 +493,6 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
                 sound->StopBackgroundSound();
             }
-            //else if (selectedBtn == 2)
-            //    kakaoMsgReserved = false;
             else if (selectedBtn == 2)
                 pushNotiReserved = false;
             else if (selectedBtn == 3)
@@ -522,12 +506,13 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (idx == 999)
             m_pLogoutBtn->setColor(ccc3(255,255,255));
+        //else if (idx == 888)
+        //    cafe->setColor(ccc3(255,255,255));
         else
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
-            //((CCSprite*)spriteClass->FindSpriteByName("letter/letter_idcopy.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }
@@ -557,8 +542,6 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     std::string param = "";
                     sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
                     param += temp;
-                    //sprintf(temp, "kakao_message=%d&", kakaoMsgReserved);
-                    //param += temp;
                     sprintf(temp, "push_notification=%d&", pushNotiReserved);
                     param += temp;
                     sprintf(temp, "potion_message=%d", potionMsgReserved);
@@ -571,6 +554,21 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                 break;
             case BTN_MENU_CREDIT:
                 Common::ShowPopup(this, "Setting", "NoImage", false, CREDIT, BTN_1, nullData);
+                break;
+            case BTN_MENU_CAFE:
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                JniMethodInfo t;
+                if (JniHelper::getStaticMethodInfo(t,
+                                                   "com/playDANDi/CocoMagic/CocoMagic",
+                                                   "OpenNoticeURL",
+                                                   "(Ljava/lang/String;)V"))
+                {
+                    // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+                    t.env->CallStaticVoidMethod(t.classID, t.methodID, t.env->NewStringUTF(URL_PUBLIC_CAFE));
+                    // Release
+                    t.env->DeleteLocalRef(t.classID);
+                }
+                #endif
                 break;
         }
     }
@@ -641,6 +639,7 @@ void Setting::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     
     m_pLogoutBtn->removeFromParentAndCleanup(true);
+    //cafe->removeFromParentAndCleanup(true);
     
     tLayer->removeAllChildren();
     tLayer->removeFromParentAndCleanup(true);

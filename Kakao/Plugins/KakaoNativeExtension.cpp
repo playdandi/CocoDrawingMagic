@@ -42,8 +42,8 @@ extern "C" {
         const jbyte* methodV = (jbyte*)env->GetStringUTFChars(method, NULL);
         char* methodValue = (char *) methodV;
         const char* argv = env->GetStringUTFChars(params, NULL);
-        CCLog("sendMessageBridge target: %s", methodValue);
-        CCLog("sendMessageBridge : %s", argv);
+        //CCLog("sendMessageBridge target: %s", methodValue);
+        //CCLog("sendMessageBridge : %s", argv);
 
         if (!std::strcmp(methodValue, "onKakaoResonseComplete")) {
             KakaoResponseHandler::onSuccessComplete(std::string(argv));
@@ -76,14 +76,14 @@ void KakaoNativeExtension::init(std::function<void()> _callback, std::function<v
     KakaoResponseHandler::getInstance()->onInitErrorComplete = error_callback;
     std::string access_token = CCUserDefault::sharedUserDefault()->getStringForKey("access_token");
     std::string refresh_token = CCUserDefault::sharedUserDefault()->getStringForKey("refresh_token");
-    CCLog("access_token : %s, refresh_token : %s", access_token.c_str(), refresh_token.c_str());
+    //CCLog("access_token : %s, refresh_token : %s", access_token.c_str(), refresh_token.c_str());
     const char *param;
     if (access_token.length()) {
         param = cocos2d::CCString::createWithFormat("{\"action\":\"Init\", \"access_token\":\"%s\", \"refresh_token\":\"%s\"}", access_token.c_str(), refresh_token.c_str())->getCString();
-        CCLog("ready token");
+        //CCLog("ready token");
     } else {
         param = cocos2d::CCString::createWithFormat("{\"action\":\"Init\"}")->getCString();
-        CCLog("init token");
+        //CCLog("init token");
     }
 
     runAction(param);

@@ -152,13 +152,20 @@ void Ranking::RenewAllTime()
 {
     int deltaTime = time(0) - savedTime;
     int deltaTime2 = time(0) - savedTime2;
+    int deltaPotionTime = time(0) - savedMyPotionTime;
 
+    //CCLog("%d %d %d", deltaTime, deltaTime2, savedMyPotionTime);
+    //CCLog("바꾸기 전의 remainpotiontime = %d", myInfo->GetRemainPotionTimeNumber());
     isInGame = false;
     
     // 인게임에서 pause상태로 아주 오래동안 있다가 끝난 경우도 있을 수 있다. (deltaTime 값이 크겠지)
     // 따라서 갱신된 '포션남은시간'이 음수가 될 수 있는데, 12분씩 추가하면서 포션 값도 바꾸며 제자리를 찾아준다.
     int potion = myInfo->GetPotion();
-    int remainPotionTime = myInfo->GetRemainPotionTimeNumber() - deltaTime;
+    int remainPotionTime = myInfo->GetRemainPotionTimeNumber();
+    if (savedMyPotionTime == -1)
+        remainPotionTime -= deltaTime;
+    else // 게임이 끝나고 돌아왔을 때는 이 변경값을 따른다.
+        remainPotionTime -= deltaPotionTime;
     while (potion < 5 && remainPotionTime < 0) // 예외 = game_end에서 포션 개수가 갱신되었기 때문에, 이미 개수가 5개보다 많을 수도 있다.
     {
         remainPotionTime += 720;
@@ -346,11 +353,14 @@ void Ranking::ShowPopup()
     }
     else if (popupStatus == 1)
     {
+        bool flag = true;
         for (int i = 0 ; i < noticeList.size() ; i++)
         {
             if (noticeList[i]->isShown)
                 continue;
             noticeList[i]->isShown = true;
+
+            flag = false;
             
             if (noticeList[i]->link != "")
                 noticeList[i]->message += "\n(확인 버튼을 누르면 웹페이지로 연결합니다)";
@@ -358,8 +368,6 @@ void Ranking::ShowPopup()
             char s[20];
             sprintf(s, "noticelist_%d", noticeList[i]->id);
             long lastTime = CCUserDefault::sharedUserDefault()->getIntegerForKey(s, -1);
-            
-            //CCLog("시간차 : %ld", time(0)-lastTime);
             
             if (lastTime == -1 || time(0)-lastTime > 60*60*24)
             {
@@ -370,6 +378,20 @@ void Ranking::ShowPopup()
                 break;
             }
         }
+        if (flag)
+        {
+            popupStatus++;
+            ShowPopup();
+        }
+    }
+    else if (popupStatus == 2)
+    {
+        if (myInfo->IsTodayFirst() && !isAttendRewardShown)
+        {
+            isAttendRewardShown = true;
+            Common::ShowNextScene(this, "Ranking", "AttendReward", false);
+        }
+        popupStatus++;
     }
 }
 
@@ -410,7 +432,7 @@ void Ranking::InitSprites()
     this->addChild(pBackground, 0);
     
     //CCLog("=========================================================");
-    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
+    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
     //CCLog("=========================================================");
     
     char name[30], name2[30];
@@ -493,6 +515,8 @@ void Ranking::InitSprites()
     }
 
     // potion-remain-time
+    //CCLog("%s", myInfo->GetRemainPotionTime().c_str());
+    //CCLog("%d", myInfo->GetRemainPotionTimeNumber());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(myInfo->GetRemainPotionTime(), fontList[0], 36, ccp(0, 0), ccp(530, 1508), ccc3(255,255,255), "", "Ranking", this, 5, 0, 255, 4) );
     
     // 주간랭킹 남은시간
@@ -534,13 +558,11 @@ void Ranking::ProfileTimer(float f)
         ProfileSprite* psp = ProfileSprite::GetObj(friendList[i]->GetImageUrl());
         
         // 화면에 보이는 스프라이트 교체 (한번만 시행)
-        ////CCLog("%d : loadingRanking : %d %d %d", i, psp!=NULL, psp->IsLoadingDone(), psp->IsLoadingDoneForRanking());
         if (psp != NULL && psp->IsLoadingDone() && !psp->IsLoadingDoneForRanking())
         {
-            ////CCLog("ok");
             if (spriteClass == NULL)
                 return;
-            spriteClass->ChangeSprite(-888*(i+1), profiles[i]->GetProfile());
+            spriteClass->ChangeSprite(-888*(i+1), psp->GetProfile()); //profiles[i]->GetProfile());
             ((CCSprite*)spriteClass->FindSpriteByTag(-777*(i+1)))->setOpacity(255);
             psp->SetLoadingDoneForRanking(true);
             continue;
@@ -554,7 +576,6 @@ void Ranking::ProfileTimer(float f)
         
         if (p.y - h < 0)
         {
-            //CCLog("%d : loading start", i);
             psp->SetLoadingStarted(true);
             psp->SetLoadingDoneForRanking(true);
             
@@ -587,8 +608,6 @@ void Ranking::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     for (unsigned int i = 0 ; i < buffer->size() ; i++)
         dumpData[i] = (*buffer)[i];
     dumpData[buffer->size()] = NULL;
-    
-    ////CCLog("%d", (int)buffer->size());
     
     // make texture2D
     CCImage* img = new CCImage;
@@ -1075,6 +1094,7 @@ void Ranking::EndScene()
     // PotionTimer scheduler가 딱 정지된 시점에서 현재 시간을 저장해 둔다.
     // 인게임이 끝나고 다시 UI로 돌아올 때, 벌어진 시간을 갱신해야 하기 떄문이다.
     savedTime = savedTime2 = time(0);
+    savedMyPotionTime = -1;
     isInGame = true;
     
     if (!isRebooting)

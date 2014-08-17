@@ -28,6 +28,12 @@ std::vector<class TipContent*> tipContent;
 std::vector<class ProfileTitle*> profileTitle;
 std::vector<class NoticeList*> noticeList;
 
+// 인게임 내 아이템 관련
+std::vector<class InGameItem*> inGameItem;
+
+// 출석보상 관련
+std::vector<class LoginEvent*> loginEvent;
+
 // 친구초대리스트
 std::vector<class InviteList*> inviteList;
 int todayCnt, monthCnt, totalCnt;
@@ -42,8 +48,10 @@ bool isInGamePause; // 인게임 중에 pause되었는지 여부
 bool isInGame; // 인게임 중이면 true
 bool isInGameTutorial; // 인게임의 튜토리얼 중이면 true
 bool isStartGameEnd = false; // 인게임 오버하고, game_end.php 를 시작했는지에 대한 flag
+
 int savedTime;  // background로 가거나, 인게임 시작할 때 저장해 놓은 시간(시점)
 int savedTime2; // 똑같은데, 친구관계에서 필요한 시간(시점)
+int savedMyPotionTime; // 똑같은데, 내 포션 시간(시점)
 
 // item type&cost (type = 1(별사탕), 2(토파즈))
 int itemType[5];
@@ -69,12 +77,11 @@ int binaryVersion_current;
 // 게임결과에 필요한 값들
 class MyGameResult* myGameResult;
 
-// 초보유저 보상 관련
+// 보상 팝업창 관련
 bool isStartUser = false;
-
 bool isPossibleBuyFairyShown = false;
-
 bool isHintForBuyingNextProperty = false;
+bool isAttendRewardShown = false; // 출석보상
 
 // rsa 관련
 RSA* rsa;
@@ -145,8 +152,8 @@ void Depth::ClearDepth()
 }
 void Depth::DumpDepth()
 {
-    for (int i = 0 ; i < depth.size() ; i++)
-        CCLog("%s (%d)", depth[i]->name.c_str(), depth[i]->priority);
+    //for (int i = 0 ; i < depth.size() ; i++)
+    //    CCLog("%s (%d)", depth[i]->name.c_str(), depth[i]->priority);
 }
 
 
@@ -246,7 +253,7 @@ MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, float a
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId)
+void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst)
 {
     this->kakaoId = kakaoId;
     this->hashedTalkUserId = KakaoLocalUser::getInstance()->hashedTalkUserId;
@@ -267,6 +274,8 @@ void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg
     
     this->isPotionMax = 0;
     this->addedTopaz = 0;
+    
+    this->isToday_First = (todayFirst == 1);
 }
 
 void MyInfo::InitRestInfo(int topaz, int starcandy, int mp, int mpStaffPercent, int mpFairy, int staffLv, int staffFailPoint, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion, int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz)
@@ -782,7 +791,10 @@ int MyInfo::GetRewardTopaz()
 {
     return addedTopaz;
 }
-
+bool MyInfo::IsTodayFirst()
+{
+    return isToday_First;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2053,6 +2065,60 @@ NoticeList::NoticeList(int i, int pf, std::string t, std::string m, std::string 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LoginEvent::LoginEvent(int type, int value, int achieve)
+{
+    r_type = type;
+    r_value = value;
+    isAchieved = (achieve == 1);
+}
+int LoginEvent::GetType()
+{
+    return r_type;
+}
+int LoginEvent::GetValue()
+{
+    return r_value;
+}
+bool LoginEvent::IsAchieved()
+{
+    return isAchieved;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+InGameItem::InGameItem(int id, int costtype, int cost)
+{
+    this->nId = id;
+    this->nCostType = costtype;
+    this->nCostValue = cost;
+}
+InGameItem* InGameItem::GetObj(int id)
+{
+    for (int i = 0 ; i < (int)inGameItem.size() ; i++)
+    {
+        if (inGameItem[i]->nId == id)
+            return inGameItem[i];
+    }
+    return NULL;
+}
+int InGameItem::GetId()
+{
+    return nId;
+}
+int InGameItem::GetCostType()
+{
+    return nCostType;
+}
+int InGameItem::GetCostValue()
+{
+    return nCostValue;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 // 난독화 public keys
 std::string obfuscationKey[30] = {

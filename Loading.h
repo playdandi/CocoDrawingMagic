@@ -20,14 +20,14 @@ public:
     virtual void onEnter();
     virtual void onExit();
     
-    void LoadingSprites();
-    void LoadingSpriteTimer(float f);
-    void Callback(CCNode* sender, void* pointer);
+    //void LoadingSprites();
+    //void LoadingSpriteTimer(float f);
+    //void Callback(CCNode* sender, void* pointer);
     
-    void AAA(CCNode* sender, void* p);
+    //void AAA(CCNode* sender, void* p);
     
-    void onHttpRequestCompleted(CCNode *sender, void *data);
-    void XmlParseGameStart(xml_document *xmlDoc);
+    //void onHttpRequestCompleted(CCNode *sender, void *data);
+    //void XmlParseGameStart(xml_document *xmlDoc);
     
     void EndScene();
     

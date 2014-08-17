@@ -33,6 +33,11 @@ USING_NS_CC;
 #define ITEM_PAINT_YELLOW 13
 #define ITEM_PAINT_WHITE 14
 #define ITEM_STAFF 20
+#define ITEM_PAINT_RED_SPECIAL 103
+#define ITEM_PAINT_BLUE_SPECIAL 113
+#define ITEM_PAINT_GREEN_SPECIAL 123
+
+#define INGAME_ITEM_3PAINT 1
 
 // 인게임 기본 구성 변수
 #define PUZZLE_TIME 60
@@ -60,6 +65,7 @@ USING_NS_CC;
 // 어떤 팝업창인지 구분하기 위한 predefined type
 #define YOU_WERE_BLOCKED -100
 #define FUCKING_APP_DETECTED -99
+#define ROOTING_DETECTED -98
 #define SERVER_CHECK -8
 #define WILL_BE_UPDATED -7
 #define ERROR_IN_APP_BILLING -6
@@ -195,6 +201,7 @@ USING_NS_CC;
 #define BTN_MENU_KAKAOBTN 12
 #define BTN_MENU_RESUMEGAME 13
 #define BTN_MENU_ENDGAME 14
+#define BTN_MENU_CAFE 15
 
 // 카카오톡 메시지 관련
 #define KAKAO_MSG_TEMPLATE_SENDPOTION   "1766"
@@ -206,6 +213,9 @@ USING_NS_CC;
 // 아이템 타입 관련
 #define ITEM_STARCANDY 1
 #define ITEM_TOPAZ 2
+
+// 공식카페 주소
+#define URL_PUBLIC_CAFE "http://cafe.naver.com/cocomagic2014/"
 
 
 

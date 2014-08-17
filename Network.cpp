@@ -225,17 +225,17 @@ int Network::DeObfuscation(std::string obfuscatedStr, char* data)
 void Network::ShowCommonError(int code)
 {
     //CCLog("xml code 공통에러 : %d", code);
+    //CCLog("현재 위치 : %s", Depth::GetCurNameString().c_str());
     
     int popupType;
     switch (code)
     {
-        
-        case -2:
-        case -1:
         case 1:
         case 2:
             popupType = NETWORK_FAIL; break;
         case -3:
+        case -2:
+        case -1:
         case 5:
             popupType = NEED_TO_REBOOT; break;
         case 4:
@@ -249,14 +249,14 @@ void Network::ShowCommonError(int code)
     Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurNameString(), "NoImage", false, popupType, BTN_1, nullData);
     
     /*
-     코드 -1 : 디비 syntax 에러
-     코드 -2 : 디비 insertion 에러
+     코드 -1 : 디비 syntax 에러 (재부팅 필요)
+     코드 -2 : 디비 insertion 에러 (재부팅 필요)
      코드 -3 : 10분 지나 세션 종료 (재부팅 필요)
      코드 1 : 파라미터 에러
      코드 2 : userId 없음
      코드 3 : 돈이 모지람.
      코드 4 : 바이너리 업데이트로 인한 앱 업데이트 필요
-     코드 5 : 게임버전 업데이트로 인한 재부팅 필요
+     코드 5 : 게임버전 업데이트로 인한 재부팅 필요 (재부팅 필요)
     */
 }
 

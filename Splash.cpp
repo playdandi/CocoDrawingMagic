@@ -80,7 +80,6 @@ void Splash::onAuthComplete(bool result)
     if (result && isJoinNeeded && !stopHere) // join을 해야 함.
     {
         stopHere = true; // 처음 로그인할 때 auth가 두 번 호출되어서 이 flag로 막도록 조치함.
-        //CCLog("onAuthComplete : 조인하자!!!");
         m_pMsgLabel->setString("잠시만 기다려주세요.");
         KakaoNativeExtension::getInstance()->localUser(std::bind(&Splash::onLocalUserComplete, this), std::bind(&Splash::onLocalUserErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
     }
@@ -199,6 +198,8 @@ bool Splash::init()
     m_pBackground->setScale(size_h / origin_h);
     m_pBackground->setOpacity(0);
     this->addChild(m_pBackground, 1);
+    
+    savedMyPotionTime = -1;
     
     isKakaoLoading = false;
     isStarting = false;
@@ -614,7 +615,7 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
 
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         binaryVersion_latest = binaryVersion_android;
-        //CCLog("바이너리 버전 (android) = %d", binaryVersion_android);
+        
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                            "com/playDANDi/CocoMagic/CocoMagic",
@@ -628,29 +629,23 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
         binaryVersion_latest = binaryVersion_ios;
-        //CCLog("바이너리 버전 (iOS) = %d", binaryVersion_ios);
-        binaryVersion_current = binaryVersion_latest;
+        binaryVersion_current = binaryVersion_latest; // 임시 설정
         #endif
 
-        //CCLog("현재 바이너리 버전 : %d", binaryVersion_current);
-        
-        if (binaryVersion_current != binaryVersion_latest)
-        {
-            //CCLog("바이너리 버전 다름 : 업데이트 해야 함.");
 
+        // 안드로이드 설정에 따라 자동업데이트를 한 경우, 앱 버전이 서버설정 버전보다 클 수도 있다.
+        // 따라서 앱 버전이 서버설정 버전보다 작을 때 업데이트를 하도록 유도하자.
+        if (binaryVersion_current < binaryVersion_latest)
+        {
             std::vector<int> nullData;
             Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_UPDATE, BTN_1, nullData);
-            //iBinaryVersion = binaryVersion;
-            //CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", iBinaryVersion);
             return;
         }
         
         if (gameVersion != iGameVersion)
         {
-            //CCLog("게임 버전 다름 : 리소스 업데이트 시작함.");
-            m_pMsgLabel->setString("못생긴 리소스 설득 중...");
-            ////CCLog("%s", balanceFileUrl.c_str());
             // 밸런스 파일 업데이트 !
+            m_pMsgLabel->setString("못생긴 리소스 설득 중...");
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl(balanceFileUrl.c_str());
             req->setRequestType(CCHttpRequest::kHttpPost);
@@ -732,16 +727,16 @@ void Splash::TryLogin()
         param += temp;
         sprintf(temp, "kakao_id=%s&", KakaoLocalUser::getInstance()->userId.c_str());
         param += temp;
-        sprintf(temp, "nick_name=%s&", KakaoLocalUser::getInstance()->nickName.c_str());
-        param += temp;
         sprintf(temp, "access_token=%s&", CCUserDefault::sharedUserDefault()->getStringForKey("access_token").c_str());
         param += temp;
         sprintf(temp, "profile_image_url=%s&", KakaoLocalUser::getInstance()->profileImageUrl.c_str());
         param += temp;
         if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) // 안드로이드는 기기 고유 id를,
-            sprintf(temp, "push_token=%s", regId);
+            sprintf(temp, "push_token=%s&", regId);
         else                                            // iPhone은 아이폰에서 기기 고유 id를 받아넣는다.
-            sprintf(temp, "push_token=TEST_PUSH_VALUE");
+            sprintf(temp, "push_token=TEST_PUSH_VALUE&");
+        param += temp;
+        sprintf(temp, "nick_name=%s", KakaoLocalUser::getInstance()->nickName.c_str());
         param += temp;
     
         Network::HttpPost(param, URL_LOGIN, this, httpresponse_selector(Splash::onHttpRequestCompleted), "", "", true);
@@ -1021,6 +1016,20 @@ void Splash::XMLParseGameData()
         profileTitle.push_back( new ProfileTitle(id, -1, propertyType, title) );
         //profileTitle.push_back( new ProfileTitle(id, certificateType, propertyType, title) );
     }
+    
+    // ingame_item cost define (인게임 내 출현하는 아이템 목록)
+    its = nodeResult.child("ingame_item_define").children("Data");
+    for (it = its.begin() ; it != its.end() ; ++it)
+    {
+        for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+        {
+            std::string name = ait->name();
+            if (name == "nItemID") id = ait->as_int();
+            else if (name == "bCostType") item_type = ait->as_int(); // 1(별사탕), 2(토파즈)
+            else if (name == "nCostValue") cost_item = ait->as_int();
+        }
+        inGameItem.push_back( new InGameItem(id, item_type, cost_item) );
+    }
 }
 
 void Splash::WriteResFile(char* data, int size)
@@ -1060,8 +1069,6 @@ void Splash::WriteResFile(char* data, int size)
 
 void Splash::XmlParseLogin(xml_document *xmlDoc)
 {
-    //CCLog("xml parse : login");
-    
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
@@ -1097,9 +1104,23 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         int userId = nodeResult.child("userID").text().as_int();
         int msgCnt = nodeResult.child("message").attribute("count").as_int();
         
+        int todayFirst = nodeResult.child("today-first").text().as_int();
+        if (todayFirst == 1)
+        {
+            int type, value, achieve;
+            std::string week[7] = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"};
+            for (int i = 0 ; i < 7 ; i++)
+            {
+                type = nodeResult.child("attendance").child(week[i].c_str()).attribute("reward-type").as_int();
+                value = nodeResult.child("attendance").child(week[i].c_str()).attribute("reward-value").as_int();
+                achieve = nodeResult.child("attendance").child(week[i].c_str()).attribute("achieve").as_int();
+                loginEvent.push_back( new LoginEvent(type, value, achieve) );
+            }
+        }
+        
         // 내 정보 class (extern) 만들기
         myInfo = new MyInfo();
-        myInfo->Init(KakaoLocalUser::getInstance()->userId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId);
+        myInfo->Init(KakaoLocalUser::getInstance()->userId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId, todayFirst);
         
         // get GCM key
         gcmKey = nodeResult.child("gcm-key").text().as_string();
@@ -1107,9 +1128,6 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         // get public-key for RSA
         publicKey = nodeResult.child("public-key").text().as_string();
         publicKeyIndex = nodeResult.child("public-key-index").text().as_int();
-        //CCLog("gcm key = %s", gcmKey.c_str());
-        //CCLog("public key = %s", publicKey.c_str());
-        //CCLog("public key idx = %d", publicKeyIndex);
         
         // rsa 만들기 (초기 1회만 만들면 됨)
         rsa = createRSA((unsigned char*)(publicKey.c_str()), 1);
@@ -1177,6 +1195,28 @@ void Splash::XmlParseNotice(xml_document *xmlDoc)
             }
             #endif
         }
+        
+        // 루팅 폰 검사
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        JniMethodInfo t;
+        if (JniHelper::getStaticMethodInfo(t,
+                                           "com/playDANDi/CocoMagic/CocoMagic",
+                                           "IsRootingPhone",
+                                           "()Z"))
+        {
+            // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
+            bool result = t.env->CallStaticBooleanMethod(t.classID, t.methodID);
+            // Release
+            t.env->DeleteLocalRef(t.classID);
+            
+            if (result)
+            {
+                std::vector<int> nullData;
+                Common::ShowPopup(this, "Splash", "NoImage", false, ROOTING_DETECTED, BTN_1, nullData);
+                return;
+            }
+        }
+        #endif
         
         // 공지사항 리스트를 받는다.
         int onetime;
@@ -1375,8 +1415,8 @@ void Splash::XmlParseRewardWeeklyRank(xml_document *xmlDoc)
             // code 11 : 지난 주 점수 업데이트가 되어있지 않음.
             Common::ShowPopup(this, "Splash", "NoImage", false, NEED_TO_REBOOT, BTN_1, nullData);
         }
-        else if (code == 12)
-            ;//CCLog("Splash : 이미 보상을 받은 경우");
+        else if (code == 12) // 이미 보상을 받은 경우
+            Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
         else
             Common::ShowPopup(this, "Splash", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
     }

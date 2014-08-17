@@ -401,19 +401,6 @@ void SketchDetail::MakeClosedSkillSprites()
     }
     else
     {
-        /*
-        // 도전 문장의 배경
-        spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4", ccp(0, 0), ccp(210, 822), CCSize(730, 58), "", "Layer", tLayer, 5) );
-        char name[100];
-        sprintf(name, "도전 : MP %d 달성", requireMP);
-        
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(230, 830), ccc3(255,255,255), "", "Layer", tLayer, 5) );
-        CCSize s = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->label->getContentSize();
-        spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("아래의 조건 달성시 별사탕으로 스킬습득 가능", fontList[2], 30, ccp(0, 0), ccp(230+s.width+10, 835), ccc3(255,255,255), "", "Layer", tLayer, 5, 170) );
-        
-        */
-        
-        
         //아래의 요건을 모두 갖추면 별사탕으로 이 마법을 배울 수 있어요.
         spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea("아래의 조건 달성시 별사탕으로 스킬습득 가능", fontList[0], 36, ccp(0, 1), ccp(150, 1100), ccc3(78,47,8), CCSize(779, 180), kCCTextAlignmentCenter, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
         
@@ -608,19 +595,28 @@ void SketchDetail::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             }
             else if (btnStatus == 3) // '?'스킬의 요구조건을 모두 충족한 경우
             {
-                // Loading 화면으로 MESSAGE request 넘기기
-                Common::ShowNextScene(this, "SketchDetail", "Loading", false, LOADING_MESSAGE);
-                
-                char temp[255];
-                std::string param = "";
-                sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-                param += temp;
-                sprintf(temp, "skill_id=%d&", skill_common_id);
-                param += temp;
-                sprintf(temp, "cost_type=1"); // 1 : 별사탕, 2 : 토파즈
-                param += temp;
-                
-                Network::HttpPost(param, URL_PURCHASE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "1");
+                // 스킬 즉시 구매하기 (별사탕으로)
+                if (myInfo->GetStarCandy() < SkillBuildUpInfo::GetCost(skill_common_id, 1))
+                {
+                    std::vector<int> nullData;
+                    Common::ShowPopup(this, "SketchDetail", "NoImage", false, NEED_TO_BUY_STARCANDY, BTN_2, nullData);
+                }
+                else
+                {
+                    // Loading 화면으로 MESSAGE request 넘기기
+                    Common::ShowNextScene(this, "SketchDetail", "Loading", false, LOADING_MESSAGE);
+                    
+                    char temp[255];
+                    std::string param = "";
+                    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+                    param += temp;
+                    sprintf(temp, "skill_id=%d&", skill_common_id);
+                    param += temp;
+                    sprintf(temp, "cost_type=1"); // 1 : 별사탕, 2 : 토파즈
+                    param += temp;
+                    
+                    Network::HttpPost(param, URL_PURCHASE_SKILL, this, httpresponse_selector(SketchDetail::onHttpRequestCompleted), "1");
+                }
             }
             else if (btnStatus == 4) // '?'스킬 요구조건 미충족 -> 토파즈로 살 수 있는 경우
             {

@@ -122,7 +122,7 @@ void CocoRoomTodayCandy::Notification(CCObject* obj)
     else if (param->intValue() == 1)
     {
         // 터치 비활성
-        //CCLog("CocoRoomTodayCandy : 터치 비활성");
+        CCLog("CocoRoomTodayCandy : 터치 비활성");
         isTouched = true;
         isKeybackTouched = true;
         CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);

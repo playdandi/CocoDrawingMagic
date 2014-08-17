@@ -184,6 +184,7 @@ void T_Puzzle::InitTutorial()
     CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, 10)), CCMoveBy::create(0.5f, ccp(0, -10)), NULL );
     ttrFinger->runAction(CCRepeatForever::create(action));
     
+    /*
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     isSkipPossible = false;
     ////CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
@@ -196,6 +197,7 @@ void T_Puzzle::InitTutorial()
         this->addChild(ttrSkip, 3001);
     //}
     #endif
+    */
 }
 
 void T_Puzzle::Notification(CCObject* obj)
@@ -1046,9 +1048,9 @@ void T_Puzzle::TutorialNextState()
             ttrBg1->removeFromParentAndCleanup(true);
             ttrBg2->removeFromParentAndCleanup(true);
             ttrFinger->removeFromParentAndCleanup(true);
-            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-            ttrSkip->removeFromParentAndCleanup(true);
-            #endif
+            //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            //ttrSkip->removeFromParentAndCleanup(true);
+            //#endif
             ReverseColor();
             skill->Invoke(7, touch_cnt%QUEUE_CNT);
             break;
@@ -1271,6 +1273,7 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     //if (!isGameStarted)
     //    return true;
 
+    /*
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     // 2) 튜토리얼 건너뛰기
     //if (isSkipPossible)
@@ -1282,6 +1285,7 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
     //}
     #endif
+     */
     
     //CCLog("ttrState = %d", ttrState);
     //CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);

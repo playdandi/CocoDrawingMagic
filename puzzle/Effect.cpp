@@ -643,12 +643,12 @@ void Effect::PlayEffect_17_Callback(CCNode* sender, void* p)
         pThis->gameLayer->GetSound()->PlaySkillSound(17);
         
         // 점수 업데이트
-        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 5%)])
+        // 최종점수 = 발동점수 + [(drag수-1)*(10+drag수*발동점수의 3%)])
         int dragNum = pThis->gameLayer->GetPiece8xy(true).size(); // 드래그수 구하기
         if (pThis->gameLayer->IsRoundInFeverTime(true))
             dragNum = pThis->gameLayer->GetPosForFeverTime(true).size();
         int basicScore = pThis->gameLayer->GetSkill()->GetBasicSkillScore(17); // 발동점수
-        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*5)/100.0f))); // 가중치점수
+        int addedScore = (int)((float)(dragNum-1)*(10.0f+(float)dragNum*((float)(basicScore*3)/100.0f))); // 가중치점수
         pThis->gameLayer->UpdateScore(1, (basicScore+addedScore)/numOfBomb);
         float scale = pThis->gameLayer->GetScoreBasicScale(dragNum);
         pThis->gameLayer->ShowSkillScore((basicScore+addedScore)/numOfBomb, scale, pThis->queuePos, x[0], y[0]);
@@ -989,9 +989,9 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
         // big sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(72);
         
-        // 점수 업데이트 [ 발동점수의30% + (터지는피스개수 * 발동점수의5%) ]
+        // 점수 업데이트 [ 발동점수의30% + (터지는피스개수 * 발동점수의 3%) ]
         float basicScore = (float)ef->gameLayer->GetSkill()->GetBasicSkillScore(7);
-        int addedScore = (int)((float)(basicScore * 0.3f) + (basicScore * 0.05f * (float)ef->skillDoublePos[idx].size()));
+        int addedScore = (int)((float)(basicScore * 0.3f) + (basicScore * 0.03f * (float)ef->skillDoublePos[idx].size()));
         ef->gameLayer->UpdateScore(1, addedScore);
         ef->gameLayer->ShowSkillScore(addedScore, 1.5f, ef->queuePos, x, y);
         //ef->gameLayer->ShowSkillAddedScore(addedScore, ef->queuePos, 1, x, y);
@@ -1013,7 +1013,6 @@ void Effect::Effect7_Callback_3(CCNode* sender, void* pointer) // 혜성 떨어�
     }
     else
     {
-        //CCLog("small fire : %d %d", x, y);
         // small sound
         ef->gameLayer->GetSound()->PlayDesignatedSound(71);
         

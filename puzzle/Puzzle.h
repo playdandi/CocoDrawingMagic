@@ -87,7 +87,7 @@ public:
     CCPoint BoardMovePosition(CCPoint point);
     CCPoint SetCorrectPosition(CCPoint point);
     
-    void StartMagicTime(float f);
+    //void StartMagicTime(float f);
     
     void SkillSemaphoreUpdate(int val);
     bool IsSkillSemaphoreFree();
@@ -188,7 +188,7 @@ public:
     CCSize floorSize;
     
     void ReadyAndStart(CCNode* sender, void* pointer);
-    //void Ready(float f);
+    void Ready();
     void Ready_C(CCNode* sender, void* p);
     void ReadyCallback(CCNode* sender, void* pointer);
     
@@ -200,7 +200,6 @@ public:
     void SetGlobalType(int queue_pos, int pieceType);
     
     void StartFeverTime();
-    void EndFeverTime();
     bool IsFeverTime();
     int GetFeverRemainTime();
     bool IsRoundInFeverTime(bool afterCast);
@@ -214,7 +213,9 @@ public:
     bool IsItemTime();
     bool IsItemPaint();
     bool IsItemStaff();
-    //void SetItemPossible(bool flag);
+    bool IsItemPaintSpecial();
+    int GetItemPaintSpecialType(int k);
+
     void UpdateSemaphore(int v);
     
     int Time100(int denom);
@@ -244,6 +245,8 @@ public:
     
     float board_wh;
     
+    int executeCnt; // 아이템, 한붓그리기 등 실행되기 시작한 수
+    
 protected:
     bool isKeybackTouched;
     
@@ -268,7 +271,7 @@ protected:
     std::vector<CCPoint> lastPosition;
     int m_iBombCallbackCnt[QUEUE_CNT];
     int m_iBombCallbackCntMax[QUEUE_CNT];
-    int m_iBombCallbackType[QUEUE_CNT];
+    //int m_iBombCallbackType[QUEUE_CNT];
     int globalType[QUEUE_CNT];
     // skill state도 DROP_QUEUE_CNT만큼 있어야 한다.
     int m_iState[QUEUE_CNT];
@@ -344,11 +347,13 @@ protected:
     
     int bonusTimeState; // 보너스타임 순서 상태
     
-    //bool m_bIsItemPossible;
+    int item_paint_special_type[2]; // 3줄 페인트 이용 시, 2가지 속성.
+    bool item_paint_special;
     bool item_clear;
     bool item_time;
     bool item_paint;
     bool item_staff;
+    bool item_booster;
     int totalCnt_paint; // 나와야 할 전체 paint item 수
     int totalCnt_staff; // 나와야 할 전체 staff item 수
     int iNumOfPaintItemRemained; // 지금까지 나타난 paint item 수
@@ -460,6 +465,7 @@ public:
     void SwapObject(int x1, int y1, int x2, int y2);
     void Falling(int x, int y, int targetX, int targetY, int queue_pos, int vertical_idx);
     void RemoveAllObjects();
+    void Effect_Callback(CCNode* sender, void* p);
     
 private:
     PuzzleP8* object[COLUMN_COUNT][ROW_COUNT];

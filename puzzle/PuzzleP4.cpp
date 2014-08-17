@@ -34,13 +34,6 @@ void PuzzleP4::CreateSprites(int x, int y, int lu, int ru, int ld, int rd, CCPoi
     
     isRemoved = false;
     
-    /*
-    if (type == CONNECTED)
-        CCLog("%d %d (CONNECTED): %d %d %d %d", x, y, lu, rd, ru, ld);
-    else
-        CCLog("%d %d (BLOCKED): %d %d %d %d", x, y, lu, rd, ru, ld);
-    */
-    
     if (type != BLOCKED)
     {
         InitChild();

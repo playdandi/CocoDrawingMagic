@@ -61,8 +61,6 @@ bool LoadingPuzzle::init()
 	if (!CCLayer::init())
 		return false;
     
-    //Depth::DumpDepth();
-    
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     loadingSprites = false;
     
@@ -126,9 +124,6 @@ void LoadingPuzzle::LoadingSprites()
 
 void LoadingPuzzle::onHttpRequestCompleted(CCNode *sender, void *data)
 {
-    // Loading_GameStart 창 끄기
-    //((Loading_GameStart*)Depth::GetCurPointer())->EndScene();
-    
     CCHttpResponse* res = (CCHttpResponse*) data;
     
     xml_document xmlDoc;
@@ -195,10 +190,6 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
                 myInfo->AddSkillSlot(id, csi, usi);
             inGameSkill.push_back(csi);
         }
-        for (int i = 0 ; i < inGameSkill.size() ; i++)
-        {
-            //CCLog("행할 스킬 번호 : %d", inGameSkill[i]);
-        }
         
         // 빈 슬롯 처리
         for (int i = myInfo->GetSlot().size()+1 ; i <= slotSize ; i++)
@@ -241,7 +232,6 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
         // '코코타임' 발동 횟수
         int numOfCocoTime = gameInfo.child("coco-time").attribute("add-number").as_int();
         
-        //return;
         Common::ShowNextScene(this, "LoadingPuzzle", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime);
     }
 }

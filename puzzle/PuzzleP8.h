@@ -17,9 +17,11 @@ public:
     void SetPiece(CCSprite* sprite);
     void SetPieceTexture(CCTexture2D* texture);
     void SetZOrder(int zOrder);
+    CCSprite* GetEffect();
 
 private:
     CCSprite* sprite;
+    CCSprite* effect;
     int type;
     void* parent;
     int zOrder;
