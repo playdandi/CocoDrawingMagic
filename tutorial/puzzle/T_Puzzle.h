@@ -265,14 +265,17 @@ private:
     CCLabelTTF* ttrMsg;
     CCScale9Sprite* ttrBg1;
     CCScale9Sprite* ttrBg2;
-    CCSprite* ttrSkip;
     CCSprite* ttrFinger;
     CCSprite* ttrFinger_1;
     CCSprite* ttrFinger_2;
     CCSprite* ttrFinger_3;
     CCSprite* ttrFinger_4;
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    CCSprite* ttrSkip;
+    #endif
     
     bool isSkipPossible;
+    bool isSkipping;
 };
 
 class T_PuzzleP8Set

@@ -365,6 +365,10 @@ void Ranking::ShowPopup()
             if (noticeList[i]->link != "")
                 noticeList[i]->message += "\n(확인 버튼을 누르면 웹페이지로 연결합니다)";
             
+            //Network::replaceAll(noticeList[i]->message, "\n", "\n");
+            //CCLog("%s", noticeList[i]->message.c_str());
+            //CCLog("%d", (int)noticeList[i]->message.find("\n"));
+            
             char s[20];
             sprintf(s, "noticelist_%d", noticeList[i]->id);
             long lastTime = CCUserDefault::sharedUserDefault()->getIntegerForKey(s, -1);
@@ -482,6 +486,12 @@ void Ranking::InitSprites()
     // 친구추가 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_addfriend.png", ccp(0, 0), ccp(912, 1920-1582-86), CCSize(0, 0), "", "Ranking", this, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_invitefriend.png", ccp(0, 0), ccp(886, 1920-1674-44), CCSize(0, 0), "", "Ranking", this, 5) );
+    if (isGuestLogin)
+    {
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_addfriend.png"))->setColor(ccc3(140,140,140));
+        ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_invitefriend.png"))->setColor(ccc3(140,140,140));
+    }
+    
     
     // 게임준비 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_red.png", ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "Ranking", this, 5) );
@@ -956,6 +966,8 @@ bool Ranking::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_addfriend.png")
         {
+            if (isGuestLogin) // 게스트로그인이면 터치 못하게 함.
+                continue;
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();

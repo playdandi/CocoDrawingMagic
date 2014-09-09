@@ -97,6 +97,7 @@ bool T_Puzzle::init()
     isFalling = true;
     isInGamePause = true;
     isCancelling = true;
+    isSkipping = false;
     ttrState = -1;
     
     // make depth tree
@@ -184,20 +185,19 @@ void T_Puzzle::InitTutorial()
     CCActionInterval* action = CCSequence::create( CCMoveBy::create(0.5f, ccp(0, 10)), CCMoveBy::create(0.5f, ccp(0, -10)), NULL );
     ttrFinger->runAction(CCRepeatForever::create(action));
     
-    /*
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    ttrSkip = NULL;
     isSkipPossible = false;
-    ////CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
-    //if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
-    //{
+    //CCLog("is skip possible = %d", CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false));
+    if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
+    {
         isSkipPossible = true;
         ttrSkip = CCSprite::create("images/tutorial_skip.png");
         ttrSkip->setAnchorPoint(ccp(1, 0));
-        ttrSkip->setPosition(ccp(m_winSize.width, vo.y));
-        this->addChild(ttrSkip, 3001);
-    //}
+        ttrSkip->setPosition(ccp(m_winSize.width, vo.y+tbSize.height));
+        ttrSkip->retain();
+    }
     #endif
-    */
 }
 
 void T_Puzzle::Notification(CCObject* obj)
@@ -213,6 +213,8 @@ void T_Puzzle::Notification(CCObject* obj)
         this->setTouchPriority(Depth::GetCurPriority());
         m_bTouchStarted = false;
         isKeybackTouched = false;
+        
+        isSkipping = false;
         //CCLog("T_Puzzle : 터치 활성 (Priority = %d)", this->getTouchPriority());
         
         //sound->ResumeBackgroundInGameSound();
@@ -890,6 +892,10 @@ void T_Puzzle::TutorialNextState()
             isInGamePause = false;
             isCancelling = false;
             isKeybackTouched = false;
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            if (ttrSkip != NULL)
+                this->addChild(ttrSkip, 3001);
+            #endif
             break;
         case 1:
             ttrBg1->setOpacity(0);
@@ -1048,9 +1054,13 @@ void T_Puzzle::TutorialNextState()
             ttrBg1->removeFromParentAndCleanup(true);
             ttrBg2->removeFromParentAndCleanup(true);
             ttrFinger->removeFromParentAndCleanup(true);
-            //#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-            //ttrSkip->removeFromParentAndCleanup(true);
-            //#endif
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            if (ttrSkip != NULL)
+            {
+                ttrSkip->release();
+                ttrSkip->removeFromParentAndCleanup(true);
+            }
+            #endif
             ReverseColor();
             skill->Invoke(7, touch_cnt%QUEUE_CNT);
             break;
@@ -1233,8 +1243,8 @@ void T_Puzzle::PauseGame()
 }
 void T_Puzzle::SkipGame()
 {
+    isSkipping = true;
     CancelDrawing();
-    
     Common::ShowNextScene(this, "T_Puzzle", "T_Skip", false, vo.y+tbSize.height+boardSize.height+60, ttrFromWhere);
 }
 
@@ -1273,19 +1283,17 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     //if (!isGameStarted)
     //    return true;
 
-    /*
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     // 2) 튜토리얼 건너뛰기
-    //if (isSkipPossible)
-    //{
+    if (ttrSkip != NULL && isSkipPossible)
+    {
         if (ttrSkip->boundingBox().containsPoint(point))
         {
             SkipGame();
             return false;
         }
-    //}
+    }
     #endif
-     */
     
     //CCLog("ttrState = %d", ttrState);
     //CCLog("touchBegan (%d) : %d %d", touch_cnt%QUEUE_CNT, m_iSkillSP, m_bTouchStarted);
@@ -1771,27 +1779,28 @@ void T_Puzzle::CancelDrawing()
         ttrFinger_4->setOpacity(0);
     }
     
-    
-    // action (finger) 재시작
-    CCActionInterval* action;
-    if (ttrState == 6)
-        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(3, 3)), CCMoveTo::create(0.5f, SetTouch8Position(4, 4)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(2, 3)), NULL);
-    else if (ttrState == 11)
-        action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(4, 5)), CCMoveTo::create(0.5f, SetTouch8Position(3, 5)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(5, 4)), NULL);
-    else if (ttrState == 16)
+    if (!isSkipping)
     {
-        action = CCSequence::create(CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)1),
-                                    CCMoveTo::create(0.5f, SetTouch8Position(4, 1)),
-                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)2),
-                                    CCMoveTo::create(0.5f, SetTouch8Position(5, 1)),
-                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)3),
-                                    CCMoveTo::create(0.5f, SetTouch8Position(4, 2)),
-                                    CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)4),
-                                    CCDelayTime::create(0.5f),
-                                    NULL);
+        // action (finger) 재시작
+        CCActionInterval* action;
+        if (ttrState == 6)
+            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(3, 3)), CCMoveTo::create(0.5f, SetTouch8Position(4, 4)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(2, 3)), NULL);
+        else if (ttrState == 11)
+            action = CCSequence::create( CCDelayTime::create(0.5f), CCMoveTo::create(0.5f, SetTouch8Position(4, 5)), CCMoveTo::create(0.5f, SetTouch8Position(3, 5)), CCDelayTime::create(0.5f), CCPlace::create(SetTouch8Position(5, 4)), NULL);
+        else if (ttrState == 16)
+        {
+            action = CCSequence::create(CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)1),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(4, 1)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)2),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(5, 1)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)3),
+                                        CCMoveTo::create(0.5f, SetTouch8Position(4, 2)),
+                                        CCCallFuncND::create(this, callfuncND_selector(T_Puzzle::FingerNumber), (void*)4),
+                                        CCDelayTime::create(0.5f),
+                                        NULL);
+        }
+        ttrFinger->runAction(CCRepeatForever::create(action));
     }
-    
-    ttrFinger->runAction(CCRepeatForever::create(action));
 }
 
 

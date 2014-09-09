@@ -627,6 +627,10 @@ void GameReady::InitSprites()
     
     // 오늘의 별사탕 버튼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_todaycandy.png", ccp(0, 0), ccp(886-50, 1920-1674-44), CCSize(0, 0), "", "Layer", tLayer, 5) );
+    if (isGuestLogin)
+    {
+        ((CCSprite*)spriteClass->FindSpriteByName("button/btn_todaycandy.png"))->setColor(ccc3(140,140,140));
+    }
     
     // 코코 그림
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "image/coco_ready.png", ccp(0.5, 0.5), ccp(250, 1190+100), CCSize(0, 0), "", "Layer", tLayer, 3) );
@@ -1234,6 +1238,8 @@ bool GameReady::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
         }
         else if (spriteClass->spriteObj[i]->name == "button/btn_todaycandy.png")
         {
+            if (isGuestLogin) // 게스트로그인이면 터치 못하게 함.
+                continue;
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 sound->playClick();

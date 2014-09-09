@@ -3,17 +3,15 @@
 #include "puzzle/Puzzle.h"
 #include "Ranking.h"
 #include "SimpleAudioEngine.h"
-USING_NS_CC;
+#include "BuyTopaz.h"
+//USING_NS_CC;
 
 using namespace cocos2d;
 using namespace CocosDenshion;
 
 AppDelegate::AppDelegate() {
-
 }
-
-AppDelegate::~AppDelegate() 
-{
+AppDelegate::~AppDelegate() {
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
@@ -49,7 +47,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 // This function will be called when the app is inactive. When comes a phone call,it's be invoked too
 void AppDelegate::applicationDidEnterBackground()
 {
-    //CCLog("enter background");
+    CCLog("enter background");
     CCDirector::sharedDirector()->stopAnimation();
     CCDirector::sharedDirector()->pause();
     
@@ -88,10 +86,15 @@ void AppDelegate::applicationDidEnterBackground()
 // this function will be called when the app is active again
 void AppDelegate::applicationWillEnterForeground()
 {
-    //CCLog("enter foreground");
+    CCLog("enter foreground");
     CCDirector::sharedDirector()->stopAnimation(); //
     CCDirector::sharedDirector()->resume(); //
     CCDirector::sharedDirector()->startAnimation();
+    
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    // make badge to zero
+    BuyTopaz::BadgeZero();
+    #endif
     
     if (isInGameTutorial)
     {
@@ -191,7 +194,7 @@ void AppDelegate::Resume()
     CCString* param = CCString::create("5");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
     
-    if (Depth::GetCurNameString() != "Splash")
+    if (Depth::GetCurNameString() == "Splash")
     {
         // 터치 풀기
         param = CCString::create("10");

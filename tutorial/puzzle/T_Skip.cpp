@@ -74,16 +74,7 @@ void T_Skip::InitSprites()
     pBlack->setAnchorPoint(ccp(0, 0));
     pBlack->setColor(ccc3(0, 0, 0));
     pBlack->setOpacity(180);
-    this->addChild(pBlack, 0);
-    
-    /*
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_pause_window.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, m_winSize.height/2), CCSize(0,0), "", "T_Skip", this, 9) );
-    ((CCSprite*)spriteClass->FindSpriteByName("background/bg_pause_window.png"))->setScale(1.05f);
-    
-    
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_cont.png", ccp(1, 0.5), ccp(m_winSize.width/2-10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_pause_end.png", ccp(0, 0.5), ccp(m_winSize.width/2+10, m_winSize.height/2-70), CCSize(0,0), "", "T_Skip", this, 10) );
-     */
+    this->addChild(pBlack, 10001);
 
     // pop-up 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640), CCSize(982, 623), "", "T_Skip", this, 10001) );
@@ -116,7 +107,8 @@ bool T_Skip::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
     {
-        if (spriteClass->spriteObj[i]->name == "button/btn_system.png")
+        if (spriteClass->spriteObj[i]->name == "button/btn_system.png" ||
+            spriteClass->spriteObj[i]->name == "button/btn_x_brown.png")
         {
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {

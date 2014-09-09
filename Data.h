@@ -23,6 +23,9 @@
 // 서버 점검중일 경우 나오는 메시지
 extern std::string serverCheckMsg;
 
+// 게스트 로그인인가?
+extern bool isGuestLogin;
+
 extern int iGameVersion;
 extern int iBinaryVersion;
 extern class MyInfo* myInfo;

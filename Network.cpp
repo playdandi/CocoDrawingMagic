@@ -35,7 +35,7 @@ void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_Htt
     sprintf(temp, "a=%s", encoded_a.c_str());
     postData += temp;
     
-    ////CCLog("%s", postData.c_str());
+    //CCLog("%s", postData.c_str());
      
     CCHttpRequest* req = new CCHttpRequest();
     req->setUrl(url.c_str());
@@ -65,6 +65,8 @@ std::string Network::Encrypt_PS(bool isBasic)
     else
         sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
     std::string ps_param_s = ps_param;
+    
+    //CCLog("%s", ps_param_s.c_str());
     
     result = RSA_public_encrypt((int)ps_param_s.size(), (unsigned char*)(ps_param_s.c_str()), encrypted, rsa, RSA_PKCS1_PADDING);
     if (result == -1)
@@ -145,7 +147,8 @@ int Network::GetHttpResponseData(CCHttpResponse* res, char* data, bool isDeObfus
 {
     if (!res || !res->isSucceed())
     {
-        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        CCLog("%d", res->getResponseCode());
         return NULL;
     }
     
@@ -164,8 +167,8 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
 {
     if (!res || !res->isSucceed())
     {
-        //CCLog("res failed. error buffer: %s", res->getErrorBuffer());
-        //CCLog("%d", res->getResponseCode());
+        CCLog("res failed. error buffer: %s", res->getErrorBuffer());
+        CCLog("%d", res->getResponseCode());
         return;
     }
     

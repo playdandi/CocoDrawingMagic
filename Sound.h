@@ -26,6 +26,8 @@ using namespace CocosDenshion;
 class Sound
 {
 public:
+    const char* GetSoundFile(std::string filename);
+    
     void PreLoadSound();
     
     void SetEffectVolume();

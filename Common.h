@@ -181,6 +181,7 @@ USING_NS_CC;
 #define POPUP_NOTICE 106
 #define PURCHASE_SKILL_BY_TOPAZ_TRY 107
 #define HINT_BUY_PROPERTY 108
+#define GUEST_LOGIN 109
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -202,6 +203,7 @@ USING_NS_CC;
 #define BTN_MENU_RESUMEGAME 13
 #define BTN_MENU_ENDGAME 14
 #define BTN_MENU_CAFE 15
+#define BTN_MENU_GUESTBTN 16
 
 // 카카오톡 메시지 관련
 #define KAKAO_MSG_TEMPLATE_SENDPOTION   "1766"
@@ -218,7 +220,6 @@ USING_NS_CC;
 #define URL_PUBLIC_CAFE "http://cafe.naver.com/cocomagic2014/"
 
 
-
 using namespace pugi;
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -229,12 +230,17 @@ class BuyTopaz;
 
 extern Sound* sound;
 extern std::string fontList[];
-
+extern std::string resFileList[];
 
 class Common
 {
 public:
     //static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
+    static void MakeBadgeToZeroFunc();
+    
+    static void AddSpriteFramesWithFile(std::string plist, std::string png);
+    static std::string GetResFilename(std::string filename);
+    static CCTexture2D* GetResFileImg(std::string filename);
     
     static std::string GetTip();
     
@@ -247,6 +253,8 @@ public:
     static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1, int etc3 = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
+
+    static std::string SubstrNickname(std::string nickname);
     
     static std::string GetMissionContent(int type, int val, int refVal);
     static void UpdateProfileTitle();
@@ -254,12 +262,12 @@ public:
     static std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
     static std::string base64_decode(std::string const& encoded_string);
     
-    //static void verifyPayloadAndProvideItem(const char* data, const char* signature, int topazCount);
-    //static void VerifyPayloadAndProvideItem(int type, int topazId, const char* kakaoid, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
     static std::string GetVerifyParams(int type, int topazId, const char* kakaoId, const char* friendkakaoId, const char* purchaseData, const char* dataSignature, int consumeIdx);
     static void XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx, const char* fkid);
-    //void XmlParseVerifyPurchaseResult(xml_document *xmlDoc, int type, int consumeIdx);
-    //void onHttpRequestCompleted(CCNode *sender, void *data);
+
+    static void BackToCocos2dxFromApple();
+    static std::string GetVerifyParamsApple(int type, int topazId, std::string friendKakaoId, const char* receipt);
+    static void XmlParseVerifyPurchaseResultApple(const char* data, int size);
 };
 
 

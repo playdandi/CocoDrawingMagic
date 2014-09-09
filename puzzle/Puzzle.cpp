@@ -1,4 +1,5 @@
 #include "Puzzle.h"
+#include <regex>
 
 enum
 {
@@ -112,6 +113,8 @@ bool Puzzle::init()
     item_staff = CCUserDefault::sharedUserDefault()->getBoolForKey("item_03", false);
     item_booster = CCUserDefault::sharedUserDefault()->getBoolForKey("item_04", false);
     
+    item_paint_special = false; // 인게임 아이템 (세줄붓) 사용 여부
+    
     totalCnt_paint = (item_paint) ? 2+rand()%5 : 0; // 2~6개
     totalCnt_staff = (item_staff) ? 2+rand()%5 : 0; // 2~6개
     if (item_paint && item_staff && totalCnt_staff == totalCnt_paint)
@@ -204,6 +207,8 @@ bool Puzzle::init()
     pPuzzlePtr = this;
     readySprite = NULL;
     dragScore = 0;
+    
+    runningActions = NULL;
 
 	return true;
 }
@@ -237,8 +242,14 @@ void Puzzle::Notification(CCObject* obj)
         if (skill->IsSpiritAlive(2))
             effect->GetSpirit(2)->resumeSchedulerAndActions();
         
+        if (runningActions == NULL)
+        {
+            runningActions = CCDirector::sharedDirector()->getActionManager()->pauseAllRunningActions();
+            runningActions->retain();
+        }
         CCDirector::sharedDirector()->getActionManager()->resumeTargets(runningActions);
         runningActions->release();
+        runningActions = NULL;
     }
     else if (param->intValue() == 1)
     {
@@ -280,9 +291,7 @@ void Puzzle::Notification(CCObject* obj)
         // 인게임 아이템 사용 : 세줄붓 만들기
         
         puzzleP8set->RemoveChild(1, ROW_COUNT-1);
-        //spriteP8[1][ROW_COUNT-1] = NULL;
         puzzleP8set->RemoveChild(5, ROW_COUNT-1);
-        //spriteP8[5][ROW_COUNT-1] = NULL;
         
         item_paint_special = true;
         if (item_paint_special)
@@ -320,15 +329,6 @@ void Puzzle::Notification(CCObject* obj)
         puzzleP8set->CreatePiece(5, ROW_COUNT-1, GetItemPaintSpecialType(1));
         spriteP8[5][ROW_COUNT-1] = puzzleP8set->GetSprite(5, ROW_COUNT-1);
         puzzleP8set->AddChild(5, ROW_COUNT-1);
-        
-        // 세줄붓 아이템을 사용하는 경우
-        //if (item_paint_special && ((x == 1 || x == 5) && y == ROW_COUNT-1))
-        //{
-            //int type = 0;
-            //if (x == 1) type = GetItemPaintSpecialType(0);
-            //else if (x == 5) type = GetItemPaintSpecialType(1);
-        
-        //}
     }
 }
 
@@ -3543,10 +3543,9 @@ void Puzzle::FallingCallback(CCNode* sender, void* queue_pos)
             if (skill->E8_IsFinished())
             {
                 m_iState[(int)queue_pos] = m_iNextState[(int)queue_pos];
-                ////CCLog("Falling callback (%d) - 다음 스킬 [고대나무 끝났음] : %d", queue, m_iState[(int)queue_pos]);
+                //CCLog("Falling callback (%d) - 다음 스킬 [고대나무 끝났음] : %d", queue, m_iState[(int)queue_pos]);
                 InvokeSkills((int)queue_pos);
             }
-            return;
         }
         else
         {
@@ -3705,6 +3704,13 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
         sprintf(temp, "break_piece_count_list[0]=0&");
         param += temp;
     }
+    /*
+    // 인게임 아이템 사용여부
+    if (item_paint_special)
+        param += "ingame_item_id=1&";
+    else
+        param += "ingame_item_id=0&";
+    */
 
     // 별사탕 최종개수 계산
     iStarCandy = FakeStarCandy( (int)((float)RealStarCandy() + (float)RealStarCandy()*ADD_STARCANDY_PERCENT/100.0f) );
@@ -3813,7 +3819,7 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
             }
             
             // nickname 너무 길면 자르자.
-            nickname = SubstrNickname(nickname);
+            nickname = Common::SubstrNickname(nickname);
             
             friendList.push_back( new Friend(kakaoId, nickname, imageUrl, potionMsgStatus, remainPotionTime, remainRequestPotionTime, remainRequestTopazTime, weeklyHighScore, highScore, scoreUpdateTime, certificateType, profileTitleId, fire, water, land, master, fairyId, fairyLevel, skillId, skillLevel) );
             // potion image 처리
@@ -3822,25 +3828,26 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
         // sort by { max[weeklyScore], min[scoreUpdateTime] }
         DataProcess::SortFriendListByScore();
         
-        
-        // 카카오 친구리스트에서 필요한 변수들을 집어넣는다.
-        int cnt = KakaoFriends::getInstance()->appFriends->count();
-        CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
-        std::string id;
-        for (int i = 0 ; i < friendList.size() ; i++)
+        if (!isGuestLogin)
         {
-            for (int j = 0 ; j < cnt ; j++)
+            // 카카오 친구리스트에서 필요한 변수들을 집어넣는다.
+            int cnt = KakaoFriends::getInstance()->appFriends->count();
+            CCArray* keys = KakaoFriends::getInstance()->appFriends->allKeys();
+            std::string id;
+            for (int i = 0 ; i < friendList.size() ; i++)
             {
-                id = ((CCString*)keys->objectAtIndex(j))->getCString();
-                if (friendList[i]->GetKakaoId() == id)
+                for (int j = 0 ; j < cnt ; j++)
                 {
-                    KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->appFriends->objectForKey(id.c_str());
-                    friendList[i]->SetKakaoVariables( f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice );
-                    break;
+                    id = ((CCString*)keys->objectAtIndex(j))->getCString();
+                    if (friendList[i]->GetKakaoId() == id)
+                    {
+                        KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->appFriends->objectForKey(id.c_str());
+                        friendList[i]->SetKakaoVariables( f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice );
+                        break;
+                    }
                 }
             }
         }
-        
         
         // 본인이 몇 등인지 검사해서, 기존 순위보다 높으면 랭킹변동 UI를 띄운다.
         isRankUp = false;
@@ -3858,31 +3865,13 @@ void Puzzle::XmlParseFriends(xml_document *xmlDoc)
     }
 }
 
-std::string Puzzle::SubstrNickname(std::string nickname)
-{
-    if (nickname.size() > 20)
-    {
-        ////CCLog("%s", nickname.c_str());
-        int i;
-        for (i = 0 ; i < nickname.size() ; i++)
-        {
-            if (i >= 20)
-                break;
-            if (isascii(nickname[i]) != 1)
-                i += 2;
-        }
-        nickname = nickname.substr(0, i);
-        nickname += "...";
-    }
-    return nickname;
-}
-
-
 
 void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
 {
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
+    
+    CCLog("GAME END : code = %d", code);
     
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)

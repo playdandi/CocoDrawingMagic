@@ -1,4 +1,14 @@
 #include "BuyTopaz.h"
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+#include "bridge.h"
+#endif
+
+void BuyTopaz::BadgeZero()
+{
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    MakeBadgeToZero();
+    #endif
+}
 
 CCScene* BuyTopaz::scene(int parent)
 {
@@ -114,11 +124,10 @@ void BuyTopaz::Notification(CCObject* obj)
         // 터치 풀기 (백그라운드에서 돌아올 때)
         isTouched = false;
         isKeybackTouched = false;
-        //CCLog("BuyTopaz : noti 10 ( tryingPurchase = %d )", isTryingPurchase);
         
         if (isTryingPurchase)
         {
-            // 안드로이드 결제 과정 거친 후 돌아온 경우! (여기 왔다는 것 = 결제에 승인했으나 그 후 에러가 났음을 의미)
+            // 안드로이드/iOS 결제 과정 거친 후 돌아온 경우! (여기 왔다는 것 = 결제에 승인했으나 그 후 에러가 났음을 의미)
             std::vector<int> nullData;
             Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurName(), "NoImage", false, ERROR_IN_APP_BILLING, BTN_1, nullData);
         }
@@ -130,7 +139,6 @@ void BuyTopaz::Notification(CCObject* obj)
         std::string friendKakaoId = p.substr(0, p.find("/"));
         int priceTopazIdx = atoi(p.substr(p.find("/")+1).c_str());
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         char num[10];
         sprintf(num, "%d", priceTopazIdx);
         
@@ -144,8 +152,14 @@ void BuyTopaz::Notification(CCObject* obj)
         sprintf(temp, "friend_kakao_id=%s", friendKakaoId.c_str());
         param += temp;
         
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         Network::HttpPost(param, URL_GOOGLE_PAYLOAD, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num, friendKakaoId);
         #endif
+        
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        Network::HttpPost(param, URL_APPLE_UPDATE, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num, friendKakaoId);
+        #endif
+        
     }
 }
 
@@ -311,8 +325,6 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 sound->playClick();
                 
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(25).c_str());
-                
-                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
                 char num[10];
                 sprintf(num, "%d", number);
                 
@@ -326,16 +338,13 @@ bool BuyTopaz::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
                 httpStatus = 0;
                 verifyStatusScene = this;
                 
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
                 Network::HttpPost(param, URL_GOOGLE_PAYLOAD, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num);
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                /*
-                std::vector<int> data;
-                data.push_back(number);
-                data.push_back(priceTopaz[number]->GetPrice(myInfo->GetDeviceType()));
-                Common::ShowPopup(this, "BuyTopaz", "NoImage", false, BUY_TOPAZ_TRY, BTN_2, data);
-                */
+                //CCLog("%s", param.c_str());
+                Network::HttpPost(param, URL_APPLE_UPDATE, this, httpresponse_selector(BuyTopaz::onHttpRequestCompleted), num);
                 #endif
                 
                 return false;
@@ -388,9 +397,15 @@ void BuyTopaz::onHttpRequestCompleted(CCNode *sender, void *data)
     else if (httpStatus == 0)
         priceTopazIdx = atoi(tag.c_str());
     
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     XmlParseDeveloperPayload(&xmlDoc, atoi(res->getHttpRequest()->getTag()), friendKakaoId);
+    #endif
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    XmlParseUpdateFriendApple(&xmlDoc, atoi(res->getHttpRequest()->getTag()), friendKakaoId);
+    #endif
 }
 
+// Android 전용.
 void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId)
 {
     xml_node nodeResult = xmlDoc->child("response");
@@ -410,7 +425,6 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
     {
         isTryingPurchase = true; // 안드로이드 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         int topazId = priceTopaz[priceTopazIdx]->GetId();
         char productId[15];
         if (httpStatus == 0)
@@ -429,12 +443,13 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
         //CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
         //CCLog("friendKakaoId = %s", friendKakaoId.c_str());
         
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         JniMethodInfo t;
         if (JniHelper::getStaticMethodInfo(t,
                                      "com/playDANDi/CocoMagic/CocoMagic",
                                      "StartIAB",
                                      "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
-        {  // 파라미터 (int, String, String), 리턴타입은 Void
+        {   // 파라미터 (int, String, String), 리턴타입은 Void
             // 함수 호출할 때 Object값을 리턴하는 함수로 받아야함!!!!
             t.env->CallStaticVoidMethod(t.classID, t.methodID,
                                         type,
@@ -449,8 +464,54 @@ void BuyTopaz::XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx,
             t.env->DeleteLocalRef(t.classID);
         }
         #endif
+    }
+    /*
+     [친구 id 불러오기]
+     send_topaz_google_get_friend.php (기존 구글 프로토콜 재활용)
+     param : kakao_id
+     return : <friend kakao-id=친구카카오아이디>
+     */
+}
+
+// iOS 전용.
+void BuyTopaz::XmlParseUpdateFriendApple(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId)
+{
+    xml_node nodeResult = xmlDoc->child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+    if (code != 0)
+    {
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+            Common::ShowPopup(this, "BuyTopaz", "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+    }
+    
+    else if (code == 0)
+    {
+        isTryingPurchase = true; // iOS 인앱결제 끝나고 돌아올 때 오류 체크 위해 필요함. (팝업창 띄우는 용도)
         
+        int topazId = priceTopaz[priceTopazIdx]->GetId();
+        char productId[15];
+        if (httpStatus == 0)
+            sprintf(productId, "topaz%d", priceTopaz[priceTopazIdx]->GetCount());
+        else if (httpStatus == 1)
+            sprintf(productId, "topaz%d_p", priceTopaz[priceTopazIdx]->GetCount());
         
+        // type : 일반구매(1) , 선물하기(2)
+        int type = (httpStatus == 0) ? 1 : 2;
+        
+        //CCLog("type = %d", type);
+        //CCLog("topazId = %d", topazId);
+        //CCLog("productId = %s", productId);
+        //CCLog("kakaoId = %s", myInfo->GetKakaoId().c_str());
+        //CCLog("friendKakaoId = %s", friendKakaoId.c_str());
+        
+        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        StartIAP(topazId, type, productId, friendKakaoId);
+        #endif
     }
 }
 

@@ -235,7 +235,8 @@ void Message::ProfileTimer(float f)
     float h;
     for (int i = 0 ; i < msgData.size() ; i++)
     {
-        if (msgData[i]->GetProfileUrl().substr(0, 4) != "http") // 정상적인 프로필 url이 아닌 경우
+        // 정상적인 프로필 url이 아닌 경우
+        if ((int)msgData[i]->GetProfileUrl().size() < 4 || msgData[i]->GetProfileUrl().substr(0, 4) != "http")
             continue;
             
         ProfileSprite* psp = ProfileSprite::GetObj(msgData[i]->GetProfileUrl());
@@ -254,7 +255,8 @@ void Message::ProfileTimer(float f)
             req->setUrl(psp->GetProfileUrl().c_str());
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Message::onHttpRequestCompletedNoEncrypt));
-            sprintf(tag, "%d", i);
+            //sprintf(tag, "%d", i);
+            sprintf(tag, "%d", msgData[i]->GetId());
             req->setTag(tag);
             CCHttpClient::getInstance()->send(req);
             req->release();
@@ -285,14 +287,34 @@ void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     CCTexture2D* texture = new CCTexture2D();
     texture->initWithImage(img);
     
+    // profile sprite 교체
+    ProfileSprite* psp = ProfileSprite::GetObj(res->getHttpRequest()->getUrl());
+    psp->SetSprite(texture);
+    psp->SetLoadingDone(true);
+    
     // set CCSprite (profile 모음 리스트에 갱신)
-    int index = atoi(res->getHttpRequest()->getTag());
+    int mId = atoi(res->getHttpRequest()->getTag());
+    for (int i = 0 ; i < msgData.size() ; i++)
+    {
+        if (msgData[i]->GetId() == mId)
+        {
+            if (spriteClassScroll == NULL)
+                return;
+            spriteClassScroll->ChangeSprite(-888*(i+1), psp->GetProfile());
+            //((CCSprite*)spriteClassScroll->FindSpriteByTag(-777*(index+1)))->setOpacity(255);
+            break;
+        }
+    }
+    
+    /*
     for (int i = 0 ; i < profiles.size() ; i++)
     {
+        for (int j = 0 ; j < msgData[)
+        
         if (profiles[i]->GetProfileUrl() == msgData[index]->GetProfileUrl())
         {
-            profiles[i]->SetSprite(texture);
-            profiles[i]->SetLoadingDone(true);
+            //profiles[i]->SetSprite(texture);
+            //profiles[i]->SetLoadingDone(true);
             // 화면에 보이는 스프라이트 교체
             if (spriteClassScroll == NULL)
                 return;
@@ -301,6 +323,7 @@ void Message::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             break;
         }
     }
+     */
 }
 
 

@@ -13,6 +13,8 @@ using namespace cocos2d::extension;
 class BuyTopaz : public CCLayer
 {
 public:
+    static void BadgeZero();
+    
     static CCScene* scene(int parent);
     virtual bool init();
     virtual void onEnter();
@@ -33,6 +35,7 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void XmlParseDeveloperPayload(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId);
+    void XmlParseUpdateFriendApple(xml_document *xmlDoc, int priceTopazIdx, std::string friendKakaoId);
 
     void SetErrorFlag(bool flag);
     

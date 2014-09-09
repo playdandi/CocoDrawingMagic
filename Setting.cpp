@@ -176,7 +176,11 @@ void Setting::InitSprites()
     int version3 = binaryVersion_current % 100;
     sprintf(temp, "게임버전 : %d.%d.%d", version1, version2, version3);
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(630+30, 192+30), ccc3(78,47,8), "", "Layer", tLayer, 4) );
-    sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
+
+    if (!isGuestLogin)
+        sprintf(temp, "카카오회원번호 : %s", myInfo->GetKakaoId().c_str());
+    else
+        sprintf(temp, "게스트로그인 상태");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(temp, fontList[0], 36, ccp(0, 0), ccp(107, 356), ccc3(78,47,8), "", "Layer", tLayer, 4) );
     
     int offset = 30;
@@ -568,6 +572,9 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
                     // Release
                     t.env->DeleteLocalRef(t.classID);
                 }
+                #endif
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+                CCApplication::sharedApplication()->openURL(URL_PUBLIC_CAFE);
                 #endif
                 break;
         }

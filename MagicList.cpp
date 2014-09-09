@@ -103,7 +103,6 @@ bool MagicList::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    
     winSize = CCDirector::sharedDirector()->getWinSize();
     
     // background
@@ -199,7 +198,7 @@ void MagicList::InitSprites()
     
     layer = CCLayer::create();
     layer->setPosition(0, winSize.height);
-    this->addChild(layer, 5);
+    this->addChild(layer, 9999);
 
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png",
                         ccp(0, 0), ccp(49, 688+offset), CCSize(982, 1066), "", "Layer", layer, 10) );

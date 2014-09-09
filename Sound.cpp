@@ -6,7 +6,7 @@ std::string ext(std::string fname)
 {
     std::string extension;
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-    extension = "mp3";
+    extension = "m4a";
 #endif
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     extension = "ogg";
@@ -23,7 +23,7 @@ std::string ext(std::string path, std::string fname)
     std::string extension;
     std::string os;
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-    extension = "mp3";
+    extension = "m4a";
     os = "ios";
 #endif
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -36,13 +36,17 @@ std::string ext(std::string path, std::string fname)
     return res;
 }
 
+const char* Sound::GetSoundFile(std::string filename)
+{
+    return (CCFileUtils::sharedFileUtils()->getWritablePath() + filename).c_str();
+}
 
 
 void Sound::PreLoadSound()
 {
-    
     engine = SimpleAudioEngine::sharedEngine();
     engine->preloadBackgroundMusic(ext("sounds/bgm").c_str());
+    //engine->preloadBackgroundMusic( GetSoundFile(ext("sounds/bgm")) );
     engine->preloadEffect(ext("sounds/click").c_str());
     engine->preloadEffect(ext("sounds/clickboard").c_str());
     engine->preloadEffect(ext("sounds/lvup_success").c_str());
@@ -190,9 +194,9 @@ void Sound::PreLoadInGameSound()
     engine->preloadEffect(ext("sounds/voice", "bonus").c_str());
     engine->preloadEffect(ext("sounds/voice", "stoptime").c_str());
     engine->preloadEffect(ext("sounds/voice", "missionsuccess").c_str());
-    engine->preloadEffect(ext("sounds/voice", "eit").c_str());
-    engine->preloadEffect(ext("sounds/voice", "eit2").c_str());
-    engine->preloadEffect(ext("sounds/voice", "eit3").c_str());
+    //engine->preloadEffect(ext("sounds/voice", "eit").c_str());
+    //engine->preloadEffect(ext("sounds/voice", "eit2").c_str());
+    //engine->preloadEffect(ext("sounds/voice", "eit3").c_str());
     engine->preloadEffect(ext("sounds/voice", "cocotime").c_str());
     
     engine->preloadEffect(ext("sounds/clock").c_str());
@@ -362,7 +366,7 @@ void Sound::PlayVoice(int type)
 {
     switch (type)
     {
-        case VOICE_TITLE: engine->playEffect(ext("sounds/voice", "title").c_str()); break;
+        //case VOICE_TITLE: engine->playEffect(ext("sounds/voice", "title").c_str()); break;
         case VOICE_READY: engine->playEffect(ext("sounds/voice", "ready").c_str()); break;
         case VOICE_GO: engine->playEffect(ext("sounds/voice", "go").c_str()); break;
         case VOICE_TIMELIMIT: engine->playEffect(ext("sounds/voice", "timelimit").c_str()); break;
@@ -370,8 +374,8 @@ void Sound::PlayVoice(int type)
         case VOICE_BONUS: engine->playEffect(ext("sounds/voice", "bonus").c_str()); break;
         case VOICE_STOPTIME: engine->playEffect(ext("sounds/voice", "stoptime").c_str()); break;
         case VOICE_MISSIONSUCCESS: engine->playEffect(ext("sounds/voice", "missionsuccess").c_str()); break;
-        case VOICE_EIT2: engine->playEffect(ext("sounds/voice", "eit2").c_str()); break;
-        case VOICE_EIT3: engine->playEffect(ext("sounds/voice", "eit3").c_str()); break;
+        //case VOICE_EIT2: engine->playEffect(ext("sounds/voice", "eit2").c_str()); break;
+        //case VOICE_EIT3: engine->playEffect(ext("sounds/voice", "eit3").c_str()); break;
         case VOICE_COCOTIME : engine->playEffect(ext("sounds/voice", "cocotime").c_str()); break;
     }
 }
@@ -383,7 +387,6 @@ void Sound::UnLoadInGameSound()
     char name[22];
     for (int i = 1 ; i <= 18 ; i++)
     {
-        //sprintf(name, "sounds/pieces/%d.mp3", i);
         sprintf(name, "%d", i);
         engine->unloadEffect(ext("sounds/pieces", name).c_str());
     }
@@ -431,9 +434,9 @@ void Sound::UnLoadInGameSound()
     engine->unloadEffect(ext("sounds/voice", "bonus").c_str());
     engine->unloadEffect(ext("sounds/voice", "stoptime").c_str());
     engine->unloadEffect(ext("sounds/voice", "missionsuccess").c_str());
-    engine->unloadEffect(ext("sounds/voice", "eit").c_str());
-    engine->unloadEffect(ext("sounds/voice", "eit2").c_str());
-    engine->unloadEffect(ext("sounds/voice", "eit3").c_str());
+    //engine->unloadEffect(ext("sounds/voice", "eit").c_str());
+    //engine->unloadEffect(ext("sounds/voice", "eit2").c_str());
+    //engine->unloadEffect(ext("sounds/voice", "eit3").c_str());
     engine->unloadEffect(ext("sounds/voice", "cocotime").c_str());
     
     engine->unloadEffect(ext("sounds/clock").c_str());

@@ -1377,6 +1377,8 @@ bool CocoRoom::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
             if (spriteClass->spriteObj[i]->sprite->boundingBox().containsPoint(point))
             {
                 int number = atoi(spriteClass->spriteObj[i]->name.substr(35, 36).c_str());
+                if (isGuestLogin && number == 3) // 게스트로그인 시 오늘의별사탕은 못하게 함.
+                    continue;
                 sound->playClickboard();
                 MakeSprites(number);
                 return true;

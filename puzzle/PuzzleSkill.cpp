@@ -2149,6 +2149,7 @@ void PuzzleSkill::E8_Timer(float f) // 라인 흔들기를 시작한다.
     else
     {
         ps->E8_cnt++;
+        //CCLog("E8 timer : 흔들기 시작 (%d)", ps->E8_cnt);
         
         int x = ps->E8_lineIdx[ps->E8_cnt-1];
         ps->E8_bottomY[x] = ROW_COUNT-1-ps->E8_lineDepth[ps->E8_cnt-1]+1;
@@ -2248,6 +2249,7 @@ void PuzzleSkill::E8_BombCallback(CCNode* sender, void* data)
 void PuzzleSkill::E8_DecideRestart(int x)
 {
     ps->E8_endCnt++;
+    //CCLog("DecideRestart : EndCnt = %d / (%d)", ps->E8_endCnt, (int)ps->E8_lineIdx.size());
     
     if (ps->E8_endCnt == (int)ps->E8_lineIdx.size())
     {

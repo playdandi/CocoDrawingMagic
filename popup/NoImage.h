@@ -65,6 +65,8 @@ public:
     void XmlParseGetPotionStatus(xml_document *xmlDoc);
     void XmlParsePurchaseSkill(xml_document *xmlDoc);
     
+    void ClearAllData();
+    
     void ShowHintOfUpgrade();
     
 protected:

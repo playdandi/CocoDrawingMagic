@@ -5,16 +5,19 @@
 #include "Sound.h"
 #include "cocos-ext.h"
 
+#define HTTP_JOIN_GUEST -3
 #define HTTP_JOIN -2
 #define HTTP_VERSION 0
 #define HTTP_LOGIN 1
 #define HTTP_NOTICE 2
 #define HTTP_MYINFO 3
-#define HTTP_REWARDWEELYRANK 4
-#define HTTP_FRIENDS 5
-#define HTTP_PROFILE_IMAGE 6
-#define HTTP_NONCONSUMED_GET_FRIEND_ID -10
+#define HTTP_NONCONSUMED_GET_FRIEND_ID 4
+#define HTTP_REWARDWEELYRANK 5
+#define HTTP_FRIENDS 6
+#define HTTP_PROFILE_IMAGE 7
+
 #define HTTP_NONCONSUMEDITEMS -100
+
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
@@ -66,13 +69,20 @@ public:
     //void keyboardWillShow(CCIMEKeyboardNotificationInfo &info);
     //void keyboardWillHide(CCIMEKeyboardNotificationInfo &info);
     
-    void StartLoginProcess();
+    void StartProtocol();
     
     void TryLogin();
     
     void XMLParseGameData();
     void WriteResFile(char* data, int size);
     
+    std::string BLAHBLAH(std::string filename);
+    CCTexture2D* BLAHT(std::string filename);
+    void WriteResFileTexture(char* data, int size);
+    void WriteResFileZip(char* data, int size);
+    void UncompressZip(std::string filename);
+    
+    void XmlParseJoinGuest(xml_document *xmlDoc);
     void XmlParseVersion(xml_document *xmlDoc);
     void XmlParseLogin(xml_document *xmlDoc);
     void XmlParseNotice(xml_document *xmlDoc);
@@ -86,14 +96,14 @@ public:
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
     
-    void GetNonConsumedItems(std::string friendKakaoId);
+    void TryGetNonConsumed();
+    void GetNonConsumedItems();
     
     void GetTodayCandyFriend();
     void LastActionStart();
     void LastActionCallback(CCNode* sender, void *data);
     void LastActionCallback2(CCNode* sender, void *data);
     
-    std::string SubstrNickname(std::string nickname);
     void EndScene();
     
     RSA* createRSA(unsigned char * key, int pub);
@@ -135,6 +145,9 @@ private:
     CCSprite* m_pStartBtn;
     CCSprite* m_pStartLetter;
     CCSprite* m_pKakaoBtn;
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    CCLabelTTF* m_pGuestBtn;
+    #endif
     
     // 약관 관련 변수들
     CCSprite* term1;
@@ -157,6 +170,8 @@ private:
     CCSprite* check2;
     bool isChecked1;
     bool isChecked2;
+    
+    std::string fKakaoId;
 };
 
 

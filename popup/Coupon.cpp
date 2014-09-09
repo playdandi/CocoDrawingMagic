@@ -420,7 +420,7 @@ void Coupon::XmlParseCouponResult(xml_document *xmlDoc)
     else if (code == 0)
     {
         // 쿠폰의 타입과 보상 값
-        // type { 1 : 별사탕, 2 : 토파즈 , 3 : 포션 }
+        // type { 1 : 별사탕, 2 : 토파즈 , 3 : 포션 , 4 : 모든아이템(부스터제외) , 5 : 부스터아이템 }
         int type = nodeResult.child("coupon").attribute("type").as_int();
         int value = nodeResult.child("coupon").attribute("value").as_int();
         
@@ -433,6 +433,9 @@ void Coupon::XmlParseCouponResult(xml_document *xmlDoc)
         int potion = nodeResult.child("potion").attribute("potion-count").as_int();
         int remainTime = nodeResult.child("potion").attribute("remain-time").as_int();
         myInfo->SetPotion(potion, remainTime);
+        
+        // 아이템 갱신.
+        
         
         // 성공 팝업창 띄우기
         std::vector<int> data;

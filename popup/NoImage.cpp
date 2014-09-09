@@ -72,12 +72,10 @@ void NoImage::keyBackClicked()
 
 void NoImage::onLogoutComplete()
 {
-    //CCLog("onLogoutComplete");
-
     CCDirector::sharedDirector()->end();
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
-#endif
+    #endif
 }
 void NoImage::onLogoutErrorComplete(char const* status, char const* error)
 {
@@ -724,8 +722,8 @@ void NoImage::InitSprites()
             sprintf(text, "카카오 계정을 로그아웃하시겠습니까?\n(로그아웃하면 게임을 종료합니다)");
             break;
         case KAKAO_UNREGISTER:
-            title = "카카오 게임 탈퇴";
-            sprintf(text, "카카오 게임을 탈퇴하시겠습니까?\n모든 게임 데이터가 삭제됩니다.\n(회원탈퇴하면 게임을 종료합니다)");
+            title = "게임 탈퇴";
+            sprintf(text, "게임을 탈퇴하시겠습니까?\n모든 게임 데이터가 삭제됩니다.\n(회원탈퇴하면 게임을 종료합니다)");
             break;
         case RANKUP_BOAST:
             title = "자랑하기";
@@ -794,6 +792,11 @@ void NoImage::InitSprites()
             if (d[0] == 1) sprintf(text, "물 속성 마법을 다 배웠습니다.\n모든 물 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
             else if (d[0] == 2) sprintf(text, "불 속성 마법을 다 배웠습니다.\n모든 불 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
             else if (d[0] == 3) sprintf(text, "땅 속성 마법을 다 배웠습니다.\n모든 땅 마법을 5레벨 이상 달성하면\n다른 속성을 배울 수 있습니다.");
+            break;
+            
+        case GUEST_LOGIN:
+            title = "게스트 로그인";
+            sprintf(text, "게임 삭제, 디바이스 변경, 혹은 탈퇴 시 데이터가 삭제될 수 있습니다.");
             break;
     }
     
@@ -1022,7 +1025,7 @@ void NoImage::HandlingTouch(int touchType)
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-                EndScene();
+                CCApplication::sharedApplication()->openURL(noticeList[d[0]]->link.c_str());
                 #endif
             }
             else
@@ -1160,6 +1163,13 @@ void NoImage::HandlingTouch(int touchType)
             CCString* param = CCString::create("6");
             CCNotificationCenter::sharedNotificationCenter()->postNotification("Sketchbook", param);
         }
+        else if (type == GUEST_LOGIN && touchType != TOUCH_CANCEL)
+        {
+            // 게스트로그인 확인 버튼 : Splash에서 다음을 진행해야 한다.
+            EndScene();
+            CCString* param = CCString::create("2");
+            CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+        }
         else // 그 외, 그냥 끈다.
         {
             EndScene();
@@ -1192,8 +1202,15 @@ void NoImage::HandlingTouch(int touchType)
     }
     else if (type == KAKAO_LOGOUT)
     {
-        // 카카오 로그아웃 후 게임종료
-        KakaoNativeExtension::getInstance()->logout(std::bind(&NoImage::onLogoutComplete, this), std::bind(&NoImage::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+        if (isGuestLogin)
+        {
+            onLogoutComplete();
+        }
+        else
+        {
+            // 카카오 로그아웃 후 게임종료
+            KakaoNativeExtension::getInstance()->logout(std::bind(&NoImage::onLogoutComplete, this), std::bind(&NoImage::onLogoutErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+        }
     }
     else if (type == KAKAO_UNREGISTER)
     {
@@ -1201,9 +1218,9 @@ void NoImage::HandlingTouch(int touchType)
         std::string param = "";
         sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
         param += temp;
-        
         HttpRequest(url, param);
     }
+    /*
     else if (type == BUY_TOPAZ_TRY)
     {
         // 토파즈 구입하기. (미결제 버전) -> (현재 iOS에만 fake로 이용됨)
@@ -1216,6 +1233,7 @@ void NoImage::HandlingTouch(int touchType)
         
         HttpRequest(url, param);
     }
+    */
     else if (type == BUY_STARCANDY_TRY)
     {
         if (myInfo->GetTopaz() < priceStarCandy[d[0]]->GetPrice()) // 토파즈 구매 창으로 이동
@@ -1268,13 +1286,14 @@ void NoImage::HandlingTouch(int touchType)
     }
     else if (type == SEND_TOPAZ_TRY)
     {
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        //#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         EndScene();
         CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-        #endif
+        //#endif
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+        /*
         // 토파즈 선물하기. (미결제 버전) -> 현재 iOS에만 fake 이용됨.
         std::string url = URL_SEND_TOPAZ_TEST;
         std::string param = "";
@@ -1285,6 +1304,7 @@ void NoImage::HandlingTouch(int touchType)
         sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
         param += temp;
         HttpRequest(url, param);
+        */
         #endif
     }
     else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
@@ -2365,34 +2385,54 @@ void NoImage::XmlParseKakaoUnregister(xml_document *xmlDoc)
     }
     else
     {
-        // 모든 클라이언트 데이터 초기화
-        CCUserDefault::sharedUserDefault()->setStringForKey("refresh_token", "");
-        CCUserDefault::sharedUserDefault()->setStringForKey("access_token", "");
-        CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", -1);
-        CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", -1);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("item_00", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("item_01", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("item_02", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("item_03", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("item_04", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("is_inGameTutorial_done", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("is_tutorial_done", false);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_0", true);
-        CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_1", true);
-        CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_1", "");
-        CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_2", "");
-        CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_3", "");
-        CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_4", "");
-        char name[30];
-        for (int i = 0 ; i < fairyInfo.size() ; i++)
+        // 모든 데이터 삭제
+        ClearAllData();
+
+        if (isGuestLogin) // 게스트로그인 시, 데이터만 모두 지우고 종료한다.
         {
-            sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
-            CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
+            CCDirector::sharedDirector()->end();
+            #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            exit(0);
+            #endif
         }
-        
-        
-        // 카카오 회원탈퇴 후 게임종료
-        KakaoNativeExtension::getInstance()->unregister(std::bind(&NoImage::onUnregisterComplete, this), std::bind(&NoImage::onUnregisterErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+        else
+        {
+            // 카카오 회원탈퇴 후 게임종료
+            KakaoNativeExtension::getInstance()->unregister(std::bind(&NoImage::onUnregisterComplete, this), std::bind(&NoImage::onUnregisterErrorComplete, this, std::placeholders::_1, std::placeholders::_2));
+        }
+    }
+}
+
+void NoImage::ClearAllData()
+{
+    // 모든 클라이언트 데이터 초기화
+    CCUserDefault::sharedUserDefault()->setStringForKey("refresh_token", "");
+    CCUserDefault::sharedUserDefault()->setStringForKey("access_token", "");
+    CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", -1);
+    CCUserDefault::sharedUserDefault()->setIntegerForKey("binaryVersion", -1);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("item_00", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("item_01", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("item_02", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("item_03", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("item_04", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("is_inGameTutorial_done", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("is_tutorial_done", false);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_0", true);
+    CCUserDefault::sharedUserDefault()->setBoolForKey("setting_option_1", true);
+    CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_1", "");
+    CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_2", "");
+    CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_3", "");
+    CCUserDefault::sharedUserDefault()->setStringForKey("todayCandy_4", "");
+    char name[30];
+    for (int i = 0 ; i < fairyInfo.size() ; i++)
+    {
+        sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
+        CCUserDefault::sharedUserDefault()->setBoolForKey(name, false);
+    }
+    
+    if (isGuestLogin)
+    {
+        CCUserDefault::sharedUserDefault()->setStringForKey("guest_kakao_id", "");
     }
 }
 

@@ -151,7 +151,7 @@ void Puzzle_BuyItem::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1157+ofs), CCSize(0, 0), "", "Layer", tLayer, 1) );
     
     // 타이틀
-    std::string title = "강력아이템 : 세줄 색깔붓";
+    std::string title = "스페셜아이템 : 세줄 색깔붓";
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 1), ccp(131, 1228+ofs), CCSize(759-126+52, 90), "", "Layer", tLayer, 2) );
     CCPoint pos = spriteClass->FindParentCenterPos("background/bg_degree_desc.png");
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(title, fontList[0], 48, ccp(0.5,0.5), ccp(pos.x+2, pos.y+3-1), ccc3(0,0,0), "background/bg_degree_desc.png", "1", NULL, 2, 1) );
@@ -228,7 +228,7 @@ std::string Puzzle_BuyItem::SkillDescription()
     switch (ingame_item_type)
     {
         case INGAME_ITEM_3PAINT:
-            return "게임을 시작할 때 강한 색깔붓 2개를 가지고 시작해요.\n세 줄을 같은 색깔로 바꿔줘요!"; break;
+            return "게임을 시작할 때 세 줄 색깔붓 2개를 가지고 시작해요.\n세 줄을 같은 색깔로 바꿔줘요!"; break;
     }
     return "";
 }
@@ -292,8 +292,9 @@ void Puzzle_BuyItem::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
     {
         if (kind == BTN_MENU_CONFIRM)
         {
-            //EndScene(true);
-
+            EndScene(true);
+            
+            /*
             // Loading 화면으로 MESSAGE request 넘기기
             Common::ShowNextScene(this, "Puzzle_BuyItem", "Loading", false, LOADING_MESSAGE);
             
@@ -306,6 +307,7 @@ void Puzzle_BuyItem::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
             param += temp;
             
             Network::HttpPost(param, URL_PURCHASE_INGAME_ITEM, this, httpresponse_selector(Puzzle_BuyItem::onHttpRequestCompleted));
+             */
         }
     }
     

@@ -1,5 +1,6 @@
 #include "InviteFriend.h"
 #include "Kakao/Plugins/KakaoNativeExtension.h"
+#include <regex>
 
 static std::vector<std::string> kakaoIds;
 static std::vector<int> remainTimes;
@@ -339,32 +340,6 @@ void InviteFriend::MakeScroll()
             ((CCSprite*)spriteClassScroll->FindSpriteByName(name3))->setOpacity(255);
             ((CCSprite*)spriteClassScroll->FindSpriteByName(name4))->setOpacity(255);
         }
-        
-        /*
-        // button
-        if (!inviteList[i]->wasInvited) // 초대 가능한 경우
-        {
-            sprintf(name, "button/btn_blue_mini.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-            sprintf(name2, "letter/letter_invite.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name, "0", NULL, 3, 1) );
-            
-            // 메시지 수신거부한 친구 or 지원되지 않는 디바이스 이용중인 친구는 어둡게 만들어서 터치 못하게 하자.
-            if (inviteList[i]->messageBlocked || !inviteList[i]->supportedDevice)
-            {
-                ((CCSprite*)spriteClassScroll->FindSpriteByName(name))->setColor(ccc3(150,150,150));
-                ((CCSprite*)spriteClassScroll->FindSpriteByName(name2))->setColor(ccc3(150,150,150));
-            }
-        }
-        else // 이미 초대한 경우
-        {
-            sprintf(name, "button/btn_invite.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(635, 34+10), CCSize(0, 0), "", "Layer", itemLayer, 3) );
-            sprintf(name2, "letter/letter_invite_brown.png%d", i);
-            spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0, 0), ccp(45, 25), CCSize(0, 0), name, "0", NULL, 3, 1) );
-        }
-         */
-         
         
         // dotted line
         sprintf(name, "background/bg_dotted_line.png%d", i);
@@ -809,7 +784,6 @@ void InviteFriend::InitInviteList()
     {
         CCString* k = (CCString*)keys->objectAtIndex(j);
         std::string userId = k->getCString();
-        ////CCLog("user id = %s", userId.c_str());
         KakaoFriends::Friends* f = (KakaoFriends::Friends*)KakaoFriends::getInstance()->friends->objectForKey(userId.c_str());
         
         // 이미 초대되어있는지 서버에서 받아온 정보와 비교한다.
@@ -822,6 +796,9 @@ void InviteFriend::InitInviteList()
                 break;
             }
         }
+        
+        // 닉네임 특수문자 처리
+        f->nickname = Common::SubstrNickname(f->nickname);
         
         inviteList.push_back( new InviteList(userId, f->nickname, f->profileImageUrl, f->hashedTalkUserId, f->messageBlocked, f->supportedDevice, wasInvited) );
         
@@ -898,5 +875,7 @@ void InviteFriend::XmlParseInviteFriend(xml_document *xmlDoc)
         RenewData();
     }
 }
+
+
 
 

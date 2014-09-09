@@ -224,12 +224,9 @@ public:
     void GameEnd(CCNode* sender, void* pointer);
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
-    //void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
-    //void XmlParseGameStart(xml_document *xmlDoc);
     void XmlParseFriends(xml_document *xmlDoc);
     void XmlParseGameEnd(xml_document *xmlDoc);
-    std::string SubstrNickname(std::string nickname);
-    //void ParseProfileImage(char* data, int size, int idx);
+    
     
     CCClippingNode* GetBoardClip();
     

@@ -1,4 +1,5 @@
 #include "Common.h"
+#include <regex>
 #include "Kakao/Plugins/KakaoNativeExtension.h"
 #include "Loading.h"
 #include "LoadingPuzzle.h"
@@ -41,6 +42,9 @@
 #include "RankUp.h"
 #include "popup/AttendReward.h"
 #include "puzzle/Puzzle_BuyItem.h"
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+//#include "bridge.h"
+#endif
 
 Sound* sound;
 
@@ -59,6 +63,88 @@ std::string fontList[] = {
     "fonts/NanumPen.ttf",
 #endif
 };
+
+std::string resFileList[] = {
+    "fairy_each.plist",
+    "fairy_each.png",
+    "fairy_flower.plist",
+    "fairy_flower.png",
+    "fairy.plist",
+    "fairy.png",
+    "fairy_cloud.plist",
+    "fairy_cloud.png",
+    "game.plist",
+    "game.png",
+    "game_result.plist",
+    "game_result.png",
+    "game2.plist",
+    "game2.png",
+    "game3.plist",
+    "game3.png",
+    "main_background.png",
+    "popup.plist",
+    "popup.png",
+    "rank.plist",
+    "rank.png",
+    "rankup.plist",
+    "rankup.png",
+    "skill.plist",
+    "skill.png",
+    "texture_1.plist",
+    "texture_1.png",
+    "texture_2.plist",
+    "texture_2.png",
+    "ingame_item@3paint.png",
+    "skilldetail@11.png",
+    "skilldetail@12.png",
+    "skilldetail@13.png",
+    "skilldetail@14.png",
+    "skilldetail@15.png",
+    "skilldetail@16.png",
+    "skilldetail@17.png",
+    "skilldetail@21.png",
+    "skilldetail@22.png",
+    "skilldetail@23.png",
+    "skilldetail@24.png",
+    "skilldetail@25.png",
+    "skilldetail@26.png",
+    "skilldetail@27.png",
+    "skilldetail@31.png",
+    "skilldetail@32.png",
+    "skilldetail@33.png",
+    "skilldetail@34.png",
+    "skilldetail@35.png",
+    "skilldetail@36.png",
+    "skilldetail@37.png",
+};
+
+
+
+void Common::AddSpriteFramesWithFile(std::string plist, std::string png)
+{
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(Common::GetResFilename(plist).c_str(), Common::GetResFileImg(png));
+}
+
+std::string Common::GetResFilename(std::string filename)
+{
+    return CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
+}
+CCTexture2D* Common::GetResFileImg(std::string filename)
+{
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
+    //CCLog("filepath = %s", filepath.c_str());
+    // read file
+    //unsigned long iSize = 0;
+    //unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(), "rb", &iSize);
+    
+    // make texture2D
+    CCImage* img = new CCImage;
+    img->initWithImageFile(filepath.c_str());
+    CCTexture2D* texture = new CCTexture2D();
+    texture->initWithImage(img);
+    
+    return texture;
+}
 
 
 std::string Common::GetTip()
@@ -1068,6 +1154,41 @@ void Common::RebootSystem(void* p)
 }
 
 
+std::string Common::SubstrNickname(std::string nickname)
+{
+    #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    // 정규식으로 특정 문자만 남기기 (알파벳, 숫자, 한글, 기타 몇 문자)
+    std::regex rx("[a-zA-Z0-9가-힣\\s\\(\\)\\[\\]\\.]+");
+    std::string aftername = "";
+    std::smatch matches;
+    std::regex_search(nickname, matches, rx);
+    
+    for (int i = 0 ; i < matches.size() ; i++)
+    {
+        std::ssub_match sub_match = matches[i];
+        aftername += sub_match.str();
+    }
+    nickname = aftername;
+    #endif
+    
+    if (nickname.size() > 20)
+    {
+        int i;
+        for (i = 0 ; i < nickname.size() ; i++)
+        {
+            if (i >= 20)
+                break;
+            if (isascii(nickname[i]) != 1)
+                i += 2;
+        }
+        nickname = nickname.substr(0, i);
+        nickname += "...";
+    }
+    
+    return nickname;
+}
+
+
 std::string Common::GetMissionContent(int type, int val, int refVal)
 {
     char s[100];
@@ -1288,51 +1409,32 @@ std::string Common::GetVerifyParams(int type, int topazId, const char* kakaoId, 
     std::string encrypted = Network::Encrypt_PS() + "#@!!@#" + Network::Encrypt_a(param);
     
     std::string url;
-    if (type == 1) url = URL_PURCHASE_TOPAZ;
-    else if (type == 2) url = URL_SEND_TOPAZ;
+    if (type == 1) url = URL_PURCHASE_TOPAZ_GOOGLE;
+    else if (type == 2) url = URL_SEND_TOPAZ_GOOGLE;
     
     return encrypted + "#@!!@#" + url;
 }
 
 void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consumeIdx, const char* fkid)
 {
-    //CCLog("start verify purchase result xml parse");
     // xml parsing
     xml_document xmlDoc;
     xml_parse_result result = xmlDoc.load_buffer(data, size);
     
     if (!result)
     {
-        //CCLog("error description: %s", result.description());
-        //CCLog("error offset: %d", result.offset);
         return;
     }
-    
-    //CCLog("========= DATA =========");
-    //CCLog("%s", data);
-    //CCLog("========================");
-    
+
     // get data
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
     if (code == 0)
     {
-        //CCLog("토파즈 구매 성공!");
-        
         // 토파즈, 별사탕을 갱신한다.
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
         int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
-        //CCLog("토파즈 = %d", topaz);
-        //CCLog("별사탕 = %d", starcandy);
         myInfo->SetMoney(topaz, starcandy);
-        ////CCLog("after 토파즈 = %d", myInfo->GetTopaz());
-        ////CCLog("after 별사탕 = %d", myInfo->GetStarCandy());
-        
-        // 부모 scene에 갱신
-        //CCString* param = CCString::create("2");
-        //CCNotificationCenter::sharedNotificationCenter()->postNotification("Ranking", param);
-        //CCNotificationCenter::sharedNotificationCenter()->postNotification("GameReady", param);
-        //CCNotificationCenter::sharedNotificationCenter()->postNotification("CocoRoom", param);
         
         // Android에서 Consume하기
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -1347,44 +1449,109 @@ void Common::XmlParseVerifyPurchaseResult(const char* data, int size, int consum
             t.env->DeleteLocalRef(t.classID);
         }
         #endif
-        
-        /*
-        // 카카오 메시지 보내기
-        std::vector<int> nullData;
-        std::string friendKakaoId = fkid;
-        if (!Friend::GetObj(friendKakaoId)->IsMessageBlocked())
-        {
-            // 카카오 api 호출
-            std::string templateId = KAKAO_MSG_TEMPLATE_SENDTOPAZ;
-            std::string executeUrl = "";
-            char temp[128];
-            sprintf(temp, "{\"sender_name\":\"%s\"}", friendKakaoId.c_str());
-            std::string metaInfo = temp;
-            //CCLog("metaInfo = %s", metaInfo.c_str());
-            KakaoNativeExtension::getInstance()->sendLinkMessage(std::bind(&BuyTopaz::onSendLinkMessageComplete, (BuyTopaz*)Depth::GetCurPointer()), std::bind(&BuyTopaz::onSendLinkMessageErrorComplete, (BuyTopaz*)Depth::GetCurPointer(), std::placeholders::_1, std::placeholders::_2), templateId, friendKakaoId, "", executeUrl, metaInfo);
-            
-            Common::ShowPopup(Depth::GetCurPointer(), "BuyTopaz", "NoImage", false, SEND_TOPAZ_OK, BTN_1, nullData);
-        }
-        else
-            Common::ShowPopup(Depth::GetCurPointer(), "BuyTopaz", "NoImage", false, SEND_TOPAZ_OK_NOKAKAOMSG, BTN_1, nullData);
-        */
     }
     else
     {
-        // purchase_topaz_google.php
-        //CCLog("failed code = %d", code);
-        /*
-        if (code == 10) CCLog("서버인증실패");
-        else if (code == 11) CCLog("payload 다름");
-        else if (code == 12) CCLog("이미 지급한 토파즈");
-        else if (code == 13) CCLog("토파즈 id 이상함");
-        */
-        
-        // send_topaz_google.php
         // "kakao_id", "friend_kakao_id", "topaz_id", "purchase_data", "signature"
         // 실패코드 10:서버인증 실패, 11:페이로드다름, 12:이미지급한토파즈, 13:토파즈아이디가 이상함, 14:친구관계가아님
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Common::BackToCocos2dxFromApple()
+{
+    CCScene* pScene = CCDirector::sharedDirector()->getRunningScene();
+    ((BuyTopaz*)pScene)->SetErrorFlag(false);
+    
+    CCString* param = CCString::create("10");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+}
+
+std::string Common::GetVerifyParamsApple(int type, int topazId, std::string friendKakaoId, const char* receipt)
+{
+    // parameter 만들기
+    char temp[4096];
+    std::string param = "";
+    sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
+    param += temp;
+    sprintf(temp, "topaz_id=%d&", topazId);
+    param += temp;
+    sprintf(temp, "receipt=%s", receipt);
+    param += temp;
+    if (type == 2)
+    {
+        sprintf(temp, "&friend_kakao_id=%s", friendKakaoId.c_str());
+        param += temp;
+    }
+    
+    //CCLog("param = %s", param.c_str());
+    
+    // 파라미터 암호화 (PS, a)
+    std::string encrypted = Network::Encrypt_PS() + "#@!!@#" + Network::Encrypt_a(param);
+    
+    // type : 구입(1), 선물(2)
+    std::string url;
+    if (type == 1) url = URL_PURCHASE_TOPAZ_APPLE;
+    else if (type == 2) url = URL_SEND_TOPAZ_APPLE;
+    
+    return encrypted + "#@!!@#" + url;
+}
+
+void Common::XmlParseVerifyPurchaseResultApple(const char* data, int size)
+{
+    //CCLog("XmlparseVerifyPurchaseResult Apple");
+    //CCLog("%s", data);
+    //CCLog("size = %d", size);
+    
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size);
+    
+    if (!result)
+    {
+        return;
+    }
+    
+    // get data
+    xml_node nodeResult = xmlDoc.child("response");
+    int code = nodeResult.child("code").text().as_int();
+    
+    //CCLog("code = %d", code);
+    if (code != 0)
+    {
+        /*
+        // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
+        std::vector<int> nullData;
+        if (code <= MAX_COMMON_ERROR_CODE)
+            Network::ShowCommonError(code);
+        else
+        {
+            Common::ShowPopup(Depth::GetCurPointer(), Depth::GetCurNameString(), "NoImage", false, NETWORK_FAIL, BTN_1, nullData);
+        }
+        */
+        /*
+         10 : 애플서버 접속 에러
+         11 : 애플 response data 형식 type 에러
+         12 : 애플 response data error (애플서버에서 에러코드 보냄)
+         13 : 이미 지급한 아이템
+         14 : 없는 토파즈 상품 ID
+         15 : 친구관계아님 (선물하기의 경우에만 발생 가능)
+         */
+    }
+    else
+    {
+        // 토파즈, 별사탕을 갱신한다.
+        int topaz = nodeResult.child("money").attribute("topaz").as_int();
+        int starcandy = nodeResult.child("money").attribute("star-candy").as_int();
+        myInfo->SetMoney(topaz, starcandy);
+        
+        ((BuyTopaz*)Depth::GetCurPointer())->SetErrorFlag(false);
+    }
+  
+    // BuyTopaz Scene에 결제 과정이 모두 끝났음을 알린다.
+    CCString* param = CCString::create("10");
+    CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
+}
 
 

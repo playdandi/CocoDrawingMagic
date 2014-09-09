@@ -29,6 +29,8 @@ public:
     //void onHttpRequestCompleted(CCNode *sender, void *data);
     //void XmlParseGameStart(xml_document *xmlDoc);
     
+    void iOSLoading();
+    
     void EndScene();
     
     CREATE_FUNC(Loading);
