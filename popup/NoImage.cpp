@@ -2434,6 +2434,8 @@ void NoImage::ClearAllData()
     {
         CCUserDefault::sharedUserDefault()->setStringForKey("guest_kakao_id", "");
     }
+    
+    CCUserDefault::sharedUserDefault()->flush();
 }
 
 void NoImage::XmlParseGetPotionStatus(xml_document *xmlDoc) // 친구의 카톡메시지수신 여부 받기

@@ -13,7 +13,7 @@ using namespace cocos2d::extension;
 #define TEST_IP "14.63.212.106"
 #define REAL_IP "14.63.200.217"
 
-#define TEST 1
+#define TEST 0
 
 #if TEST
 // pre-defined URLs

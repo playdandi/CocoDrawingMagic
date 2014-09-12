@@ -1410,7 +1410,7 @@ bool T_Puzzle::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
     this->addChild(sp, 1000);
     strap[touch_cnt%QUEUE_CNT].push_back(sp);
     
-    CCLog ("touch began (%d) : %d %d", touch_cnt%QUEUE_CNT, x, y);
+    //CCLog ("touch began (%d) : %d %d", touch_cnt%QUEUE_CNT, x, y);
     // global piece type 지정
     globalType[touch_cnt%QUEUE_CNT] = puzzleP8set->GetType(x, y);
     

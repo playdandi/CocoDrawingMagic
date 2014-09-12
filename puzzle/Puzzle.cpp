@@ -53,7 +53,7 @@ void Puzzle::onEnter()
 }
 void Puzzle::onExit()
 {
-    CCLog("Puzzle : onExit");
+    //CCLog("Puzzle : onExit");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->removeDelegate(this);
     CCLayer::onExit();
@@ -3704,13 +3704,11 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
         sprintf(temp, "break_piece_count_list[0]=0&");
         param += temp;
     }
-    /*
     // 인게임 아이템 사용여부
     if (item_paint_special)
         param += "ingame_item_id=1&";
     else
         param += "ingame_item_id=0&";
-    */
 
     // 별사탕 최종개수 계산
     iStarCandy = FakeStarCandy( (int)((float)RealStarCandy() + (float)RealStarCandy()*ADD_STARCANDY_PERCENT/100.0f) );
@@ -3871,7 +3869,7 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
-    CCLog("GAME END : code = %d", code);
+    //CCLog("GAME END : code = %d", code);
     
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)

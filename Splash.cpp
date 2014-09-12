@@ -689,11 +689,10 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         //CCLog("게임 버전 = %d", gameVersion);
         
         // 마켓 버전
-        int binaryVersion_android = nodeResult.child("market-version").child("android").text().as_int();
-        int binaryVersion_ios = nodeResult.child("market-version").child("ios").text().as_int();
         int binaryVersion_latest;
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+        int binaryVersion_android = nodeResult.child("market-version").child("android").text().as_int();
         binaryVersion_latest = binaryVersion_android;
         
         JniMethodInfo t;
@@ -708,12 +707,22 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         #endif
         
         #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-        //binaryVersion_latest = binaryVersion_ios; // 나중에 이걸로 바꿔라.
-        //binaryVersion_current = binaryVersion_latest; // 임시 설정
+        int binaryVersion_ios = nodeResult.child("market-version").child("ios").text().as_int();
+        binaryVersion_latest = binaryVersion_ios;
         
+        std::string ver = GetBundleVersion();
+        int a = atoi( ver.substr(0, ver.find(".")).c_str() );
+        ver = ver.substr(ver.find(".")+1);
+        int b = atoi( ver.substr(0, ver.find(".")).c_str() );
+        ver = ver.substr(ver.find(".")+1);
+        int c = atoi( ver.c_str() );
+        binaryVersion_current = a*1000 + b*100 + c;
+        
+        //binaryVersion_current = binaryVersion_latest; // 임시 설정
+
         // 아래 두 줄은 iOS 개발되면 삭제해야 함. (임시로 해 놓은 것임)
-        binaryVersion_latest = binaryVersion_android;
-        binaryVersion_current = binaryVersion_android;
+        //binaryVersion_latest = binaryVersion_android;
+        //binaryVersion_current = binaryVersion_android;
         #endif
 
         // 안드로이드 설정에 따라 자동업데이트를 한 경우, 앱 버전이 서버설정 버전보다 클 수도 있다.
@@ -1693,7 +1702,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
             }
             
             // 본인이 카카오톡을 탈퇴한 경우, 내 정보를 제외하고 무시해야 한다. (친구가 없어야 함)
-            if (myInfo->GetHashedTalkUserId() == "")
+            if (!isGuestLogin && myInfo->GetHashedTalkUserId() == "")
                 if (myInfo->GetKakaoId() != kakaoId)
                     continue;
             
