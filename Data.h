@@ -14,6 +14,9 @@
 #include "openssl/x509.h"
 #include "openssl/rand.h"
 #include "openssl/pem.h"
+#include "openssl/md5.h"
+
+#include <map>
 
 #define POTION_X 0
 #define POTION_SEND 1
@@ -22,6 +25,15 @@
 
 // 서버 점검중일 경우 나오는 메시지
 extern std::string serverCheckMsg;
+
+extern std::string balanceFileUrl; // update_list.xml 파일주소 (리소스 xml 파일)
+extern std::string prevUrl; // 리소스 기본주소
+extern std::string pdiUrl; // balance.pdi 파일주소 (기본주소 제외)
+extern int numOfResourceFiles; // 다운받아야 할 리소스 파일 개수
+extern int numOfDownloadedFiles; // 다운 완료한 리소스 파일 개수
+extern std::vector<std::string> resourceFilename; // 다운받아야할 리소스 파일 이름
+
+extern std::map<std::string, CCTexture2D*> t2d;
 
 // 게스트 로그인인가?
 extern bool isGuestLogin;
@@ -105,6 +117,9 @@ extern bool isPossibleBuyFairyShown;
 extern bool isHintForBuyingNextProperty;
 extern bool isAttendRewardShown; // 출석보상
 
+// md5
+extern MD5_CTX md5;
+
 // rsa 관련
 extern RSA* rsa;
 extern std::string publicKey;
@@ -174,7 +189,7 @@ private:
 class MyGameResult
 {
 public:
-    MyGameResult(int topaz, int starcandy, int potion, int mp, float addedPercent, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text);
+    MyGameResult(int topaz, int starcandy, int potion, int mp, float addedPercent, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text, int addScoreFlag, int addScore, int itemId, int itemVal);
     int getTopaz;
     int getStarCandy;
     int getPotion;
@@ -186,6 +201,10 @@ public:
     int bestCombo;
     bool isMissionSuccess;
     bool isNewRecord;
+    int isAddedScoreByFairy; // 요정으로 인한 추가점수가 있는가?
+    int addedScore; // 요정으로 인한 추가점수
+    int earnItemId; // 요정으로 인한 아이템번호 (없으면 0)
+    int earnItemVal; // 요정으로 인한 아이템개수 (없으면 0)
     std::string content;
     std::vector<int> skillNum;
     std::vector<int> skillCnt;
@@ -194,7 +213,7 @@ public:
 class MyInfo
 {
 public:
-    void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst);
+    void Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst, bool couponViewFlag);
     void InitRestInfo(int topaz, int starcandy, int mp, int mpStaff, int mpFairy, int staffLv, int staffFailPoint, int highScore, int weeklyHighScore, int lastWeeklyHighScore, int isWeeklyRankReward, int certificateType, int remainWeeklyRankTime, int item1, int item2, int item3, int item4, int item5, int potion ,int remainPotionTime, int fire, int water, int land, int master, int fireByTopaz, int waterByTopaz, int landByTopaz);
     
     std::string GetSessionId();
@@ -297,6 +316,8 @@ public:
     int GetRewardTopaz();
     
     bool IsTodayFirst();
+    
+    bool IsCouponOn();
 
 private:
     int keyValue;
@@ -305,6 +326,8 @@ private:
     bool settingKakaoMsg;
     bool settingPushNoti;
     bool settingPotionMsg;
+    
+    bool isCouponOn;
     
     std::string kakaoId;
     std::string hashedTalkUserId;
@@ -640,8 +663,9 @@ public:
     FairyInfo(int id, int type, int grade, int cs, int ct, int pid);
     std::string MakeName(int id);
     static std::string GetAbilityName(FairyInfo* f, int level);
-    static std::string GetAbilityDesc(int type, bool newline);
+    static std::string GetAbilityDesc(int type, bool newline, int fid);
     std::string GetDescription();
+    static void SetInSmallArea(CCLayer* picture, int fid);
     int GetId();
     int GetGrade();
     int GetType();

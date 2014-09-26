@@ -98,11 +98,16 @@ bool Ranking::init()
     // 퍼즐게임이 끝나고 돌아온 경우 다시 spriteFrameCache를 불러와야 한다.
     if (fromWhere != -1)
     {
-        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
-        CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+        //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
+        //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
+        Common::AddSpriteFramesWithFile("texture_1");
+        Common::AddSpriteFramesWithFile("texture_2");
     }
-    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_each.plist");
+    Common::AddSpriteFramesWithFile("fairy_each");
+    // //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_each.plist");
+    
+    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
     
     spriteClass = new SpriteClass();
     spriteClassProperty = new SpriteClass();
@@ -430,15 +435,13 @@ void Ranking::InitProperties()
 void Ranking::InitSprites()
 {
     // background
-    pBackground = CCSprite::create("images/main_background.png");
+    CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA4444);
+    pBackground = CCSprite::create("images/splash/main_background.png");
     pBackground->setAnchorPoint(ccp(0, 0));
     pBackground->setPosition(ccp(0, 0));
     this->addChild(pBackground, 0);
-    
-    //CCLog("=========================================================");
-    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    //CCLog("=========================================================");
-    
+    CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA8888);
+
     char name[30], name2[30];
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_topinfo.png1", ccp(0, 0), ccp(80, 1666), CCSize(230, 75), "", "Ranking", this, 0) );
@@ -833,7 +836,7 @@ void Ranking::ShowHintOfMP()
     balloon = NULL;
     ball = NULL;
     
-    balloon = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon3.png");
     balloon->setContentSize(CCSize(600, 200));
     balloon->setAnchorPoint(ccp(1, 1));
     balloon->setPosition(ccp(765+200, 1666+35));
@@ -1094,10 +1097,8 @@ void Ranking::EndScene()
         pBlack->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_1.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/texture_2.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_1.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/texture_2.png");
+    Common::RemoveSpriteFramesWithFile("texture_1");
+    Common::RemoveSpriteFramesWithFile("texture_2");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
     

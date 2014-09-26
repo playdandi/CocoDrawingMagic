@@ -116,8 +116,11 @@ bool T_Puzzle::init()
     effect = new T_Effect();
     effect->Init(effect, this);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
+    Common::AddSpriteFramesWithFile("game");
+    Common::AddSpriteFramesWithFile("game2");
+    Common::AddSpriteFramesWithFile("game3");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
     // game3.plist는 loading화면에서 preload했음.
     
     
@@ -159,12 +162,12 @@ bool T_Puzzle::init()
 
 void T_Puzzle::InitTutorial()
 {
-    ttrBg1 = CCScale9Sprite::create("images/tutorial_balloon.png");
+    ttrBg1 = CCScale9Sprite::create("images/tutorial/tutorial_balloon.png");
     ttrBg1->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130));
     ttrBg1->setContentSize(CCSize(800, 200));
     ttrBg1->setOpacity(0);
     this->addChild(ttrBg1, 3001);
-    ttrBg2 = CCScale9Sprite::create("images/tutorial_balloon2.png");
+    ttrBg2 = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
     ttrBg2->setPosition(ccp(m_winSize.width/2, vo.y+vs.height-7-120 - 130));
     ttrBg2->setContentSize(CCSize(800, 200));
     ttrBg2->setOpacity(0);
@@ -177,7 +180,7 @@ void T_Puzzle::InitTutorial()
     ttrMsg->setColor(ccc3(255,255,255));
     this->addChild(ttrMsg, 3002);
     
-    ttrFinger = CCSprite::create("images/tutorial_finger.png");
+    ttrFinger = CCSprite::create("images/tutorial/tutorial_finger.png");
     ttrFinger->setScale(1.3f);
     ttrFinger->setAnchorPoint(ccp(0.5, 1));
     ttrFinger->setOpacity(0);
@@ -192,7 +195,7 @@ void T_Puzzle::InitTutorial()
     if (CCUserDefault::sharedUserDefault()->getBoolForKey("is_inGameTutorial_seen", false))
     {
         isSkipPossible = true;
-        ttrSkip = CCSprite::create("images/tutorial_skip.png");
+        ttrSkip = CCSprite::create("images/tutorial/tutorial_skip.png");
         ttrSkip->setAnchorPoint(ccp(1, 0));
         ttrSkip->setPosition(ccp(m_winSize.width, vo.y+tbSize.height));
         ttrSkip->retain();
@@ -1072,10 +1075,10 @@ void T_Puzzle::TutorialNextState()
 
 void T_Puzzle::MakeFingerNumber()
 {
-    ttrFinger_1 = CCSprite::create("images/tutorial_1.png");
-    ttrFinger_2 = CCSprite::create("images/tutorial_2.png");
-    ttrFinger_3 = CCSprite::create("images/tutorial_3.png");
-    ttrFinger_4 = CCSprite::create("images/tutorial_4.png");
+    ttrFinger_1 = CCSprite::create("images/tutorial/tutorial_1.png");
+    ttrFinger_2 = CCSprite::create("images/tutorial/tutorial_2.png");
+    ttrFinger_3 = CCSprite::create("images/tutorial/tutorial_3.png");
+    ttrFinger_4 = CCSprite::create("images/tutorial/tutorial_4.png");
     ttrFinger_1->setScale(0.5f);
     ttrFinger_2->setScale(0.5f);
     ttrFinger_3->setScale(0.5f);
@@ -1546,7 +1549,7 @@ void T_Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
                     sound->PlayPieceClick(piece8xy[touch_cnt%QUEUE_CNT].size()+1);
                     sound->PlayCycle();
                     
-                    CCSprite* sp = CCSprite::create("images/cycle.png");
+                    CCSprite* sp = CCSprite::createWithSpriteFrameName("cycle.png"); //CCSprite::create("images/cycle.png");
                     CCPoint p = SetTouch8Position(x, y);
                     sp->setPosition(ccp(p.x, p.y-100));
                     sp->setOpacity(0);
@@ -2332,10 +2335,15 @@ void T_Puzzle::EndScene()
     this->stopAllActions();
     
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
+    Common::RemoveSpriteFramesWithFile("game");
+    Common::RemoveSpriteFramesWithFile("game2");
+    Common::RemoveSpriteFramesWithFile("game3");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
+    
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
     
     // delete all objects
     effect->RemoveAllObjects();

@@ -56,6 +56,7 @@ bool T_Skip::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("T_Puzzle", param);
     
+    // popup.plist, popup.png 는 원래 앱에 내장된 파일이다.
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();

@@ -63,8 +63,8 @@ bool WeeklyRankResult::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetParentName(), param);
     
-    
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rank.plist");
+    Common::AddSpriteFramesWithFile("rank");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rank.plist");
     
     winSize = CCDirector::sharedDirector()->getWinSize();
     

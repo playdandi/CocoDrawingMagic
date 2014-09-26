@@ -73,6 +73,8 @@ public:
     
     void TryLogin();
     
+    void XmlParseResourceList(char* data, int size);
+    
     void XMLParseGameData();
     void WriteResFile(char* data, int size);
     
@@ -95,6 +97,8 @@ public:
     
     void onHttpRequestCompleted(CCNode *sender, void *data);
     void onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data);
+    
+    void StartDownloadImageResources();
     
     void TryGetNonConsumed();
     void GetNonConsumedItems();

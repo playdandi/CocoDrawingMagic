@@ -186,12 +186,14 @@ void BuyTopaz::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png",
                     ccp(0, 0), ccp(75, 492-45), CCSize(929, 904+243+45), "", "Layer", tLayer, 1) );
     
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     // button
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_green.png",
                     ccp(0, 0), ccp(319, 191), CCSize(0, 0), "", "Layer", tLayer, 1) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_request.png",
                     ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                     getContentSize().width/2, 56), CCSize(0, 0), "button/btn_green.png", "0", NULL, 1, 1) );
+#endif
 }
 
 void BuyTopaz::MakeScroll()
@@ -265,12 +267,19 @@ void BuyTopaz::MakeScroll()
         
         
         // button (yellow, present, green, letter 순서)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         sprintf(name, "button/btn_yellow_mini2.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(472, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
         sprintf(name2, "button/btn_present.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
+#endif
+        
+        if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+            pos = ccp(634, 62);
+        else if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            pos = ccp(564, 62);
         sprintf(name, "button/btn_green_mini.png%d", i);
-        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(634, 62), CCSize(0, 0), "", "Layer", itemLayer, 3) );
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), pos, CCSize(0, 0), "", "Layer", itemLayer, 3) );
         sprintf(name2, "letter/letter_purchase.png%d", i);
         spriteClass->spriteObj.push_back( SpriteObject::Create(0, name2, ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->getContentSize().width/2, 24), CCSize(0, 0), name, "0", NULL, 3) );
         

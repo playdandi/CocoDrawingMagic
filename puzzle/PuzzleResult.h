@@ -25,6 +25,8 @@ public:
     
     CREATE_FUNC(PuzzleResult);
     
+    void Notification(CCObject* obj);
+    
     void InitSprites();
     void InitSkills();
     void SkillTimer(float f);
@@ -35,7 +37,10 @@ public:
     void Callback(CCNode* sender, void* p);
     void Callback_ProgressBar(CCNode* sender, void* p);
     
-    void Notification(CCObject* obj);
+    void ShowItemEarnedPopup(CCNode* sender, void* ptr);
+    void SkillTimer_Fairy(float f);
+    void PlayScoreSound();
+    void ScoreTimer_Fairy(float f);
     
     std::string GetMissionContent();
     
@@ -47,6 +52,7 @@ protected:
     bool isTouched;
     
     int varScore;
+    int varScoreBasic;
     int score;
     
     float topaz;
@@ -61,6 +67,8 @@ protected:
     int idx;
 
 private:
+    Sound* sound;
+    
     CCSprite* pBlack;
     CCSprite* pBlackClose;
     CCLayer* pScoreLayer;

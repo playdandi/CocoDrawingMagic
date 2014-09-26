@@ -118,16 +118,16 @@ bool T_Sketchbook::init()
     ttr = new CCLayer();
     this->addChild(ttr, 1000);
     
-    ttrBg = CCSprite::create("images/tutorial_explain.png");
+    ttrBg = CCSprite::create("images/tutorial/tutorial_explain.png");
     ttrBg->setAnchorPoint(ccp(0, 0));
     ttrBg->setPosition(ccp(vo.x, vo.y));
     ttrBg->setScaleX(winSize.width / (float)1080);
     ttr->addChild(ttrBg, 100);
     
-    ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+    ttrArrow = CCSprite::create("images/tutorial/tutorial_arrow.png");
     ttrArrow->retain();
     
-    ttrPos2 = CCScale9Sprite::create("images/tutorial_position.png");
+    ttrPos2 = CCScale9Sprite::create("images/tutorial/tutorial_position.png");
     ttrPos2->retain();
     this->addChild(ttrPos2, 5005);
     ttrPos2->removeFromParent();

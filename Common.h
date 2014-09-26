@@ -40,7 +40,7 @@ USING_NS_CC;
 #define INGAME_ITEM_3PAINT 1
 
 // 인게임 기본 구성 변수
-#define PUZZLE_TIME 60
+#define PUZZLE_TIME 6
 #define FEVER_TIME 9
 #define FEVER_START_COMBO 12
 #define MAX_COMBO_TIME 2000
@@ -182,6 +182,7 @@ USING_NS_CC;
 #define PURCHASE_SKILL_BY_TOPAZ_TRY 107
 #define HINT_BUY_PROPERTY 108
 #define GUEST_LOGIN 109
+#define ITEM_EARNED 110
 
 #define LOADING_PUZZLEEND -2
 #define LOADING_MESSAGE 0
@@ -238,9 +239,10 @@ public:
     //static CCRenderTexture* CreateStroke( CCSprite* label, int size, ccColor3B color, GLubyte opacity );
     static void MakeBadgeToZeroFunc();
     
-    static void AddSpriteFramesWithFile(std::string plist, std::string png);
+    static void AddSpriteFramesWithFile(std::string name); //std::string plist, std::string png);
     static std::string GetResFilename(std::string filename);
     static CCTexture2D* GetResFileImg(std::string filename);
+    static void RemoveSpriteFramesWithFile(std::string name);
     
     static std::string GetTip();
     
@@ -250,7 +252,7 @@ public:
     static CCLayer* MakeScoreLayer(int num);
     static CCLayer* MakeImageNumberLayer(std::string number, int type);
     static CCLayer* MakeItemNumberLayer(std::string number, float scale = 1.0f);
-    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1, int etc3 = -1);
+    static void ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc = -1, int etc2 = -1, int etc3 = -1, int etc4 = -1, int etc5 = -1);
     static void ShowPopup(void* obj, std::string from, std::string to, bool isReplaced, int popupType, int btnType, std::vector<int> data, int etc = -1, int priority = -1);
     static void RebootSystem(void* p);
 

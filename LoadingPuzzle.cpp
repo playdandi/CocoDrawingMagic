@@ -67,7 +67,10 @@ bool LoadingPuzzle::init()
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
+    
+    Common::AddSpriteFramesWithFile("game3");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game3.plist");
     LoadingSprites();
 
 	return true;
@@ -232,7 +235,10 @@ void LoadingPuzzle::XmlParseGameStart(xml_document *xmlDoc)
         // '코코타임' 발동 횟수
         int numOfCocoTime = gameInfo.child("coco-time").attribute("add-number").as_int();
         
-        Common::ShowNextScene(this, "LoadingPuzzle", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime);
+        // 요정으로 인한 추가점수 flag
+        int scoreFlagByFairy = gameInfo.child("fairy-effect").attribute("plus-score").as_int();
+        
+        Common::ShowNextScene(this, "LoadingPuzzle", "Puzzle", true, addedPotion, numOfFreezetime, numOfCocoTime, scoreFlagByFairy);
     }
 }
 

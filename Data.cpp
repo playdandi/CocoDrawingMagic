@@ -5,6 +5,15 @@
 // 서버 점검중일 경우 나오는 메시지
 std::string serverCheckMsg;
 
+std::string balanceFileUrl; // update_list.xml 파일주소 (리소스 xml 파일)
+std::string prevUrl; // 리소스 기본주소
+std::string pdiUrl = ""; // balance.pdi 파일주소 (기본주소 제외)
+int numOfResourceFiles = 0; // 다운받아야 할 리소스 파일 개수
+int numOfDownloadedFiles = 0; // 다운 완료한 리소스 파일 개수
+std::vector<std::string> resourceFilename; // 다운받아야할 리소스 파일 이름
+
+std::map<std::string, CCTexture2D*> t2d;
+
 // 게스트 로그인인가?
 bool isGuestLogin = false;
 
@@ -85,6 +94,9 @@ bool isStartUser = false;
 bool isPossibleBuyFairyShown = false;
 bool isHintForBuyingNextProperty = false;
 bool isAttendRewardShown = false; // 출석보상
+
+// md5
+MD5_CTX md5;
 
 // rsa 관련
 RSA* rsa;
@@ -239,7 +251,7 @@ void ProfileSprite::SetSprite(CCTexture2D* texture)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, float addedPercent, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text)
+MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, float addedPercent, int score, int totalscore, int combo, int bestcombo, int mission, int newrecord, std::string text, int addScoreFlag, int addScore, int itemId, int itemVal)
 {
     this->getTopaz = topaz;
     this->getStarCandy = starcandy;
@@ -253,10 +265,15 @@ MyGameResult::MyGameResult(int topaz, int starcandy, int potion, int mp, float a
     this->isMissionSuccess = (mission == 1);
     this->isNewRecord = (newrecord == 1);
     this->content = text;
+    
+    this->isAddedScoreByFairy = addScoreFlag;
+    this->addedScore = addScore;
+    this->earnItemId = itemId;
+    this->earnItemVal = itemVal;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst)
+void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg, bool pushNoti, bool potionMsg, int msgCnt, std::string sessionId, int todayFirst, bool couponViewFlag)
 {
     this->kakaoId = kakaoId;
     this->hashedTalkUserId = KakaoLocalUser::getInstance()->hashedTalkUserId;
@@ -269,6 +286,8 @@ void MyInfo::Init(std::string kakaoId, int deviceType, int userId, bool kakaoMsg
     this->settingPushNoti = pushNoti;
     this->settingPotionMsg = potionMsg;
     this->msgCnt = msgCnt;
+    
+    this->isCouponOn = couponViewFlag;
     
     this->mySessionId = sessionId;
     int pos = sessionId.find("|");
@@ -797,6 +816,10 @@ int MyInfo::GetRewardTopaz()
 bool MyInfo::IsTodayFirst()
 {
     return isToday_First;
+}
+bool MyInfo::IsCouponOn()
+{
+    return isCouponOn;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1436,6 +1459,13 @@ std::string FairyInfo::MakeName(int id)
         case 1: return "꽃등신"; break;
         case 2: return "은근해"; break;
         case 3: return "구르미"; break;
+        case 4: return "고민형"; break;
+        case 5: return "공손달"; break;
+        case 6: return "점괘구리"; break;
+        case 7: return "또사자"; break;
+        case 8: return "그래용"; break;
+        case 9: return "놀꺼양"; break;
+        case 10: return "아기별"; break;
     }
     return "노네임";
 }
@@ -1456,15 +1486,30 @@ std::string FairyInfo::GetAbilityName(FairyInfo* f, int level) // 추가속성 �
     std::string res = temp;
     return res;
 }
-std::string FairyInfo::GetAbilityDesc(int type, bool newline) // 특수능력
+std::string FairyInfo::GetAbilityDesc(int type, bool newline, int fid) // 특수능력
 {
     if (newline)
     {
         switch (type)
         {
             case 1: return "연결피스\n확률증가"; break;
-            case 9: return "피버타임\n시간증가"; break;
-            case 10: return "별사탕\n추가획득"; break;
+            case 4:
+                if (fid == 4) return "가끔 추가점수\n5%";
+                else if (fid == 8) return "종종 추가점수\n5%";
+                else if (fid == 9) return "종종 추가점수\n10%";
+                break;
+            case 6:
+                if (fid == 6) return "아이템\n생성확률 20%";
+                else if (fid == 7) return "아이템\n생성확률 10%";
+                break;
+            case 9:
+                if (fid == 2) return "피버타임\n시간증가(1초)";
+                else if (fid == 5) return "피버타임\n시간증가(2초)";
+                break;
+            case 10:
+                if (fid == 3) return "별사탕 10%\n추가획득";
+                else if (fid == 10) return "별사탕 20%\n추가획득";
+                break;
         }
     }
     else
@@ -1472,8 +1517,23 @@ std::string FairyInfo::GetAbilityDesc(int type, bool newline) // 특수능력
         switch (type)
         {
             case 1: return "연결피스 확률증가"; break;
-            case 9: return "피버타임 시간증가"; break;
-            case 10: return "별사탕 추가획득"; break;
+            case 4:
+                if (fid == 4) return "가끔 추가점수 5%";
+                else if (fid == 8) return "종종 추가점수 5%";
+                else if (fid == 9) return "종종 추가점수 10%";
+                break;
+            case 6:
+                if (fid == 6) return "아이템 생성확률 20%";
+                else if (fid == 7) return "아이템 생성확률 10%";
+                break;
+            case 9:
+                if (fid == 2) return "피버타임 시간증가(1초)";
+                else if (fid == 5) return "피버타임 시간증가(2초)";
+                break;
+            case 10:
+                if (fid == 3) return "별사탕 10% 추가획득";
+                else if (fid == 10) return "별사탕 20% 추가획득";
+                break;
         }
     }
     return "";
@@ -1485,8 +1545,67 @@ std::string FairyInfo::GetDescription()
         case 1: return "4월에 피는 등이 이쁜 꽃"; break;
         case 2: return "따스한 햇살과 눈길(?)을 은근하게"; break;
         case 3: return "뭉게뭉게 무웅게무웅게"; break;
+        case 4: return "고민이 많은 곰인형"; break;
+        case 5: return "공손하기 짝이 없다. 인사도 한다."; break;
+        case 6: return "타로카드는 거들 뿐"; break;
+        case 7: return "사기 위해 사는 또사자"; break;
+        case 8: return "그래그래그래용"; break;
+        case 9: return "내일 놀 것까지 모아서 오늘 놀꺼양"; break;
+        case 10: return "반짝반짝 아기별 아름답게 빛나네"; break;
     }
     return "할 말이 없네요";
+}
+void FairyInfo::SetInSmallArea(CCLayer* picture, int fid)
+{
+    picture->setAnchorPoint(ccp(0, 0));
+    
+    switch (fid)
+    {
+        case 1: // 꽃등신
+            picture->setPosition(ccp(309/2+10, 236/2+23));
+            picture->setScale(0.63f);
+            break;
+        case 2: // 은근해
+            picture->setPosition(ccp(309/2, 236/2+15));
+            picture->setScale(0.7f);
+            break;
+        case 3: // 구르미
+            picture->setPosition(ccp(309/2, 236/2+23));
+            picture->setScale(0.8f);
+            break;
+        case 4: // 고민형
+            picture->setPosition(ccp(309/2+10, 236/2+10));
+            picture->setScale(0.45f);
+            break;
+        case 5: // 공손달
+            picture->setPosition(ccp(309/2+25, 236/2+10));
+            picture->setScale(0.48f);
+            break;
+        case 6: // 점괘구리
+            picture->setPosition(ccp(309/2+25, 236/2+10));
+            picture->setScale(0.46f);
+            break;
+        case 7: // 또사자
+            picture->setPosition(ccp(309/2+10, 236/2+10));
+            picture->setScale(0.48f);
+            break;
+        case 8: // 그래용
+            picture->setPosition(ccp(309/2, 236/2+10));
+            picture->setScale(0.45f);
+            break;
+        case 9: // 놀꺼양
+            picture->setPosition(ccp(309/2+10, 236/2+10));
+            picture->setScale(0.45f);
+            break;
+        case 10: // 아기별
+            picture->setPosition(ccp(309/2+5, 236/2+10));
+            picture->setScale(0.54f);
+            break;
+        default:
+            picture->setPosition(ccp(309/2, 236/2+18));
+            picture->setScale(0.9f);
+            break;
+    }
 }
 int FairyInfo::GetType()
 {

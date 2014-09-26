@@ -67,8 +67,8 @@ bool T_NoImage::init()
     
     InitSprites();
     
-    ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-    ttrPos = CCScale9Sprite::create("images/tutorial_position.png");
+    ttrArrow = CCSprite::create("images/tutorial/tutorial_arrow.png");
+    ttrPos = CCScale9Sprite::create("images/tutorial/tutorial_position.png");
     
     // ccp(717+5, 711+offset) (offset = 0)
     ttrArrow->setAnchorPoint(ccp(0.5, 0));

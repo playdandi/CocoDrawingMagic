@@ -368,7 +368,7 @@ void Sketchbook::ShowHintOfMP()
     balloon2 = NULL;
     ball2 = NULL;
     
-    balloon2 = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon2 = CCScale9Sprite::create("images/tutorial/tutorial_balloon3.png");
     balloon2->setContentSize(CCSize(600, 200));
     balloon2->setAnchorPoint(ccp(1, 1));
     balloon2->setPosition(ccp(765+200, 1666+35));
@@ -771,7 +771,7 @@ void Sketchbook::ShowHintOfBuyingSlot()
     }
     if (myInfo->GetSlot().size() == 1 && flag)
     {
-        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
         balloon->setContentSize(CCSize(600, 140));
         balloon->setAnchorPoint(ccp(1, 0));
         balloon->setPosition(ccp(896+100, 312+55));

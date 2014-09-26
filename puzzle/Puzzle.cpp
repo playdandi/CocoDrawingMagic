@@ -12,16 +12,16 @@ enum
 static int addedPotion; // 1 : '끈질긴 생명력' 발동됨, otherwise, 0
 static int numOfFreezeTime; // '시간을 얼리다' 발동 횟수 (max)
 static int numOfCocoTime; // '코코타임' 발동 횟수 (max)
+static int isAddedScoreByFairy; // 요정 중 추가점수 주는 능력의 확률 (1이면 당첨)
 static Puzzle* pPuzzlePtr;
 
-CCScene* Puzzle::scene(int potion, int freezeTime, int cocoTime)
+CCScene* Puzzle::scene(int potion, int freezeTime, int cocoTime, int addscore)
 {
     addedPotion = potion;
     numOfFreezeTime = freezeTime;
     numOfCocoTime = cocoTime;
-    //CCLog("코코타임 = %d", numOfCocoTime);
-    //CCLog("시간을 얼리다 = %d", numOfFreezeTime);
-    //CCLog("끈질긴 생명력 = %d", addedPotion);
+    isAddedScoreByFairy = addscore;
+    //CCLog("is added score by fairy = %d", isAddedScoreByFairy);
     
 	CCScene* pScene = CCScene::create();
     
@@ -100,10 +100,12 @@ bool Puzzle::init()
     effect = new Effect();
     effect->Init(effect, this);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game2.plist");
+    Common::AddSpriteFramesWithFile("game");
+    Common::AddSpriteFramesWithFile("game2");
     CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
     // game3.plist, popup.plist 는 loading화면에서 preload했음.
+    
+    CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
     
     
     // item 사용 여부
@@ -137,11 +139,25 @@ bool Puzzle::init()
     ADD_STARCANDY_PERCENT = 0;          // 추가별사탕 %
     if (myInfo->GetActiveFairyId() > 0)
     {
+        //CCLog("fid = %d", myInfo->GetActiveFairyId());
+        //CCLog("type = %d", FairyInfo::GetObj(myInfo->GetActiveFairyId())->GetType());
         switch (FairyInfo::GetObj(myInfo->GetActiveFairyId())->GetType())
         {
-            case 1:  CONN_PIECE_PROB += 10; break;
-            case 9:  FEVER_TIME_MAX += (1*1000); break;
-            case 10: ADD_STARCANDY_PERCENT += 10; break;
+            case 1: // 꽃등신 : 연결피스 확률 10% 증가
+                CONN_PIECE_PROB += 10;
+                break;
+            case 9:
+                if (myInfo->GetActiveFairyId() == 2) // 은근해 : 피버타임 1초 증가
+                    FEVER_TIME_MAX += (1 * 1000);
+                else if (myInfo->GetActiveFairyId() == 5) // 공손달 : 피버타임 2초 증가
+                    FEVER_TIME_MAX += (2 * 1000);
+                break;
+            case 10:
+                if (myInfo->GetActiveFairyId() == 3) // 구르미 : 추가별사탕 10%
+                    ADD_STARCANDY_PERCENT += 10;
+                else if (myInfo->GetActiveFairyId() == 10) // 아기별 : 추가별사탕 20%
+                    ADD_STARCANDY_PERCENT += 20;
+                break;
         }
     }
     //CCLog("요정능력 : %d %d %d", CONN_PIECE_PROB, FEVER_TIME_MAX, ADD_STARCANDY_PERCENT);
@@ -169,6 +185,11 @@ bool Puzzle::init()
     srand(time(NULL));
     InitSprites();
     InitCoco();
+    
+    // animation class
+    puzzleAnim = new PuzzleAnim();
+    puzzleAnim->Init(puzzleAnim, this);
+
     InitFairy();
     InitBoard();
     SetScoreAndStarCandy();
@@ -585,6 +606,9 @@ void Puzzle::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/magic_circle.png", ccp(0.5, 0.5), ccp(m_winSize.width/2, vo.y+tbSize.height+boardSize.height+120), CCSize(0, 0), "", "Puzzle", this, 6) );
     ((CCSprite*)spriteClass->FindSpriteByName("background/magic_circle.png"))->setScale(0.9f);
     
+    CCSize ss = ((CCSprite*)spriteClass->FindSpriteByName("background/magic_circle.png"))->getContentSize();
+    magicCircleWidth = ss.width * 0.5f; // 마법진 가로 길이
+    
     
     for (int i = 0 ; i < spriteClass->spriteObj.size() ; i++)
         spriteClass->AddChild(i);
@@ -786,34 +810,16 @@ void Puzzle::CocoAnim(float f)
 
 void Puzzle::InitFairy()
 {
-    if (myInfo->GetActiveFairyId() > 0)
+    if (myInfo->GetActiveFairyId() > 0) // 요정을 선택중일 때만!
     {
         fairyTimer = 0; // 요정 액션 타이머
-        switch (myInfo->GetActiveFairyId())
-        {
-            case 1:
-                CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_flower.plist");
-                fairyLayer = Fairy::MakeFlowerNew();
-                fairyLayer->setPosition(ccp(m_winSize.width-280, vo.y+tbSize.height+boardSize.height+60+30));
-                break;
-            case 2:
-                fairyLayer = Fairy::MakeSun();
-                fairyLayer->setPosition(ccp(m_winSize.width-280+100, vo.y+tbSize.height+boardSize.height+60+30+135));
-                break;
-            case 3:
-                CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/fairy_cloud.plist");
-                fairyLayer = Fairy::MakeCloud();
-                fairyLayer->setPosition(ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30+30));
-                break;
-            default:
-                fairyLayer = CCLayer::create();
-                break;
-        }
+        
+        fairyLayer = puzzleAnim->InitFairy(this);
         this->addChild(fairyLayer, 100);
         
         // 요정 그림자
         fairyShadow = CCSprite::createWithSpriteFrameName("sun/sun_shadow.png");
-        fairyShadow->setPosition(ccp(m_winSize.width-170, vo.y+tbSize.height+boardSize.height+95));
+        fairyShadow->setPosition(ccp(m_winSize.width-180-10, vo.y+tbSize.height+boardSize.height+85));
         fairyShadow->setScale(1.25f);
         fairyShadow->setTag(-1); // tag = -1 (그림자 피버타임 때 지우기 위해서)
         this->addChild(fairyShadow, 20);
@@ -838,60 +844,17 @@ void Puzzle::ChangeAnimFairy(float f)
     if (isInGamePause || m_iSkillSP > 0 || isGameOver)
         return;
     
-    // 요정 액션 관련 (2초마다 액션 실행)
     fairyTimer += 100;
-    if (fairyTimer % 2000 == 0)
+    
+    // 요정 액션 관련 (2초마다 액션 실행)
+    // 예외 : '점괘구리'는 3초에 1번 실행
+    int animInterval = 2000;
+    if (myInfo->GetActiveFairyId() == 6)
+        animInterval = 3000;
+    
+    if (fairyTimer % animInterval == 0)
     {
-        int n;
-        CCPoint pos;
-        switch (myInfo->GetActiveFairyId())
-        {
-            case 1: // 꽃등신
-                n = rand() % 4;
-                if (n == 0 || n == 1)
-                {
-                    // 기존 요정 잠시 안 보이게 한다.
-                    fairyLayer->setVisible(false);
-                    
-                    // anim action
-                    CCSize s = fairyLayer->getContentSize();
-                    float w = s.width * 0.5f;
-                    float h = s.height * 0.5f;
-                    pos = ccp(m_winSize.width-280 + w-18, vo.y+tbSize.height+boardSize.height+60+30 + h-5);
-                    
-                    if (n == 0) // 꽃 접었다 펴기
-                        Fairy::Anim_Flower_Hide(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
-                    else // 초록잎 파닥파닥
-                        Fairy::Anim_Flower_Padac(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
-                }
-                else if (n == 2) // 얼굴 왔다갔다하기
-                    Fairy::Anim_Flower_MoveFace(fairyLayer);
-                else // 눈썹 씰룩씰룩
-                    Fairy::Anim_Flower_MoveEyebrow(fairyLayer);
-                break;
-            
-            case 2: // 은근해
-                n = rand() % 3;
-                if (n == 0) // 한숨
-                    Fairy::Anim_Sun_Sigh(fairyLayer, this, callfuncND_selector(Puzzle::AnimFairy_Callback));
-                else if (n == 1) // 눈 움직이기
-                    Fairy::Anim_Sun_MoveEye(fairyLayer);
-                else // 꼬리 회전
-                    Fairy::Anim_Sun_RotateTails(fairyLayer);
-                break;
-                
-            case 3: // 구르미
-                if (fairyTimer % 10000 == 0) // 이 요정은 10초에 한번 액션 발동.
-                {
-                    fairyLayer->setVisible(false);
-                    pos = ccp(m_winSize.width-280-50, vo.y+tbSize.height+boardSize.height+60+30+30);
-                    Fairy::Anim_Cloud_Curl(this, callfuncND_selector(Puzzle::AnimFairy_Callback), pos);
-                }
-                break;
-
-            default:
-                break;
-        }
+        puzzleAnim->StartAnim(fairyLayer, fairyTimer);
     }
 }
 
@@ -1218,7 +1181,6 @@ void Puzzle::UpdateCombo()
     if (!isFeverTime && !isGameOver && !isInGamePause)
     {
         iFeverCombo++;
-        //CCLog("FEVER COMBO = %d", iFeverCombo);
         
         // 피버 게이지 증가 action
         CCActionInterval* action = CCMoveBy::create(0.1f, ccp(149.0f / (float)feverStartCnt, 0));
@@ -1318,7 +1280,7 @@ void Puzzle::FeverTimer(float f)
     if (iFeverTime > 0)
     {
         CCPoint p = ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->getPosition();
-        float changed_x = p.x - (149.0f * (100.0f / (float)(FEVER_TIME*1000)));
+        float changed_x = p.x - (149.0f * (100.0f / (float)(FEVER_TIME_MAX)));
         ((CCScale9Sprite*)spriteClassInfo->FindSpriteByTag(98765))->setPosition(ccp(changed_x, p.y));
     }
     // 피버타임 끝
@@ -1373,7 +1335,7 @@ void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
         {
             spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_fire.png");
             p = SetTouch8Position(COLUMN_COUNT-1, 0);
-            balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+            balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
             balloon->setAnchorPoint(ccp(1, 0));
             balloon->setPosition(ccp(m_winSize.width-10, p.y));
             ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n사랑의 불꽃으로 붉은 피스를 퍼뜨릴 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
@@ -1382,7 +1344,7 @@ void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
         {
             spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_water.png");
             p = SetTouch8Position(COLUMN_COUNT-1, ROW_COUNT-1);
-            balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+            balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
             balloon->setAnchorPoint(ccp(1, 0));
             balloon->setPosition(ccp(m_winSize.width-10, p.y));
             ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n흰색/노란색 피스를 파란 피스로 바꿀 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
@@ -1391,7 +1353,7 @@ void Puzzle::ReadyAndStart(CCNode* sender, void* pointer)
         {
             spirit_sp = CCSprite::createWithSpriteFrameName("icon/spirit_land.png");
             p = SetTouch8Position(0, ROW_COUNT-1);
-            balloon = CCScale9Sprite::create("images/tutorial_balloon.png");
+            balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon.png");
             balloon->setAnchorPoint(ccp(0, 0));
             balloon->setPosition(ccp(10, p.y));
             ball = CCLabelTTF::create("안녕 코코야! 게임중에 나를 터치하면\n초록색 피스를 모을 수 있어!\n(게임을 시작하려면 나를 터치해)", fontList[0].c_str(), 36);
@@ -2328,7 +2290,7 @@ void Puzzle::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)
                     sound->PlayPieceClick(piece8xy[touch_cnt%QUEUE_CNT].size()+1);
                     sound->PlayCycle();
                     
-                    CCSprite* sp = CCSprite::create("images/cycle.png");
+                    CCSprite* sp = CCSprite::createWithSpriteFrameName("cycle.png"); //CCSprite::create("images/cycle.png");
                     CCPoint p = SetTouch8Position(x, y);
                     sp->setPosition(ccp(p.x, p.y-100));
                     sp->setOpacity(0);
@@ -3714,9 +3676,12 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     iStarCandy = FakeStarCandy( (int)((float)RealStarCandy() + (float)RealStarCandy()*ADD_STARCANDY_PERCENT/100.0f) );
     iStarCandy = FakeStarCandy( (int)((float)RealStarCandy() + addedStarcandyBySkill) );
     
+    // 요정으로 인한 추가점수 계산
+    int addedScore = GetAddedScoreByFairy();
+    
     sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
     param += temp;
-    sprintf(temp, "score=%d&", RealScore());
+    sprintf(temp, "score=%d&", RealScore()+addedScore);
     param += temp;
     sprintf(temp, "starcandy=%d&", RealStarCandy());
     param += temp;
@@ -3724,6 +3689,22 @@ void Puzzle::GameEnd(CCNode* sender, void* pointer)
     param += temp;
 
     Network::HttpPost(param, URL_GAMEEND, this, httpresponse_selector(Puzzle::onHttpRequestCompleted));
+}
+
+int Puzzle::GetAddedScoreByFairy()
+{
+    int addedScore = 0;
+    if (isAddedScoreByFairy == 1)
+    {
+        int addPercent = 0;
+        if (myInfo->GetActiveFairyId() == 4 || myInfo->GetActiveFairyId() == 8) // 고민형, 그래용 : 추가점수 5%
+            addPercent = 5;
+        else if (myInfo->GetActiveFairyId() == 9) // 놀꺼양 : 추가점수 10%
+            addPercent = 10;
+        addedScore = (int)((float)RealScore() * (float)addPercent / 100.0f);
+    }
+    
+    return addedScore;
 }
 
 void Puzzle::onHttpRequestCompleted(CCNode *sender, void *data)
@@ -3869,8 +3850,6 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
     xml_node nodeResult = xmlDoc->child("response");
     int code = nodeResult.child("code").text().as_int();
     
-    //CCLog("GAME END : code = %d", code);
-    
     // 에러일 경우 code에 따라 적절히 팝업창 띄워줌.
     if (code != 0)
     {
@@ -3893,6 +3872,12 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         int getStarCandy = nodeResult.child("game-get").attribute("star-candy").as_int();
         int getPotion = nodeResult.child("game-get").attribute("potion").as_int();
         int getMP = nodeResult.child("game-get").attribute("mp").as_int();
+        
+        // 요정으로 인한 아이템 획득 관련
+        //int earnItemByFairy = nodeResult.child("fairy-effect").attribute("plus-item").as_int();
+        int earnItemId = nodeResult.child("fairy-effect").attribute("item-id").as_int();
+        int earnItemVal = nodeResult.child("fairy-effect").attribute("item-value").as_int();
+        //CCLog("earn = %d , %d", earnItemId, earnItemVal);
         
         // 돈 갱신
         int topaz = nodeResult.child("money").attribute("topaz").as_int();
@@ -3927,7 +3912,7 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         int addTopazNum = nodeResult.child("mp-reward").attribute("add-topaz-num").as_int();
         myInfo->SetReward(isPotionMax, addTopazNum);
         
-        // 추가 점수 % 계산
+        // MP로 인한 추가점수 퍼센트(%) 계산
         float addedMPPercent = ((float)(myInfo->GetMPTotal())/100.0f) + 1.0f;
         
         int practiceUserSkillId = nodeResult.child("coco").attribute("practice-user-skill-id").as_int();
@@ -3966,8 +3951,9 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
         // script (말풍선 내용)
         std::string text = nodeResult.child("script").text().as_string();
         
+        
         // 결과화면에 보낼 데이터 class 생성
-        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, addedMPPercent, RealScore(), totalScore, maxCombo, bestCombo, isMissionSuccess, isNewRecord, text);
+        myGameResult = new MyGameResult(getTopaz, getStarCandy, getPotion, getMP, addedMPPercent, RealScore(), totalScore, maxCombo, bestCombo, isMissionSuccess, isNewRecord, text, isAddedScoreByFairy, GetAddedScoreByFairy(), earnItemId, earnItemVal);
         int num;
         for (int i = 0 ; i < NUMOFSKILL ; i++)
         {
@@ -3978,7 +3964,6 @@ void Puzzle::XmlParseGameEnd(xml_document *xmlDoc)
                 myGameResult->skillCnt.push_back(skill->GetSkillAppliedCount(i));
             }
         }
-        
         
         int highScore = nodeResult.child("score").attribute("high-score").as_int();
         int weeklyHighScore = nodeResult.child("score").attribute("weekly-high-score").as_int();
@@ -4126,28 +4111,26 @@ void Puzzle::EndScene()
     
     this->stopAllActions();
 
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game2.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game3.plist");
+    // sprite frame cache & texture cache 모두 제거
+    Common::RemoveSpriteFramesWithFile("game");
+    Common::RemoveSpriteFramesWithFile("game2");
+    Common::RemoveSpriteFramesWithFile("game3");
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/popup.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game2.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game3.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/popup.png");
-
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     switch (myInfo->GetActiveFairyId())
     {
-        case 1:
-            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/fairy_flower.plist");
-            CCTextureCache::sharedTextureCache()->removeTextureForKey("images/fairy_flower.png");
-            break;
-        case 3:
-            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/fairy_cloud.plist");
-            CCTextureCache::sharedTextureCache()->removeTextureForKey("images/fairy_cloud");
-            break;
+        case 1: Common::RemoveSpriteFramesWithFile("fairy_flower"); break;
+        // case 2는 원래 없음
+        case 3: Common::RemoveSpriteFramesWithFile("fairy_cloud"); break;
+        case 4: Common::RemoveSpriteFramesWithFile("fairy_bear"); break;
+        case 5: Common::RemoveSpriteFramesWithFile("fairy_moon"); break;
+        case 6: Common::RemoveSpriteFramesWithFile("fairy_frog"); break;
+        case 7: Common::RemoveSpriteFramesWithFile("fairy_lion"); break;
+        case 8: Common::RemoveSpriteFramesWithFile("fairy_dragon"); break;
+        case 9: Common::RemoveSpriteFramesWithFile("fairy_sheep"); break;
+        case 10: Common::RemoveSpriteFramesWithFile("fairy_babystar"); break;
     }
-    
     CCTextureCache::sharedTextureCache()->removeAllTextures();
     
     // delete all objects

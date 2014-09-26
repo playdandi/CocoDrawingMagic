@@ -2,6 +2,9 @@
 #include "BuyPotion.h"
 #include "SketchDetail.h"
 #include "Kakao/Plugins/KakaoNativeExtension.h"
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+#include "bridge.h"
+#endif
 
 static int type;
 static int btn;
@@ -216,7 +219,7 @@ void NoImage::InitSprites()
     int offset = 0;
     
     // pop-up 배경
-    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown.png", ccp(0, 0), ccp(49, 640+offset), CCSize(982, 623-offset*2), "", "Layer", tLayer, 10001) );
+    spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_brown_mini.png", ccp(0, 0), ccp(49, 640+offset), CCSize(982, 623-offset*2), "", "Layer", tLayer, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_board_yellow.png", ccp(0, 0), ccp(76, 678+offset), CCSize(929, 562-offset*2), "", "Layer", tLayer, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_popup_rightup.png", ccp(0, 0), ccp(809, 1039-offset), CCSize(0, 0), "", "Layer", tLayer, 10001) );
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_x_brown.png", ccp(0, 0), ccp(900, 1132-offset), CCSize(0, 0), "", "Layer", tLayer, 10001) );
@@ -232,7 +235,8 @@ void NoImage::InitSprites()
         type == BUY_SKILLSLOT_BY_STARCANDY_TRY || type == BUY_SKILLSLOT_BY_TOPAZ_TRY || type == BUY_SKILLSLOT_OK ||
         type == TODAYCANDY_RESULT_LOSE || type == TODAYCANDY_RESULT_WIN || type == RANKUP_BOAST ||
         type == SELECT_PROPERTY_TRY || type == SELECT_PROPERTY_OK ||
-        type == PURCHASE_SKILL_BY_TOPAZ_TRY)
+        type == PURCHASE_SKILL_BY_TOPAZ_TRY ||
+        type == ITEM_EARNED)
     {
         hasImage = true;
         
@@ -240,6 +244,7 @@ void NoImage::InitSprites()
         CCPoint p;
         std::string e;
         char txt[50];
+        char temp[40];
         switch (type)
         {
             case UPGRADE_STAFF_BY_TOPAZ_TRY:
@@ -249,7 +254,6 @@ void NoImage::InitSprites()
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setScale(0.85f);
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->setRotation(20);
                 ((CCSprite*)spriteClass->FindSpriteByName("image/magicstaff.png"))->runAction(CCRepeatForever::create(CCSequence::create(CCRotateBy::create(1.0f, -10), CCRotateBy::create(2.0f, 20), CCRotateBy::create(1.0f, -10), NULL)));
-                //if (type != UPGRADE_STAFF_OK)
                 if (type == UPGRADE_STAFF_BY_STARCANDY_TRY)
                 {
                     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_question_mini.png", ccp(0, 0), ccp(903, 710+115), CCSize(0, 0), "", "Layer", tLayer, 10001) );
@@ -335,7 +339,6 @@ void NoImage::InitSprites()
                 break;
             case SELECT_PROPERTY_TRY:
             case SELECT_PROPERTY_OK:
-                char temp[40];
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0.5, 0.5), ccp(126+254/2, winSize.height/2), CCSize(0,0), "", "Layer", tLayer, 10002) );
                 p = spriteClass->FindParentCenterPos("background/bg_skill_brown.png");
                 if (d[0] == 1) sprintf(temp, "icon/icon_property_fire.png");
@@ -346,6 +349,16 @@ void NoImage::InitSprites()
             case PURCHASE_SKILL_BY_TOPAZ_TRY:
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "Layer", tLayer, 10005) );
                 spriteClass->spriteObj.push_back( SpriteObject::Create(0, "icon/icon_question_skill.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "Layer", tLayer, 10005) );
+                break;
+            case ITEM_EARNED:
+                if (d[0] == 1) sprintf(temp, "icon/icon_item_clear.png");
+                else if (d[0] == 2) sprintf(temp, "icon/icon_item_time.png");
+                else if (d[0] == 3) sprintf(temp, "icon/icon_item_paint.png");
+                else if (d[0] == 4) sprintf(temp, "icon/icon_item_staff.png");
+                //spriteClass->spriteObj.push_back( SpriteObject::Create(0, "background/bg_skill_brown.png", ccp(0.5,0.5), ccp(126+254/2, winSize.height/2), CCSize(0, 0), "", "Layer", tLayer, 10005) );
+                spriteClass->spriteObj.push_back( SpriteObject::Create(0, temp, ccp(0.5, 0.5), ccp(126+254/2 +10, winSize.height/2 -20), CCSize(0, 0), "", "Layer", tLayer, 10005) );
+                //((CCSprite*)spriteClass->FindSpriteByName("background/bg_skill_brown.png"))->setScale(1.5f);
+                ((CCSprite*)spriteClass->FindSpriteByName(temp))->setScale(2.0f);
                 break;
         }
     }
@@ -798,6 +811,24 @@ void NoImage::InitSprites()
             title = "게스트 로그인";
             sprintf(text, "게임 삭제, 디바이스 변경, 혹은 탈퇴 시 데이터가 삭제될 수 있습니다.");
             break;
+            
+        case ITEM_EARNED:
+            std::string itemName = "";
+            if (d[0] == 1) itemName = "4색 피스";
+            else if (d[0] == 2) itemName = "+5초 시계";
+            else if (d[0] == 3) itemName = "색깔붓";
+            else if (d[0] == 4) itemName = "마법지팡이";
+            if (myInfo->GetActiveFairyId() == 6) // 점괘구리
+            {
+                title = "점괘구리가 돼지 꿈을 꿨나?";
+                sprintf(text, "점괘가 좋게 나왔습니다!\n%s %d개를 얻었습니다.", itemName.c_str(), d[1]);
+            }
+            else if (myInfo->GetActiveFairyId() == 7) // 또사자
+            {
+                title = "또사자가 또 쇼핑을...";
+                sprintf(text, "또사자가 쇼핑을 하고\n사은품을 나눠줍니다!\n%s %d개를 얻었습니다.", itemName.c_str(), d[1]);
+            }
+            break;
     }
     
     // 내용 문장
@@ -1036,7 +1067,7 @@ void NoImage::HandlingTouch(int touchType)
             EndScene();
             
             // 앱 업데이트 (마켓으로 이동)
-            #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
             JniMethodInfo t;
             if (JniHelper::getStaticMethodInfo(t,
                                                "com/playDANDi/CocoMagic/CocoMagic",
@@ -1048,8 +1079,14 @@ void NoImage::HandlingTouch(int touchType)
                 // Release
                 t.env->DeleteLocalRef(t.classID);
             }
-            #endif
+#endif
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            ConnectToAppStore();
+#endif
             CCDirector::sharedDirector()->end();
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+            exit(0);
+#endif
         }
         else if (type == NEED_TO_REBOOT || type == ERROR_IN_APP_BILLING)
         {
@@ -1286,26 +1323,9 @@ void NoImage::HandlingTouch(int touchType)
     }
     else if (type == SEND_TOPAZ_TRY)
     {
-        //#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         EndScene();
         CCString* param = CCString::create("2");
         CCNotificationCenter::sharedNotificationCenter()->postNotification(Depth::GetCurName(), param);
-        //#endif
-        
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-        /*
-        // 토파즈 선물하기. (미결제 버전) -> 현재 iOS에만 fake 이용됨.
-        std::string url = URL_SEND_TOPAZ_TEST;
-        std::string param = "";
-        sprintf(temp, "kakao_id=%s&", myInfo->GetKakaoId().c_str());
-        param += temp;
-        sprintf(temp, "friend_kakao_id=%s&", friendList[d[0]]->GetKakaoId().c_str());
-        param += temp;
-        sprintf(temp, "topaz_id=%d", priceTopaz[d[1]]->GetId());
-        param += temp;
-        HttpRequest(url, param);
-        */
-        #endif
     }
     else if (type == UPGRADE_STAFF_BY_TOPAZ_TRY || type == UPGRADE_STAFF_BY_STARCANDY_TRY)
     {
@@ -1464,7 +1484,7 @@ void NoImage::ShowHintOfUpgrade()
     balloon = NULL;
     ball = NULL;
     
-    balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+    balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
     balloon->setContentSize(CCSize(600, 140+120));
     balloon->setAnchorPoint(ccp(1, 0));
     balloon->setPosition(ccp(896+100, 572+55+250));

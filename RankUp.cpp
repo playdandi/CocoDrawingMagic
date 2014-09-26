@@ -65,8 +65,8 @@ bool RankUp::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RankUp::Notification), Depth::GetCurName(), NULL);
     
-    
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rankup.plist");
+    Common::AddSpriteFramesWithFile("rankup");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rankup.plist");
     
     spriteClass = new SpriteClass();
     
@@ -422,8 +422,9 @@ void RankUp::EndSceneFromReboot() // 강제 리부팅 시
     //pBlackClose->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
+    Common::RemoveSpriteFramesWithFile("rankup");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
 }
@@ -446,8 +447,9 @@ void RankUp::EndSceneCallback(CCNode* sender, void* pointer)
     pThis->pBlackClose->removeFromParentAndCleanup(true);
     pThis->pBackground->removeFromParentAndCleanup(true);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
+    Common::RemoveSpriteFramesWithFile("rankup");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
     

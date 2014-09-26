@@ -14,6 +14,10 @@ CCScene* PuzzleResult::scene()
 
 void PuzzleResult::onEnter()
 {
+    //CCLog("basic score = %d", myGameResult->score);
+    //CCLog("added score = %d", myGameResult->addedScore);
+    //CCLog("total score = %d", myGameResult->totalScore);
+    
     //CCLog("PuzzleResult :: onEnter");
     CCDirector* pDirector = CCDirector::sharedDirector();
     pDirector->getTouchDispatcher()->addTargetedDelegate(this, Depth::GetCurPriority(), true);
@@ -27,6 +31,13 @@ void PuzzleResult::onEnter()
     // effect
     if (myGameResult->isNewRecord)
         ((Puzzle*)Depth::GetParentPointer())->GetEffect()->ShowNewRecordEffect(this);
+    
+    // 요정으로 인해 아이템을 얻었을 경우, 1초 딜레이 후 팝업창 띄우기
+    if (myGameResult->earnItemId > 0)
+    {
+        CCActionInterval* action = CCSequence::create(CCDelayTime::create(1.f), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::ShowItemEarnedPopup), this), NULL);
+        this->runAction(action);
+    }
 }
 void PuzzleResult::onExit()
 {
@@ -62,12 +73,16 @@ bool PuzzleResult::init()
     CCString* param = CCString::create("1");
     CCNotificationCenter::sharedNotificationCenter()->postNotification("Puzzle", param);
     
-    
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/game_result.plist");
+    Common::AddSpriteFramesWithFile("game_result");
     
     m_winSize = CCDirector::sharedDirector()->getWinSize();
     
-    isTouched = false;
+    if (myGameResult->earnItemId > 0) // 요정으로 인해 아이템을 얻었을 경우, 터치를 막아놓자.
+        isTouched = true;
+    else
+        isTouched = false;
+    
+    sound = ((Puzzle*)Depth::GetParentPointer())->GetSound();
     
     pBlackClose = NULL;
     
@@ -157,6 +172,7 @@ void PuzzleResult::InitSprites()
     
     // 점수
     varScore = 0;
+    varScoreBasic = myGameResult->score;
     
     char number[50];
     sprintf(number, "%d", varScore);
@@ -183,8 +199,8 @@ void PuzzleResult::InitSprites()
     
     // 기본점수 값
     sprintf(number, "%s", Common::MakeComma(myGameResult->score).c_str());
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500+2, 1088+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500, 1088+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500+2, 1088+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005, 0, 255, -100) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 52, ccp(0, 0.5), ccp(500, 1088+off), ccc3(255,255,255), "", "PuzzleResult", this, 1005, 0, 255, -101) );
     // MP 추가점수 값
     sprintf(number, "+ %s", Common::MakeComma(myGameResult->totalScore - myGameResult->score).c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(number, fontList[0], 48, ccp(0, 0.5), ccp(500+2, 1018+off-2), ccc3(0,0,0), "", "PuzzleResult", this, 1005, 0, 255, 101010) );
@@ -381,16 +397,35 @@ void PuzzleResult::InitSkills()
     int numOfList = myGameResult->skillNum.size();
     CCLayer* container = CCLayer::create();
     
-    char name[20], name2[20];
+    char name[30], name2[30];
     int width = 0;
     for (int i = 0 ; i < numOfList ; i++)
     {
         sprintf(name, "skill_%d.png", myGameResult->skillNum[i]);
         spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(width, 0), CCSize(0,0), "", "Layer", container, 1007, 0, 0, i+10000) );
-        //((CCSprite*)spriteClassSkill->FindSpriteByName(name))->setOpacity(0);
         
         sprintf(name2, "X %d", myGameResult->skillCnt[i]);
         spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[0], 32, ccp(0.5, 0.5), ccp(width+146/2-15, 15), ccc3(255,255,255), "", "Layer", container, 1007, 0, 0, i+20000) );
+        
+        width = width + ((CCSprite*)spriteClassSkill->FindSpriteByName(name))->getContentSize().width - 20;
+    }
+    
+    // 요정으로 인한 추가점수가 있을 시 추가
+    if (myGameResult->isAddedScoreByFairy == 1)
+    {
+        if (myInfo->GetActiveFairyId() == 4) sprintf(name, "icon/icon_fairyslot_bear.png");
+        else if (myInfo->GetActiveFairyId() == 8) sprintf(name, "icon/icon_fairyslot_dragon.png");
+        else if (myInfo->GetActiveFairyId() == 9) sprintf(name, "icon/icon_fairyslot_sheep.png");
+        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, name, ccp(0, 0), ccp(width, 0), CCSize(0,0), "", "Layer", container, 1007, 0, 0, numOfList+10000) );
+        ((CCSprite*)spriteClassSkill->FindSpriteByName(name))->setScale(123.0f/140.0f);
+        
+        int addScorePercent = 0;
+        if (myInfo->GetActiveFairyId() == 4 || myInfo->GetActiveFairyId() == 8) // 고민형, 그래용 : 추가점수 5%
+            addScorePercent = 5;
+        else if (myInfo->GetActiveFairyId() == 9) // 놀꺼양 : 추가점수 10%
+            addScorePercent = 10;
+        sprintf(name2, "+%d%%", addScorePercent);
+        spriteClassSkill->spriteObj.push_back( SpriteObject::CreateLabel(name2, fontList[0], 32, ccp(0.5, 0.5), ccp(width+146/2-15, 15), ccc3(255,255,255), "", "Layer", container, 1007, 0, 0, numOfList+20000) );
         
         width = width + ((CCSprite*)spriteClassSkill->FindSpriteByName(name))->getContentSize().width - 20;
     }
@@ -413,86 +448,106 @@ void PuzzleResult::InitSkills()
     this->addChild(scrollView, 1006);
 
     skillIdx = 0;
-    this->schedule(schedule_selector(PuzzleResult::SkillTimer), 0.33f);
+    this->schedule(schedule_selector(PuzzleResult::SkillTimer), 0.15f);
 }
 
-void PuzzleResult::SkillTimer(float f)
+void PuzzleResult::ShowItemEarnedPopup(CCNode* sender, void* ptr)
 {
-    /*
-    char number[30];
-    sprintf(number, "skill_%d.png", test[ppp]);
-    CCActionInterval* action = CCSequence::create(CCJumpBy::create(1.5f, ccp(-(350+50), 0), 80, 3), CCCallFuncND::create(this, callfuncND_selector(PuzzleResult::Callback), NULL), NULL);
-    ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->runAction(action);
-    
-    ppp++;
-    */
-    //CCLog("%d %d", skillIdx, (int)myGameResult->skillNum.size());
+    PuzzleResult* pr = (PuzzleResult*)ptr;
+
+    std::vector<int> data;
+    data.push_back(myGameResult->earnItemId); // 아이템 번호 (1~4)
+    data.push_back(myGameResult->earnItemVal); // 아이템 개수
+    Common::ShowPopup(pr, "PuzzleResult", "NoImage", false, ITEM_EARNED, BTN_1, data);
+}
+
+
+
+void PuzzleResult::SkillTimer(float f) // 0.15초 * 스킬개수
+{
     if (skillIdx < myGameResult->skillNum.size())
     {
         if (skillIdx == 3) // 4개째 만들어질 때 스크롤링 시작
         {
-            //CCLog("min offset = %d", (int)scrollView->minContainerOffset().x);
-            float d = (float)abs((int)scrollView->minContainerOffset().x) / (float)146 / 2;
-            //CCLog("time = %f", d);
-            scrollView->setContentOffsetInDuration(ccp(scrollView->minContainerOffset().x, 0), d);
+            //float d = (float)abs((int)scrollView->minContainerOffset().x) / (float)146 / 2;
+            float d = ((int)myGameResult->skillNum.size()-4) * 0.15f;
+            float offset = 0;
+            if (myGameResult->isAddedScoreByFairy == 1)
+                offset = 120.0f;
+            scrollView->setContentOffsetInDuration(ccp(scrollView->minContainerOffset().x+offset, 0), d);
         }
-        CCActionInterval* action = CCFadeIn::create(0.33f);
+        CCActionInterval* action = CCFadeIn::create(0.15f);
         ((CCSprite*)spriteClassSkill->FindSpriteByTag(skillIdx+10000))->runAction(action);
         ((CCLabelTTF*)spriteClassSkill->FindLabelByTag(skillIdx+20000))->runAction((CCActionInterval*)action->copy());
-        //spriteClassSkill->spriteObj[skillIdx]->sprite->runAction(action);
         skillIdx++;
     }
     else
     {
         this->unschedule(schedule_selector(PuzzleResult::SkillTimer));
+        
+        // 요정으로 인한 추가점수가 있을 시 추가
+        if (myGameResult->isAddedScoreByFairy == 1)
+        {
+            float delay = std::max(0.5f, 1.5f - skillIdx*0.15f);
+            this->schedule(schedule_selector(PuzzleResult::SkillTimer_Fairy), 0.0f, 1, delay);
+        }
     }
 }
-
-
-/*
-int test[10] = {11,21,31,15,25,35,23,33,27,28};
-int ppp;
-void PuzzleResult::InitSkills()
+void PuzzleResult::SkillTimer_Fairy(float f)
 {
-    char number[50];
-    l = CCLayer::create();
-    ppp = 0;
-    int k;
-    for (int i = 0 ; i < 10 ; i++)
+    this->unschedule(schedule_selector(PuzzleResult::SkillTimer_Fairy));
+    
+    // 요정 슬롯 보이게 마저 스크롤뷰 움직인다.
+    if ((int)myGameResult->skillNum.size() >= 3)
+        scrollView->setContentOffsetInDuration(ccp(scrollView->minContainerOffset().x, 0), 0.15f);
+    
+    CCActionInterval* action = CCFadeIn::create(0.15f);
+    ((CCSprite*)spriteClassSkill->FindSpriteByTag(skillIdx+10000))->runAction(CCSequence::create(action, CCDelayTime::create(0.35f), CCCallFunc::create(this, callfunc_selector(PuzzleResult::PlayScoreSound)), NULL));
+    
+    ((CCLabelTTF*)spriteClassSkill->FindLabelByTag(skillIdx+20000))->runAction((CCActionInterval*)action->copy());
+    
+    this->schedule(schedule_selector(PuzzleResult::ScoreTimer_Fairy), 0.05f, 20, 0.5f);
+}
+void PuzzleResult::PlayScoreSound()
+{
+    sound->PlayGameResultScore();
+}
+void PuzzleResult::ScoreTimer_Fairy(float f)
+{
+    varScore += (myGameResult->addedScore / 20);
+    varScoreBasic += (myGameResult->addedScore / 20);
+    if (varScore > myGameResult->totalScore)
     {
-        sprintf(number, "skill_%d.png", test[i]);
-        k = (i % 2 == 0) ? 0 : 0;
-        spriteClassSkill->spriteObj.push_back( SpriteObject::Create(0, number, ccp(0, 0), ccp(140+430+20+350+50+30*i, 810+k), CCSize(350, 150), "", "Layer", l, 1006) );
-        ((CCSprite*)spriteClassSkill->FindSpriteByName(number))->setScale(0.6f);
+        this->unschedule(schedule_selector(PuzzleResult::ScoreTimer_Fairy));
+        varScore = myGameResult->totalScore;
+        varScoreBasic = myGameResult->score + myGameResult->addedScore;
+        sound->StopGameResult();
     }
-    for (int i = 0 ; i < spriteClassSkill->spriteObj.size() ; i++)
-        spriteClassSkill->AddChild(i);
     
-    timerStencil = CCDrawNode::create();
-    CCPoint ver[] = { ccp(590, 800), ccp(590, 800+150), ccp(590+350, 800+150), ccp(590+350, 800) };
-    timerStencil->drawPolygon(ver, 4, ccc4f(0,0,0,255), 0, ccc4f(0,0,0,255));
-    timerClip = CCClippingNode::create(timerStencil);
-    timerClip->addChild(l);
-    this->addChild(timerClip, 1010);
+    // 총합 점수 부분
+    pScoreLayer->removeAllChildren();
+    pScoreLayer->removeFromParentAndCleanup(true);
+    char number[50];
+    sprintf(number, "%d", varScore);
+    pScoreLayer = Common::MakeImageNumberLayer(number, 2);
+    pScoreLayer->setAnchorPoint(ccp(0, 0));
+    pScoreLayer->setPosition(ccp(m_winSize.width/2 - pScoreLayer->getContentSize().width/2, 1230+50));
+    this->addChild(pScoreLayer, 1005);
     
-    this->schedule(schedule_selector(PuzzleResult::SkillTimer), 0.2f, 9, 0);
+    // 기본 점수 부분
+    sprintf(number, "%s", Common::MakeComma(varScoreBasic).c_str());
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(-100))->setString(number);
+    ((CCLabelTTF*)spriteClass->FindLabelByTag(-101))->setString(number);
 }
-void PuzzleResult::Callback(CCNode* sender, void* p)
-{
-    CCActionInterval* action = CCSequence::create(CCMoveBy::create(0.5f, ccp(0, 50)), CCMoveBy::create(0.5f, ccp(0, -50)), NULL);
-    CCActionInterval* rep = CCRepeatForever::create(action);
-    sender->runAction(rep);
-}
-*/
 
 void PuzzleResult::ScoreTimer(float f)
 {
-    varScore += (myGameResult->totalScore / 20);
-    if (varScore > myGameResult->totalScore)
+    varScore += ((myGameResult->totalScore - myGameResult->addedScore) / 20);
+    if (varScore > (myGameResult->totalScore - myGameResult->addedScore))
     {
         this->unschedule(schedule_selector(PuzzleResult::ScoreTimer));
-        varScore = myGameResult->totalScore;
-        ((Puzzle*)Depth::GetParentPointer())->GetSound()->StopGameResult();
+        varScore = myGameResult->totalScore - myGameResult->addedScore;
+        sound->StopGameResult();
     }
     
     pScoreLayer->removeAllChildren();
@@ -617,8 +672,9 @@ void PuzzleResult::EndSceneCallback(CCNode* sender, void* pointer)
     PuzzleResult* pThis = (PuzzleResult*)pointer;
     
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game_result.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game_result.png");
+    Common::RemoveSpriteFramesWithFile("game_result");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/game_result.plist");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/game_result.png");
     
     // remove this notification
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, Depth::GetCurName());

@@ -194,9 +194,6 @@ void Sound::PreLoadInGameSound()
     engine->preloadEffect(ext("sounds/voice", "bonus").c_str());
     engine->preloadEffect(ext("sounds/voice", "stoptime").c_str());
     engine->preloadEffect(ext("sounds/voice", "missionsuccess").c_str());
-    //engine->preloadEffect(ext("sounds/voice", "eit").c_str());
-    //engine->preloadEffect(ext("sounds/voice", "eit2").c_str());
-    //engine->preloadEffect(ext("sounds/voice", "eit3").c_str());
     engine->preloadEffect(ext("sounds/voice", "cocotime").c_str());
     
     engine->preloadEffect(ext("sounds/clock").c_str());
@@ -312,7 +309,8 @@ void Sound::PlayClock()
 }
 void Sound::StopClock()
 {
-    engine->stopAllEffects();
+    engine->stopEffect(nClockSoundId);
+    //engine->stopAllEffects();
 }
 
 void Sound::PlaySkillSound(int skillNum)

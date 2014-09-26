@@ -291,7 +291,13 @@ void GameReady::ShowRewardPopup()
                         }
                     }
                     
-                    if (!flag && myInfo->GetMPTotal() >= fairyInfo[i]->GetRefVal())
+                    // 지팡이 레벨 or 총 MP로 요구조건 검사
+                    bool required = false;
+                    if (fairyInfo[i]->GetRefVal() < 10 && myInfo->GetStaffLv() >= fairyInfo[i]->GetRefVal())
+                        required = true;
+                    else if (fairyInfo[i]->GetRefVal() >= 10 && myInfo->GetMPTotal() >= fairyInfo[i]->GetRefVal())
+                        required = true;
+                    if (!flag && required)
                     {
                         char name[30];
                         sprintf(name, "buyingFairy_%d", fairyInfo[i]->GetId());
@@ -311,6 +317,8 @@ void GameReady::ShowRewardPopup()
         }
         else if (popupStatus == 3) // 현재 연습중인 스킬이 max exp일 경우 팝업창
         {
+            // !@# : 연습중 스킬이 없을 경우 확실하게 ms가 NULL인가? // 아니면 오류 생김
+            
             MySkill* ms = MySkill::GetObj(myInfo->GetPracticeSkillId());
             if (!doNotShowExpPopup)
             {
@@ -380,6 +388,8 @@ void GameReady::RenewInfo()
     // 부스터 아이템을 사용할 수 없는 경우 (연습중 스킬 없음 or 강화에 필요한 연습량이 1 남았을 때)
     ((CCSprite*)spriteClass->FindSpriteByTag(-3334*(4+1)))->setColor(ccc3(255,255,255));
     ((CCSprite*)spriteClass->FindSpriteByTag(-3333*(4+1)))->setColor(ccc3(255,255,255));
+    
+    // 역시 psid가 NULL일 경우 (즉, 연습중 스킬 없음), 바로 밑 if문에서 문제가 될 수 있다.
     int psid = myInfo->GetPracticeSkillId();
     int plv = myInfo->GetPracticeSkillLv();
     if (psid <= 0 || SkillBuildUpInfo::GetMaxExp(psid, plv) - MySkill::GetObj(psid)->GetExp() <= 1)
@@ -684,7 +694,7 @@ void GameReady::ShowHintOfBuyingSlot()
     }
     if (myInfo->GetSlot().size() == 1 && flag)
     {
-        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
         balloon->setContentSize(CCSize(600, 180));
         balloon->setAnchorPoint(ccp(1, 0));
         balloon->setPosition(ccp(896+100, 572+55));
@@ -713,7 +723,7 @@ void GameReady::ShowHintOfMP()
     balloon2 = NULL;
     ball2 = NULL;
     
-    balloon2 = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon2 = CCScale9Sprite::create("images/tutorial/tutorial_balloon3.png");
     balloon2->setContentSize(CCSize(600, 200));
     balloon2->setAnchorPoint(ccp(1, 1));
     balloon2->setPosition(ccp(765+200, 1666+35));
@@ -775,34 +785,13 @@ void GameReady::InitFairy()
     
     int fid = myInfo->GetActiveFairyId();
     int flv = myInfo->GetActiveFairyLevel();
-    //CCLog("fid flv : %d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
-    // 요정 그림
+    // 요정 그림 (position, scale 배치)
     CCLayer* picture = Fairy::GetFairy(fid);
-    picture->setAnchorPoint(ccp(0, 0));
-    switch (fid)
-    {
-        case 1:
-            picture->setPosition(ccp(309/2+10, 236/2+23));
-            picture->setScale(0.63f);
-            break;
-        case 2:
-            picture->setPosition(ccp(309/2, 236/2+15));
-            picture->setScale(0.7f);
-            break;
-        case 3:
-            picture->setPosition(ccp(309/2, 236/2+23));
-            picture->setScale(0.8f);
-            break;
-        default:
-            picture->setPosition(ccp(309/2, 236/2+23));
-            picture->setScale(0.9f);
-            break;
-    }
- 
-    picture->setTag(99999);
+    FairyInfo::SetInSmallArea(picture, fid);
     fairyLayer->addChild(picture, 5);
+    picture->setTag(99999);
     
     // 요정 등급
     char fname[30];
@@ -835,7 +824,7 @@ void GameReady::InitFairy()
     spriteClassFairy->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 6) );
     
     if (fid > 0)
-        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false).c_str());
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false, fid).c_str());
     else
         sprintf(fname, "요정 없음");
     spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 6) );

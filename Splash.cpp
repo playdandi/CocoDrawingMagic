@@ -18,6 +18,7 @@ static bool isFriendListChecked;
 static bool isJoinNeeded;
 static std::string fKakaoId;
 
+static int resourcedownloadtime;
 
 Splash::~Splash(void)
 {
@@ -201,14 +202,17 @@ bool Splash::init()
     // notification observer
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Splash::Notification), "Splash", NULL);
     
+    // 기본적으로 필요한 이미지 리소스
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
+    
     winSize = CCDirector::sharedDirector()->getWinSize();
     vs = CCDirector::sharedDirector()->getVisibleSize();
     vo = CCDirector::sharedDirector()->getVisibleOrigin();
-    float logo_h = vs.height / (6.7f) * 3.0f;
-    float size_h = vs.height / 6.7f;
     
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-    m_pBackground = CCSprite::create("images/kakao/splash_logo.png");
+    float logo_h = vs.height / (6.7f) * 3.0f;
+    float size_h = vs.height / 6.7f;
+    m_pBackground = CCSprite::create("images/splash/kakao/splash_logo.png");
     m_pBackground->setAnchorPoint(ccp(0.5, 0));
     m_pBackground->setPosition(ccp(winSize.width/2, vo.y+logo_h));
     float origin_h = m_pBackground->getContentSize().height;
@@ -220,10 +224,10 @@ bool Splash::init()
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     this->setOpacity(255);
     this->setColor(ccc3(255,255,255));
-    m_pBackground = CCSprite::create("images/logo_playdandi_text.png");
+    m_pBackground = CCSprite::create("images/splash/logo_playdandi_text.png");
     m_pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
     this->addChild(m_pBackground, 0);
-    m_pBackground2 = CCSprite::create("images/logo_playdandi_copyright.png");
+    m_pBackground2 = CCSprite::create("images/splash/logo_playdandi_copyright.png");
     m_pBackground2->setAnchorPoint(ccp(0.5, 0));
     m_pBackground2->setPosition(ccp(winSize.width/2, vo.y+50));
     this->addChild(m_pBackground2, 0);
@@ -279,7 +283,7 @@ void Splash::Notification(CCObject* obj)
         // 게스트로그인 확인 버튼 누른 직후
         
         isGuestLogin = true;
-        CCLog("guest kakao id = %s", CCUserDefault::sharedUserDefault()->getStringForKey("guest_kakao_id", "").c_str());
+        //CCLog("guest kakao id = %s", CCUserDefault::sharedUserDefault()->getStringForKey("guest_kakao_id", "").c_str());
         
         if (CCUserDefault::sharedUserDefault()->getStringForKey("guest_kakao_id", "") == "")
             isJoinNeeded = true;
@@ -315,10 +319,10 @@ void Splash::Callback_Logo_KakaoGame(CCNode* sender, void* p)
     sender = NULL;
     
     this->setColor(ccc3(255,255,255));
-    m_pBackground = CCSprite::create("images/logo_playdandi_text.png");
+    m_pBackground = CCSprite::create("images/splash/logo_playdandi_text.png");
     m_pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
     this->addChild(m_pBackground, 0);
-    m_pBackground2 = CCSprite::create("images/logo_playdandi_copyright.png");
+    m_pBackground2 = CCSprite::create("images/splash/logo_playdandi_copyright.png");
     m_pBackground2->setAnchorPoint(ccp(0.5, 0));
     m_pBackground2->setPosition(ccp(winSize.width/2, vo.y+50));
     this->addChild(m_pBackground2, 0);
@@ -333,32 +337,15 @@ void Splash::Callback_Logo_playDANDi(CCNode* sender, void* p)
     sender = NULL;
     m_pBackground2->removeFromParentAndCleanup(true);
     this->setColor(ccc3(0,0,0));
-
-    /*
-    CCHttpRequest* req = new CCHttpRequest();
-    req->setUrl("http://14.63.212.106/cogma/temp/temp.zip");
-    req->setRequestType(CCHttpRequest::kHttpPost);
-    req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
-    req->setTag("1231234");
-    CCHttpClient::getInstance()->send(req);
-    req->release();
-    */
-    /*
-     Common::AddSpriteFramesWithFile("texture_1.plist", "texture_1.png");
-     Common::AddSpriteFramesWithFile("texture_2.plist", "texture_2.png");
-     Common::AddSpriteFramesWithFile("skill.plist", "skill.png");
-     */
-    
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_1.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/texture_2.plist");
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/skill.plist");
     
     // 배경 액션
-    m_pBackground = CCSprite::create("images/main_background.png", CCRectMake(0, 0, 1080, 1920));
+    CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA4444);
+    m_pBackground = CCSprite::create("images/splash/main_background.png", CCRectMake(0, 0, 1080, 1920));
     m_pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));
     m_pBackground->setScale(1.2f);
     m_pBackground->setOpacity(0);
     this->addChild(m_pBackground, 0);
+    CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA8888);
     
     CCActionInterval* action = CCSequence::create(CCFadeIn::create(1.0f),CCCallFunc::create(this, callfunc_selector(Splash::LogoLoadingCompleted)), NULL);
     m_pBackground->runAction(action);
@@ -367,11 +354,11 @@ void Splash::Callback_Logo_playDANDi(CCNode* sender, void* p)
 void Splash::LogoLoadingCompleted()
 {
     // logo
-    m_pTitle = CCSprite::createWithSpriteFrameName("background/Title.png");
+    m_pTitle = CCSprite::create("images/splash/Title.png"); //CCSprite::createWithSpriteFrameName("background/Title.png");
     m_pTitle->setPosition(ccp(winSize.width/2, 1350+1000));
     this->addChild(m_pTitle, 5);
 
-    m_pForKakao = CCSprite::createWithSpriteFrameName("letter/letter_forkakao.png");
+    m_pForKakao = CCSprite::create("images/splash/letter_forkakao.png"); //CCSprite::createWithSpriteFrameName("letter/letter_forkakao.png");
     m_pForKakao->setAnchorPoint(ccp(0, 1));
     m_pForKakao->setScale(0.8f);
     m_pForKakao->setPosition(ccp(winSize.width/2+20, 130));
@@ -432,19 +419,19 @@ void Splash::ShowClause()
     isChecked1 = isChecked2 = false;
     int ofs = 185;
     
-    term1 = CCSprite::create("images/term_private.png");
+    term1 = CCSprite::create("images/splash/term_private.png");
     term1->setAnchorPoint(ccp(0, 0));
     term1->setPosition(ccp(100+ofs, 191+50+50));
     term1->setScale(0.9f);
     this->addChild(term1, 10);
     
-    term2 = CCSprite::create("images/term_service.png");
+    term2 = CCSprite::create("images/splash/term_service.png");
     term2->setAnchorPoint(ccp(0, 0));
     term2->setScale(0.9f);
     term2->setPosition(ccp(100+ofs, 191+50+150));
     this->addChild(term2, 10);
     
-    agreeBtn1 = CCSprite::createWithSpriteFrameName("button/btn_clause_agree2.png");
+    agreeBtn1 = CCSprite::create("images/splash/btn_clause_agree.png");
     agreeBtn1->setAnchorPoint(ccp(1, 0));
     agreeBtn1->setScale( 80 / agreeBtn1->getContentSize().width );
     agreeBtn1->setContentSize(CCSize(80, 80));
@@ -452,7 +439,7 @@ void Splash::ShowClause()
     agreeBtn1->setPosition(ccp(90+ofs, 191+50+50-15));
     this->addChild(agreeBtn1, 10);
     
-    agreeBtn2 = CCSprite::createWithSpriteFrameName("button/btn_clause_agree2.png");
+    agreeBtn2 = CCSprite::create("images/splash/btn_clause_agree.png");
     agreeBtn2->setAnchorPoint(ccp(1, 0));
     agreeBtn2->setScale( 80 / agreeBtn2->getContentSize().width );
     agreeBtn2->setContentSize(CCSize(80, 80));
@@ -460,12 +447,12 @@ void Splash::ShowClause()
     agreeBtn2->setPosition(ccp(90+ofs, 191+50+150-15));
     this->addChild(agreeBtn2, 10);
     
-    check1 = CCSprite::createWithSpriteFrameName("icon/icon_check.png");
+    check1 = CCSprite::create("images/splash/icon_check.png");
     check1->setPosition(ccp(90-agreeBtn1->getContentSize().width/2+ofs-30, 191+50+50+20));
     check1->setOpacity(0);
     this->addChild(check1, 11);
     
-    check2 = CCSprite::createWithSpriteFrameName("icon/icon_check.png");
+    check2 = CCSprite::create("images/splash/icon_check.png");
     check2->setPosition(ccp(90-agreeBtn2->getContentSize().width/2+ofs-30, 191+50+150+20));
     check2->setOpacity(0);
     this->addChild(check2, 11);
@@ -475,7 +462,7 @@ void Splash::ShowClause()
 
 void Splash::ShowKakaoBtn()
 {
-    m_pKakaoBtn = CCSprite::create("images/kakao/kakao_login.png");
+    m_pKakaoBtn = CCSprite::create("images/splash/kakao/kakao_login.png");
     m_pKakaoBtn->setPosition(ccp(winSize.width/2, 191+50));
     m_pKakaoBtn->setScale(4.0f/3.0f);
     this->addChild(m_pKakaoBtn, 3);
@@ -684,14 +671,14 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
     {
         // 버전 정보를 받는다.
         gameVersion = nodeResult.child("game-version").text().as_int();
-        std::string balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
+        balanceFileUrl = nodeResult.child("balance-file-url").text().as_string();
         //int binaryVersion = nodeResult.child("binary-version").text().as_int();
         //CCLog("게임 버전 = %d", gameVersion);
         
         // 마켓 버전
         int binaryVersion_latest;
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         int binaryVersion_android = nodeResult.child("market-version").child("android").text().as_int();
         binaryVersion_latest = binaryVersion_android;
         
@@ -704,9 +691,9 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
             binaryVersion_current = (jint)t.env->CallStaticObjectMethod(t.classID,t.methodID);
             t.env->DeleteLocalRef(t.classID);
         }
-        #endif
+#endif
         
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
         int binaryVersion_ios = nodeResult.child("market-version").child("ios").text().as_int();
         binaryVersion_latest = binaryVersion_ios;
         
@@ -717,14 +704,15 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         ver = ver.substr(ver.find(".")+1);
         int c = atoi( ver.c_str() );
         binaryVersion_current = a*1000 + b*100 + c;
+#endif
         
-        //binaryVersion_current = binaryVersion_latest; // 임시 설정
-
-        // 아래 두 줄은 iOS 개발되면 삭제해야 함. (임시로 해 놓은 것임)
-        //binaryVersion_latest = binaryVersion_android;
-        //binaryVersion_current = binaryVersion_android;
-        #endif
-
+        CCLog("binary = %d , %d", binaryVersion_current, binaryVersion_latest);
+        CCLog("game = %d , %d", gameVersion, iGameVersion);
+        
+        // rsa 만들기 (초기 1회만 만들면 됨)
+        rsa = createRSA((unsigned char*)(basicKey.c_str()), 1);
+        
+        
         // 안드로이드 설정에 따라 자동업데이트를 한 경우, 앱 버전이 서버설정 버전보다 클 수도 있다.
         // 따라서 앱 버전이 서버설정 버전보다 작을 때 업데이트를 하도록 유도하자.
         if (binaryVersion_current < binaryVersion_latest)
@@ -736,13 +724,13 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
         
         if (gameVersion != iGameVersion)
         {
-            // 밸런스 파일 업데이트 !
+            // 리소스 파일 정보 가져오기
             m_pMsgLabel->setString("못생긴 리소스 설득 중...");
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl(balanceFileUrl.c_str());
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
-            req->setTag("9999999");
+            req->setTag("9999998");
             CCHttpClient::getInstance()->send(req);
             req->release();
         }
@@ -760,8 +748,17 @@ void Splash::XmlParseVersion(xml_document *xmlDoc)
 
 void Splash::TryLogin()
 {
-    // rsa 만들기 (초기 1회만 만들면 됨)
-    rsa = createRSA((unsigned char*)(basicKey.c_str()), 1);
+    //CCLog("리소스 다운로드 시간 : %ld", time(0) - resourcedownloadtime);
+    
+    // UserDefault에 바뀐 gameVersion 저장.
+    iGameVersion = gameVersion;
+    CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", iGameVersion);
+    
+    
+    // 필요한 이미지 리소스 미리 로드
+    Common::AddSpriteFramesWithFile("texture_1");
+    Common::AddSpriteFramesWithFile("texture_2");
+    Common::AddSpriteFramesWithFile("skill");
     
     // 회원가입이 필요한 경우
     if (isJoinNeeded)
@@ -822,7 +819,8 @@ void Splash::TryLogin()
         // required parameter values
         char temp[255];
         std::string param = "";
-        sprintf(temp, "game_version=%d&", iGameVersion);
+        //sprintf(temp, "game_version=%d&", iGameVersion);
+        sprintf(temp, "game_version=1061&");
         param += temp;
         
         // 카카오톡을 탈퇴한 경우 => 닉네임/프로필을 공란으로 만든다.
@@ -869,7 +867,9 @@ void Splash::TryLogin()
 
 void Splash::XMLParseGameData()
 {
-    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
+    std::string pdiurl = CCUserDefault::sharedUserDefault()->getStringForKey("pdiUrl");
+    Network::replaceAll(pdiurl, "/", "@");
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + pdiurl;
     //CCLog("filepath = %s", filepath.c_str());
     
     // read file
@@ -910,8 +910,8 @@ void Splash::XMLParseGameData()
     int count, price, price_KRW, price_USD, bonus;
     int level, bonusMPPercent, bonusMPPlus, cost_starcandy, cost_topaz;
     int costType, cost;
-    int category, type, value1, value2;
-    int grade, pid;
+    int category, type;
+    int grade;
     int ability, refId, ability2;
     std::string skillName;
     int maxLevel, mp, staffLv, skillId, skillLv, isActive;
@@ -1156,7 +1156,9 @@ void Splash::XMLParseGameData()
 
 void Splash::WriteResFile(char* data, int size)
 {
-    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "gamedata.xml";
+    std::string pdiurl = CCUserDefault::sharedUserDefault()->getStringForKey("pdiUrl");
+    Network::replaceAll(pdiurl, "/", "@");
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + pdiurl;
     //CCLog("filepath = %s", filepath.c_str());
     
     FILE* ptr_fp;
@@ -1172,18 +1174,15 @@ void Splash::WriteResFile(char* data, int size)
         exit(1);
     }
     fclose(ptr_fp);
-    
-    // UserDefault에 바뀐 gameVersion 저장.
-    iGameVersion = gameVersion;
-    CCUserDefault::sharedUserDefault()->setIntegerForKey("gameVersion", iGameVersion);
-    
-    // 새 리소스 XML parsing
-    m_pMsgLabel->setString("못생긴 리소스 배치 중...");
-    XMLParseGameData();
 }
+
 void Splash::WriteResFileTexture(char* data, int size)
 {
-    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "skill.png";
+    std::string rfn = resourceFilename[numOfDownloadedFiles];
+    rfn = rfn.substr(rfn.find("/")+1);
+    Network::replaceAll(rfn, "/", "@");
+    
+    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + rfn;
     CCLog("filepath = %s", filepath.c_str());
     
     FILE* ptr_fp;
@@ -1193,10 +1192,9 @@ void Splash::WriteResFileTexture(char* data, int size)
         exit(1);
     }
     
-    //size_t realSize = strlen(data);
     size_t realSize = size;
     size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
-    CCLog("%d %d", (int)realSize, (int)fwriteSize);
+    //CCLog("%d %d", (int)realSize, (int)fwriteSize);
     if (fwriteSize != realSize)
     {
         CCLog("FILE WRITE ERROR !");
@@ -1204,29 +1202,7 @@ void Splash::WriteResFileTexture(char* data, int size)
     }
     fclose(ptr_fp);
 }
-void Splash::WriteResFileZip(char* data, int size)
-{
-    std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "1.zip";
-    CCLog("filepath = %s", filepath.c_str());
-    
-    FILE* ptr_fp;
-    if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
-    {
-        CCLog("FILE OPEN ERROR !");
-        exit(1);
-    }
-    size_t realSize = size;
-    size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
-    CCLog("%d %d", (int)realSize, (int)fwriteSize);
-    if (fwriteSize != realSize)
-    {
-        CCLog("FILE WRITE ERROR !");
-        exit(1);
-    }
-    fclose(ptr_fp);
-    
-    UncompressZip("1.zip");
-}
+
 
 void Splash::XmlParseLogin(xml_document *xmlDoc)
 {
@@ -1265,6 +1241,8 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         int userId = nodeResult.child("userID").text().as_int();
         int msgCnt = nodeResult.child("message").attribute("count").as_int();
         
+        bool couponViewFlag = (nodeResult.child("ios-coupon-view").text().as_int() == 1) ? true : false;
+        
         int todayFirst = nodeResult.child("today-first").text().as_int();
         if (todayFirst == 1)
         {
@@ -1284,7 +1262,7 @@ void Splash::XmlParseLogin(xml_document *xmlDoc)
         if (isGuestLogin)
             myKakaoId = CCUserDefault::sharedUserDefault()->getStringForKey("guest_kakao_id", "");
         myInfo = new MyInfo();
-        myInfo->Init(myKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId, todayFirst);
+        myInfo->Init(myKakaoId, mDeviceType, userId, kakaoMsg, pushNoti, potionMsg, msgCnt, sessionId, todayFirst, couponViewFlag);
         
         // get GCM key
         gcmKey = nodeResult.child("gcm-key").text().as_string();
@@ -1933,7 +1911,7 @@ void Splash::XmlParseServerCheck(void* data, int size)
             // 게임 버전 체크
             m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
             CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl(URL_VERSION);
+            req->setUrl(URL_VERSION_UPDATE);
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
             CCHttpClient::getInstance()->send(req);
@@ -1992,17 +1970,17 @@ void Splash::onHttpRequestCompleted(CCNode *sender, void *data)
 void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
 {
     CCHttpResponse* res = (CCHttpResponse*) data;
-    char dumpData[300000];
+    char* dumpData;
+    
+    //CCLog("status code = %d", res->getResponseCode());
     
     // mt.php (제일 처음) 호출 결과
     if (atoi(res->getHttpRequest()->getTag()) == 8888888)
     {
         // dump data
         std::vector<char> *buffer = res->getResponseData();
-        for (unsigned int i = 0 ; i < buffer->size() ; i++)
-            dumpData[i] = (*buffer)[i];
-        dumpData[buffer->size()] = NULL;
-        
+        dumpData = reinterpret_cast<char*>(buffer->data());
+
         XmlParseServerCheck(dumpData, (int)buffer->size());
         return;
     }
@@ -2010,9 +1988,8 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     // 프로필 사진 or resource.xml 받아올 때
     if (!res || !res->isSucceed())
     {
-        if ( !(atoi(res->getHttpRequest()->getTag()) == 9999999) )
+        if ( !(atoi(res->getHttpRequest()->getTag()) == 9999998) && !(atoi(res->getHttpRequest()->getTag()) == 9999999) )
         {
-            //CCLog("프로필 사진 로드 실패...");
             profileCnt--;
             if (profileCnt <= 0)
             {
@@ -2034,37 +2011,119 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
                 LastActionStart();
                 #endif
             }
+            return;
         }
-        return;
+        else if (atoi(res->getHttpRequest()->getTag()) == 9999998 || atoi(res->getHttpRequest()->getTag()) == 9999999)
+            return;
     }
     
     // dump data
     std::vector<char> *buffer = res->getResponseData();
-    for (unsigned int i = 0 ; i < buffer->size() ; i++)
-        dumpData[i] = (*buffer)[i];
-    dumpData[buffer->size()] = NULL;
+    dumpData = reinterpret_cast<char*>(buffer->data());
     
-    // gameVersion 변경으로 resource XML 파일 받았을 경우
-    if (atoi(res->getHttpRequest()->getTag()) == 9999999)
+    
+    // update_list.xml 파일 받았을 경우
+    if (atoi(res->getHttpRequest()->getTag()) == 9999998)
+    {
+        // 리소스 파일 정보 분석
+        XmlParseResourceList(dumpData, (int)buffer->size());
+    }
+    
+    // 일반 리소스 파일 받았을 경우
+    else if (atoi(res->getHttpRequest()->getTag()) == 1231234)
+    {
+        // md5 hash 검사
+        unsigned char md5_res[16];
+        MD5_Init(&md5);
+        MD5_Update(&md5, dumpData, (int)buffer->size());
+        MD5_Final(md5_res, &md5);
+        
+        //int md5_size = strlen((char*)md5_res);
+        //std::string encodedMD5 = Common::base64_encode(md5_res, md5_size);
+        //CCLog("encoded (%d) = %s", (int)encodedMD5.size(), encodedMD5.c_str());
+        CCLog("original size = %d", (int)buffer->size());
+        
+        char mdString[33];
+        for (int i = 0 ; i < 16 ; i++)
+            sprintf(&mdString[i*2], "%02x", (unsigned int)md5_res[i]);
+        CCLog("mdString = %s", mdString);
+        
+        //std::string encoded = Network::Encrypt_a(dumpData, (int)buffer->size());
+        //CCLog("encoded length = %d", (int)encoded.size());
+        //CCLog("ENCODED = %s", encoded.c_str());
+        
+        
+        if (!res || !res->isSucceed())
+        {
+            // 리소스 파일 다시 다운로드
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl( res->getHttpRequest()->getUrl() );
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+            req->setTag("1231234");
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+            return;
+        }
+        
+        /*
+        // Print the MD5 sum as hex-digits.
+        void print_md5_sum(unsigned char* md) {
+            int i;
+            for(i = 0 ; i < MD5_DIGEST_LENGTH ; i++) {
+                printf("%02x",md[i]);
+            }
+        }
+        */
+        
+        // 리소스 파일 해석 및 배치
+        WriteResFileTexture(dumpData, (int)buffer->size());
+        
+        
+        // 그 다음 리소스 파일 다운로드
+        numOfDownloadedFiles++;
+        char text[50];
+        sprintf(text, "리소스 다운로드 중... (%d/%d)", numOfDownloadedFiles, numOfResourceFiles);
+        m_pMsgLabel->setString(text);
+        
+        if (numOfDownloadedFiles >= (int)resourceFilename.size())
+        {
+            if (pdiUrl != "") // 새로운 balance.pdi 다운로드
+            {
+                CCHttpRequest* req = new CCHttpRequest();
+                req->setUrl( (prevUrl+pdiUrl).c_str() );
+                req->setRequestType(CCHttpRequest::kHttpPost);
+                req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+                req->setTag("9999999");
+                CCHttpClient::getInstance()->send(req);
+                req->release();
+            }
+            else // balance.pdi를 새로 받을 필요가 없다면, 클라에 있던 기존 것으로 data parsing
+            {
+                // 리소스 XML parsing
+                m_pMsgLabel->setString("못생긴 리소스 배치 중...");
+                XMLParseGameData();
+                
+                TryLogin();
+            }
+        }
+        //StartDownloadImageResources();
+    }
+    
+    // balance.pdi 파일 받았을 경우
+    else if (atoi(res->getHttpRequest()->getTag()) == 9999999)
     {
         // 클라에 파일 저장 후, 해석한다.
         WriteResFile(dumpData, (int)buffer->size());
         
+        // 새 리소스 XML parsing
+        m_pMsgLabel->setString("못생긴 리소스 배치 중...");
+        XMLParseGameData();
+
         // 로그인 시도
         TryLogin();
-        
-        return;
     }
-    /*
-    else if (atoi(res->getHttpRequest()->getTag()) == 1231233)
-    {
-        WriteResFileTexture(dumpData, (int)buffer->size());
-    }
-    else if (atoi(res->getHttpRequest()->getTag()) == 1231234)
-    {
-        WriteResFileZip(dumpData, (int)buffer->size());
-    }
-    */
+    
     // 프로필 이미지 받아오기
     else
     {
@@ -2091,6 +2150,198 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
             #endif
         }
     }
+}
+
+int versionCompare(int a, int b)
+{
+    return a > b;
+}
+
+void Splash::XmlParseResourceList(char* data, int size)
+{
+    // 'update_list.xml' 파일을 해석한다.
+
+    //CCLog("%s", data);
+    /*
+    // base64_decode
+    std::string base64EncodedStr = "";
+    for (int i = 0 ; i < size ; i++)
+        base64EncodedStr.push_back(data[i]);
+    std::string obfuscatedStr = Common::base64_decode(base64EncodedStr);
+    
+    // deObfuscation
+    int obfKey = 36 - 10;
+    int keyLen = obfuscationKey[obfKey].size();
+    std::string decodedStr = "";
+    for (int i = 0 ; i < obfuscatedStr.size() ; i++) // xor operation
+        decodedStr += obfuscatedStr[i] ^ obfuscationKey[obfKey][i%keyLen];
+    */
+    //CCLog("%s", decodedStr.c_str());
+    
+    // xml parsing
+    xml_document xmlDoc;
+    xml_parse_result result = xmlDoc.load_buffer(data, size); //decodedStr.c_str(), (int)decodedStr.size());
+    
+    //base64EncodedStr.clear();
+    //decodedStr.clear();
+    
+    if (!result)
+    {
+        CCLog("error description: %s", result.description());
+        CCLog("error offset: %d", result.offset);
+        return;
+    }
+    
+    
+    // 기본 url 구하기
+    prevUrl = balanceFileUrl;
+    Network::replaceAll(prevUrl, "update_list.xml", "");
+    
+    // 받지 않은 모든 버전에 대해 리소스 순차 검사
+    std::string filename;
+    xml_named_node_iterator it;
+    xml_node nodeResult = xmlDoc.child("update-list");
+    
+    // xml 파일에 형성되어 있는 버전을 모두 뽑아내서 내림차순으로 정렬한다. (최신버전이 먼저 오도록)
+    std::vector<int> versions;
+    xml_node_iterator ite;
+    for (ite = nodeResult.begin() ; ite != nodeResult.end() ; ++ite)
+    {
+        std::string ver = ite->name();
+        int versionNumber = atoi( ver.substr(ver.find("v")+1).c_str() );
+        versions.push_back(versionNumber);
+    }
+    std::sort(versions.begin(), versions.end(), versionCompare);
+    
+    // 방식 : 최신버전 V부터 V-1, V-2, ..., K+1 (K는 이전까지의 최신버전) 순서대로 다운받아야 할 리소스 파일명을 검사한다. 중복되는 파일명은 제외한다.
+    char version[7];
+    for (int v = 0 ; v < (int)versions.size() ; v++)
+    {
+        if (versions[v] <= iGameVersion)
+            break;
+        
+        sprintf(version, "v%d", versions[v]);
+        xml_object_range<xml_named_node_iterator> its = nodeResult.child(version).children("file");
+        for (it = its.begin() ; it != its.end() ; ++it)
+        {
+            filename = it->text().as_string();
+            
+            // 이미 똑같은 파일명이 있으면 무시한다.
+            int i;
+            for (i = 0 ; i < (int)resourceFilename.size() ; i++)
+            {
+                if (resourceFilename[i].substr(resourceFilename[i].find("/")+1) == filename.substr(filename.find("/")+1))
+                    break;
+            }
+            if (i < (int)resourceFilename.size())
+                continue;
+
+            
+            if (filename.substr(filename.find(".")+1) == "pdi")// 가장 최근 balance.pdi의 주소를 저장한다.
+            {
+                if (pdiUrl == "")
+                {
+                    pdiUrl = filename;
+                    CCUserDefault::sharedUserDefault()->setStringForKey("pdiUrl", pdiUrl);
+                    //CCLog("pdi = %s", pdiUrl.c_str());
+                }
+            }
+            else
+            {
+                resourceFilename.push_back(filename);
+                //CCLog("filename = %s", filename.c_str());
+            }
+        }
+    }
+    numOfResourceFiles = (int)resourceFilename.size();
+    
+    // 각 이미지 리소스 + pdi 파일 다운로드
+    StartDownloadImageResources();
+}
+
+void Splash::StartDownloadImageResources() // 필요한 모든 이미지 리소스 다운받기
+{
+    // 1) balance.xml 파일에서 리스트를 모두 받아온다.
+    // 2) 클라에 파일이 정상적으로 존재하는지 검사한다. 비정상적인 파일의 개수를 센다.
+    // 3) 비정상적인 파일들을 일시에 다운로드 시작한다.
+    // 4) 완료된 파일은 압축을 풀어서 저장한다. (.zip)
+    // 5) 다운로드 완료 개수를 세고, 모두 완료되면 다음 상태인 TryLogin()으로 이동한다.
+    // * 만약 다운은 완료되었는데 그게 비정상적이라면? 어떻게 해야 하는가?
+    
+    char text[50];
+    sprintf(text, "리소스 다운로드 중... (%d/%d)", numOfDownloadedFiles, numOfResourceFiles);
+    m_pMsgLabel->setString(text);
+    
+    //resourcedownloadtime = time(0);
+    
+    for (int i = 0 ; i < (int)resourceFilename.size() ; i++)
+    {
+        // 각 리소스 파일 동시 다운로드 (balance.pdi 제외!)
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl( (prevUrl + resourceFilename[i]).c_str() );
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+        req->setTag("1231234");
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+    
+    // 새로운 리소스 이미지 파일을 받을 게 전혀 없는 경우 : 바로 balance.pdi 검사로 넘어감.
+    if ((int)resourceFilename.size() == 0)
+    {
+        for (int i = 0 ; i < (int)resourceFilename.size() ; i++)
+            resourceFilename[i].clear();
+        resourceFilename.clear();
+        
+        if (pdiUrl != "") // 새로운 balance.pdi 다운로드
+        {
+            CCHttpRequest* req = new CCHttpRequest();
+            req->setUrl( (prevUrl+pdiUrl).c_str() );
+            req->setRequestType(CCHttpRequest::kHttpPost);
+            req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+            req->setTag("9999999");
+            CCHttpClient::getInstance()->send(req);
+            req->release();
+        }
+        else // balance.pdi를 새로 받을 필요가 없다면, 클라에 있던 기존 것으로 data parsing
+        {
+            // 리소스 XML parsing
+            m_pMsgLabel->setString("못생긴 리소스 배치 중...");
+            XMLParseGameData();
+            
+            TryLogin();
+        }
+    }
+    
+    
+    /*
+    if (numOfDownloadedFiles+1 >= numOfResourceFiles) // pdi를 제외한 파일이 없는 경우
+    {
+        for (int i = 0 ; i < (int)resourceFilename.size() ; i++)
+            resourceFilename[i].clear();
+        resourceFilename.clear();
+        
+        // balance.pdi 다운로드
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl( (prevUrl+pdiUrl).c_str() );
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+        req->setTag("9999999");
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+    else // pdi를 제외한 리소스 파일이 1개 이상 있는 경우
+    {
+        // 각 리소스 파일 다운로드 (순서대로)
+        CCHttpRequest* req = new CCHttpRequest();
+        req->setUrl( (prevUrl+resourceFilename[numOfDownloadedFiles]).c_str() );
+        req->setRequestType(CCHttpRequest::kHttpPost);
+        req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
+        req->setTag("1231234");
+        CCHttpClient::getInstance()->send(req);
+        req->release();
+    }
+     */
 }
 
 void Splash::TryGetNonConsumed()
@@ -2294,8 +2545,40 @@ void Splash::EndScene()
     m_pForKakao->removeFromParentAndCleanup(true);
     m_pTitle->removeFromParentAndCleanup(true);
     m_pMsgLabel->removeFromParentAndCleanup(true);
+    
+    CCTextureCache::sharedTextureCache()->removeAllTextures();
 }
 
+
+
+
+/*
+ void Splash::WriteResFileZip(char* data, int size)
+ {
+ std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + "1.zip";
+ CCLog("filepath = %s", filepath.c_str());
+ 
+ FILE* ptr_fp;
+ if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
+ {
+ CCLog("FILE OPEN ERROR !");
+ exit(1);
+ }
+ size_t realSize = size;
+ size_t fwriteSize = fwrite(data, 1, realSize, ptr_fp);
+ //CCLog("%d %d", (int)realSize, (int)fwriteSize);
+ if (fwriteSize != realSize)
+ {
+ CCLog("FILE WRITE ERROR !");
+ exit(1);
+ }
+ fclose(ptr_fp);
+ 
+ UncompressZip("1.zip");
+ }
+ */
+
+/*
 #define READ_SIZE 1000000
 #define dir_delimter '/'
 
@@ -2427,5 +2710,5 @@ void Splash::UncompressZip(std::string filename)
     
     unzClose( zipfile );
 }
-
+*/
 

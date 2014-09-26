@@ -5,6 +5,7 @@
 #include "PuzzleP8.h"
 #include "PuzzleP4.h"
 #include "PuzzleSkill.h"
+#include "PuzzleAnim.h"
 #include "Effect.h"
 #include "Sound.h"
 #include "../pugixml/pugixml.hpp"
@@ -21,13 +22,14 @@ using namespace pugi;
 
 class Effect;
 class PuzzleSkill;
+class PuzzleAnim;
 class PuzzleP8Set;
 class PuzzleP4Set;
 
 class Puzzle : public CCLayerColor
 {
 public:
-    static CCScene* scene(int addedPotion, int freezeTime, int cocoTime = 1);
+    static CCScene* scene(int addedPotion, int freezeTime, int cocoTime, int addscore);
 	bool init();
     virtual void onEnter();
     virtual void onExit();
@@ -186,6 +188,7 @@ public:
     CCSize tbSize;
     CCSize boardSize;
     CCSize floorSize;
+    float magicCircleWidth;
     
     void ReadyAndStart(CCNode* sender, void* pointer);
     void Ready();
@@ -219,6 +222,8 @@ public:
     void UpdateSemaphore(int v);
     
     int Time100(int denom);
+    
+    int GetAddedScoreByFairy();
     
     void GameOver_Callback(CCNode* sender, void* pointer);
     void GameEnd(CCNode* sender, void* pointer);
@@ -382,6 +387,11 @@ private:
     Sound* sound;
     PuzzleSkill* skill;
     Effect* effect;
+    PuzzleAnim* puzzleAnim; // animation class
+    
+    PuzzleP8Set* puzzleP8set;
+    CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
+    PuzzleP4Set* puzzleP4set;
     
     CCSprite* pBlackOpen;
     CCLabelTTF* readyTimeLabel;
@@ -423,10 +433,6 @@ private:
     int cocoFrameNumber;
     std::vector<CCSprite*> coco_sp;
     CCLayer* puzzleLayer;
-    
-    PuzzleP8Set* puzzleP8set;
-    CCSprite* spriteP8[COLUMN_COUNT][ROW_COUNT];
-    PuzzleP4Set* puzzleP4set;
 
     CCSprite* magicTimeBg;
     int m_iStartMagicTimeStatus;

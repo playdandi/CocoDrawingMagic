@@ -310,7 +310,7 @@ void CocoRoom::RenewAllData()
         
         // 요정 특수능력
         if (fid > 0)
-            sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true).c_str());
+            sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true, fid).c_str());
         else
             sprintf(fname, "없음");
         ((CCLabelTTF*)spriteClassFairy->FindLabelByTag(2))->setString(fname);
@@ -408,7 +408,7 @@ void CocoRoom::ShowHintOfMP()
     balloon2 = NULL;
     ball2 = NULL;
     
-    balloon2 = CCScale9Sprite::create("images/tutorial_balloon3.png");
+    balloon2 = CCScale9Sprite::create("images/tutorial/tutorial_balloon3.png");
     balloon2->setContentSize(CCSize(600, 200));
     balloon2->setAnchorPoint(ccp(1, 1));
     balloon2->setPosition(ccp(765+200, 1666+35));
@@ -773,10 +773,13 @@ void CocoRoom::MakeSpritesFairy()
     CCLayer* picture = Fairy::GetFairy(fid);
     switch (fid)
     {
+        case -1: picture->setScale(2.0f); break; // 요정없음
         case 1: picture->setScale(1.2f); break;
         case 2: picture->setScale(1.2f); break;
-        case 3: picture->setScale(1.0f); break;
-        default: picture->setScale(2.0f); break;
+        case 3: picture->setScale(1.1f); break; // 구르미 크기 좀 키우기
+        case 4: picture->setScale(0.9f); break; // 고민형 크기 좀 줄이기
+        case 5: picture->setScale(0.9f); break; // 공손달 크기 좀 줄이기
+        default: picture->setScale(1.0f); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
     switch (fid)
@@ -784,6 +787,7 @@ void CocoRoom::MakeSpritesFairy()
         case 1: picture->setPosition(ccp(300, 1186+offset-50)); break;
         case 2: picture->setPosition(ccp(310, 1156+offset-50)); break;
         case 3: picture->setPosition(ccp(310, 1136+offset-50)); break;
+        case 4: picture->setPosition(ccp(300, 1136+offset-50)); break; // 고민형
         default: picture->setPosition(ccp(310, 1136+offset-50)); break;
     }
     picture->setTag(99999);
@@ -828,7 +832,7 @@ void CocoRoom::MakeSpritesFairy()
     
     // 특수능력 값
     if (fid > 0)
-        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true).c_str());
+        sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), true, fid).c_str());
     else
         sprintf(fname, "없음");
     //spriteClassFairy->spriteObj.push_back( SpriteObject::CreateLabelArea(fname, fontList[0], 36, ccp(0, 1), ccp(720, 1134+offset+58-13), ccc3(255,255,255), CCSize(190, 58*2), kCCTextAlignmentLeft, kCCVerticalTextAlignmentTop, "", "Layer", fairy, 5) );
@@ -954,7 +958,7 @@ void CocoRoom::ShowHintOfFairy()
     
     if (myInfo->GetFairyList().size() == 0) // 구입한 요정이 없으면 띄운다.
     {
-        balloon = CCScale9Sprite::create("images/tutorial_balloon2.png");
+        balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon2.png");
         balloon->setContentSize(CCSize(600, 140));
         balloon->setAnchorPoint(ccp(1, 0));
         balloon->setPosition(ccp(896+100, 312+55));
@@ -969,7 +973,7 @@ void CocoRoom::ShowHintOfFairy()
     }
     else if (myInfo->GetFairyList().size() == 1 && myInfo->GetActiveFairyLevel() == 1) // 처음 구입하고 레벨이 1일 때
     {
-        balloon = CCScale9Sprite::create("images/tutorial_balloon.png");
+        balloon = CCScale9Sprite::create("images/tutorial/tutorial_balloon.png");
         balloon->setContentSize(CCSize(600, 140));
         balloon->setAnchorPoint(ccp(0, 0));
         balloon->setPosition(ccp(94+300, 509+80));
@@ -1211,8 +1215,14 @@ void CocoRoom::MakeScrollFairy()
             case 1: sprintf(fname, "icon/icon_fairyslot_flower.png"); break;
             case 2: sprintf(fname, "icon/icon_fairyslot_sun.png"); break;
             case 3: sprintf(fname, "icon/icon_fairyslot_cloud.png"); break;
+            case 4: sprintf(fname, "icon/icon_fairyslot_bear.png"); break;
+            case 5: sprintf(fname, "icon/icon_fairyslot_moon.png"); break;
+            case 6: sprintf(fname, "icon/icon_fairyslot_frog.png"); break;
+            case 7: sprintf(fname, "icon/icon_fairyslot_lion.png"); break;
+            case 8: sprintf(fname, "icon/icon_fairyslot_dragon.png"); break;
+            case 9: sprintf(fname, "icon/icon_fairyslot_sheep.png"); break;
+            case 10: sprintf(fname, "icon/icon_fairyslot_babystar.png"); break;
         }
-        //sprintf(fname, "background/bg_skill_yellow.png%d", i);
         spriteClassFairySlot->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0, 0), ccp(i*(146+5), 0), CCSize(0, 0), "", "Layer", containerFairy, 3, 0, 255, fuid) );
         
         FairyInfo* f = FairyInfo::GetObj(fid);

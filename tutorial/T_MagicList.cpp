@@ -79,9 +79,9 @@ bool T_MagicList::init()
     scrollViewSlot->setTouchPriority(Depth::GetCurPriority());
     this->addChild(scrollViewSlot, 5);
     
-    ttrArrow = CCSprite::create("images/tutorial_arrow.png");
+    ttrArrow = CCSprite::create("images/tutorial/tutorial_arrow.png");
     ttrArrow->retain();
-    ttrPos = CCScale9Sprite::create("images/tutorial_position.png");
+    ttrPos = CCScale9Sprite::create("images/tutorial/tutorial_position.png");
     ttrPos->retain();
     
     InitSprites();

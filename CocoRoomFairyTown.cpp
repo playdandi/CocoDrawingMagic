@@ -34,7 +34,8 @@ void CocoRoomFairyTown::onEnter()
     sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
     params += temp;
     
-    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    //Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_ADD, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
     
     // 전체화면 액션
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(CocoRoomFairyTown::SceneCallback)), NULL );
@@ -157,7 +158,8 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
         params += temp;
         
-        Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+        //Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+        Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_ADD, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
     }
     else if (param->intValue() == 10)
     {
@@ -244,7 +246,6 @@ void CocoRoomFairyTown::MakeScroll()
         
         if (fairyData[i]->GetCommonId() == -1)
         {
-            // 빈 슬롯 (COMING SOON !)
             sprintf(fname, "icon/icon_fairy_empty.png%d", i);
             spriteClassScroll->spriteObj.push_back( SpriteObject::Create(0, fname, ccp(0.5, 0.5), ccp(290/2, 290/2+17), CCSize(0, 0), "", "Layer", itemLayer, 90) );
             spriteClassScroll->spriteObj[spriteClassScroll->spriteObj.size()-1]->sprite->setScale(1.1f);
@@ -253,12 +254,21 @@ void CocoRoomFairyTown::MakeScroll()
         
         // 그림
         CCLayer* picture = Fairy::GetFairy(fi->GetId());
+        float scale = 290.0f / std::max(picture->getContentSize().width, picture->getContentSize().height);
         switch (fi->GetId())
         {
             case 0: picture->setScale(1.0f); break;
             case 1: picture->setScale(0.7f); break;
             case 2: picture->setScale(0.8f); break;
             case 3: picture->setScale(0.8f); break;
+            case 4: picture->setScale(scale-0.15f); break;
+            case 5: picture->setScale(scale-0.25f); break;
+            case 6: picture->setScale(scale-0.20f); break;
+            case 7: picture->setScale(scale-0.15f); break;
+            case 8: picture->setScale(scale-0.15f); break;
+            case 9: picture->setScale(scale-0.17f); break;
+            case 10: picture->setScale(scale-0.22f); break;
+            default: picture->setScale(scale); break;
         }
         picture->setAnchorPoint(ccp(0, 0));
         picture->setPosition(ccp(290/2, 290/2+30));
@@ -492,7 +502,7 @@ void CocoRoomFairyTown::XmlParseFairyList(xml_document *xmlDoc)
             fairyData.push_back( new FairyEach(cfi, costType, costValue) );
         }
         
-        for (int i = 0 ; i < 10 ; i++)
+        for (int i = 0 ; i < 2 ; i++)
             fairyData.push_back( new FairyEach(-1, -1, -1) );
         
         std::sort(fairyData.begin(), fairyData.end(), compareFairy);

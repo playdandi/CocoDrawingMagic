@@ -158,18 +158,28 @@ void FairyOneInfo::InitSprites()
     isByTopaz = (common_fairy_id < 0);
     
     // 요정 이미지
-    CCLayer* picture;
+    CCLayer* picture = Fairy::GetFairy(fi->GetId());
+    float scale = 290.0f / std::max(picture->getContentSize().width, picture->getContentSize().height);
     switch (fi->GetId())
     {
-        case 1: picture = Fairy::MakeFlower(); picture->setScale(0.7f); break;
-        case 2: picture = Fairy::MakeSun(); picture->setScale(0.8f); break;
-        case 3: picture = Fairy::MakeCloud(true); picture->setScale(0.8f); break;
+        case 0: picture->setScale(1.0f); break;
+        case 1: picture->setScale(0.9f); break;
+        case 2: picture->setScale(1.0f); break;
+        case 3: picture->setScale(0.9f); break;
+        case 4: picture->setScale(scale); break;
+        case 5: picture->setScale(scale-0.15f); break;
+        case 6: picture->setScale(scale-0.07f); break;
+        case 7: picture->setScale(scale); break;
+        case 8: picture->setScale(scale); break;
+        case 9: picture->setScale(scale-0.02f); break;
+        case 10: picture->setScale(scale-0.10f); break;
+        default: picture->setScale(scale); break;
     }
     picture->setAnchorPoint(ccp(0, 0));
-    picture->setPosition(ccp(250, 1100));
+    //picture->setPosition(ccp(250, 1100));
+    picture->setPosition(ccp(250, 1060));
     tLayer->addChild(picture, 10);
     spriteClass->layers.push_back(picture);
-    
 
     // name + grade background
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png1", ccp(0, 0), ccp(404, 1121), CCSize(440, 90), "", "Layer", tLayer, 5) );
@@ -195,10 +205,11 @@ void FairyOneInfo::InitSprites()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png3", ccp(0, 0), ccp(404, 971), CCSize(520, 58), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977), ccc3(121,71,0), "", "Layer", tLayer, 5) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel("특수능력", fontList[2], 36, ccp(0, 0), ccp(424, 977+3), ccc3(255,219,53), "", "Layer", tLayer, 5) );
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::GetAbilityDesc(fi->GetType(), false), fontList[0], 36, ccp(0, 0), ccp(574, 977+3), ccc3(255,255,255), "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(FairyInfo::GetAbilityDesc(fi->GetType(), false, abs(common_fairy_id)), fontList[0], 36, ccp(0, 0), ccp(574, 977+3), ccc3(255,255,255), "", "Layer", tLayer, 5) );
     
     // 요정 묘사
-    spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(fi->GetDescription(), fontList[0], 36, ccp(0, 0), ccp(210, 875), ccc3(117,86,47), CCSize(730, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
+    spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fi->GetDescription(), fontList[0], 36, ccp(0, 0), ccp(404, 903), ccc3(117,86,47), "", "Layer", tLayer, 5) );
+    //spriteClass->spriteObj.push_back( SpriteObject::CreateLabelArea(fi->GetDescription(), fontList[0], 36, ccp(0, 0), ccp(210, 875), ccc3(117,86,47), CCSize(730, 100), kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter, "", "Layer", tLayer, 5) );
     
     // 도전 문장의 배경
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_cocoroom_desc.png4", ccp(0, 0), ccp(210, 822), CCSize(730, 58), "", "Layer", tLayer, 5) );
@@ -223,7 +234,10 @@ void FairyOneInfo::InitSprites()
             
             int requireMP = FairyInfo::GetObj(abs(common_fairy_id))->GetRefVal();
             char name[50];
-            sprintf(name, "도전 : MP %d 달성", requireMP);
+            if (requireMP < 10) // 숫자가 10미만이면 mp가 아니라 지팡이 lv로 보면 된다.
+                sprintf(name, "도전 : 지팡이 Lv %d", requireMP);
+            else
+                sprintf(name, "도전 : MP %d 달성", requireMP);
             
             spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(name, fontList[0], 36, ccp(0, 0), ccp(230, 830), ccc3(255,255,255), "", "Layer", tLayer, 5) );
             CCSize s = spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->label->getContentSize();

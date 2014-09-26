@@ -288,8 +288,9 @@ void GetDegree::EndScene()
     pBlack->removeFromParentAndCleanup(true);
     pBackground->removeFromParentAndCleanup(true);
     
-    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rank.plist");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rank.png");
+    Common::RemoveSpriteFramesWithFile("rank");
+    //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rank.plist");
+    //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rank.png");
     
     this->removeFromParentAndCleanup(true);
 }

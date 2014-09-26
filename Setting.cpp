@@ -1,5 +1,6 @@
 #include "Setting.h"
 
+
 CCScene* Setting::scene()
 {
     CCScene* pScene = CCScene::create();
@@ -134,7 +135,8 @@ void Setting::Notification(CCObject* obj)
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
-            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+            if (myInfo->IsCouponOn())
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }
@@ -195,12 +197,15 @@ void Setting::InitSprites()
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 36), CCSize(0, 0), "button/btn_purple_mini.png1", "0", NULL, 1) );
 
-    // 버튼 : 쿠폰등록
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png2",
+    if (myInfo->IsCouponOn())
+    {
+        // 버튼 : 쿠폰등록
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png2",
                 ccp(0, 0), ccp(96, 492-offset), CCSize(0, 0), "", "Layer", tLayer, 1) );
-    spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_coupon.png",
+        spriteClass->spriteObj.push_back( SpriteObject::Create(0, "letter/letter_coupon.png",
                 ccp(0.5, 0), ccp(spriteClass->spriteObj[spriteClass->spriteObj.size()-1]->sprite->
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png2", "0", NULL, 1) );
+    }
     
     // 버튼 : 튜토리얼
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "button/btn_purple_mini.png3",
@@ -217,7 +222,7 @@ void Setting::InitSprites()
                 getContentSize().width/2, 32), CCSize(0, 0), "button/btn_purple_mini.png4", "0", NULL, 1) );
     
     // 버튼 : logout
-    m_pLogoutBtn = CCSprite::create("images/kakao/kakao_logout.png");
+    m_pLogoutBtn = CCSprite::create("images/splash/kakao/kakao_logout.png");
     m_pLogoutBtn->setAnchorPoint(ccp(0, 0));
     m_pLogoutBtn->setPosition(ccp(82, 192));
     tLayer->addChild(m_pLogoutBtn, 5);
@@ -516,7 +521,8 @@ void Setting::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             spriteClass->spriteObj[idx]->sprite->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_tutorial.png"))->setColor(ccc3(255,255,255));
-            ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
+            if (myInfo->IsCouponOn())
+                ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_coupon.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_service.png"))->setColor(ccc3(255,255,255));
             ((CCSprite*)spriteClass->FindSpriteByName("letter/letter_maker.png"))->setColor(ccc3(255,255,255));
         }

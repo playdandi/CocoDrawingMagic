@@ -63,8 +63,8 @@ bool T_SketchDetail::init()
         spriteClass->AddChild(i);
     
     
-    ttrArrow = CCSprite::create("images/tutorial_arrow.png");
-    ttrPos = CCScale9Sprite::create("images/tutorial_position.png");
+    ttrArrow = CCSprite::create("images/tutorial/tutorial_arrow.png");
+    ttrPos = CCScale9Sprite::create("images/tutorial/tutorial_position.png");
     
     // 760, 673 (0, 0)
     ttrArrow->setAnchorPoint(ccp(0.5, 0));
@@ -211,8 +211,8 @@ void T_SketchDetail::MakeOpenedSkillSprites()
     
     // 내가 원하는 그림
     char temp[30];
-    sprintf(temp, "images/skilldetail/%d.png", scid);
-    sp = CCSprite::create(temp);
+    sprintf(temp, "skilldetail@%d.png", scid);
+    sp = CCSprite::createWithTexture( Common::GetResFileImg(temp) );
     sp->setPosition(ccp(120+360/2, 684+360/2));
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120-3, 684-3), CCSize(360+6, 360+6), "", "T_SketchDetail", this, 3) );

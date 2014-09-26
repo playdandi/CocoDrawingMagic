@@ -64,78 +64,20 @@ std::string fontList[] = {
 #endif
 };
 
-std::string resFileList[] = {
-    "fairy_each.plist",
-    "fairy_each.png",
-    "fairy_flower.plist",
-    "fairy_flower.png",
-    "fairy.plist",
-    "fairy.png",
-    "fairy_cloud.plist",
-    "fairy_cloud.png",
-    "game.plist",
-    "game.png",
-    "game_result.plist",
-    "game_result.png",
-    "game2.plist",
-    "game2.png",
-    "game3.plist",
-    "game3.png",
-    "main_background.png",
-    "popup.plist",
-    "popup.png",
-    "rank.plist",
-    "rank.png",
-    "rankup.plist",
-    "rankup.png",
-    "skill.plist",
-    "skill.png",
-    "texture_1.plist",
-    "texture_1.png",
-    "texture_2.plist",
-    "texture_2.png",
-    "ingame_item@3paint.png",
-    "skilldetail@11.png",
-    "skilldetail@12.png",
-    "skilldetail@13.png",
-    "skilldetail@14.png",
-    "skilldetail@15.png",
-    "skilldetail@16.png",
-    "skilldetail@17.png",
-    "skilldetail@21.png",
-    "skilldetail@22.png",
-    "skilldetail@23.png",
-    "skilldetail@24.png",
-    "skilldetail@25.png",
-    "skilldetail@26.png",
-    "skilldetail@27.png",
-    "skilldetail@31.png",
-    "skilldetail@32.png",
-    "skilldetail@33.png",
-    "skilldetail@34.png",
-    "skilldetail@35.png",
-    "skilldetail@36.png",
-    "skilldetail@37.png",
-};
 
 
-
-void Common::AddSpriteFramesWithFile(std::string plist, std::string png)
+void Common::AddSpriteFramesWithFile(std::string name)
 {
-    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(Common::GetResFilename(plist).c_str(), Common::GetResFileImg(png));
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(Common::GetResFilename((name+".plist").c_str()).c_str());
 }
-
 std::string Common::GetResFilename(std::string filename)
 {
     return CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
 }
+
 CCTexture2D* Common::GetResFileImg(std::string filename)
 {
     std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
-    //CCLog("filepath = %s", filepath.c_str());
-    // read file
-    //unsigned long iSize = 0;
-    //unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(), "rb", &iSize);
     
     // make texture2D
     CCImage* img = new CCImage;
@@ -143,7 +85,15 @@ CCTexture2D* Common::GetResFileImg(std::string filename)
     CCTexture2D* texture = new CCTexture2D();
     texture->initWithImage(img);
     
+    t2d.insert( std::pair<std::string, CCTexture2D*>(filename, texture) );
+    
     return texture;
+}
+
+void Common::RemoveSpriteFramesWithFile(std::string name)
+{
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFrameByName((name+".plist").c_str());
+    CCTextureCache::sharedTextureCache()->removeTextureForKey((name+".png").c_str());
 }
 
 
@@ -447,7 +397,7 @@ CCLayer* Common::MakeImageNumberLayer(std::string number, int type)
 // from       : 이 함수를 불러온 scene 이름
 // to         : 이동할 scene 이름
 // isReplaced : replaceScene을 할 경우 true, otherwise, false.
-void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc, int etc2, int etc3)
+void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isReplaced, int etc, int etc2, int etc3, int etc4, int etc5)
 {
     if (from == "Sketchbook")
         ((Sketchbook*)obj)->SetTouchLock(false);
@@ -525,7 +475,7 @@ void Common::ShowNextScene(void* obj, std::string from, std::string to, bool isR
     else if (from == "LoadingPuzzle")
     {
         if (isReplaced) // to Puzzle
-            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3));
+            CCDirector::sharedDirector()->replaceScene(Puzzle::scene(etc, etc2, etc3, etc4));
     }
         
     else if (from == "Profile") ((Profile*)obj)->addChild(nextScene, 200, 200);
@@ -1294,7 +1244,8 @@ void Common::UpdateProfileTitle()
 static const std::string base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-std::string Common::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+std::string Common::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+{
     std::string ret;
     int i = 0;
     int j = 0;

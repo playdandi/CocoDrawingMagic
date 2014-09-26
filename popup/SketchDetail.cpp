@@ -254,8 +254,8 @@ void SketchDetail::MakeOpenedSkillSprites()
     
     // 내가 원하는 그림
     char temp[30];
-    sprintf(temp, "images/skilldetail/%d.png", scid);
-    sp = CCSprite::create(temp);
+    sprintf(temp, "skilldetail@%d.png", scid);
+    sp = CCSprite::createWithTexture( Common::GetResFileImg(temp) );
     sp->setPosition(ccp(120+360/2, 684+360/2));
     
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_degree_desc.png", ccp(0, 0), ccp(120-3, 684-3), CCSize(360+6, 360+6), "", "Layer", tLayer, 3) );

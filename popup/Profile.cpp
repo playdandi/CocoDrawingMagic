@@ -255,32 +255,11 @@ void Profile::InitFairy()
     
     int fid = friendList[profile_index]->GetFairyId();
     int flv = friendList[profile_index]->GetFairyLv();
-    ////CCLog("%d %d", fid, flv);
     FairyInfo* f = FairyInfo::GetObj(fid);
     
-    
-    // 요정 그림
+    // 요정 그림 (position, scale 배치)
     CCLayer* picture = Fairy::GetFairy(fid);
-    picture->setAnchorPoint(ccp(0, 0));
-    switch (fid)
-    {
-        case 1:
-            picture->setPosition(ccp(309/2+10, 236/2+23));
-            picture->setScale(0.63f);
-            break;
-        case 2:
-            picture->setPosition(ccp(309/2, 236/2+15));
-            picture->setScale(0.7f);
-            break;
-        case 3:
-            picture->setPosition(ccp(309/2, 236/2+23));
-            picture->setScale(0.8f);
-            break;
-        default:
-            picture->setPosition(ccp(309/2, 236/2+23));
-            picture->setScale(0.9f);
-            break;
-    }
+    FairyInfo::SetInSmallArea(picture, fid);
     fairyLayer->addChild(picture, 6);
 
     spriteClass->layers.push_back(picture);
@@ -314,7 +293,7 @@ void Profile::InitFairy()
     spriteClass->spriteObj.push_back( SpriteObject::Create(1, "background/bg_gameready_name.png1", ccp(0, 0), ccp(19, 22), CCSize(274, 53), "", "Layer", fairyLayer, 7) );
 
     if (fid == 0) sprintf(fname, "요정 없음");
-    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false).c_str());
+    else sprintf(fname, "%s", FairyInfo::GetAbilityDesc(f->GetType(), false, fid).c_str());
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2), ccc3(121,71,0), "", "Layer", fairyLayer, 7) );
     spriteClass->spriteObj.push_back( SpriteObject::CreateLabel(fname, fontList[2], 30, ccp(0.5, 0.5), ccp(19+274/2, 22+53/2+3), ccc3(255,219,53), "", "Layer", fairyLayer, 7) );
 }

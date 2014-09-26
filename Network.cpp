@@ -16,11 +16,11 @@ void Network::replaceAll(std::string& str, const std::string& from, const std::s
 
 void Network::HttpPost(std::string data, std::string url, void* pointer, SEL_HttpResponse hr, std::string tag, std::string etc, bool isbasic)
 {
-    //CCLog("HttpPost : url = %s", url.c_str());
+    CCLog("HttpPost : url = %s", url.c_str());
     //CCLog("param length = %d", (int)data.size());
-    //CCLog("param = %s", (unsigned char*)(data.c_str()));
+    CCLog("param = %s", (unsigned char*)(data.c_str()));
     
-    std::string encoded_a = Encrypt_a(data, isbasic);
+    std::string encoded_a = Encrypt_a(data);
     std::string encoded_ps = Encrypt_PS(isbasic);
     
     // 이제 파라미터를 만든다. (필요 파라미터 : PS, a)
@@ -61,9 +61,11 @@ std::string Network::Encrypt_PS(bool isBasic)
 
     char ps_param[100];
     if (isBasic)
-        sprintf(ps_param, "0|%d|%d", CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
+        sprintf(ps_param, "0|1061|%d", binaryVersion_current);
+        //sprintf(ps_param, "0|%d|%d", CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
     else
-        sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
+        sprintf(ps_param, "%d|1061|%d", myInfo->GetUserId(), binaryVersion_current);
+        //sprintf(ps_param, "%d|%d|%d", myInfo->GetUserId(), CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion"), binaryVersion_current);
     std::string ps_param_s = ps_param;
     
     //CCLog("%s", ps_param_s.c_str());
@@ -93,14 +95,17 @@ std::string Network::Encrypt_PS(bool isBasic)
     return number + encoded_ps;
 }
 
-std::string Network::Encrypt_a(std::string data, bool isBasic)
+std::string Network::Encrypt_a(std::string data, int size)
 {
     // & -> || 형태로 바꿔 놓자.
     Network::replaceAll(data, "&", "||");
     
+    if (size == -1) // 사이즈를 지정하지 않았다면 맞춰준다.
+        size = (int)data.size();
+    
     int unitLength = RSA_BIT/8 - 11; // substring 한 개의 단위길이
-    int numOfSubstr = (int)data.size() / unitLength; // substring 개수
-    if ((int)data.size() % unitLength > 0)
+    int numOfSubstr = size / unitLength; // substring 개수
+    if (size % unitLength > 0)
         numOfSubstr++;
     
     std::string totalEncryptedString = "";
@@ -181,7 +186,7 @@ void Network::GetXMLFromResponseData(CCHttpResponse* res, xml_document &xmlDoc)
     char decryptedData[BUFFER_SIZE];
     int bufferSize = Network::DeObfuscation(dumpData, decryptedData);
    
-    //CCLog("%s", decryptedData);
+    CCLog("%s", decryptedData);
     
     // xml parsing
     xml_parse_result result = xmlDoc.load_buffer(decryptedData, bufferSize);

@@ -1330,7 +1330,6 @@ void PuzzleSkill::F8_Bomb_Real()
     }
     
     // 폭발 예상 피스가 모두 일반 피스가 아니라면, callback을 호출하지 못하므로 즉시 턴을 종료한다.
-    //CCLog("%d %d", itemPieceCnt, (int)result_double_pos[bombIdx].size());
     if (itemPieceCnt == (int)result_double_pos[bombIdx].size())
     {
         F8_isFalling = false;
@@ -2722,7 +2721,7 @@ void PuzzleSkill::ApplyItemPaint(int x, int y, int dx, int dy, int type, int que
     
     itemPaint_callbackCnt = 0;
     itemPaint_type = type - 10; // ITEM_PAINT류와 일반 PIECE류의 숫자는 정확히 10차이 (그렇게 정의함)
-    if (type > 100)
+    if (type > 100) // special paint일 경우
     {
         itemPaint_type = (type-3)/10 - 10;
         isStrongPaint = true;
@@ -2759,11 +2758,10 @@ void PuzzleSkill::ApplyItemPaint_Change(CCNode* sender, void* pointer)
     pss->m_pGameLayer->GetPuzzleP8Set()->GetSprite(x, y)->runAction(action);
     
     pss->item_x1 = pss->item_x2 = pss->item_y1 = pss->item_y2 = -1;
-    if (pss->isStrongPaint)
+    if (pss->isStrongPaint) // special paint인 경우
     {
         int dx = pss->item_dx / 20;
         int dy = pss->item_dy / 20;
-        //CCLog("dx dy ; %d %d", dx ,dy);
 
         if (dy == 0)
         {
@@ -2811,7 +2809,7 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
     int y = (int)pss->result_pos[pss->itemPaint_callbackCnt-1].y;
     
     ApplyItemPaint_Callback_Handle(pss, x, y, true);
-    if (pss->isStrongPaint)
+    if (pss->isStrongPaint) // special paint를 사용한 경우
     {
         if (pss->item_x1 != -1 && pss->item_y1 != -1)
             ApplyItemPaint_Callback_Handle(pss, pss->item_x1, pss->item_y1, false);
@@ -2822,25 +2820,26 @@ void PuzzleSkill::ApplyItemPaint_Callback(CCNode* sender, void* pointer)
 
 void PuzzleSkill::ApplyItemPaint_Callback_Handle(PuzzleSkill* pss, int x, int y, bool flag)
 {
-    // 기존 피스를 없앤다.
-    pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
-    pss->m_pGameLayer->SetSpriteP8Null(x, y);
-    
-    // 그 위치에 새로운 피스를 만든다.
-    pss->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, pss->itemPaint_type);
-    pss->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
-    
+    // 기존 피스를 없앤다. 단, 스페셜 아이템은 캐시를 썼기 때문에 없애지 않는다.
+    int firstX = (int)pss->result_pos[0].x;
+    int firstY = (int)pss->result_pos[0].y;
+    if ((firstX == x && firstY == y) || !(pss->m_pGameLayer->GetPuzzleP8Set()->GetType(x, y) > 100))
+    {
+        pss->m_pGameLayer->GetPuzzleP8Set()->RemoveChild(x, y);
+        pss->m_pGameLayer->SetSpriteP8Null(x, y);
+        
+        // 그 위치에 새로운 피스를 만든다.
+        pss->m_pGameLayer->GetPuzzleP8Set()->CreatePiece(x, y, pss->itemPaint_type);
+        pss->m_pGameLayer->GetPuzzleP8Set()->AddChild(x, y);
+    }
+
     // 대각선 이동이라면, 지나가는 부분에 연결피스를 만든다.
     if (pss->item_dx != 0 && pss->item_dy != 0 && pss->itemPaint_callbackCnt-1 > 0)
     {
-        //int beforeX = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].x;
-        //int beforeY = (int)pss->result_pos[pss->itemPaint_callbackCnt-2].y;
         int beforeX = x - pss->item_dx/20;
         int beforeY = y - pss->item_dy/20;
         int xx = std::max(x, beforeX);
         int yy = std::max(y, beforeY);
-        
-        //CCLog("%d %d  :  %d %d  : %d %d", x, y, beforeX, beforeY, xx, yy);
         
         if (pss->m_pGameLayer->GetPuzzleP4Set()->CreatePiece(xx, yy, CONNECTED))
             pss->m_pGameLayer->GetPuzzleP4Set()->AddChild(xx, yy);
