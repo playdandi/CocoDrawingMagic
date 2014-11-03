@@ -40,7 +40,7 @@ USING_NS_CC;
 #define INGAME_ITEM_3PAINT 1
 
 // 인게임 기본 구성 변수
-#define PUZZLE_TIME 6
+#define PUZZLE_TIME 60
 #define FEVER_TIME 9
 #define FEVER_START_COMBO 12
 #define MAX_COMBO_TIME 2000

@@ -34,8 +34,10 @@ void CocoRoomFairyTown::onEnter()
     sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
     params += temp;
     
-    //Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
-    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_ADD, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    //if (binaryVersion_current < 2000) // 1000번대 (기존 유저)
+    //    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+    //else // 2000번대
+    Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_NEW, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
     
     // 전체화면 액션
     CCActionInterval* action = CCSequence::create( CCSpawn::create(CCMoveTo::create(0.2f, ccp(0, 0)), CCScaleTo::create(0.2f, 1.0f), NULL), CCCallFunc::create(this, callfunc_selector(CocoRoomFairyTown::SceneCallback)), NULL );
@@ -158,8 +160,11 @@ void CocoRoomFairyTown::Notification(CCObject* obj)
         sprintf(temp, "kakao_id=%s", myInfo->GetKakaoId().c_str());
         params += temp;
         
-        //Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
-        Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_ADD, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
+        if (binaryVersion_current < 2000) // 1000번대 (기존 유저)
+            Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted))
+            ;
+        else // 2000번대 이상
+            Network::HttpPost(params, URL_PURCHASE_FAIRY_LIST_NEW, this, httpresponse_selector(CocoRoomFairyTown::onHttpRequestCompleted));
     }
     else if (param->intValue() == 10)
     {

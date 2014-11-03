@@ -11,6 +11,8 @@ std::string pdiUrl = ""; // balance.pdi 파일주소 (기본주소 제외)
 int numOfResourceFiles = 0; // 다운받아야 할 리소스 파일 개수
 int numOfDownloadedFiles = 0; // 다운 완료한 리소스 파일 개수
 std::vector<std::string> resourceFilename; // 다운받아야할 리소스 파일 이름
+std::vector<std::string> resourceChecksum; // 다운받아야할 리소스 파일 체크섬
+std::vector<int> resourceFilesize; // 다운받아야할 리소스 파일 크기
 
 std::map<std::string, CCTexture2D*> t2d;
 

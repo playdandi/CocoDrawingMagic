@@ -111,6 +111,8 @@ public:
     void EndScene();
     
     RSA* createRSA(unsigned char * key, int pub);
+    
+    //void Compress(unsigned char* data, int size);
 
 protected:
     CCSize winSize;

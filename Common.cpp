@@ -1468,7 +1468,7 @@ void Common::XmlParseVerifyPurchaseResultApple(const char* data, int size)
     xml_node nodeResult = xmlDoc.child("response");
     int code = nodeResult.child("code").text().as_int();
     
-    //CCLog("code = %d", code);
+    CCLog("code = %d", code);
     if (code != 0)
     {
         /*

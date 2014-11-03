@@ -108,7 +108,7 @@ void GetDegree::InitSprites()
     this->addChild(pBlack, 0);
     
     // background
-    pBackground = CCSprite::create("images/main_background.png");
+    pBackground = CCSprite::create("images/splash/main_background.png");
     pBackground->setScale(1.5f);
     pBackground->setAnchorPoint(ccp(0.5, 1));
     //pBackground->setPosition(ccp(winSize.width/2, winSize.height/2));

@@ -13,7 +13,7 @@ using namespace cocos2d::extension;
 #define TEST_IP "14.63.212.106"
 #define REAL_IP "14.63.200.217"
 
-#define TEST 1
+#define TEST 0
 
 #if TEST
 // pre-defined URLs
@@ -21,7 +21,8 @@ using namespace cocos2d::extension;
 #define URL_JOIN_GUEST              "http://14.63.212.106/cogma/game/join_guest.php?"
 #define URL_JOIN                    "http://14.63.212.106/cogma/game/join.php?"
 #define URL_VERSION                 "http://14.63.212.106/cogma/game/get_version.php"
-#define URL_VERSION_UPDATE          "http://14.63.212.106/cogma/game/get_version_update.php"
+//#define URL_VERSION_UPDATE          "http://14.63.212.106/cogma/game/get_version_update.php"
+#define URL_VERSION_NEW             "http://14.63.212.106/cogma/game/get_version_new.php"
 #define URL_LOGIN                   "http://14.63.212.106/cogma/game/login.php"
 #define URL_NOTICE                  "http://14.63.212.106/cogma/game/notice.php"
 #define URL_USERINFO                "http://14.63.212.106/cogma/game/user_info.php?"
@@ -35,7 +36,8 @@ using namespace cocos2d::extension;
 #define URL_TODAY_STARCANDY         "http://14.63.212.106/cogma/game/today_starcandy.php?"
 #define URL_USING_FAIRY             "http://14.63.212.106/cogma/game/using_fairy.php?"
 #define URL_PURCHASE_FAIRY_LIST     "http://14.63.212.106/cogma/game/get_purchase_fairy_list.php?"
-#define URL_PURCHASE_FAIRY_LIST_ADD "http://14.63.212.106/cogma/game/get_purchase_fairy_list_add.php?"
+//#define URL_PURCHASE_FAIRY_LIST_ADD "http://14.63.212.106/cogma/game/get_purchase_fairy_list_add.php?"
+#define URL_PURCHASE_FAIRY_LIST_NEW "http://14.63.212.106/cogma/game/get_purchase_fairy_list_new.php?"
 #define URL_MESSAGE_LIST            "http://14.63.212.106/cogma/game/get_messagelist.php?"
 #define URL_MESSAGE_ONE             "http://14.63.212.106/cogma/game/receive_message_one.php?"
 #define URL_MESSAGE_ALL             "http://14.63.212.106/cogma/game/receive_message_all_potion.php?"
@@ -77,6 +79,7 @@ using namespace cocos2d::extension;
 #define URL_JOIN_GUEST              "http://14.63.200.217/cogma/game/join_guest.php?"
 #define URL_JOIN                    "http://14.63.200.217/cogma/game/join.php?"
 #define URL_VERSION                 "http://14.63.200.217/cogma/game/get_version.php"
+#define URL_VERSION_NEW             "http://14.63.200.217/cogma/game/get_version_new.php"
 #define URL_LOGIN                   "http://14.63.200.217/cogma/game/login.php"
 #define URL_NOTICE                  "http://14.63.200.217/cogma/game/notice.php"
 #define URL_USERINFO                "http://14.63.200.217/cogma/game/user_info.php?"
@@ -90,6 +93,7 @@ using namespace cocos2d::extension;
 #define URL_TODAY_STARCANDY         "http://14.63.200.217/cogma/game/today_starcandy.php?"
 #define URL_USING_FAIRY             "http://14.63.200.217/cogma/game/using_fairy.php?"
 #define URL_PURCHASE_FAIRY_LIST     "http://14.63.200.217/cogma/game/get_purchase_fairy_list.php?"
+#define URL_PURCHASE_FAIRY_LIST_NEW "http://14.63.200.217/cogma/game/get_purchase_fairy_list_new.php?"
 #define URL_MESSAGE_LIST            "http://14.63.200.217/cogma/game/get_messagelist.php?"
 #define URL_MESSAGE_ONE             "http://14.63.200.217/cogma/game/receive_message_one.php?"
 #define URL_MESSAGE_ALL             "http://14.63.200.217/cogma/game/receive_message_all_potion.php?"

@@ -66,6 +66,7 @@ bool RankUp::init()
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(RankUp::Notification), Depth::GetCurName(), NULL);
     
     Common::AddSpriteFramesWithFile("rankup");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/popup.plist");
     //CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile("images/rankup.plist");
     
     spriteClass = new SpriteClass();
@@ -105,14 +106,10 @@ void RankUp::Notification(CCObject* obj)
 void RankUp::InitSprites()
 {
     // background
-    pBackground = CCSprite::create("images/main_background.png");
+    pBackground = CCSprite::create("images/splash/main_background.png");
     pBackground->setAnchorPoint(ccp(0, 0));
     pBackground->setPosition(ccp(0, 0));
     this->addChild(pBackground, 0);
-    
-    //CCLog("=========================================================");
-    //CCTextureCache::sharedTextureCache()->dumpCachedTextureInfo();
-    //CCLog("=========================================================");
     
     // strap
     spriteClass->spriteObj.push_back( SpriteObject::Create(0, "strap_yellow.png", ccp(0, 0), ccp(14, 1506), CCSize(0, 0), "", "RankUp", this, 1) );
@@ -425,8 +422,10 @@ void RankUp::EndSceneFromReboot() // 강제 리부팅 시
     Common::RemoveSpriteFramesWithFile("rankup");
     //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
     //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
+    CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/popup.plist");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/popup.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/splash/main_background.png");
 }
 
 void RankUp::EndSceneCallback(CCNode* sender, void* pointer)
@@ -451,7 +450,7 @@ void RankUp::EndSceneCallback(CCNode* sender, void* pointer)
     //CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile("images/rankup.plist");
     //CCTextureCache::sharedTextureCache()->removeTextureForKey("images/rankup.png");
     CCTextureCache::sharedTextureCache()->removeTextureForKey("images/ranking_scrollbg.png");
-    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/main_background.png");
+    CCTextureCache::sharedTextureCache()->removeTextureForKey("images/splash/main_background.png");
     
     Common::ShowNextScene(pThis, "RankUp", "Ranking", true, 1);
 }

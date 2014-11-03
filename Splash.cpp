@@ -18,7 +18,6 @@ static bool isFriendListChecked;
 static bool isJoinNeeded;
 static std::string fKakaoId;
 
-static int resourcedownloadtime;
 
 Splash::~Splash(void)
 {
@@ -383,8 +382,34 @@ void Splash::LogoLoadingCompleted()
     this->addChild(m_pMsgLabel, 5);
   
     // 버전 세팅
+    /*
     iGameVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion", -1);
-    iBinaryVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion", -1);
+    iBinaryVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("binaryVersion", 2000);
+    */
+    
+    iGameVersion = CCUserDefault::sharedUserDefault()->getIntegerForKey("gameVersion", -1);
+    
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    JniMethodInfo t;
+    if (JniHelper::getStaticMethodInfo(t,
+                                       "com/playDANDi/CocoMagic/CocoMagic",
+                                       "GetBinaryVersion",
+                                       "()I"))
+    {
+        binaryVersion_current = (jint)t.env->CallStaticObjectMethod(t.classID,t.methodID);
+        t.env->DeleteLocalRef(t.classID);
+    }
+#endif
+    
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    std::string ver = GetBundleVersion();
+    int a = atoi( ver.substr(0, ver.find(".")).c_str() );
+    ver = ver.substr(ver.find(".")+1);
+    int b = atoi( ver.substr(0, ver.find(".")).c_str() );
+    ver = ver.substr(ver.find(".")+1);
+    int c = atoi( ver.c_str() );
+    binaryVersion_current = a*1000 + b*100 + c;
+#endif
 }
 
 void Splash::SoundCallback(CCNode* sender, void* p)
@@ -1183,7 +1208,7 @@ void Splash::WriteResFileTexture(char* data, int size)
     Network::replaceAll(rfn, "/", "@");
     
     std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + rfn;
-    CCLog("filepath = %s", filepath.c_str());
+    //CCLog("filepath = %s", filepath.c_str());
     
     FILE* ptr_fp;
     if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
@@ -1801,6 +1826,7 @@ void Splash::XmlParseFriends(xml_document *xmlDoc)
                 std::string url = profiles[i]->GetProfileUrl();
                 if (profiles[i]->IsPreload() && url != "" && ((int)url.size() >= 4 && url.substr(0, 4) == "http"))
                 {
+                    //CCLog("친구 로딩 후 프로필 로딩 시작...(%d)", i);
                     profiles[i]->SetLoadingStarted(true);
                     
                     CCHttpRequest* req = new CCHttpRequest();
@@ -1911,7 +1937,10 @@ void Splash::XmlParseServerCheck(void* data, int size)
             // 게임 버전 체크
             m_pMsgLabel->setString("게임 버전이 잘생겼는지 확인 중...");
             CCHttpRequest* req = new CCHttpRequest();
-            req->setUrl(URL_VERSION_UPDATE);
+            //if (binaryVersion_current < 2000) // 1000번대 (기존 유저)
+            //    req->setUrl(URL_VERSION);
+            //else // 2000번대 이상
+            req->setUrl(URL_VERSION_NEW);
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompleted));
             CCHttpClient::getInstance()->send(req);
@@ -1972,7 +2001,10 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     CCHttpResponse* res = (CCHttpResponse*) data;
     char* dumpData;
     
-    //CCLog("status code = %d", res->getResponseCode());
+    std::string tag = res->getHttpRequest()->getTag();
+    
+    //CCLog("%s", res->getHttpRequest()->getUrl());
+    //CCLog("%d", res->getResponseCode());
     
     // mt.php (제일 처음) 호출 결과
     if (atoi(res->getHttpRequest()->getTag()) == 8888888)
@@ -1991,8 +2023,11 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         if ( !(atoi(res->getHttpRequest()->getTag()) == 9999998) && !(atoi(res->getHttpRequest()->getTag()) == 9999999) )
         {
             profileCnt--;
+            //CCLog("cnt = %d // 프로필 로딩 done", profileCnt);
             if (profileCnt <= 0)
             {
+                //CCLog("프로필 로딩 끝!");
+                /*
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
                  m_pMsgLabel->setString("새로운 아이템을 쳐다보는 중...");
                  httpStatus = HTTP_NONCONSUMED_GET_FRIEND_ID;
@@ -2003,6 +2038,10 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
                  param += temp;
                  
                  Network::HttpPost(param, URL_NONCONSUMED_GETFRIENDID, this, httpresponse_selector(Splash::onHttpRequestCompleted));
+                #endif
+                */
+                #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+                GetNonConsumedItems();
                 #endif
                 
                 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -2030,7 +2069,7 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
     }
     
     // 일반 리소스 파일 받았을 경우
-    else if (atoi(res->getHttpRequest()->getTag()) == 1231234)
+    else if (atoi(tag.substr(0, 7).c_str()) == 1231234)
     {
         // md5 hash 검사
         unsigned char md5_res[16];
@@ -2038,46 +2077,42 @@ void Splash::onHttpRequestCompletedNoEncrypt(CCNode *sender, void *data)
         MD5_Update(&md5, dumpData, (int)buffer->size());
         MD5_Final(md5_res, &md5);
         
-        //int md5_size = strlen((char*)md5_res);
-        //std::string encodedMD5 = Common::base64_encode(md5_res, md5_size);
-        //CCLog("encoded (%d) = %s", (int)encodedMD5.size(), encodedMD5.c_str());
-        CCLog("original size = %d", (int)buffer->size());
-        
         char mdString[33];
         for (int i = 0 ; i < 16 ; i++)
             sprintf(&mdString[i*2], "%02x", (unsigned int)md5_res[i]);
-        CCLog("mdString = %s", mdString);
+        //CCLog("mdString = %s", mdString);
         
-        //std::string encoded = Network::Encrypt_a(dumpData, (int)buffer->size());
-        //CCLog("encoded length = %d", (int)encoded.size());
-        //CCLog("ENCODED = %s", encoded.c_str());
+        // checksum, filesize 검사
+        int index = atoi(tag.substr(tag.find("_")+1).c_str());
         
-        
-        if (!res || !res->isSucceed())
+        // 체크섬, 파일크기, status code 중 하나라도 비정상적이면 다시 다운로드 받는다.
+        if (!res || !res->isSucceed() || res->getResponseCode() != 200 ||
+            strcmp(mdString, resourceChecksum[index].c_str()) != 0 ||
+            (int)buffer->size() != resourceFilesize[index])
         {
+            //CCLog("사이즈 : %d , %d", (int)buffer->size(), resourceFilesize[index]);
+            //CCLog("체크섬 : %s , %s", mdString, resourceChecksum[index].c_str());
             // 리소스 파일 다시 다운로드
             CCHttpRequest* req = new CCHttpRequest();
             req->setUrl( res->getHttpRequest()->getUrl() );
             req->setRequestType(CCHttpRequest::kHttpPost);
             req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
-            req->setTag("1231234");
+            req->setTag(res->getHttpRequest()->getTag());
             CCHttpClient::getInstance()->send(req);
             req->release();
             return;
         }
         
-        /*
-        // Print the MD5 sum as hex-digits.
-        void print_md5_sum(unsigned char* md) {
-            int i;
-            for(i = 0 ; i < MD5_DIGEST_LENGTH ; i++) {
-                printf("%02x",md[i]);
-            }
+        // xor operation with a key
+        int keyLen = basicKey.size();
+        std::string decryptedKey = "";
+        for (int i = 0 ; i < (int)buffer->size() ; i++)
+        {
+            decryptedKey += dumpData[i] ^ basicKey[i%keyLen];
         }
-        */
         
         // 리소스 파일 해석 및 배치
-        WriteResFileTexture(dumpData, (int)buffer->size());
+        WriteResFileTexture((char*)decryptedKey.c_str(), (int)buffer->size());  //dumpData, (int)buffer->size());
         
         
         // 그 다음 리소스 파일 다운로드
@@ -2159,15 +2194,13 @@ int versionCompare(int a, int b)
 
 void Splash::XmlParseResourceList(char* data, int size)
 {
-    // 'update_list.xml' 파일을 해석한다.
-
-    //CCLog("%s", data);
-    /*
-    // base64_decode
-    std::string base64EncodedStr = "";
-    for (int i = 0 ; i < size ; i++)
-        base64EncodedStr.push_back(data[i]);
-    std::string obfuscatedStr = Common::base64_decode(base64EncodedStr);
+    // 'update_list.pdi' 파일을 해석한다.
+    
+    std::string obfuscatedStr = data;
+    // replacing '-' to '+'
+    Network::replaceAll(obfuscatedStr, "-", "+");
+    // base64 decode
+    obfuscatedStr = Common::base64_decode(data);
     
     // deObfuscation
     int obfKey = 36 - 10;
@@ -2175,15 +2208,15 @@ void Splash::XmlParseResourceList(char* data, int size)
     std::string decodedStr = "";
     for (int i = 0 ; i < obfuscatedStr.size() ; i++) // xor operation
         decodedStr += obfuscatedStr[i] ^ obfuscationKey[obfKey][i%keyLen];
-    */
+
     //CCLog("%s", decodedStr.c_str());
     
     // xml parsing
     xml_document xmlDoc;
-    xml_parse_result result = xmlDoc.load_buffer(data, size); //decodedStr.c_str(), (int)decodedStr.size());
+    xml_parse_result result = xmlDoc.load_buffer(decodedStr.c_str(), (int)decodedStr.size());
     
-    //base64EncodedStr.clear();
-    //decodedStr.clear();
+    obfuscatedStr.clear();
+    decodedStr.clear();
     
     if (!result)
     {
@@ -2195,10 +2228,11 @@ void Splash::XmlParseResourceList(char* data, int size)
     
     // 기본 url 구하기
     prevUrl = balanceFileUrl;
-    Network::replaceAll(prevUrl, "update_list.xml", "");
+    Network::replaceAll(prevUrl, "update_list.pdi", "");
     
     // 받지 않은 모든 버전에 대해 리소스 순차 검사
-    std::string filename;
+    std::string filename, checksum;
+    int fsize;
     xml_named_node_iterator it;
     xml_node nodeResult = xmlDoc.child("update-list");
     
@@ -2215,6 +2249,7 @@ void Splash::XmlParseResourceList(char* data, int size)
     
     // 방식 : 최신버전 V부터 V-1, V-2, ..., K+1 (K는 이전까지의 최신버전) 순서대로 다운받아야 할 리소스 파일명을 검사한다. 중복되는 파일명은 제외한다.
     char version[7];
+    char fullfilename[100];
     for (int v = 0 ; v < (int)versions.size() ; v++)
     {
         if (versions[v] <= iGameVersion)
@@ -2224,7 +2259,13 @@ void Splash::XmlParseResourceList(char* data, int size)
         xml_object_range<xml_named_node_iterator> its = nodeResult.child(version).children("file");
         for (it = its.begin() ; it != its.end() ; ++it)
         {
-            filename = it->text().as_string();
+            for (xml_attribute_iterator ait = it->attributes_begin() ; ait != it->attributes_end() ; ++ait)
+            {
+                std::string name = ait->name();
+                if (name == "name") filename = ait->as_string();
+                else if (name == "checksum") checksum = ait->as_string();
+                else if (name == "size") fsize = ait->as_int();
+            }
             
             // 이미 똑같은 파일명이 있으면 무시한다.
             int i;
@@ -2237,18 +2278,22 @@ void Splash::XmlParseResourceList(char* data, int size)
                 continue;
 
             
-            if (filename.substr(filename.find(".")+1) == "pdi")// 가장 최근 balance.pdi의 주소를 저장한다.
+            if (filename.substr(filename.find(".")+1) == "pdi") // 가장 최근 balance.pdi의 주소를 저장한다.
             {
                 if (pdiUrl == "")
                 {
-                    pdiUrl = filename;
+                    sprintf(fullfilename, "%d/%s", versions[v], filename.c_str());
+                    pdiUrl = fullfilename;
                     CCUserDefault::sharedUserDefault()->setStringForKey("pdiUrl", pdiUrl);
                     //CCLog("pdi = %s", pdiUrl.c_str());
                 }
             }
             else
             {
-                resourceFilename.push_back(filename);
+                sprintf(fullfilename, "%d/%s", versions[v], filename.c_str());
+                resourceFilename.push_back(fullfilename);
+                resourceChecksum.push_back(checksum);
+                resourceFilesize.push_back(fsize);
                 //CCLog("filename = %s", filename.c_str());
             }
         }
@@ -2272,8 +2317,8 @@ void Splash::StartDownloadImageResources() // 필요한 모든 이미지 리소�
     sprintf(text, "리소스 다운로드 중... (%d/%d)", numOfDownloadedFiles, numOfResourceFiles);
     m_pMsgLabel->setString(text);
     
-    //resourcedownloadtime = time(0);
-    
+
+    char temp[12];
     for (int i = 0 ; i < (int)resourceFilename.size() ; i++)
     {
         // 각 리소스 파일 동시 다운로드 (balance.pdi 제외!)
@@ -2281,7 +2326,8 @@ void Splash::StartDownloadImageResources() // 필요한 모든 이미지 리소�
         req->setUrl( (prevUrl + resourceFilename[i]).c_str() );
         req->setRequestType(CCHttpRequest::kHttpPost);
         req->setResponseCallback(this, httpresponse_selector(Splash::onHttpRequestCompletedNoEncrypt));
-        req->setTag("1231234");
+        sprintf(temp, "1231234_%d", i);
+        req->setTag(temp);
         CCHttpClient::getInstance()->send(req);
         req->release();
     }
@@ -2712,3 +2758,100 @@ void Splash::UncompressZip(std::string filename)
 }
 */
 
+
+/*
+void Splash::Compress(unsigned char* data, int size)
+{
+    unsigned char* outbuf;
+    unsigned long OUTBUFSIZE;
+    
+    //Upon entry, destLen is the total size of the destination buffer,
+    //which must be at least 0.1% larger than sourceLen plus 12 bytes.
+    OUTBUFSIZE = (unsigned long)1.001*(size+12) + 1;
+    OUTBUFSIZE += 3000;
+    outbuf = new unsigned char[OUTBUFSIZE];
+    
+    //#define Z_NO_COMPRESSION         0
+    //#define Z_BEST_SPEED             1
+    //#define Z_BEST_COMPRESSION       9
+    //#define Z_DEFAULT_COMPRESSION  (-1)
+    int err = compress2(outbuf, &OUTBUFSIZE, data, size, Z_BEST_COMPRESSION);
+    
+
+    // Z_OK             if success,
+    // Z_MEM_ERROR      if there was not enough memory,
+    // Z_BUF_ERROR      if there was not enough room in the output buffer
+    // Z_STREAM_ERROR   if the level parameter is invalid
+    if (err == Z_OK)
+    {
+        // original -> compress -> (base64) -> rsa -> base64(+ -> -)
+        
+        // 1) compress done
+        CCLog("compress : success (size = %ld)", OUTBUFSIZE);
+        
+        
+        // 2) base64 encode
+        std::string base64 = Common::base64_encode(outbuf, OUTBUFSIZE);
+        CCLog("1st base64 size = %d", (int)base64.size());
+        
+        // 3) rsa + base64 encode + (+ -> -)
+        std::string encoded = Network::Encrypt_a(base64, (int)base64.size());
+        CCLog("final length = %d", (int)encoded.size());
+        
+        
+        std::string rfn = resourceFilename[numOfDownloadedFiles];
+        rfn = rfn.substr(rfn.find("/")+1);
+        Network::replaceAll(rfn, "/", "@");
+        
+        std::string filepath = CCFileUtils::sharedFileUtils()->getWritablePath() + rfn + "2";
+        CCLog("filepath = %s", filepath.c_str());
+        
+        FILE* ptr_fp;
+        if ((ptr_fp = fopen(filepath.c_str(), "wb")) == NULL)
+        {
+            CCLog("FILE OPEN ERROR !");
+            exit(1);
+        }
+        
+        size_t realSize = (int)encoded.size();
+        size_t fwriteSize = fwrite(encoded.c_str(), 1, realSize, ptr_fp);
+        //CCLog("%d %d", (int)realSize, (int)fwriteSize);
+        if (fwriteSize != realSize)
+        {
+            CCLog("FILE WRITE ERROR !");
+            exit(1);
+        }
+        fclose(ptr_fp);
+        
+        
+
+        char decryptedData[3000000];
+        int dSize = Network::DeObfuscation(encoded, decryptedData);
+        std::string decoded = Common::base64_decode(decryptedData);
+        
+        // uncompress
+        unsigned char* recbuf;
+        unsigned long RECBUFSIZE = size + 5;
+        recbuf = new unsigned char[RECBUFSIZE];
+
+        err = uncompress(recbuf, &RECBUFSIZE, (unsigned char*)decoded.c_str(), (int)decoded.size());
+        if (err == Z_OK)
+        {
+            CCLog("UNcompress : success (size = %ld)", RECBUFSIZE);
+        }
+        else
+        {
+            CCLog("UNcompress : ERROR (code = %d)", err);
+        }
+    }
+    else
+    {
+        CCLog("compress : ERROR (code = %d)", err);
+    }
+    
+    
+    delete [] outbuf;
+    //delete [] inbuf;
+    
+}
+*/
